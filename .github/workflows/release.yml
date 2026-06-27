@@ -16,40 +16,13 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  desktop:
-    name: Build desktop (${{ matrix.platform }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: windows-latest
-            args: --bundles nsis --config .github/tauri-updater.conf.json
-          - platform: macos-latest
-            args: --target universal-apple-darwin --bundles app,dmg --config .github/tauri-updater.conf.json
-          - platform: ubuntu-22.04
-            args: --bundles appimage,deb,rpm --config .github/tauri-updater.conf.json
-    runs-on: ${{ matrix.platform }}
+  windows:
+    name: Build Windows installer
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install Linux system dependencies
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libxdo-dev \
-            libssl-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            patchelf \
-            rpm
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -64,10 +37,6 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Install macOS universal Rust targets
-        if: matrix.platform == 'macos-latest'
-        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
@@ -78,11 +47,11 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
           if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            echo "::error::Set the TAURI_SIGNING_PRIVATE_KEY repository secret before publishing updater-capable desktop builds."
+            echo "::error::Set the TAURI_SIGNING_PRIVATE_KEY repository secret before publishing updater-capable Windows builds."
             exit 1
           fi
 
-      - name: Build and upload desktop bundles
+      - name: Build and upload Windows installer
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -91,76 +60,8 @@ jobs:
         with:
           tagName: ${{ github.event.release.tag_name || inputs.tag }}
           releaseName: ${{ github.event.release.name || inputs.tag }}
-          releaseBody: "Desktop builds include updater signature artifacts."
+          releaseBody: "Windows installer includes updater signature artifacts."
           releaseDraft: false
           prerelease: ${{ github.event.release.prerelease || false }}
-          args: ${{ matrix.args }}
+          args: --bundles nsis --config .github/tauri-updater.conf.json
           includeUpdaterJson: true
-
-  android:
-    name: Build Android APK
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.9.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK packages
-        shell: bash
-        run: |
-          sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
-          echo "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
-
-      - name: Install frontend dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Initialize Android project if needed
-        shell: bash
-        run: |
-          if [ ! -f src-tauri/gen/android/gradlew ]; then
-            pnpm tauri android init --ci --skip-targets-install
-          fi
-
-      - name: Build APK
-        run: pnpm tauri android build --apk --target aarch64 armv7 i686 x86_64 --ci
-
-      - name: Upload APKs to GitHub Release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
-        run: |
-          apk_paths="$(find src-tauri/gen/android -path '*/build/outputs/apk/*/release/*.apk' -type f)"
-          if [ -z "$apk_paths" ]; then
-            echo "::error::No Android APK files were produced."
-            exit 1
-          fi
-          while IFS= read -r apk_path; do
-            gh release upload "$RELEASE_TAG" "$apk_path" --clobber
-          done <<< "$apk_paths"

@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "hsractionsequence",
-  "version": "0.1.0",
+  "version": "2026.6.27",
   "identifier": "com.andyzhou.hsractionsequence",
   "build": {
     "beforeDevCommand": "pnpm dev",
