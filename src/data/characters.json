@@ -1,0 +1,42 @@
+{
+	"characters": [
+		{
+			"names": ["布洛妮娅", "鸭", "鸭鸭"],
+			"effects": {
+				"A": "selfAdvance30",
+				"E": "allyPullToCurrent"
+			}
+		},
+		{
+			"names": ["星期日", "周日"],
+			"effects": {
+				"E": "allyPullToCurrent"
+			}
+		},
+		{
+			"names": ["花火"],
+			"effects": {
+				"E": "allyAdvance50NotPast"
+			}
+		},
+		{
+			"names": ["知更鸟", "鸟"],
+			"effects": {
+				"Q": "robinUltimate"
+			},
+			"passives": ["firstActionAdvance25"]
+		},
+		{
+			"names": ["白厄", "Phainon"],
+			"effects": {
+				"W": "counterW"
+			}
+		},
+		{
+			"names": ["姬子"],
+			"effects": {
+				"F": "assistF"
+			}
+		}
+	]
+}

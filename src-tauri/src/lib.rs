@@ -1,6 +1,7 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 use base64::{engine::general_purpose, Engine as _};
 use std::fs;
+use tauri::Manager;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -31,6 +32,19 @@ fn write_png_file(path: String, data_url: String) -> Result<(), String> {
     fs::write(path, contents).map_err(|error| error.to_string())
 }
 
+#[tauri::command]
+fn get_autosave_path(app: tauri::AppHandle) -> Result<String, String> {
+    let app_dir = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|e| format!("无法获取应用数据目录：{e}"))?;
+    fs::create_dir_all(&app_dir).map_err(|e| format!("无法创建应用数据目录：{e}"))?;
+    Ok(app_dir
+        .join("action-sequence-autosave.json")
+        .to_string_lossy()
+        .to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -40,7 +54,8 @@ pub fn run() {
             greet,
             read_text_file,
             write_text_file,
-            write_png_file
+            write_png_file,
+            get_autosave_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

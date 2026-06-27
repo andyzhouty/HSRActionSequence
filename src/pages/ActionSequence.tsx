@@ -1,1069 +1,927 @@
-import html2canvas from "html2canvas";
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { useMemo, useRef, useState } from "react";
-
-type CharacterConfig = {
-  id: string;
-  kind: TargetKind;
-  name: string;
-  speed: string;
-  hasVonwacq: boolean;
-  hasWindSet: boolean;
-  hasDance: boolean;
-  ultCycle: string;
-  ultOffset: string;
-};
-
-type GeneratedAction = {
-  key: string;
-  characterId: string;
-  actionNo: number;
-  actionValue: number;
-  isUltimateAction: boolean;
-};
-
-type SavedData = {
-  limitPreset: string;
-  customLimit: string;
-  characters: CharacterConfig[];
-  resources: string[];
-  overrides: Record<string, string>;
-  ultOverrides: Record<string, boolean>;
-  resourceValues: Record<string, Record<string, string>>;
-};
-
-type TargetKind = "角色" | "忆灵" | "非忆灵" | "敌人";
-
-const targetKinds: TargetKind[] = ["角色", "忆灵", "非忆灵", "敌人"];
-
-function isCharacterTarget(character: CharacterConfig) {
-  return character.kind === "角色";
-}
-
-function isEnemyTarget(kind: TargetKind | undefined) {
-  return kind === "敌人";
-}
-
-function canBeAdvancedByDance(character: CharacterConfig) {
-  return character.kind === "角色" || character.kind === "忆灵";
-}
-
-function getTargetDefaultName(kind: TargetKind, index: number) {
-  if (kind === "非忆灵") return `召唤物 ${index + 1}`;
-  return `${kind} ${index + 1}`;
-}
-
-function createTarget(id: string, index: number, kind: TargetKind = "角色") {
-  return {
-    id,
-    kind,
-    name: getTargetDefaultName(kind, index),
-    speed: "",
-    hasVonwacq: false,
-    hasWindSet: false,
-    hasDance: false,
-    ultCycle: "",
-    ultOffset: "",
-  };
-}
-
-function withoutCharacterOnlyEffects(character: CharacterConfig): CharacterConfig {
-  if (isCharacterTarget(character)) return character;
-  return {
-    ...character,
-    hasVonwacq: false,
-    hasWindSet: false,
-    hasDance: false,
-    ultCycle: "",
-    ultOffset: "",
-  };
-}
-
-const defaultCharacters: CharacterConfig[] = Array.from({ length: 4 }, (_, index) =>
-  createTarget(`c${index + 1}`, index),
-);
-
-const limitPresets = ["150", "300", "500", "自定义"];
-const maxResources = 5;
-
-function ensureFileExtension(path: string, extension: string) {
-  return path.toLowerCase().endsWith(extension) ? path : `${path}${extension}`;
-}
-
-function getTimestampedFileName(prefix: string, extension: string) {
-  return `${prefix}-${Date.now()}${extension}`;
-}
-
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
-
-function canvasToPngDataUrl(canvas: HTMLCanvasElement) {
-  const dataUrl = canvas.toDataURL("image/png");
-  if (!dataUrl.startsWith("data:image/png;base64,")) {
-    throw new Error("图片编码失败");
-  }
-  return dataUrl;
-}
-
-function toPositiveNumber(value: string, fallback = 0) {
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-function toNonNegativeNumber(value: string | undefined, fallback: number) {
-  if (value === undefined || value === "") return fallback;
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
-}
-
-function toPositiveInteger(value: string, fallback = 0) {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-function formatActionValue(value: number) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2);
-}
-
-function isUltimateAction(character: CharacterConfig, actionNo: number) {
-  if (!isCharacterTarget(character)) return false;
-  const cycle = toPositiveInteger(character.ultCycle);
-  const offset = toPositiveInteger(character.ultOffset, cycle);
-  if (cycle === 0 || offset === 0 || actionNo < offset) return false;
-  return (actionNo - offset) % cycle === 0;
-}
-
-function simulateActions(
-  characters: CharacterConfig[],
-  limit: number,
-  overrides: Record<string, string>,
-  ultOverrides: Record<string, boolean>,
-) {
-  const activeCharacters = characters.filter(
-    (character) => toPositiveNumber(character.speed) > 0,
-  );
-
-  const states = activeCharacters.map((character) => {
-    const speed = toPositiveNumber(character.speed);
-    return {
-      character,
-      actionNo: 1,
-      nextActionValue:
-        (isCharacterTarget(character) && character.hasVonwacq ? 6000 : 10000) /
-        speed,
-    };
-  });
-
-  const actions: GeneratedAction[] = [];
-  let guard = 0;
-
-  while (states.length > 0 && guard < 400) {
-    guard += 1;
-    const candidates = states.map((state) => {
-      const key = `${state.character.id}-${state.actionNo}`;
-      return {
-        state,
-        key,
-        actionValue: toNonNegativeNumber(overrides[key], state.nextActionValue),
-      };
-    });
-
-    candidates.sort((a, b) => {
-      if (a.actionValue !== b.actionValue) return a.actionValue - b.actionValue;
-      return a.state.character.id.localeCompare(b.state.character.id);
-    });
-
-    const next = candidates[0];
-    if (!next || next.actionValue > limit) break;
-
-    const { state } = next;
-    const { character } = state;
-    const speed = toPositiveNumber(character.speed);
-    const actionNo = state.actionNo;
-    const defaultUltimateAction = isUltimateAction(character, actionNo);
-    const ultimateAction =
-      isCharacterTarget(character) && ultOverrides[next.key] !== undefined
-        ? ultOverrides[next.key]
-        : defaultUltimateAction;
-
-    actions.push({
-      key: next.key,
-      characterId: character.id,
-      actionNo,
-      actionValue: next.actionValue,
-      isUltimateAction: ultimateAction,
-    });
-
-    const nextInterval =
-      isCharacterTarget(character) && character.hasWindSet && ultimateAction
-        ? 7500 / speed
-        : 10000 / speed;
-    state.actionNo += 1;
-    state.nextActionValue = next.actionValue + nextInterval;
-
-    if (isCharacterTarget(character) && character.hasDance && ultimateAction) {
-      const advance = 2400 / speed;
-      for (const teammate of states) {
-        if (!canBeAdvancedByDance(teammate.character)) continue;
-        teammate.nextActionValue = Math.max(
-          next.actionValue,
-          teammate.nextActionValue - advance,
-        );
-      }
-    }
-  }
-
-  return actions;
-}
-
-function NumberInput({
-  label,
-  value,
-  onChange,
-  disabled = false,
-  placeholder = "请输入",
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  placeholder?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm text-gray-300">{label}</span>
-      <input
-        type="text"
-        inputMode="decimal"
-        value={value}
-        disabled={disabled}
-        placeholder={placeholder}
-        onChange={(event) => {
-          const nextValue = event.target.value;
-          if (nextValue === "" || /^\d*\.?\d*$/.test(nextValue)) {
-            onChange(nextValue);
-          }
-        }}
-        className="w-full rounded-lg border border-gray-600 bg-gray-700 p-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-      />
-    </label>
-  );
-}
-
-function TextInput({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <input
-      type="text"
-      value={value}
-      placeholder={placeholder}
-      onChange={(event) => onChange(event.target.value)}
-      className="h-10 w-full rounded-lg border border-gray-600 bg-gray-700 px-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-  );
-}
-
-function Toggle({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={onChange}
-      className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
-        checked
-          ? "border-[#3b82f680] bg-[#1e3a8a66] text-blue-100"
-          : "border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
+import html2canvas from "html2canvas";
+import { useEffect, useMemo, useRef, useState } from "react";
+import ActionPanel from "../components/action-sequence/ActionPanel";
+import CharacterPanel from "../components/action-sequence/CharacterPanel";
+import { ActionSequenceCtx } from "../contexts/ActionSequenceContext";
+import {
+	type CharacterConfig,
+	canUseSkillCode,
+	canvasToPngDataUrl,
+	createTarget,
+	defaultCharacters,
+	ensureFileExtension,
+	formatEditableNumber,
+	type GeneratedAction,
+	getDefaultSkill,
+	getErrorMessage,
+	getTargetDefaultName,
+	getTimestampedFileName,
+	hasSkillEffect,
+	isCharacterTarget,
+	limitPresets,
+	maxResources,
+	type SavedData,
+	type SkillCode,
+	type SpeedAdjustment,
+	type SpeedChangeMode,
+	type TargetKind,
+	targetKinds,
+	toPositiveNumber,
+	toSignedNumber,
+	type UltInterrupt,
+	withoutCharacterOnlyEffects,
+} from "../utils/actionSequence";
+import { simulateActions } from "../utils/simulateActions";
 
 export default function ActionSequence() {
-  const [characters, setCharacters] =
-    useState<CharacterConfig[]>(defaultCharacters);
-  const [limitPreset, setLimitPreset] = useState("150");
-  const [customLimit, setCustomLimit] = useState("");
-  const [resources, setResources] = useState<string[]>(["战技点"]);
-  const [overrides, setOverrides] = useState<Record<string, string>>({});
-  const [ultOverrides, setUltOverrides] = useState<Record<string, boolean>>({});
-  const [resourceValues, setResourceValues] = useState<
-    Record<string, Record<string, string>>
-  >({});
-  const [importText, setImportText] = useState("");
-  const [message, setMessage] = useState("");
-  const [isExportingImage, setIsExportingImage] = useState(false);
-  const imageExportRef = useRef<HTMLDivElement>(null);
+	const [characters, setCharacters] =
+		useState<CharacterConfig[]>(defaultCharacters);
+	const [limitPreset, setLimitPreset] = useState("150");
+	const [customLimit, setCustomLimit] = useState("");
+	const [resources, setResources] = useState<string[]>(["战技点"]);
+	const [overrides, setOverrides] = useState<Record<string, string>>({});
+	const [ultOverrides, setUltOverrides] = useState<Record<string, boolean>>({});
+	const [skillOverrides, setSkillOverrides] = useState<
+		Record<string, SkillCode>
+	>({});
+	const [domainEndOverrides, setDomainEndOverrides] = useState<
+		Record<string, boolean>
+	>({});
+	const [speedAdjustments, setSpeedAdjustments] = useState<
+		Record<string, SpeedAdjustment>
+	>({});
+	const [selectedActionKeys, setSelectedActionKeys] = useState<Set<string>>(
+		() => new Set(),
+	);
+	const [actionMenuOpen, setActionMenuOpen] = useState(false);
+	const [actionMenuKey, setActionMenuKey] = useState<string | null>(null);
+	const [actionMenuPos, setActionMenuPos] = useState<number>(0);
+	const [actionOperation, setActionOperation] = useState<"advance" | "speed">(
+		"advance",
+	);
+	const [operationValue, setOperationValue] = useState("");
+	const [operationSpeedMode, setOperationSpeedMode] =
+		useState<SpeedChangeMode>("absolute");
+	const [resourceValues, setResourceValues] = useState<
+		Record<string, Record<string, string>>
+	>({});
+	const [skillTargets, setSkillTargets] = useState<Record<string, string>>({});
+	const [ultInterrupts, setUltInterrupts] = useState<
+		Record<string, UltInterrupt[]>
+	>({});
+	const [draftInterruptCaster, setDraftInterruptCaster] = useState("");
+	const [draftInterruptTiming, setDraftInterruptTiming] = useState<
+		"before" | "after"
+	>("before");
+	const [actions, setActions] = useState<GeneratedAction[]>([]);
+	const [importText, setImportText] = useState("");
+	const [message, setMessage] = useState("");
+	const [isExportingImage, setIsExportingImage] = useState(false);
+	const imageExportRef = useRef<HTMLDivElement>(null);
+	const autosavePathRef = useRef<string | null>(null);
+	const autosaveTimerRef = useRef<number | null>(null);
 
-  const actionLimit = useMemo(() => {
-    if (limitPreset === "自定义") {
-      return toPositiveNumber(customLimit, 150);
-    }
-    return toPositiveNumber(limitPreset, 150);
-  }, [customLimit, limitPreset]);
+	const actionLimit = useMemo(() => {
+		if (limitPreset === "自定义") {
+			return toPositiveNumber(customLimit, 150);
+		}
+		return toPositiveNumber(limitPreset, 150);
+	}, [customLimit, limitPreset]);
+	const displayedActionLimit = actionLimit + 100;
 
-  const actions = useMemo(
-    () => simulateActions(characters, actionLimit, overrides, ultOverrides),
-    [characters, actionLimit, overrides, ultOverrides],
-  );
-  const characterNames = useMemo(
-    () =>
-      Object.fromEntries(
-        characters.map((character, index) => [
-          character.id,
-          character.name.trim() ||
-            getTargetDefaultName(character.kind, index),
-        ]),
-      ),
-    [characters],
-  );
-  const characterKinds = useMemo(
-    () =>
-      Object.fromEntries(
-        characters.map((character) => [character.id, character.kind]),
-      ),
-    [characters],
-  );
+	// 启动时自动加载上次保存的状态
+	useEffect(() => {
+		let cancelled = false;
 
-  const updateCharacter = (
-    id: string,
-    updater: (character: CharacterConfig) => CharacterConfig,
-  ) => {
-    setCharacters((prev) =>
-      prev.map((character) =>
-        character.id === id ? updater(character) : character,
-      ),
-    );
-  };
+		void (async () => {
+			try {
+				const autosavePath = await invoke<string>("get_autosave_path");
+				autosavePathRef.current = autosavePath;
 
-  const addTarget = () => {
-    setCharacters((prev) => [
-      ...prev,
-      createTarget(`target-${Date.now()}`, prev.length),
-    ]);
-  };
+				const text = await invoke<string>("read_text_file", {
+					path: autosavePath,
+				});
+				if (cancelled) return;
+				if (!text.trim()) return;
 
-  const removeTarget = (id: string) => {
-    if (characters.length <= 1) return;
-    setCharacters((prev) =>
-      prev.length <= 1 ? prev : prev.filter((character) => character.id !== id),
-    );
-    setOverrides((prev) =>
-      Object.fromEntries(
-        Object.entries(prev).filter(([actionKey]) => !actionKey.startsWith(`${id}-`)),
-      ),
-    );
-    setUltOverrides((prev) =>
-      Object.fromEntries(
-        Object.entries(prev).filter(
-          ([actionKey]) => !actionKey.startsWith(`${id}-`),
-        ),
-      ),
-    );
-    setResourceValues((prev) =>
-      Object.fromEntries(
-        Object.entries(prev).filter(
-          ([actionKey]) => !actionKey.startsWith(`${id}-`),
-        ),
-      ),
-    );
-  };
+				const parsed = JSON.parse(text) as Partial<SavedData>;
+				if (!Array.isArray(parsed.characters)) return;
+				if (parsed.characters.length === 0) return;
 
-  const updateResourceValue = (
-    actionKey: string,
-    resourceName: string,
-    value: string,
-  ) => {
-    setResourceValues((prev) => ({
-      ...prev,
-      [actionKey]: {
-        ...(prev[actionKey] ?? {}),
-        [resourceName]: value,
-      },
-    }));
-  };
+				// 导入状态
+				setCharacters(
+					parsed.characters.map((character, index) =>
+						withoutCharacterOnlyEffects({
+							...createTarget(
+								String(character.id ?? `autoload-${index + 1}`),
+								index,
+								(targetKinds.includes(character.kind as TargetKind)
+									? character.kind
+									: "角色") as TargetKind,
+							),
+							...character,
+							id: String(character.id ?? `autoload-${index + 1}`),
+							kind: (targetKinds.includes(character.kind as TargetKind)
+								? character.kind
+								: "角色") as TargetKind,
+							name: String(character.name ?? ""),
+							speed: String(character.speed ?? ""),
+							baseSpeed: String(character.baseSpeed ?? ""),
+							ultCycle: String(character.ultCycle ?? ""),
+							ultOffset: String(character.ultOffset ?? ""),
+						}),
+					),
+				);
+				setLimitPreset(
+					parsed.limitPreset && limitPresets.includes(parsed.limitPreset)
+						? parsed.limitPreset
+						: "150",
+				);
+				setCustomLimit(String(parsed.customLimit ?? ""));
+				setResources(
+					Array.isArray(parsed.resources)
+						? parsed.resources.slice(0, maxResources).map(String)
+						: [],
+				);
+				setOverrides(parsed.overrides ?? {});
+				setUltOverrides(parsed.ultOverrides ?? {});
+				setSkillOverrides(parsed.skillOverrides ?? {});
+				setDomainEndOverrides(parsed.domainEndOverrides ?? {});
+				setSkillTargets(parsed.skillTargets ?? {});
+				setUltInterrupts(parsed.ultInterrupts ?? {});
+				setSpeedAdjustments(parsed.speedAdjustments ?? {});
+				setResourceValues(parsed.resourceValues ?? {});
+				setMessage("已自动恢复上次的排轴数据");
+			} catch {
+				// 首次使用或无上次保存数据，静默忽略
+			}
+		})();
 
-  const toggleUltimateOverride = (action: GeneratedAction) => {
-    if (characterKinds[action.characterId] !== "角色") return;
-    setUltOverrides((prev) => ({
-      ...prev,
-      [action.key]: !action.isUltimateAction,
-    }));
-  };
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
-  const addResource = () => {
-    if (resources.length >= maxResources) return;
-    setResources((prev) => [...prev, `资源 ${prev.length + 1}`]);
-  };
+	useEffect(() => {
+		try {
+			const nextActions = simulateActions({
+				characters,
+				limit: displayedActionLimit,
+				overrides,
+				skillOverrides,
+				domainEndOverrides,
+				legacyUltOverrides: ultOverrides,
+				speedAdjustments,
+				skillTargets,
+				ultInterrupts,
+			});
+			setActions(nextActions);
+		} catch (error) {
+			setActions([]);
+			setMessage(`行动轴计算失败：${getErrorMessage(error)}`);
+		}
+	}, [
+		characters,
+		displayedActionLimit,
+		overrides,
+		skillOverrides,
+		domainEndOverrides,
+		ultOverrides,
+		speedAdjustments,
+		skillTargets,
+		ultInterrupts,
+	]);
 
-  const updateResource = (index: number, value: string) => {
-    setResources((prev) =>
-      prev.map((resource, resourceIndex) =>
-        resourceIndex === index ? value : resource,
-      ),
-    );
-  };
+	// 状态变化时自动保存（防抖 800ms）
+	useEffect(() => {
+		if (autosaveTimerRef.current !== null) {
+			window.clearTimeout(autosaveTimerRef.current);
+		}
+		if (autosavePathRef.current === null) return;
 
-  const removeResource = (index: number) => {
-    const removedName = resources[index];
-    setResources((prev) =>
-      prev.filter((_, resourceIndex) => resourceIndex !== index),
-    );
-    setResourceValues((prev) => {
-      const next = { ...prev };
-      for (const actionKey of Object.keys(next)) {
-        const values = { ...next[actionKey] };
-        delete values[removedName];
-        next[actionKey] = values;
-      }
-      return next;
-    });
-  };
+		autosaveTimerRef.current = window.setTimeout(() => {
+			const path = autosavePathRef.current;
+			if (!path) return;
 
-  const buildExportData = (): SavedData => ({
-    limitPreset,
-    customLimit,
-    characters: characters.map(withoutCharacterOnlyEffects),
-    resources,
-    overrides,
-    ultOverrides,
-    resourceValues,
-  });
+			const data: SavedData = {
+				limitPreset,
+				customLimit,
+				characters: characters.map(withoutCharacterOnlyEffects),
+				resources,
+				overrides,
+				skillOverrides,
+				domainEndOverrides,
+				speedAdjustments,
+				skillTargets,
+				ultInterrupts,
+				resourceValues,
+			};
 
-  const exportJson = async () => {
-    const json = JSON.stringify(buildExportData(), null, 2);
+			invoke("write_text_file", {
+				path,
+				contents: JSON.stringify(data, null, 2),
+			}).catch(() => {
+				// 自动保存失败不影响用户操作
+			});
+		}, 800);
 
-    try {
-      const selectedPath = await save({
-        title: "导出 JSON",
-        defaultPath: getTimestampedFileName("action-sequence", ".json"),
-        filters: [
-          {
-            name: "JSON",
-            extensions: ["json"],
-          },
-        ],
-      });
-      if (!selectedPath) {
-        setMessage("已取消导出 JSON。");
-        return;
-      }
+		return () => {
+			if (autosaveTimerRef.current !== null) {
+				window.clearTimeout(autosaveTimerRef.current);
+			}
+		};
+	}, [
+		characters,
+		limitPreset,
+		customLimit,
+		resources,
+		overrides,
+		skillOverrides,
+		domainEndOverrides,
+		speedAdjustments,
+		skillTargets,
+		ultInterrupts,
+		resourceValues,
+	]);
 
-      const filePath = ensureFileExtension(selectedPath, ".json");
-      await invoke("write_text_file", {
-        path: filePath,
-        contents: json,
-      });
-      setImportText(json);
-      setMessage(`已导出 JSON 文件：${filePath}`);
-    } catch (error) {
-      setMessage(`JSON 导出失败：${getErrorMessage(error)}`);
-    }
-  };
+	const characterNames = useMemo(
+		() =>
+			Object.fromEntries(
+				characters.map((character, index) => [
+					character.id,
+					character.name.trim() || getTargetDefaultName(character.kind, index),
+				]),
+			),
+		[characters],
+	);
+	const characterKinds = useMemo(
+		() =>
+			Object.fromEntries(
+				characters.map((character) => [character.id, character.kind]),
+			),
+		[characters],
+	);
+	const charactersById = useMemo(
+		() =>
+			Object.fromEntries(
+				characters.map((character) => [character.id, character]),
+			),
+		[characters],
+	);
 
-  const exportImage = async () => {
-    if (!imageExportRef.current) return;
+	const updateCharacter = (
+		id: string,
+		updater: (character: CharacterConfig) => CharacterConfig,
+	) => {
+		setCharacters((prev) =>
+			prev.map((character) =>
+				character.id === id ? updater(character) : character,
+			),
+		);
+	};
 
-    try {
-      setIsExportingImage(true);
-      setMessage("正在生成行动序列图片...");
+	const addTarget = () => {
+		setCharacters((prev) => [
+			...prev,
+			createTarget(`target-${Date.now()}`, prev.length),
+		]);
+	};
 
-      const target = imageExportRef.current;
-      const exportPadding = 32;
-      const canvas = await html2canvas(target, {
-        backgroundColor: "#1f2937",
-        scale: Math.min(window.devicePixelRatio || 1, 2),
-        width: target.scrollWidth,
-        height: target.scrollHeight + exportPadding,
-        windowWidth: Math.max(
-          document.documentElement.clientWidth,
-          target.scrollWidth,
-        ),
-        windowHeight: Math.max(
-          document.documentElement.clientHeight,
-          target.scrollHeight + exportPadding,
-        ),
-        onclone: (_clonedDocument, clonedElement) => {
-          clonedElement.style.boxSizing = "border-box";
-          clonedElement.style.paddingBottom = `${exportPadding}px`;
-          clonedElement.querySelectorAll(".truncate").forEach((element) => {
-            const exportText = element as HTMLElement;
-            exportText.style.lineHeight = "1.25rem";
-            exportText.style.minHeight = "1.25rem";
-          });
-          clonedElement.querySelectorAll("input").forEach((input) => {
-            const replacement = document.createElement("div");
-            const inputElement = input as HTMLInputElement;
-            const isActionValue = inputElement.classList.contains("font-mono");
-            replacement.textContent = inputElement.value;
-            replacement.style.alignItems = "center";
-            replacement.style.backgroundColor = "#374151";
-            replacement.style.border = "1px solid #4b5563";
-            replacement.style.borderRadius = "0.5rem";
-            replacement.style.boxSizing = "border-box";
-            replacement.style.color = "#ffffff";
-            replacement.style.display = "flex";
-            replacement.style.fontFamily = isActionValue
-              ? '"Inconsolata Nerd Font", monospace'
-              : "inherit";
-            replacement.style.height = "40px";
-            replacement.style.lineHeight = "1";
-            replacement.style.padding = "0 12px";
-            replacement.style.whiteSpace = "nowrap";
-            replacement.style.width = isActionValue ? "112px" : "100%";
-            inputElement.replaceWith(replacement);
-          });
-        },
-      });
+	const removeTarget = (id: string) => {
+		if (characters.length <= 1) return;
+		setCharacters((prev) =>
+			prev.length <= 1 ? prev : prev.filter((character) => character.id !== id),
+		);
+		setOverrides((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).filter(
+					([actionKey]) => !actionKey.startsWith(`${id}-`),
+				),
+			),
+		);
+		setUltOverrides((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).filter(
+					([actionKey]) => !actionKey.startsWith(`${id}-`),
+				),
+			),
+		);
+		setSkillOverrides((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).filter(
+					([actionKey]) => !actionKey.startsWith(`${id}-`),
+				),
+			),
+		);
+		setDomainEndOverrides((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).filter(
+					([actionKey]) => !actionKey.startsWith(`${id}-`),
+				),
+			),
+		);
+		setSpeedAdjustments((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).filter(
+					([actionKey]) => !actionKey.startsWith(`${id}-`),
+				),
+			),
+		);
+		setSkillTargets((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).filter(
+					([actionKey]) => !actionKey.startsWith(`${id}-`),
+				),
+			),
+		);
+		setUltInterrupts((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).filter(
+					([actionKey]) => !actionKey.startsWith(`${id}-`),
+				),
+			),
+		);
+		setResourceValues((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).filter(
+					([actionKey]) => !actionKey.startsWith(`${id}-`),
+				),
+			),
+		);
+		setSelectedActionKeys((prev) => {
+			const next = new Set(
+				[...prev].filter((actionKey) => !actionKey.startsWith(`${id}-`)),
+			);
+			return next;
+		});
+		closeActionMenu();
+	};
 
-      const selectedPath = await save({
-        title: "导出行动序列图片",
-        defaultPath: getTimestampedFileName("action-sequence", ".png"),
-        filters: [
-          {
-            name: "PNG 图片",
-            extensions: ["png"],
-          },
-        ],
-      });
-      if (!selectedPath) {
-        setMessage("已取消导出图片。");
-        return;
-      }
+	const updateResourceValue = (
+		actionKey: string,
+		resourceName: string,
+		value: string,
+	) => {
+		setResourceValues((prev) => ({
+			...prev,
+			[actionKey]: {
+				...(prev[actionKey] ?? {}),
+				[resourceName]: value,
+			},
+		}));
+	};
 
-      const filePath = ensureFileExtension(selectedPath, ".png");
-      await invoke("write_png_file", {
-        path: filePath,
-        dataUrl: canvasToPngDataUrl(canvas),
-      });
-      setMessage(`已导出行动序列图片：${filePath}`);
-    } catch (error) {
-      setMessage(`图片导出失败：${getErrorMessage(error)}`);
-    } finally {
-      setIsExportingImage(false);
-    }
-  };
+	const updateActionSkill = (action: GeneratedAction, value: string) => {
+		const character = charactersById[action.characterId];
+		if (!character) return;
+		if (action.isDomainFinalAction) return;
+		const nextSkill = value.trim().toUpperCase() as SkillCode;
+		const allowedDomainSkills = new Set(["", "E", "EW", "EA", "A", "W"]);
+		if (action.isDomainAction && !allowedDomainSkills.has(nextSkill)) {
+			setMessage("白厄境界内只能填写 E、EW、EA、A 或 W");
+			return;
+		}
+		if (!action.isDomainAction && !canUseSkillCode(character, nextSkill)) {
+			if (nextSkill.includes("A") && nextSkill.includes("E")) {
+				setMessage("A（普攻）和 E（战技）不能组合");
+			} else if (
+				nextSkill.includes("W") &&
+				!hasSkillEffect(character.name, "W", "counterW")
+			) {
+				setMessage(
+					"只有名称为\u201c白厄\u201d或\u201cPhainon\u201d的角色可以填写 W",
+				);
+			} else if (
+				nextSkill.includes("F") &&
+				!hasSkillEffect(character.name, "F", "assistF")
+			) {
+				setMessage("只有名称包含\u201c姬子\u201d的角色可以填写 F");
+			} else if (!isCharacterTarget(character)) {
+				setMessage("只有角色可以填写技能");
+			}
+			return;
+		}
 
-  const importJson = (rawText = importText) => {
-    try {
-      const parsed = JSON.parse(rawText) as Partial<SavedData>;
-      if (!Array.isArray(parsed.characters)) {
-        throw new Error("characters 缺失");
-      }
+		setSkillOverrides((prev) => {
+			const next = { ...prev };
+			const defaultSkill = action.isDomainAction
+				? ""
+				: getDefaultSkill(character, action.actionNo);
+			if (nextSkill === defaultSkill) {
+				delete next[action.key];
+			} else {
+				next[action.key] = nextSkill;
+			}
+			return next;
+		});
+		setUltOverrides((prev) => {
+			const next = { ...prev };
+			delete next[action.key];
+			return next;
+		});
+		// 技能不再是 E 时，清理技能目标
+		if (!nextSkill.includes("E")) {
+			setSkillTargets((prev) => {
+				const next = { ...prev };
+				delete next[action.key];
+				return next;
+			});
+		}
+	};
 
-      setCharacters(
-        parsed.characters.map((character) =>
-          withoutCharacterOnlyEffects(character),
-        ),
-      );
-      setLimitPreset(
-        parsed.limitPreset && limitPresets.includes(parsed.limitPreset)
-          ? parsed.limitPreset
-          : "150",
-      );
-      setCustomLimit(String(parsed.customLimit ?? ""));
-      setResources(
-        Array.isArray(parsed.resources)
-          ? parsed.resources.slice(0, maxResources).map(String)
-          : [],
-      );
-      setOverrides(parsed.overrides ?? {});
-      setUltOverrides(parsed.ultOverrides ?? {});
-      setResourceValues(parsed.resourceValues ?? {});
-      setMessage("导入成功。");
-    } catch {
-      setMessage("导入失败，请检查 JSON 格式。");
-    }
-  };
+	const selectAction = (actionKey: string, additive: boolean) => {
+		setSelectedActionKeys((prev) => {
+			if (!additive) return new Set([actionKey]);
+			const next = new Set(prev);
+			if (next.has(actionKey)) {
+				next.delete(actionKey);
+			} else {
+				next.add(actionKey);
+			}
+			return next;
+		});
+	};
 
-  const importFromFile = async () => {
-    try {
-      const selectedPath = await open({
-        title: "导入 JSON",
-        multiple: false,
-        filters: [
-          {
-            name: "JSON",
-            extensions: ["json"],
-          },
-        ],
-      });
-      if (!selectedPath || Array.isArray(selectedPath)) {
-        setMessage("已取消从文件导入。");
-        return;
-      }
+	const openActionMenu = (
+		actionKey: string,
+		additive: boolean,
+		clientY: number,
+	) => {
+		if (actionMenuOpen && actionMenuKey === actionKey && !additive) {
+			closeActionMenu();
+			return;
+		}
+		setSelectedActionKeys((prev) => {
+			if (prev.has(actionKey) && !additive) return prev;
+			if (!additive) return new Set([actionKey]);
+			const next = new Set(prev);
+			next.add(actionKey);
+			return next;
+		});
+		setActionMenuKey(actionKey);
+		setActionMenuPos(clientY);
+		setActionMenuOpen(true);
+	};
 
-      const text = await invoke<string>("read_text_file", {
-        path: selectedPath,
-      });
-      setImportText(text);
-      importJson(text);
-    } catch (error) {
-      setMessage(`从文件导入失败：${getErrorMessage(error)}`);
-    }
-  };
+	const closeActionMenu = () => {
+		setActionMenuOpen(false);
+		setActionMenuKey(null);
+	};
 
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="mb-6 rounded-2xl bg-gray-800 p-6 shadow">
-        <h2 className="mb-2 text-2xl font-bold text-white">行动排轴器</h2>
-        <p className="text-gray-300">
-          星穹铁道行动值序列工具，支持翁瓦克、风套、舞舞舞、手动行动值和资源备注。
-        </p>
-      </div>
+	const getPhainonDomainEquivalentSpeed = (action: GeneratedAction) => {
+		const character = charactersById[action.characterId];
+		if (!character) return action.speed;
+		const baseSpeed =
+			toPositiveNumber(character.baseSpeed, 0) > 0
+				? toPositiveNumber(character.baseSpeed, action.speed)
+				: 106.0;
+		const coeff = character.hasEidolon1 ? 0.66 : 0.6;
+		return baseSpeed * coeff;
+	};
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
-        <section className="space-y-4">
-          {characters.map((character, index) => (
-              <div
-                key={character.id}
-                className="rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow"
-              >
-                <div className="mb-4 grid grid-cols-[112px_minmax(0,1fr)] gap-3">
-                  <select
-                    value={character.kind}
-                    onChange={(event) =>
-                      updateCharacter(character.id, (prev) =>
-                        {
-                          const nextKind = event.target.value as TargetKind;
-                          const previousDefaultName = getTargetDefaultName(
-                            prev.kind,
-                            index,
-                          );
-                          const shouldUseNextDefaultName =
-                            prev.name.trim() === "" ||
-                            prev.name.trim() === previousDefaultName;
+	const getPreviousDomainActionValue = (action: GeneratedAction) => {
+		const match = action.key.match(/^(.*-domain-)(\d+)$/);
+		if (!match) return action.actionValue;
+		const previousIndex = Number.parseInt(match[2], 10) - 1;
+		if (!Number.isFinite(previousIndex) || previousIndex < 0) {
+			return action.actionValue;
+		}
+		const previousAction = actions.find(
+			(candidate) => candidate.key === `${match[1]}${previousIndex}`,
+		);
+		return previousAction?.actionValue ?? action.actionValue;
+	};
 
-                          return withoutCharacterOnlyEffects({
-                            ...prev,
-                            kind: nextKind,
-                            name: shouldUseNextDefaultName
-                              ? getTargetDefaultName(nextKind, index)
-                              : prev.name,
-                          });
-                        }
-                      )
-                    }
-                    className="h-10 rounded-lg border border-gray-600 bg-gray-700 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {targetKinds.map((kind) => (
-                      <option key={kind} value={kind}>
-                        {kind}
-                      </option>
-                    ))}
-                  </select>
-                  <TextInput
-                    value={character.name}
-                    placeholder={getTargetDefaultName(character.kind, index)}
-                    onChange={(value) =>
-                      updateCharacter(character.id, (prev) => ({
-                        ...prev,
-                        name: value,
-                      }))
-                    }
-                  />
-                </div>
+	const applyActionOperation = () => {
+		const selectedActions = actions.filter((action) =>
+			selectedActionKeys.has(action.key),
+		);
+		if (selectedActions.length === 0) {
+			setMessage("请先选中至少一条行动");
+			return;
+		}
 
-                <div
-                  className={`grid gap-3 ${
-                    isCharacterTarget(character) ? "grid-cols-3" : "grid-cols-1"
-                  }`}
-                >
-                  <NumberInput
-                    label="速度 v"
-                    value={character.speed}
-                    onChange={(value) =>
-                      updateCharacter(character.id, (prev) => ({
-                        ...prev,
-                        speed: value,
-                      }))
-                    }
-                  />
-                  {isCharacterTarget(character) && (
-                    <>
-                      <NumberInput
-                        label="X 动一大"
-                        value={character.ultCycle}
-                        onChange={(value) =>
-                          updateCharacter(character.id, (prev) => ({
-                            ...prev,
-                            ultCycle: value,
-                          }))
-                        }
-                      />
-                      <NumberInput
-                        label="第 K 动开大"
-                        value={character.ultOffset}
-                        onChange={(value) =>
-                          updateCharacter(character.id, (prev) => ({
-                            ...prev,
-                            ultOffset: value,
-                          }))
-                        }
-                      />
-                    </>
-                  )}
-                </div>
+		const value = toSignedNumber(operationValue, Number.NaN);
+		if (!Number.isFinite(value)) {
+			setMessage("请输入有效数值");
+			return;
+		}
 
-                {isCharacterTarget(character) && (
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    <Toggle
-                      label="翁瓦克"
-                      checked={character.hasVonwacq}
-                      onChange={() =>
-                        updateCharacter(character.id, (prev) => ({
-                          ...prev,
-                          hasVonwacq: !prev.hasVonwacq,
-                        }))
-                      }
-                    />
-                    <Toggle
-                      label="风套"
-                      checked={character.hasWindSet}
-                      onChange={() =>
-                        updateCharacter(character.id, (prev) => ({
-                          ...prev,
-                          hasWindSet: !prev.hasWindSet,
-                        }))
-                      }
-                    />
-                    <Toggle
-                      label="舞舞舞"
-                      checked={character.hasDance}
-                      onChange={() =>
-                        updateCharacter(character.id, (prev) => ({
-                          ...prev,
-                          hasDance: !prev.hasDance,
-                        }))
-                      }
-                    />
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => removeTarget(character.id)}
-                  disabled={characters.length <= 1}
-                  className="mt-3 h-10 w-full rounded-lg border border-[#ef444466] bg-gray-800 text-sm font-medium text-red-200 hover:bg-[#450a0a4d] disabled:cursor-not-allowed disabled:border-gray-600 disabled:bg-gray-800 disabled:text-gray-500 disabled:hover:bg-gray-800"
-                >
-                  删除目标
-                </button>
-              </div>
-          ))}
-          <button
-            type="button"
-            onClick={addTarget}
-            className="h-11 w-full rounded-xl border border-[#3b82f666] bg-[#1725544d] font-medium text-blue-100 hover:bg-[#1e3a8a66]"
-          >
-            添加场上目标
-          </button>
-        </section>
+		if (actionOperation === "advance") {
+			const minActionValue = Math.min(
+				...selectedActions.map((action) => action.actionValue),
+			);
+			setOverrides((prev) => {
+				const next = { ...prev };
+				for (const action of selectedActions) {
+					if (action.isDomainAction && value <= 0) continue;
+					const actionSpeed = action.isDomainAction
+						? getPhainonDomainEquivalentSpeed(action)
+						: action.speed;
+					const shifted = action.actionValue - (value * 100) / actionSpeed;
+					if (action.isDomainAction) {
+						const lowerBound = getPreviousDomainActionValue(action);
+						next[action.key] = formatEditableNumber(
+							Math.max(0, Math.max(lowerBound, shifted)),
+						);
+						continue;
+					}
+					const shouldClampToSelectedMinimum =
+						value > 0 && action.actionValue > minActionValue;
+					const clamped = shouldClampToSelectedMinimum
+						? Math.max(minActionValue, shifted)
+						: shifted;
+					next[action.key] = formatEditableNumber(
+						Math.max(0, clamped),
+					);
+				}
+				return next;
+			});
+			setMessage(`已调整 ${selectedActions.length} 条行动的行动值`);
+		} else {
+			const missingBaseSpeed = selectedActions.some((action) => {
+				const character = charactersById[action.characterId];
+				return (
+					operationSpeedMode === "relative" &&
+					character !== undefined &&
+					toPositiveNumber(character.baseSpeed) <= 0
+				);
+			});
+			if (missingBaseSpeed) {
+				setMessage("相对变速需要为选中的目标填写基础速度 v₀");
+				return;
+			}
 
-        <section className="min-w-0 rounded-2xl bg-gray-800 p-5 shadow">
-          <div className="mb-5 grid grid-cols-1 items-start gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-            <div>
-              <label className="mb-2 block h-5 text-sm leading-5 text-gray-300">
-                行动值上限
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={limitPreset}
-                  onChange={(event) => setLimitPreset(event.target.value)}
-                  className="h-10 w-32 rounded-lg border border-gray-600 bg-gray-700 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {limitPresets.map((preset) => (
-                    <option key={preset} value={preset}>
-                      {preset}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={customLimit}
-                  disabled={limitPreset !== "自定义"}
-                  placeholder="自定义"
-                  onChange={(event) => {
-                    const nextValue = event.target.value;
-                    if (nextValue === "" || /^\d*\.?\d*$/.test(nextValue)) {
-                      setCustomLimit(nextValue);
-                    }
-                  }}
-                  className="h-10 min-w-0 flex-1 rounded-lg border border-gray-600 bg-gray-700 px-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </div>
-            </div>
+			setSpeedAdjustments((prev) => {
+				const next = { ...prev };
+				for (const action of selectedActions) {
+					next[action.key] = {
+						value: operationValue,
+						mode: operationSpeedMode,
+					};
+				}
+				return next;
+			});
+			setMessage(`已为 ${selectedActions.length} 条行动设置后续变速`);
+		}
 
-            <div>
-              <div className="mb-2 flex h-5 items-center gap-3">
-                <span className="text-sm leading-5 text-gray-300">资源列</span>
-              </div>
-              <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_112px]">
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-2">
-                  {resources.map((resource, index) => (
-                    <div
-                      key={`resource-editor-${index}`}
-                      className="grid grid-cols-[minmax(0,1fr)_64px] gap-2"
-                    >
-                      <TextInput
-                        value={resource}
-                        placeholder="资源名称"
-                        onChange={(value) => updateResource(index, value)}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeResource(index)}
-                        className="h-10 rounded-lg border border-gray-600 bg-gray-800 px-3 text-gray-200 hover:bg-gray-700"
-                      >
-                        删除
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={addResource}
-                  disabled={resources.length >= maxResources}
-                  className="h-10 rounded-lg bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-gray-600"
-                >
-                  添加资源
-                </button>
-              </div>
-            </div>
-          </div>
+		closeActionMenu();
+	};
 
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold text-white">行动序列</h3>
-              <p className="text-sm text-gray-400">
-                当前上限 {formatActionValue(actionLimit)}，共 {actions.length} 条行动。
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void exportImage()}
-              disabled={isExportingImage}
-              className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-600"
-            >
-              {isExportingImage ? "生成中..." : "导出图片"}
-            </button>
-          </div>
+	const addResource = () => {
+		if (resources.length >= maxResources) return;
+		setResources((prev) => [...prev, `资源 ${prev.length + 1}`]);
+	};
 
-          <div
-            ref={imageExportRef}
-            className="overflow-x-auto rounded-xl border border-gray-700 bg-gray-800 pb-4"
-          >
-            <div className="bg-gray-800">
-              <div className="border-b border-gray-700 bg-[#11182799] px-4 py-3">
-                <h3 className="text-lg font-semibold text-white">行动序列</h3>
-                <p className="text-sm text-gray-400">
-                  行动值上限 {formatActionValue(actionLimit)} / 行动数{" "}
-                  {actions.length}
-                </p>
-              </div>
-              <table className="w-full table-auto divide-y divide-gray-700 text-left text-sm">
-                <colgroup>
-                  <col className="w-12" />
-                  <col className="w-[1%]" />
-                  <col className="w-28" />
-                  <col className="w-16" />
-                  {resources.map((_, index) => (
-                    <col key={`resource-col-${index}`} />
-                  ))}
-                </colgroup>
-                <thead className="bg-[#11182799] text-gray-300">
-                  <tr>
-                    <th className="w-12 min-w-12 max-w-12 whitespace-nowrap px-2 py-3 font-semibold">
-                      序号
-                    </th>
-                    <th className="w-[1%] whitespace-nowrap px-3 py-3 font-semibold">
-                      角色
-                    </th>
-                    <th className="whitespace-nowrap px-2 py-3 font-semibold">
-                      行动值
-                    </th>
-                    <th className="whitespace-nowrap px-2 py-3 font-semibold">
-                      大招
-                    </th>
-                    {resources.map((resource, index) => (
-                      <th
-                        key={`resource-header-${index}`}
-                        className="truncate whitespace-nowrap px-2 py-3 font-semibold"
-                        title={resource || `资源 ${index + 1}`}
-                      >
-                        {resource || `资源 ${index + 1}`}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-700">
-                  {actions.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={4 + resources.length}
-                        className="px-4 py-10 text-center text-gray-400"
-                      >
-                        请至少填写一个有效速度。
-                      </td>
-                    </tr>
-                  ) : (
-                    actions.map((action, index) => {
-                      const isEnemyAction = isEnemyTarget(
-                        characterKinds[action.characterId],
-                      );
+	const updateResource = (index: number, value: string) => {
+		setResources((prev) =>
+			prev.map((resource, resourceIndex) =>
+				resourceIndex === index ? value : resource,
+			),
+		);
+	};
 
-                      return (
-                        <tr
-                          key={action.key}
-                          className={
-                            isEnemyAction
-                              ? "bg-[#450a0a66] hover:bg-[#450a0a80]"
-                              : "hover:bg-[#3741514d]"
-                          }
-                        >
-                          <td
-                            className={`w-12 min-w-12 max-w-12 whitespace-nowrap px-2 py-3 ${
-                              isEnemyAction ? "text-red-100" : "text-gray-400"
-                            }`}
-                          >
-                            {index + 1}
-                          </td>
-                          <td className="w-[1%] max-w-32 whitespace-nowrap px-3 py-4">
-                            <div
-                              className="truncate font-medium leading-5 text-white"
-                              title={characterNames[action.characterId]}
-                            >
-                              {characterNames[action.characterId]}
-                            </div>
-                            <div
-                              className={`truncate text-xs leading-5 ${
-                                isEnemyAction ? "text-[#fecacacc]" : "text-gray-400"
-                              }`}
-                            >
-                              第 {action.actionNo} 动
-                            </div>
-                          </td>
-                          <td className="px-2 py-3">
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              value={
-                                overrides[action.key] ??
-                                formatActionValue(action.actionValue)
-                              }
-                              onChange={(event) => {
-                                const nextValue = event.target.value;
-                                if (
-                                  nextValue === "" ||
-                                  /^\d*\.?\d*$/.test(nextValue)
-                                ) {
-                                  setOverrides((prev) => ({
-                                    ...prev,
-                                    [action.key]: nextValue,
-                                  }));
-                                }
-                              }}
-                              className="h-10 w-full rounded-lg border border-gray-600 bg-gray-700 px-2 font-mono text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                          </td>
-                          <td className="px-2 py-3">
-                            <button
-                              type="button"
-                              role="switch"
-                              aria-checked={action.isUltimateAction}
-                              disabled={characterKinds[action.characterId] !== "角色"}
-                              onClick={() => toggleUltimateOverride(action)}
-                              className={`h-10 w-full rounded-lg border text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
-                                action.isUltimateAction
-                                  ? "border-[#fbbf2499] bg-[#f59e0b33] text-amber-100"
-                                  : "border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
-                              }`}
-                            >
-                              {action.isUltimateAction ? "开" : "关"}
-                            </button>
-                          </td>
-                          {resources.map((resource, resourceIndex) => (
-                            <td
-                              key={`${action.key}-resource-${resourceIndex}`}
-                              className="px-2 py-3"
-                            >
-                              <input
-                                type="text"
-                                value={
-                                  resourceValues[action.key]?.[resource] ?? ""
-                                }
-                                onChange={(event) =>
-                                  updateResourceValue(
-                                    action.key,
-                                    resource,
-                                    event.target.value,
-                                  )
-                                }
-                                className="h-10 w-full min-w-0 rounded-lg border border-gray-600 bg-gray-700 px-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            </td>
-                          ))}
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+	const removeResource = (index: number) => {
+		const removedName = resources[index];
+		setResources((prev) =>
+			prev.filter((_, resourceIndex) => resourceIndex !== index),
+		);
+		setResourceValues((prev) => {
+			const next = { ...prev };
+			for (const actionKey of Object.keys(next)) {
+				const values = { ...next[actionKey] };
+				delete values[removedName];
+				next[actionKey] = values;
+			}
+			return next;
+		});
+	};
 
-          <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
-            <textarea
-              value={importText}
-              onChange={(event) => setImportText(event.target.value)}
-              placeholder="JSON 导入 / 导出内容"
-              className="min-h-32 rounded-xl border border-gray-600 bg-gray-700 p-3 font-mono text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => void exportJson()}
-                className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-500"
-              >
-                导出 JSON
-              </button>
-              <button
-                type="button"
-                onClick={() => importJson()}
-                className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-500"
-              >
-                导入 JSON
-              </button>
-              <button
-                type="button"
-                onClick={() => void importFromFile()}
-                className="rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 font-medium text-gray-200 hover:bg-gray-700"
-              >
-                从文件导入
-              </button>
-              {message && <p className="text-sm text-gray-300">{message}</p>}
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
-  );
+	const buildExportData = (): SavedData => ({
+		limitPreset,
+		customLimit,
+		characters: characters.map(withoutCharacterOnlyEffects),
+		resources,
+		overrides,
+		skillOverrides,
+		domainEndOverrides,
+		speedAdjustments,
+		skillTargets,
+		ultInterrupts,
+		resourceValues,
+	});
+
+	const exportJson = async () => {
+		const json = JSON.stringify(buildExportData(), null, 2);
+
+		try {
+			const selectedPath = await save({
+				title: "导出 JSON",
+				defaultPath: getTimestampedFileName("action-sequence", ".json"),
+				filters: [
+					{
+						name: "JSON",
+						extensions: ["json"],
+					},
+				],
+			});
+			if (!selectedPath) {
+				setMessage("已取消导出 JSON");
+				return;
+			}
+
+			const filePath = ensureFileExtension(selectedPath, ".json");
+			await invoke("write_text_file", {
+				path: filePath,
+				contents: json,
+			});
+			setImportText(json);
+			setMessage(`已导出 JSON 文件：${filePath}`);
+		} catch (error) {
+			setMessage(`JSON 导出失败：${getErrorMessage(error)}`);
+		}
+	};
+
+	const exportImage = async () => {
+		if (!imageExportRef.current) return;
+
+		try {
+			setIsExportingImage(true);
+			setMessage("正在生成行动序列图片...");
+
+			const target = imageExportRef.current;
+			const exportPadding = 32;
+			const canvas = await html2canvas(target, {
+				backgroundColor: "#1f2937",
+				scale: Math.min(window.devicePixelRatio || 1, 2),
+				width: target.scrollWidth,
+				height: target.scrollHeight + exportPadding,
+				windowWidth: Math.max(
+					document.documentElement.clientWidth,
+					target.scrollWidth,
+				),
+				windowHeight: Math.max(
+					document.documentElement.clientHeight,
+					target.scrollHeight + exportPadding,
+				),
+				onclone: (_clonedDocument, clonedElement) => {
+					// 替换所有 oklch/oklab 颜色为十六进制，避免 html2canvas 解析失败
+					_clonedDocument.querySelectorAll("style").forEach((style) => {
+						style.textContent = style.textContent.replace(
+							/oklch\([^)]+\)|oklab\([^)]+\)/g,
+							"inherit",
+						);
+					});
+					clonedElement.style.boxSizing = "border-box";
+					clonedElement.style.paddingBottom = `${exportPadding}px`;
+					clonedElement.querySelectorAll(".truncate").forEach((element) => {
+						const exportText = element as HTMLElement;
+						exportText.style.lineHeight = "1.25rem";
+						exportText.style.minHeight = "1.25rem";
+					});
+					clonedElement.querySelectorAll("input").forEach((input) => {
+						const replacement = document.createElement("div");
+						const inputElement = input as HTMLInputElement;
+						const isActionValue = inputElement.classList.contains("font-mono");
+						const isDomainSkill =
+							inputElement.dataset.exportKind === "domain-skill";
+						replacement.textContent = inputElement.value;
+						replacement.style.alignItems = "center";
+						replacement.style.backgroundColor = isDomainSkill
+							? "#78350f"
+							: "#374151";
+						replacement.style.border = isDomainSkill
+							? "1px solid #fbbf24"
+							: "1px solid #4b5563";
+						replacement.style.borderRadius = "0.5rem";
+						replacement.style.boxSizing = "border-box";
+						replacement.style.color = isDomainSkill ? "#fef3c7" : "#ffffff";
+						replacement.style.display = "flex";
+						replacement.style.fontWeight = isDomainSkill ? "700" : "400";
+						replacement.style.justifyContent = isDomainSkill
+							? "center"
+							: "flex-start";
+						replacement.style.fontFamily = isActionValue
+							? '"Inconsolata Nerd Font", monospace'
+							: "inherit";
+						replacement.style.height = "40px";
+						replacement.style.lineHeight = "1";
+						replacement.style.padding = isDomainSkill ? "0 4px" : "0 12px";
+						replacement.style.whiteSpace = "nowrap";
+						replacement.style.width = isDomainSkill
+							? "40px"
+							: isActionValue
+								? "112px"
+								: "100%";
+						inputElement.replaceWith(replacement);
+					});
+				},
+			});
+
+			const selectedPath = await save({
+				title: "导出行动序列图片",
+				defaultPath: getTimestampedFileName("action-sequence", ".png"),
+				filters: [
+					{
+						name: "PNG 图片",
+						extensions: ["png"],
+					},
+				],
+			});
+			if (!selectedPath) {
+				setMessage("已取消导出图片");
+				return;
+			}
+
+			const filePath = ensureFileExtension(selectedPath, ".png");
+			await invoke("write_png_file", {
+				path: filePath,
+				dataUrl: canvasToPngDataUrl(canvas),
+			});
+			setMessage(`已导出行动序列图片：${filePath}`);
+		} catch (error) {
+			setMessage(`图片导出失败：${getErrorMessage(error)}`);
+		} finally {
+			setIsExportingImage(false);
+		}
+	};
+
+	const importJson = (rawText = importText) => {
+		try {
+			const parsed = JSON.parse(rawText) as Partial<SavedData>;
+			if (!Array.isArray(parsed.characters)) {
+				throw new Error("characters 缺失");
+			}
+
+			setCharacters(
+				parsed.characters.map((character, index) =>
+					withoutCharacterOnlyEffects({
+						...createTarget(
+							String(character.id ?? `target-${index + 1}`),
+							index,
+							(targetKinds.includes(character.kind as TargetKind)
+								? character.kind
+								: "角色") as TargetKind,
+						),
+						...character,
+						id: String(character.id ?? `target-${index + 1}`),
+						kind: (targetKinds.includes(character.kind as TargetKind)
+							? character.kind
+							: "角色") as TargetKind,
+						name: String(character.name ?? ""),
+						speed: String(character.speed ?? ""),
+						baseSpeed: String(character.baseSpeed ?? ""),
+						ultCycle: String(character.ultCycle ?? ""),
+						ultOffset: String(character.ultOffset ?? ""),
+					}),
+				),
+			);
+			setLimitPreset(
+				parsed.limitPreset && limitPresets.includes(parsed.limitPreset)
+					? parsed.limitPreset
+					: "150",
+			);
+			setCustomLimit(String(parsed.customLimit ?? ""));
+			setResources(
+				Array.isArray(parsed.resources)
+					? parsed.resources.slice(0, maxResources).map(String)
+					: [],
+			);
+			setOverrides(parsed.overrides ?? {});
+			setUltOverrides(parsed.ultOverrides ?? {});
+			setSkillOverrides(parsed.skillOverrides ?? {});
+			setDomainEndOverrides(parsed.domainEndOverrides ?? {});
+			setSpeedAdjustments(parsed.speedAdjustments ?? {});
+			setSkillTargets(parsed.skillTargets ?? {});
+			setUltInterrupts(parsed.ultInterrupts ?? {});
+			setResourceValues(parsed.resourceValues ?? {});
+			setSelectedActionKeys(new Set());
+			closeActionMenu();
+			setMessage("导入成功");
+		} catch {
+			setMessage("导入失败，请检查 JSON 格式");
+		}
+	};
+
+	const importFromFile = async () => {
+		try {
+			const selectedPath = await open({
+				title: "导入 JSON",
+				multiple: false,
+				filters: [
+					{
+						name: "JSON",
+						extensions: ["json"],
+					},
+				],
+			});
+			if (!selectedPath || Array.isArray(selectedPath)) {
+				setMessage("已取消从文件导入");
+				return;
+			}
+
+			const text = await invoke<string>("read_text_file", {
+				path: selectedPath,
+			});
+			setImportText(text);
+			importJson(text);
+		} catch (error) {
+			setMessage(`从文件导入失败：${getErrorMessage(error)}`);
+		}
+	};
+
+	return (
+		<ActionSequenceCtx.Provider
+			value={{
+				characters,
+				setCharacters,
+				limitPreset,
+				setLimitPreset,
+				customLimit,
+				setCustomLimit,
+				resources,
+				setResources,
+				overrides,
+				setOverrides,
+				ultOverrides,
+				setUltOverrides,
+				skillOverrides,
+				setSkillOverrides,
+				domainEndOverrides,
+				setDomainEndOverrides,
+				speedAdjustments,
+				setSpeedAdjustments,
+				skillTargets,
+				setSkillTargets,
+				ultInterrupts,
+				setUltInterrupts,
+				resourceValues,
+				setResourceValues,
+				actions,
+				setActions,
+				importText,
+				setImportText,
+				message,
+				setMessage,
+				isExportingImage,
+				setIsExportingImage,
+				selectedActionKeys,
+				setSelectedActionKeys,
+				actionMenuOpen,
+				setActionMenuOpen,
+				actionMenuKey,
+				setActionMenuKey,
+				actionMenuPos,
+				setActionMenuPos,
+				actionOperation,
+				setActionOperation,
+				operationValue,
+				setOperationValue,
+				operationSpeedMode,
+				setOperationSpeedMode,
+				draftInterruptCaster,
+				setDraftInterruptCaster,
+				draftInterruptTiming,
+				setDraftInterruptTiming,
+				actionLimit,
+				displayedActionLimit,
+				characterNames,
+				characterKinds,
+				charactersById,
+				imageExportRef,
+				updateCharacter,
+				addTarget,
+				removeTarget,
+				updateResourceValue,
+				updateActionSkill,
+				selectAction,
+				openActionMenu,
+				closeActionMenu,
+				applyActionOperation,
+				addResource,
+				updateResource,
+				removeResource,
+				buildExportData,
+				exportJson,
+				exportImage,
+				importJson,
+				importFromFile,
+			}}
+		>
+			<div className="mx-auto max-w-7xl px-1 py-2">
+				<div className="mb-4 rounded-2xl bg-gray-800 p-4 shadow">
+					<h2 className="mb-2 text-2xl font-bold text-white">行动排轴器</h2>
+					<p className="text-gray-300">
+						星穹铁道行动值序列工具，支持翁瓦克、风套、舞舞舞、手动行动值和资源备注。
+					</p>
+				</div>
+				<div className="grid grid-cols-1 gap-4 xl:grid-cols-[420px_minmax(0,1fr)]">
+					<CharacterPanel />
+					<ActionPanel />
+				</div>
+			</div>
+		</ActionSequenceCtx.Provider>
+	);
 }
