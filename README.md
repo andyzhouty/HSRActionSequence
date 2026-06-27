@@ -1,7 +1,3 @@
-# Tauri + React + Typescript
+# 星穹铁道排轴可视化工具
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
-
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+本工具使用 Tauri 框架，结合React进行开发。开发目的是为了方便崩坏·星穹铁道的玩家在进行高难本挑战之前，预先对自己的轴进行排演，以便互相交流、分享。

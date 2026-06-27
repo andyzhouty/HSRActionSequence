@@ -1,4 +1,7 @@
-@import "tailwindcss";
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
 
 @font-face {
   font-family: "Source Han Sans SC";
@@ -35,16 +38,68 @@
 @theme {
   --font-sans: "Source Han Sans SC", sans-serif;
   --font-mono: "Inconsolata Nerd Font", monospace;
+  --color-red-100: #fee2e2;
+  --color-red-200: #fecaca;
+  --color-red-500: #ef4444;
+  --color-red-950: #450a0a;
+  --color-amber-100: #fef3c7;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-blue-100: #dbeafe;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-900: #1e3a8a;
+  --color-blue-950: #172554;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-white: #ffffff;
 }
 
-html,
-body {
-  font-family: "Source Han Sans SC", sans-serif;
-}
+@layer base {
+  html,
+  body {
+    margin: 0;
+    font-family: "Source Han Sans SC", sans-serif;
+  }
 
-code,
-kbd,
-samp,
-pre {
-  font-family: "Inconsolata Nerd Font", monospace;
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+
+  button,
+  input,
+  textarea {
+    color: inherit;
+    font: inherit;
+  }
+
+  button {
+    appearance: none;
+    border: 0;
+    background-color: transparent;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: "Inconsolata Nerd Font", monospace;
+  }
 }

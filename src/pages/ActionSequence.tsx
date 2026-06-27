@@ -1,5 +1,6 @@
-import type React from "react";
 import html2canvas from "html2canvas";
+import { invoke } from "@tauri-apps/api/core";
+import { open, save } from "@tauri-apps/plugin-dialog";
 import { useMemo, useRef, useState } from "react";
 
 type CharacterConfig = {
@@ -85,6 +86,26 @@ const defaultCharacters: CharacterConfig[] = Array.from({ length: 4 }, (_, index
 
 const limitPresets = ["150", "300", "500", "自定义"];
 const maxResources = 5;
+
+function ensureFileExtension(path: string, extension: string) {
+  return path.toLowerCase().endsWith(extension) ? path : `${path}${extension}`;
+}
+
+function getTimestampedFileName(prefix: string, extension: string) {
+  return `${prefix}-${Date.now()}${extension}`;
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function canvasToPngDataUrl(canvas: HTMLCanvasElement) {
+  const dataUrl = canvas.toDataURL("image/png");
+  if (!dataUrl.startsWith("data:image/png;base64,")) {
+    throw new Error("图片编码失败");
+  }
+  return dataUrl;
+}
 
 function toPositiveNumber(value: string, fallback = 0) {
   const parsed = Number.parseFloat(value);
@@ -268,7 +289,7 @@ function Toggle({
       onClick={onChange}
       className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
         checked
-          ? "border-blue-500/50 bg-blue-900/40 text-blue-100"
+          ? "border-[#3b82f680] bg-[#1e3a8a66] text-blue-100"
           : "border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
       }`}
     >
@@ -291,7 +312,6 @@ export default function ActionSequence() {
   const [importText, setImportText] = useState("");
   const [message, setMessage] = useState("");
   const [isExportingImage, setIsExportingImage] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const imageExportRef = useRef<HTMLDivElement>(null);
 
   const actionLimit = useMemo(() => {
@@ -429,17 +449,35 @@ export default function ActionSequence() {
     resourceValues,
   });
 
-  const exportJson = () => {
+  const exportJson = async () => {
     const json = JSON.stringify(buildExportData(), null, 2);
-    const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `action-sequence-${Date.now()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    setImportText(json);
-    setMessage("已导出 JSON 文件。");
+
+    try {
+      const selectedPath = await save({
+        title: "导出 JSON",
+        defaultPath: getTimestampedFileName("action-sequence", ".json"),
+        filters: [
+          {
+            name: "JSON",
+            extensions: ["json"],
+          },
+        ],
+      });
+      if (!selectedPath) {
+        setMessage("已取消导出 JSON。");
+        return;
+      }
+
+      const filePath = ensureFileExtension(selectedPath, ".json");
+      await invoke("write_text_file", {
+        path: filePath,
+        contents: json,
+      });
+      setImportText(json);
+      setMessage(`已导出 JSON 文件：${filePath}`);
+    } catch (error) {
+      setMessage(`JSON 导出失败：${getErrorMessage(error)}`);
+    }
   };
 
   const exportImage = async () => {
@@ -467,6 +505,11 @@ export default function ActionSequence() {
         onclone: (_clonedDocument, clonedElement) => {
           clonedElement.style.boxSizing = "border-box";
           clonedElement.style.paddingBottom = `${exportPadding}px`;
+          clonedElement.querySelectorAll(".truncate").forEach((element) => {
+            const exportText = element as HTMLElement;
+            exportText.style.lineHeight = "1.25rem";
+            exportText.style.minHeight = "1.25rem";
+          });
           clonedElement.querySelectorAll("input").forEach((input) => {
             const replacement = document.createElement("div");
             const inputElement = input as HTMLInputElement;
@@ -492,13 +535,29 @@ export default function ActionSequence() {
         },
       });
 
-      const link = document.createElement("a");
-      link.download = `action-sequence-${Date.now()}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-      setMessage("已导出行动序列图片。");
-    } catch {
-      setMessage("图片导出失败，请稍后再试。");
+      const selectedPath = await save({
+        title: "导出行动序列图片",
+        defaultPath: getTimestampedFileName("action-sequence", ".png"),
+        filters: [
+          {
+            name: "PNG 图片",
+            extensions: ["png"],
+          },
+        ],
+      });
+      if (!selectedPath) {
+        setMessage("已取消导出图片。");
+        return;
+      }
+
+      const filePath = ensureFileExtension(selectedPath, ".png");
+      await invoke("write_png_file", {
+        path: filePath,
+        dataUrl: canvasToPngDataUrl(canvas),
+      });
+      setMessage(`已导出行动序列图片：${filePath}`);
+    } catch (error) {
+      setMessage(`图片导出失败：${getErrorMessage(error)}`);
     } finally {
       setIsExportingImage(false);
     }
@@ -536,17 +595,31 @@ export default function ActionSequence() {
     }
   };
 
-  const importFromFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = String(reader.result ?? "");
+  const importFromFile = async () => {
+    try {
+      const selectedPath = await open({
+        title: "导入 JSON",
+        multiple: false,
+        filters: [
+          {
+            name: "JSON",
+            extensions: ["json"],
+          },
+        ],
+      });
+      if (!selectedPath || Array.isArray(selectedPath)) {
+        setMessage("已取消从文件导入。");
+        return;
+      }
+
+      const text = await invoke<string>("read_text_file", {
+        path: selectedPath,
+      });
       setImportText(text);
       importJson(text);
-    };
-    reader.readAsText(file);
-    event.target.value = "";
+    } catch (error) {
+      setMessage(`从文件导入失败：${getErrorMessage(error)}`);
+    }
   };
 
   return (
@@ -689,7 +762,7 @@ export default function ActionSequence() {
                   type="button"
                   onClick={() => removeTarget(character.id)}
                   disabled={characters.length <= 1}
-                  className="mt-3 h-10 w-full rounded-lg border border-red-500/40 text-sm font-medium text-red-200 hover:bg-red-950/30 disabled:cursor-not-allowed disabled:border-gray-600 disabled:text-gray-500 disabled:hover:bg-transparent"
+                  className="mt-3 h-10 w-full rounded-lg border border-[#ef444466] bg-gray-800 text-sm font-medium text-red-200 hover:bg-[#450a0a4d] disabled:cursor-not-allowed disabled:border-gray-600 disabled:bg-gray-800 disabled:text-gray-500 disabled:hover:bg-gray-800"
                 >
                   删除目标
                 </button>
@@ -698,7 +771,7 @@ export default function ActionSequence() {
           <button
             type="button"
             onClick={addTarget}
-            className="h-11 w-full rounded-xl border border-blue-500/40 bg-blue-950/30 font-medium text-blue-100 hover:bg-blue-900/40"
+            className="h-11 w-full rounded-xl border border-[#3b82f666] bg-[#1725544d] font-medium text-blue-100 hover:bg-[#1e3a8a66]"
           >
             添加场上目标
           </button>
@@ -758,7 +831,7 @@ export default function ActionSequence() {
                       <button
                         type="button"
                         onClick={() => removeResource(index)}
-                        className="h-10 rounded-lg border border-gray-600 px-3 text-gray-300 hover:bg-gray-700"
+                        className="h-10 rounded-lg border border-gray-600 bg-gray-800 px-3 text-gray-200 hover:bg-gray-700"
                       >
                         删除
                       </button>
@@ -799,7 +872,7 @@ export default function ActionSequence() {
             className="overflow-x-auto rounded-xl border border-gray-700 bg-gray-800 pb-4"
           >
             <div className="bg-gray-800">
-              <div className="border-b border-gray-700 bg-gray-900/60 px-4 py-3">
+              <div className="border-b border-gray-700 bg-[#11182799] px-4 py-3">
                 <h3 className="text-lg font-semibold text-white">行动序列</h3>
                 <p className="text-sm text-gray-400">
                   行动值上限 {formatActionValue(actionLimit)} / 行动数{" "}
@@ -816,7 +889,7 @@ export default function ActionSequence() {
                     <col key={`resource-col-${index}`} />
                   ))}
                 </colgroup>
-                <thead className="bg-gray-900/60 text-gray-300">
+                <thead className="bg-[#11182799] text-gray-300">
                   <tr>
                     <th className="w-12 min-w-12 max-w-12 whitespace-nowrap px-2 py-3 font-semibold">
                       序号
@@ -862,8 +935,8 @@ export default function ActionSequence() {
                           key={action.key}
                           className={
                             isEnemyAction
-                              ? "bg-red-950/40 hover:bg-red-950/50"
-                              : "hover:bg-gray-700/30"
+                              ? "bg-[#450a0a66] hover:bg-[#450a0a80]"
+                              : "hover:bg-[#3741514d]"
                           }
                         >
                           <td
@@ -873,16 +946,16 @@ export default function ActionSequence() {
                           >
                             {index + 1}
                           </td>
-                          <td className="w-[1%] max-w-32 whitespace-nowrap px-3 py-3">
+                          <td className="w-[1%] max-w-32 whitespace-nowrap px-3 py-4">
                             <div
-                              className="truncate font-medium text-white"
+                              className="truncate font-medium leading-5 text-white"
                               title={characterNames[action.characterId]}
                             >
                               {characterNames[action.characterId]}
                             </div>
                             <div
-                              className={`truncate text-xs ${
-                                isEnemyAction ? "text-red-200/80" : "text-gray-400"
+                              className={`truncate text-xs leading-5 ${
+                                isEnemyAction ? "text-[#fecacacc]" : "text-gray-400"
                               }`}
                             >
                               第 {action.actionNo} 动
@@ -920,7 +993,7 @@ export default function ActionSequence() {
                               onClick={() => toggleUltimateOverride(action)}
                               className={`h-10 w-full rounded-lg border text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
                                 action.isUltimateAction
-                                  ? "border-amber-400/60 bg-amber-500/20 text-amber-100"
+                                  ? "border-[#fbbf2499] bg-[#f59e0b33] text-amber-100"
                                   : "border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
                               }`}
                             >
@@ -967,7 +1040,7 @@ export default function ActionSequence() {
             <div className="flex flex-col gap-2">
               <button
                 type="button"
-                onClick={exportJson}
+                onClick={() => void exportJson()}
                 className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-500"
               >
                 导出 JSON
@@ -981,18 +1054,11 @@ export default function ActionSequence() {
               </button>
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="rounded-lg border border-gray-600 px-4 py-2 font-medium text-gray-200 hover:bg-gray-700"
+                onClick={() => void importFromFile()}
+                className="rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 font-medium text-gray-200 hover:bg-gray-700"
               >
                 从文件导入
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="application/json,.json"
-                onChange={importFromFile}
-                className="hidden"
-              />
               {message && <p className="text-sm text-gray-300">{message}</p>}
             </div>
           </div>
