@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Source Han Sans SC";
+  src: url("./assets/fonts/SourceHanSansSC-Regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Source Han Sans SC";
+  src: url("./assets/fonts/SourceHanSansSC-Bold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inconsolata Nerd Font";
+  src: url("./assets/fonts/InconsolataNerdFont-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inconsolata Nerd Font";
+  src: url("./assets/fonts/InconsolataNerdFont-Bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Source Han Sans SC", sans-serif;
+  --font-mono: "Inconsolata Nerd Font", monospace;
+}
+
+html,
+body {
+  font-family: "Source Han Sans SC", sans-serif;
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: "Inconsolata Nerd Font", monospace;
+}
