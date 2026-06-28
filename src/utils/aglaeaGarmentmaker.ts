@@ -224,6 +224,7 @@ export function activateAglaeaSupreme(
 
     if (existingCountdown) {
         existingCountdown.nextActionValue = actionValue + 10000 / rule.countdownSpeed;
+        existingCountdown.actionNo += 1;
     } else {
         states.push({
             character: {

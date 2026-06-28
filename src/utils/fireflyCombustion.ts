@@ -85,21 +85,23 @@ function handleSingleBreakTrigger(
     const isBreakExtra = actionKey.includes("-break-extra-");
 
     if (!isBreakExtra) {
-        // 正常回合：生成额外行动
-        states[stateIndex].combustionBreakCount =
-            (states[stateIndex].combustionBreakCount ?? 0) + 1;
-        const breakExtraKey = `${actionKey}-break-extra-${states[stateIndex].combustionBreakCount}`;
-        actions.push({
-            key: breakExtraKey,
-            characterId: character.id,
-            isCombustionAction: true,
-            actionNo,
-            actionValue,
-            skill: "" as SkillCode,
-            speed: states[stateIndex].currentSpeed,
-        });
-        if (input.fireflyBreakCounters?.[breakExtraKey] !== false) {
-            registerCombustionBreakDelay(states, stateIndex);
+        // E2 额外回合（独立于倒计时延后）
+        if (character.hasEidolon2) {
+            states[stateIndex].combustionBreakCount =
+                (states[stateIndex].combustionBreakCount ?? 0) + 1;
+            const breakExtraKey = `${actionKey}-break-extra-${states[stateIndex].combustionBreakCount}`;
+            actions.push({
+                key: breakExtraKey,
+                characterId: character.id,
+                isCombustionAction: true,
+                actionNo,
+                actionValue,
+                skill: "" as SkillCode,
+                speed: states[stateIndex].currentSpeed,
+            });
+            if (input.fireflyBreakCounters?.[breakExtraKey] === true) {
+                registerCombustionBreakDelay(states, stateIndex);
+            }
         }
     }
 
@@ -206,40 +208,12 @@ export function activateCombustion(
 
     states[stateIndex].currentSpeed += rule.speedBonus;
 
-    // 立即行动（与 Q 同 AV，这是一个正常回合）
-    // 不走主循环，在此直接触发击破检查
-    const extraKey = `${key}-combustion-extra`;
-    actions.push({
-        key: extraKey,
-        characterId: character.id,
-        isCombustionAction: true,
-        actionNo,
-        actionValue,
-        skill: "" as SkillCode,
-        speed: states[stateIndex].currentSpeed,
-    });
-
-    // 手动处理 combustion-extra 的击破（它不走主循环）
-    if (
-        hasCombustionExtraTurn(character) &&
-        input.fireflyBreakCounters?.[extraKey] !== false
-    ) {
-        handleSingleBreakTrigger(
-            states,
-            stateIndex,
-            actions,
-            extraKey,
-            character,
-            actionNo,
-            actionValue,
-            input,
-        );
-    }
+    // 立即行动：下一动与 Q 同 AV（100% 行动提前），由主循环正常处理
+    states[stateIndex].nextActionValue = actionValue;
 }
 
 export function hasCombustionExtraTurn(character: CharacterConfig): boolean {
-    const rule = getFireflyCombustionRule(character.name);
-    return rule.eidolonExtraTurn === 2 && character.hasEidolon2;
+    return character.hasEidolon2;
 }
 
 export function shouldCheckBreakTrigger(
@@ -249,7 +223,6 @@ export function shouldCheckBreakTrigger(
 ): boolean {
     return (
         combustionActive === true &&
-        hasCombustionExtraTurn(character) &&
         !usesUltimate
     );
 }
@@ -264,7 +237,7 @@ export function checkBreakTrigger(
     actionValue: number,
     input: SimulateActionsInput,
 ) {
-    const breakTriggered = input.fireflyBreakCounters?.[key] !== false;
+    const breakTriggered = input.fireflyBreakCounters?.[key] === true;
     if (!breakTriggered) return;
 
     handleSingleBreakTrigger(

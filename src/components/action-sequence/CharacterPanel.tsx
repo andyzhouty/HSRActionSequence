@@ -46,6 +46,7 @@ export default function CharacterPanel() {
         ctx.setSelectedActionKeys(new Set());
         ctx.closeActionMenu();
         ctx.setImportText("");
+        ctx.clearAutosaveFile();
         ctx.setMessage("已清空所有排轴数据");
     };
 
@@ -346,7 +347,8 @@ function CharacterCard({
                         character.name,
                         "Q",
                         "fireflyCombustion",
-                    ) && (
+                    ) ||
+                    hasSkillEffect(character.name, "Q", "teamAdvance24") ? (
                         <Toggle
                             className="flex-1"
                             label="2魂"
@@ -358,7 +360,7 @@ function CharacterCard({
                                 }))
                             }
                         />
-                    )}
+                    ) : null}
                     {hasSkillEffect(
                         character.name,
                         "E",

@@ -86,6 +86,22 @@ function clampOverridesToDisplayedLimit(
     );
 }
 
+function pruneRecord<T>(
+    record: Record<string, T>,
+    shouldPrune: (key: string) => boolean,
+) {
+    let changed = false;
+    const next: Record<string, T> = {};
+    for (const [key, value] of Object.entries(record)) {
+        if (shouldPrune(key)) {
+            changed = true;
+            continue;
+        }
+        next[key] = value;
+    }
+    return changed ? next : record;
+}
+
 export default function ActionSequence() {
     const [characters, setCharacters] =
         useState<CharacterConfig[]>(defaultCharacters);
@@ -375,6 +391,32 @@ export default function ActionSequence() {
         fireflyBreakCounters,
     ]);
 
+    useEffect(() => {
+        const actionKeys = new Set(actions.map((action) => action.key));
+        const isStaleAglaeaCountdownKey = (key: string) =>
+            key.includes("-aglaea-countdown-") && !actionKeys.has(key);
+
+        setOverrides((prev) => pruneRecord(prev, isStaleAglaeaCountdownKey));
+        setSpeedAdjustments((prev) =>
+            pruneRecord(prev, isStaleAglaeaCountdownKey),
+        );
+        setResourceValues((prev) =>
+            pruneRecord(prev, isStaleAglaeaCountdownKey),
+        );
+        setSelectedActionKeys((prev) => {
+            let changed = false;
+            const next = new Set<string>();
+            for (const key of prev) {
+                if (isStaleAglaeaCountdownKey(key)) {
+                    changed = true;
+                    continue;
+                }
+                next.add(key);
+            }
+            return changed ? next : prev;
+        });
+    }, [actions]);
+
     // 状态变化时自动保存（防抖 800ms）
     useEffect(() => {
         if (autosaveTimerRef.current !== null) {
@@ -636,11 +678,12 @@ export default function ActionSequence() {
         const character = charactersById[action.characterId];
         if (!character) return;
         const nextSkill = value.trim().toUpperCase() as SkillCode;
-        // 完全燃烧状态下只允许单个 A 或 E
-        if (action.isCombustionAction) {
-            const singleChar = nextSkill.replace(/F/g, "");
-            const combustionRule = getFireflyCombustionRule(character.name);
-            if (!combustionRule.allowedSkills.includes(singleChar)) {
+// 完全燃烧状态下允许单个 A/E 或 EE（EE 自动拆分为两动 E）
+		if (action.isCombustionAction) {
+			const chars = nextSkill.replace(/F/g, "");
+			const combustionRule = getFireflyCombustionRule(character.name);
+			const allowed = new Set(combustionRule.allowedSkills);
+			if (![...chars].every((c) => allowed.has(c))) {
                 setMessage(
                     `完全燃烧状态下只能填写 ${combustionRule.allowedSkills
                         .filter(Boolean)
@@ -1256,6 +1299,17 @@ export default function ActionSequence() {
         }
     };
 
+    const clearAutosaveFile = () => {
+        const path = autosavePathRef.current;
+        if (!path) return;
+        invoke("write_text_file", {
+            path,
+            contents: "{}",
+        }).catch(() => {
+            // 清空失败不影响用户操作
+        });
+    };
+
     return (
         <ActionSequenceCtx.Provider
             value={{
@@ -1346,6 +1400,7 @@ export default function ActionSequence() {
                 exportImage,
                 importJson,
                 importFromFile,
+                clearAutosaveFile,
             }}
         >
             <div className="mx-auto max-w-7xl px-1 py-2">

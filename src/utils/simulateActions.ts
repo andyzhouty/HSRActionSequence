@@ -86,6 +86,17 @@ function isAllyTarget(kind: string): boolean {
     return kind === "角色" || kind === "忆灵";
 }
 
+function hasTeamAdvance24OnUltimate(character: CharacterConfig): boolean {
+    if (!isCharacterTarget(character)) return false;
+    if (character.hasDance && getCharacterPath(character.name) === "Harmony") {
+        return true;
+    }
+    return (
+        character.hasEidolon2 &&
+        hasSkillEffect(character.name, "Q", "teamAdvance24")
+    );
+}
+
 function getDefaultSkill(
     _character: CharacterConfig,
     _actionNo: number,
@@ -673,6 +684,17 @@ export function simulateActions(
         const assistUseCount = rawSkill.match(/F/g)?.length ?? 0;
         const skipAssistFollowUp =
             himekoNovaAssist !== undefined && assistUseCount >= 2;
+
+        // 流萤完全燃烧：EE 拆分为两动 E（多出的 E 在 emit 后生成额外行动）
+        const eeSplitCount =
+            states[stateIndex].isInCompleteCombustion &&
+            skill.length > 1 &&
+            [...skill].every((c) => c === "E")
+                ? skill.length - 1
+                : 0;
+        const resolvedSkill = eeSplitCount > 0
+            ? ("E" as SkillCode)
+            : skill;
         const usesUltimate = skill.includes("Q");
         const qIsFront = skill.length > 1 && skill.startsWith("Q");
         const actionSpeed = states[stateIndex].currentSpeed;
@@ -722,13 +744,10 @@ export function simulateActions(
                     actionValue,
                 });
             }
-            // 插队大招触发舞舞舞
+            // 插队大招触发 24% 全队拉条（舞舞舞、忘归人 2魂等）。
             if (
-                isCharacterTarget(caster.character) &&
-                caster.character.hasDance &&
-                getCharacterPath(caster.character.name) === "Harmony"
+                hasTeamAdvance24OnUltimate(caster.character)
             ) {
-                const adv = 2400 / casterSpeed;
                 for (
                     let teammateIndex = 0;
                     teammateIndex < states.length;
@@ -738,6 +757,7 @@ export function simulateActions(
                     if (!canBeAdvancedByDance(teammate.character.kind))
                         continue;
                     if (teammate.blockNextAdvance) continue;
+                    const adv = 2400 / teammate.currentSpeed;
                     if (
                         himekoNovaAssist &&
                         !skipAssistFollowUp &&
@@ -797,6 +817,27 @@ export function simulateActions(
                         actionValue + rank * 0.0001;
                 }
             }
+            // 插队大招触发流萤完全燃烧。
+            if (
+                shouldActivateCombustion(
+                    caster.character,
+                    true,
+                    Boolean(caster.isInCompleteCombustion),
+                )
+            ) {
+                activateCombustion(
+                    states,
+                    casterIndex,
+                    actions,
+                    `${key}-interrupt-${idx}`,
+                    caster.character,
+                    caster.actionNo,
+                    actionValue,
+                    input,
+                );
+            }
+            // 插队大招触发阿格莱雅至高之姿，并使自身立即行动。
+            handleAglaeaSkillEffects(states, casterIndex, "Q", actionValue);
             // 插队大招触发白厄境界（改为逐动生成）
             if (hasSkillEffect(caster.character.name, "W", "counterW")) {
                 const domainRule = getCounterWDomainRule(caster.character.name);
@@ -906,7 +947,7 @@ export function simulateActions(
                     states[stateIndex].aglaeaSupremeActive,
                 actionNo,
                 actionValue,
-                skill: skill as SkillCode,
+                skill: resolvedSkill as SkillCode,
                 speed: actionSpeed,
                 isAssistFollowUp: himekoNovaAssist !== undefined,
                 isMemospriteAction: states[stateIndex].isMemeState,
@@ -927,6 +968,22 @@ export function simulateActions(
                     cyrene: character,
                     sourceKey: key,
                     actionValue,
+                });
+            }
+        }
+
+        // ── 流萤完全燃烧 EE 多出的 E → 生成额外行动 ──
+        if (eeSplitCount > 0 && !skipAssistFollowUp) {
+            for (let ei = 0; ei < eeSplitCount; ei++) {
+                const extraKey = `${key}-combustion-e${ei + 1}`;
+                actions.push({
+                    key: extraKey,
+                    characterId: character.id,
+                    isCombustionAction: true,
+                    actionNo,
+                    actionValue,
+                    skill: "E" as SkillCode,
+                    speed: actionSpeed,
                 });
             }
         }
@@ -985,6 +1042,7 @@ export function simulateActions(
             }
         } else {
             // ── 流萤完全燃烧（使用 Q 后激活） ──
+            let justActivatedCombustion = false;
             if (
                 shouldActivateCombustion(
                     character,
@@ -1002,19 +1060,30 @@ export function simulateActions(
                     actionValue,
                     input,
                 );
+                justActivatedCombustion = true;
             }
 
-            // ── 正常下一动间隔 ──
+            // ── 正常下一动间隔（燃烧激活时由 activateCombustion 设 100%提前） ──
             {
-                const nextInterval =
+                const nextInterval = 10000 / states[stateIndex].currentSpeed;
+                states[stateIndex].actionNo += 1;
+                if (!justActivatedCombustion) {
+                    states[stateIndex].nextActionValue = actionValue + nextInterval;
+                }
+                // 风套：Q 后行动提前 25%
+                if (
                     isCharacterTarget(character) &&
                     character.hasWindSet &&
                     usesUltimate &&
-                    !qIsFront
-                        ? 7500 / states[stateIndex].currentSpeed
-                        : 10000 / states[stateIndex].currentSpeed;
-                states[stateIndex].actionNo += 1;
-                states[stateIndex].nextActionValue = actionValue + nextInterval;
+                    !qIsFront &&
+                    !justActivatedCombustion
+                ) {
+                    const windAdvance = 2500 / states[stateIndex].currentSpeed;
+                    states[stateIndex].nextActionValue = Math.max(
+                        actionValue,
+                        states[stateIndex].nextActionValue - windAdvance,
+                    );
+                }
                 if (pendingAssistFollowUpAdvance > 0) {
                     states[stateIndex].nextActionValue = Math.max(
                         actionValue,
@@ -1023,25 +1092,23 @@ export function simulateActions(
                     );
                 }
 
-                // Dance Dance Dance
+                // 24% 全队拉条（舞舞舞、忘归人 2魂等）。
                 if (
-                    isCharacterTarget(character) &&
-                    character.hasDance &&
-                    getCharacterPath(character.name) === "Harmony" &&
+                    hasTeamAdvance24OnUltimate(character) &&
                     usesUltimate &&
                     !qIsFront
                 ) {
-                    const advance = 2400 / actionSpeed;
-                    for (const teammate of states) {
-                        if (!canBeAdvancedByDance(teammate.character.kind))
-                            continue;
-                        if (teammate.blockNextAdvance) continue;
-                        teammate.nextActionValue = Math.max(
-                            actionValue,
-                            teammate.nextActionValue - advance,
-                        );
-                    }
-                }
+					for (const teammate of states) {
+						if (!canBeAdvancedByDance(teammate.character.kind))
+							continue;
+						if (teammate.blockNextAdvance) continue;
+						const advance = 2400 / teammate.currentSpeed;
+						teammate.nextActionValue = Math.max(
+							actionValue,
+							teammate.nextActionValue - advance,
+						);
+					}
+				}
 
                 // Bronya A: self advance 30%
                 if (
@@ -1150,7 +1217,7 @@ export function simulateActions(
                     }
                 }
 
-                // ── 流萤 2魂 完全燃烧中击破触发 ──
+                // ── 流萤 完全燃烧中击破触发 ──
                 if (
                     shouldCheckBreakTrigger(
                         character,

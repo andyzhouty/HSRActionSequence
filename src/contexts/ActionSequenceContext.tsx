@@ -128,6 +128,7 @@ export type ActionSequenceContextType = {
         resourceName: string,
         value: string,
     ) => void;
+    clearAutosaveFile: () => void;
     cancelHimekoNovaAssist: (action: GeneratedAction) => void;
     updateSkillTarget: (action: GeneratedAction, targetId: string) => void;
     updateActionSkill: (action: GeneratedAction, value: string) => void;

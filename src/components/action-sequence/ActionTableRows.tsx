@@ -558,8 +558,8 @@ function CombustionBreakInline({ action }: { action: GeneratedAction }) {
     if (!action.isCombustionAction) return null;
     const character = ctx.charactersById[action.characterId];
     const rule = getFireflyCombustionRule(character?.name ?? "");
-    // 击破开关，默认 true = 触发
-    const isBreakOn = ctx.fireflyBreakCounters[action.key] !== false;
+    // 击破开关，默认 false = 不触发
+    const isBreakOn = ctx.fireflyBreakCounters[action.key] === true;
     return (
         <button
             type="button"
@@ -575,9 +575,9 @@ function CombustionBreakInline({ action }: { action: GeneratedAction }) {
                 ctx.setFireflyBreakCounters((prev) => {
                     const next = { ...prev };
                     if (isBreakOn) {
-                        next[action.key] = false;
-                    } else {
                         delete next[action.key];
+                    } else {
+                        next[action.key] = true;
                     }
                     return next;
                 });

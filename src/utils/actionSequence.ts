@@ -426,6 +426,12 @@ export function canUseSkillCode(character: CharacterConfig, skill: SkillCode) {
     // AE/EA 不能组合
     if (skill.includes("A") && skill.includes("E")) return false;
 
+    // F（协战标记）必须在最前面，且最多带含 F 的两个字符
+    const firstNonF = [...skill].findIndex((c) => c !== "F");
+    const lastF = skill.lastIndexOf("F");
+    if (lastF >= 0 && firstNonF >= 0 && lastF > firstNonF) return false;
+    if (skill.includes("F") && skill.length > 2) return false;
+
     return true;
 }
 
