@@ -24,11 +24,8 @@ jobs:
       - run: pnpm test
 
   build:
-    name: Build (${{ matrix.os }})
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    name: Build Windows
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -44,13 +41,7 @@ jobs:
         with:
           workspaces: src-tauri -> target
           cache-on-failure: true
-          shared-key: ${{ matrix.os }}-tauri
-
-      - name: Install Linux system deps
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev libayatana-appindicator3-dev
+          shared-key: windows-tauri
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
@@ -61,8 +52,6 @@ jobs:
       - name: Upload executable artifact
         uses: actions/upload-artifact@v4
         with:
-          name: hsractionsequence-${{ matrix.os }}-${{ github.sha }}
-          path: |
-            src-tauri/target/release/hsractionsequence
-            src-tauri/target/release/hsractionsequence.exe
+          name: hsractionsequence-windows-${{ github.sha }}
+          path: src-tauri/target/release/hsractionsequence.exe
           if-no-files-found: warn
