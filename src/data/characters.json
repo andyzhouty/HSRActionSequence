@@ -1,42 +1,204 @@
 {
 	"characters": [
 		{
-			"names": ["布洛妮娅", "鸭", "鸭鸭"],
+			"names": ["布洛妮娅", "鸭", "鸭鸭", "Bronya"],
 			"effects": {
 				"A": "selfAdvance30",
 				"E": "allyPullToCurrent"
 			}
 		},
 		{
-			"names": ["星期日", "周日"],
+			"names": ["星期日", "周日", "Sunday"],
 			"effects": {
 				"E": "allyPullToCurrent"
 			}
 		},
 		{
-			"names": ["花火"],
+			"names": ["花火", "Sparkle"],
 			"effects": {
 				"E": "allyAdvance50NotPast"
 			}
 		},
 		{
-			"names": ["知更鸟", "鸟"],
+			"names": ["知更鸟", "鸟", "Robin"],
 			"effects": {
 				"Q": "robinUltimate"
 			},
 			"passives": ["firstActionAdvance25"]
 		},
 		{
+			"names": ["开拓者·记忆", "记忆主", "RMC", "Memory Trailblazer"],
+			"effects": {
+				"E": "summonMeme",
+				"M": "memeAdvance"
+			},
+			"effectRules": {
+				"memeAdvance": {
+					"memospriteName": "迷迷",
+					"memospriteSkill": "拉条",
+					"memospriteSpeed": 130,
+					"advancePercent": 100
+				}
+			},
+			"passives": ["firstActionAdvance30"]
+		},
+		{
 			"names": ["白厄", "Phainon"],
 			"effects": {
 				"W": "counterW"
-			}
+			},
+			"effectRules": {
+				"counterW": {
+					"domain": {
+						"defaultBaseSpeed": 106.0,
+						"normalEquivalentSpeedCoefficient": 0.6,
+						"eidolon1EquivalentSpeedCoefficient": 0.66,
+						"extraActionCount": 8,
+						"endSpeedBonusBaseSpeedRatio": 0.15,
+						"defaultResources": ["火种", "毁伤"],
+						"allowedSkills": ["", "E", "EW", "EA", "A", "W"],
+						"finalSkill": "Q"
+					}
+				}
+			},
+			"semantics": ["wOnlyInDomain"]
 		},
 		{
 			"names": ["姬子"],
+			"semantics": ["ambiguousBaseName"]
+		},
+		{
+			"names": ["姬子·启行", "Himeko Nova"],
 			"effects": {
-				"F": "assistF"
+				"F": "himekoNovaAssist"
+			},
+			"effectRules": {
+				"himekoNovaAssist": {
+					"trigger": "allyTurn",
+					"excludeSelf": true,
+					"generatedActionSkill": "F",
+					"generatedActionOrder": "beforeTargetBeforeInterrupts",
+					"targetActionTreatment": "sameActionValueExtraTurn"
+				}
 			}
+		},
+		{
+			"names": ["刻律德菈", "刻律", "刻", "Cerydra"],
+			"effects": {
+				"E": "allyTargetSelectable"
+			}
+		},
+		{
+			"names": ["昔涟", "Cyrene"],
+			"effects": {
+				"Q": "cyreneUltimate"
+			},
+			"effectRules": {
+				"cyreneUltimate": {
+					"memospriteName": "德谬歌",
+					"memospriteSkill": "Q",
+					"defaultResources": ["追忆"],
+					"genericOde": {
+						"code": "generic",
+						"label": "诗篇",
+						"fullName": "诗篇",
+						"targetNames": [],
+						"duration": "turns",
+						"turns": 2
+					},
+					"odes": [
+						{
+							"code": "genesis",
+							"label": "创世",
+							"fullName": "创世之诗",
+							"targetNames": ["开拓者·记忆", "记忆主", "RMC"],
+							"duration": "battle"
+						},
+						{
+							"code": "passage",
+							"label": "门径",
+							"fullName": "门径之诗",
+							"targetNames": ["缇宝", "Tribbie"],
+							"duration": "battle"
+						},
+						{
+							"code": "lifeDeath",
+							"label": "生死",
+							"fullName": "生死之诗",
+							"targetNames": ["遐蝶", "Castorice"],
+							"duration": "battle"
+						},
+						{
+							"code": "trickery",
+							"label": "诡计",
+							"fullName": "诡计之诗",
+							"targetNames": ["赛飞儿", "猫", "猫猫", "Cipher"],
+							"duration": "battle"
+						},
+						{
+							"code": "worldbearing",
+							"label": "负世",
+							"fullName": "负世之诗",
+							"targetNames": ["白厄", "Phainon"],
+							"duration": "battle",
+							"effects": ["endlessCounterWDomain"]
+						},
+						{
+							"code": "law",
+							"label": "律法",
+							"fullName": "律法之诗",
+							"targetNames": ["刻律德菈", "刻律", "刻", "Cerydra"],
+							"duration": "battle"
+						},
+						{
+							"code": "time",
+							"label": "岁月",
+							"fullName": "岁月之诗",
+							"targetNames": ["长夜月", "月", "Evernight"],
+							"duration": "battle"
+						},
+						{
+							"code": "earth",
+							"label": "大地",
+							"fullName": "献予大地之诗",
+							"targetNames": ["丹恒·腾荒", "盾丹", "DHPT"],
+							"duration": "battle"
+						},
+						{
+							"code": "reason",
+							"label": "理性",
+							"fullName": "理性之诗",
+							"targetNames": ["那刻夏", "夏", "Anaxa"],
+							"duration": "nextTurn",
+							"effects": ["immediateTurn"]
+						},
+						{
+							"code": "strife",
+							"label": "纷争",
+							"fullName": "纷争之诗",
+							"targetNames": ["万敌", "Mydei"],
+							"duration": "extraTurn",
+							"effects": ["immediateEnhancedSkill"]
+						},
+						{
+							"code": "ocean",
+							"label": "海洋",
+							"fullName": "海洋之诗",
+							"targetNames": ["海瑟音", "Hysilens"],
+							"duration": "nextAttack"
+						},
+						{
+							"code": "sky",
+							"label": "天空",
+							"fullName": "天空之诗",
+							"targetNames": ["风堇", "Hyacine"],
+							"duration": "stacks",
+							"stacks": 2
+						}
+					]
+				}
+			},
+			"semantics": ["noDefaultSkillTarget"]
 		}
 	]
 }

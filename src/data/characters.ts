@@ -1,12 +1,22 @@
 import characterData from "./characters.json";
 
+type CharacterEntry = {
+	names: string[];
+	effects?: Record<string, string>;
+	effectRules?: Record<string, unknown>;
+	passives?: string[];
+	semantics?: string[];
+};
+
+const characters = (characterData as { characters: CharacterEntry[] }).characters;
+
 export function normalizeName(name: string) {
 	return name.trim().replace(/\s+/g, "");
 }
 
 function findCharacterEntry(name: string) {
 	const normalized = normalizeName(name);
-	return characterData.characters.find((entry) =>
+	return characters.find((entry) =>
 		entry.names.some((n) => normalizeName(n) === normalized),
 	);
 }
@@ -22,19 +32,39 @@ export function hasSkillEffect(
 	effect: string,
 ): boolean {
 	const entry = findCharacterEntry(name);
-	if (!entry) return false;
-	const effects = entry.effects as unknown as Record<string, string>;
-	return effects[skill] === effect;
+	return entry?.effects?.[skill] === effect;
+}
+
+export function getSkillEffectOwnerNames(skill: string, effect: string) {
+	return characters
+		.filter((entry) => entry.effects?.[skill] === effect)
+		.map((entry) => entry.names[0])
+		.filter((name): name is string => Boolean(name));
 }
 
 export function hasPassive(name: string, passive: string): boolean {
 	const entry = findCharacterEntry(name);
-	if (!entry?.passives) return false;
-	return (entry.passives as string[]).includes(passive);
+	return entry?.passives?.includes(passive) ?? false;
+}
+
+export function hasSemanticFlag(name: string, semantic: string): boolean {
+	const entry = findCharacterEntry(name);
+	return entry?.semantics?.includes(semantic) ?? false;
+}
+
+export function getEffectRule<T = unknown>(
+	name: string,
+	effect: string,
+): T | undefined {
+	const entry = findCharacterEntry(name);
+	return entry?.effectRules?.[effect] as T | undefined;
 }
 
 export function getSpecialActionHint(name: string) {
 	const displayName = getCharacterDisplayName(name);
+	if (displayName && hasSemanticFlag(name, "ambiguousBaseName")) {
+		return `已识别：${displayName}。若指姬子·启行，请输入全名。`;
+	}
 	return displayName ? `已识别：${displayName}` : "";
 }
 

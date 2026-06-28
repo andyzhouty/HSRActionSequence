@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import type {
 	GeneratedAction,
@@ -8,7 +8,12 @@ import {
 	formatEditableNumber,
 	formatActionValue,
 	getCharacterDisplayName,
+	getCounterWDomainRule,
+	getCyreneUltimateRule,
+	getMemeAdvanceRule,
+	getOdeRuleForTarget,
 	getTargetDefaultName,
+	hasSemanticFlag,
 	hasSkillEffect,
 	isAllyTarget,
 	isCharacterTarget,
@@ -16,12 +21,14 @@ import {
 	isQFrontCombo,
 	limitPresets,
 	maxResources,
+	shouldRememberSkillTarget,
 	toPositiveNumber,
 } from "../../utils/actionSequence";
 import { SelectInput, TextInput } from "./Controls";
 
 export default function ActionPanel() {
 	const ctx = useActionSequence();
+	const isImageExportLocked = ctx.actions.length > 100;
 	const limitMarkerIndex = ctx.actions.findIndex(
 		(action) => action.actionValue > ctx.actionLimit,
 	);
@@ -30,34 +37,55 @@ export default function ActionPanel() {
 
 	return (
 		<section className="min-w-0 rounded-2xl bg-gray-800 p-4 shadow">
-			<div className="mb-4 grid grid-cols-1 items-start gap-3 lg:grid-cols-[260px_minmax(0,1fr)]">
-				<div>
-					<label className="mb-2 block h-5 text-sm leading-5 text-gray-300">
-						行动值上限
-					</label>
-					<div className="flex gap-2">
-						<SelectInput
-							value={ctx.limitPreset}
-							options={limitPresets.map((preset) => ({
-								value: preset,
-								label: preset,
-							}))}
-							onChange={ctx.setLimitPreset}
-							className="w-32"
-						/>
+			<div className="mb-4 grid grid-cols-1 items-start gap-3 lg:grid-cols-[420px_minmax(0,1fr)]">
+				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+					<div>
+						<label className="mb-2 block h-5 text-sm leading-5 text-gray-300">
+							行动值上限
+						</label>
+						<div className="flex gap-2">
+							<SelectInput
+								value={ctx.limitPreset}
+								options={limitPresets.map((preset) => ({
+									value: preset,
+									label: preset,
+								}))}
+								onChange={ctx.setLimitPreset}
+								className="w-28"
+							/>
+							<input
+								type="text"
+								inputMode="decimal"
+								value={ctx.customLimit}
+								disabled={ctx.limitPreset !== "自定义"}
+								placeholder="自定义"
+								onChange={(event) => {
+									const nextValue = event.target.value;
+									if (nextValue === "" || /^\d*\.?\d*$/.test(nextValue)) {
+										ctx.setCustomLimit(nextValue);
+									}
+								}}
+								className="h-10 min-w-0 flex-1 rounded-lg border border-gray-600 bg-gray-700 px-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+							/>
+						</div>
+					</div>
+					<div>
+						<label className="mb-2 block h-5 text-sm leading-5 text-gray-300">
+							显示上限
+						</label>
 						<input
 							type="text"
 							inputMode="decimal"
-							value={ctx.customLimit}
-							disabled={ctx.limitPreset !== "自定义"}
-							placeholder="自定义"
+							value={ctx.displayedLimit}
+							placeholder={formatEditableNumber(ctx.actionLimit + 100)}
+							title="默认跟随行动值上限 + 100"
 							onChange={(event) => {
 								const nextValue = event.target.value;
 								if (nextValue === "" || /^\d*\.?\d*$/.test(nextValue)) {
-									ctx.setCustomLimit(nextValue);
+									ctx.setDisplayedLimit(nextValue);
 								}
 							}}
-							className="h-10 min-w-0 flex-1 rounded-lg border border-gray-600 bg-gray-700 px-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+							className="h-10 w-full min-w-0 rounded-lg border border-gray-600 bg-gray-700 px-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 						/>
 					</div>
 				</div>
@@ -113,10 +141,19 @@ export default function ActionPanel() {
 				<button
 					type="button"
 					onClick={() => void ctx.exportImage()}
-					disabled={ctx.isExportingImage}
+					disabled={ctx.isExportingImage || isImageExportLocked}
+					title={
+						isImageExportLocked
+							? "当前行动数超过 100，图片过大，已锁定导出"
+							: undefined
+					}
 					className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-600"
 				>
-					{ctx.isExportingImage ? "生成中..." : "导出图片"}
+					{ctx.isExportingImage
+						? "生成中..."
+						: isImageExportLocked
+							? "图片过大"
+							: "导出图片"}
 				</button>
 			</div>
 
@@ -353,6 +390,12 @@ function MenuContent() {
 			{/* Phainon domain section */}
 			<DomainEndSection />
 
+			{/* Himeko Nova assist section */}
+			<AssistCancelSection />
+
+			{/* Memory Trailblazer memosprite advance section */}
+			<MemeAdvanceSection />
+
 			{/* Interrupt section */}
 			<InterruptSection />
 		</>
@@ -374,17 +417,22 @@ function SkillTargetSection() {
 	const isEligible =
 		isCharacterTarget(character) &&
 		skill.includes("E") &&
-		(hasSkillEffect(character.name, "E", "allyPullToCurrent") ||
-			hasSkillEffect(character.name, "E", "allyAdvance50NotPast"));
+		hasTargetableESkill(character.name);
 	if (!isEligible) return null;
 
-	const currentTargetId = ctx.skillTargets[firstKey] ?? "";
 	const allies = ctx.characters.filter(
 		(c) =>
 			c.id !== character.id &&
 			isAllyTarget(c.kind) &&
 			toPositiveNumber(c.speed, 0) > 0,
 	);
+	const rememberedTargetId = shouldRememberSkillTarget(character.name)
+		? ctx.defaultSkillTargets[character.id]
+		: undefined;
+	const currentTargetId = ctx.skillTargets[firstKey] ?? rememberedTargetId ?? "";
+	const validCurrentTargetId = allies.some((ally) => ally.id === currentTargetId)
+		? currentTargetId
+		: "";
 	const targetOptions = [
 		{ value: "", label: "无" },
 		...allies.map((c) => ({
@@ -402,26 +450,29 @@ function SkillTargetSection() {
 				{displayName} E 目标：
 			</span>
 			<SelectInput
-				value={currentTargetId}
+				value={validCurrentTargetId}
 				options={targetOptions}
-				onChange={(targetId) => {
-					ctx.setSkillTargets((prev) => {
-						const next = { ...prev };
-						if (targetId === "") delete next[firstKey];
-						else next[firstKey] = targetId;
-						return next;
-					});
-				}}
+				onChange={(targetId) => ctx.updateSkillTarget(firstAction, targetId)}
 				className="w-48"
 			/>
-			{currentTargetId && (
+			{validCurrentTargetId && (
 				<span className="text-xs text-amber-200/80">
 					{hasSkillEffect(character.name, "E", "allyAdvance50NotPast")
 						? "目标行动提前 50%"
-						: "目标立刻行动"}
+						: hasSkillEffect(character.name, "E", "allyPullToCurrent")
+							? "目标立刻行动"
+							: "已选择目标"}
 				</span>
 			)}
 		</div>
+	);
+}
+
+function hasTargetableESkill(characterName: string) {
+	return (
+		hasSkillEffect(characterName, "E", "allyPullToCurrent") ||
+		hasSkillEffect(characterName, "E", "allyAdvance50NotPast") ||
+		hasSkillEffect(characterName, "E", "allyTargetSelectable")
 	);
 }
 
@@ -467,6 +518,181 @@ function DomainEndSection() {
 	);
 }
 
+function AssistCancelSection() {
+	const ctx = useActionSequence();
+	const selectedKeys = [...ctx.selectedActionKeys];
+	if (selectedKeys.length === 0) return null;
+	const firstKey = selectedKeys[0];
+	const firstAction = ctx.actions.find((action) => action.key === firstKey);
+	if (!firstAction) return null;
+
+	const sourceKey = firstAction.assistSourceKey ?? firstAction.key;
+	const sourceSkill = ctx.skillOverrides[sourceKey] ?? "";
+	const isAssistAction = firstAction.isAssistAction ?? false;
+	const isAssistFollowUp = firstAction.isAssistFollowUp ?? false;
+	const hasPendingAssistSkill = sourceSkill.includes("F");
+	if (!isAssistAction && !isAssistFollowUp && !hasPendingAssistSkill) {
+		return null;
+	}
+
+	const isSecondAssist = isAssistAction && (firstAction.assistIndex ?? 1) >= 2;
+
+	return (
+		<div className="flex flex-wrap items-center gap-3 border-t border-gray-700 pt-3">
+			<span className="whitespace-nowrap text-sm text-gray-300">
+				姬子·启行助战：
+			</span>
+			<button
+				type="button"
+				onClick={() => {
+					ctx.cancelHimekoNovaAssist(firstAction);
+					ctx.closeActionMenu();
+				}}
+				className="h-8 rounded-md bg-amber-600 px-3 text-xs font-medium text-white hover:bg-amber-500"
+			>
+				{isSecondAssist ? "取消第二个助战技" : "取消助战技"}
+			</button>
+			<span className="text-xs text-gray-400">
+				{isSecondAssist ? "恢复一个额外回合" : "恢复原回合"}
+			</span>
+		</div>
+	);
+}
+
+function getMemeTargetOptions(ctx: ReturnType<typeof useActionSequence>) {
+	return ctx.characters
+		.filter(
+			(character) =>
+				isCharacterTarget(character) && toPositiveNumber(character.speed, 0) > 0,
+		)
+		.map((character) => ({
+			value: character.id,
+			label:
+				character.name.trim() ||
+				getTargetDefaultName(character.kind, ctx.characters.indexOf(character)),
+		}));
+}
+
+function hasMemeBeenSummonedBeforeAction(
+	ctx: ReturnType<typeof useActionSequence>,
+	ownerId: string,
+	actionKey: string,
+) {
+	const selectedIndex = ctx.actions.findIndex((action) => action.key === actionKey);
+	if (selectedIndex <= 0) return false;
+	return ctx.actions.slice(0, selectedIndex).some((action) => {
+		if (action.characterId !== ownerId) return false;
+		if (action.isDomainAction || action.isMemospriteAction) return false;
+		const skill = ctx.skillOverrides[action.key] ?? action.skill;
+		return skill.includes("E");
+	});
+}
+
+function MemeAdvanceSection() {
+	const ctx = useActionSequence();
+	const selectedKeys = [...ctx.selectedActionKeys];
+	if (selectedKeys.length === 0) return null;
+	const firstKey = selectedKeys[0];
+	const firstAction = ctx.actions.find((action) => action.key === firstKey);
+	if (!firstAction) return null;
+	if (
+		firstAction.isDomainAction ||
+		firstAction.isMemospriteAction ||
+		firstAction.isOdeExtraAction
+	) {
+		return null;
+	}
+
+	const actionTarget = ctx.charactersById[firstAction.characterId];
+	if (!actionTarget) return null;
+	if (
+		actionTarget &&
+		!isAllyTarget(actionTarget.kind) &&
+		!isEnemyTarget(actionTarget.kind)
+	) {
+		return null;
+	}
+
+	const memeOwner = ctx.characters.find(
+		(character) =>
+			isCharacterTarget(character) &&
+			toPositiveNumber(character.speed, 0) > 0 &&
+			hasSkillEffect(character.name, "M", "memeAdvance"),
+	);
+	if (!memeOwner) return null;
+	if (
+		!hasMemeBeenSummonedBeforeAction(
+			ctx,
+			memeOwner.id,
+			firstAction.key,
+		)
+	) {
+		return null;
+	}
+
+	const memeKey = `${firstKey}-meme`;
+	const currentTargetId = ctx.memeSelections[memeKey] ?? "";
+	const targetOptions = getMemeTargetOptions(ctx);
+	const memeRule = getMemeAdvanceRule(memeOwner.name);
+	const validTargetId = targetOptions.some(
+		(option) => option.value === currentTargetId,
+	)
+		? currentTargetId
+		: "";
+	if (targetOptions.length === 0) return null;
+	const ownerName = getCharacterDisplayName(memeOwner.name) ?? memeOwner.name;
+
+	return (
+		<div className="flex flex-wrap items-center gap-3 border-t border-gray-700 pt-3">
+			<span className="whitespace-nowrap text-sm text-gray-300">
+				{ownerName}：
+			</span>
+			<button
+				type="button"
+				onClick={() => {
+					ctx.setMemeSelections((prev) => {
+						const next = { ...prev };
+						if (validTargetId) {
+							delete next[memeKey];
+						} else {
+							next[memeKey] =
+								targetOptions.find((option) => option.value !== "")?.value ??
+								"";
+						}
+						return next;
+					});
+				}}
+				className={`h-8 rounded-md px-3 text-xs font-medium text-white ${
+					validTargetId
+						? "border border-gray-600 bg-gray-800 hover:bg-gray-700"
+						: "bg-pink-600 hover:bg-pink-500"
+				}`}
+			>
+				{validTargetId ? "取消迷迷拉条" : "迷迷拉条"}
+			</button>
+			{validTargetId && (
+				<SelectInput
+					value={validTargetId}
+					options={targetOptions}
+					onChange={(targetId) => {
+						ctx.setMemeSelections((prev) => {
+							const next = { ...prev };
+							if (targetId === "") delete next[memeKey];
+							else next[memeKey] = targetId;
+							return next;
+						});
+					}}
+					className="w-40"
+				/>
+			)}
+			<span className="text-xs text-gray-400">
+				{memeRule.memospriteName}获得一动，并使目标提前{" "}
+				{memeRule.advancePercent}%
+			</span>
+		</div>
+	);
+}
+
 function InterruptSection() {
 	const ctx = useActionSequence();
 	const selectedKeys = [...ctx.selectedActionKeys];
@@ -478,9 +704,7 @@ function InterruptSection() {
 	const allCasters = ctx.characters.filter(
 		(c) => toPositiveNumber(c.speed, 0) > 0,
 	);
-	const usedCasterIds = new Set(existingInterrupts.map((i) => i.casterId));
-	const availableCasters = allCasters.filter((c) => !usedCasterIds.has(c.id));
-	const casterOptions = availableCasters.map((c) => ({
+	const casterOptions = allCasters.map((c) => ({
 		value: c.id,
 		label:
 			c.name.trim() || getTargetDefaultName(c.kind, ctx.characters.indexOf(c)),
@@ -606,9 +830,26 @@ function ActionRow({
 	isPastOriginalLimit: boolean;
 }) {
 	const ctx = useActionSequence();
-	const isInterrupt = action.actionNo === 0 && !action.isDomainAction;
+	const isInterrupt =
+		action.actionNo === 0 &&
+		!action.isDomainAction &&
+		!action.isMemospriteAction &&
+		!action.isOdeExtraAction &&
+		!action.isAssistAction;
+	const isAssist = action.isAssistAction;
 	const isDomain = action.isDomainAction;
 	const isEnemyAction = isEnemyTarget(ctx.characterKinds[action.characterId]);
+	const isCyreneMemospriteAction = Boolean(
+		action.isMemospriteAction &&
+			action.memospriteOwnerId &&
+			hasSkillEffect(
+				ctx.charactersById[action.memospriteOwnerId]?.name ?? "",
+				"Q",
+				"cyreneUltimate",
+			),
+	);
+	const displayName =
+		action.displayName ?? ctx.characterNames[action.characterId] ?? action.characterId;
 	const isSelected = ctx.selectedActionKeys.has(action.key);
 	const speedAdjustment = ctx.speedAdjustments[action.key];
 	const getPreviousDomainActionValue = () => {
@@ -640,6 +881,31 @@ function ActionRow({
 		}));
 		ctx.setMessage("白厄境界行动值不能早于上一个额外回合");
 	};
+	const rowClass = (() => {
+		if (isInterrupt) {
+			return isSelected
+				? "bg-[#065f4680] outline outline-1 outline-emerald-300"
+				: "bg-[#064e3b66] outline outline-1 outline-emerald-500";
+		}
+		if (isCyreneMemospriteAction) {
+			return isSelected
+				? "bg-[#9d174d80] outline outline-1 outline-pink-300"
+				: "bg-[#83184366] outline outline-1 outline-pink-400";
+		}
+		if (isDomain) {
+			return isSelected
+				? "bg-[#7e22ce80] outline outline-1 outline-purple-300"
+				: "bg-[#581c8766] outline outline-1 outline-purple-400";
+		}
+		if (isEnemyAction) {
+			return isSelected
+				? "bg-[#7f1d1d80] outline outline-1 outline-red-300"
+				: "bg-[#450a0a66] hover:bg-[#450a0a80]";
+		}
+		return isSelected
+			? "bg-[#4b556380] outline outline-1 outline-gray-400"
+			: "hover:bg-[#3741514d]";
+	})();
 
 	return (
 		<tr
@@ -655,37 +921,47 @@ function ActionRow({
 					event.clientY,
 				);
 			}}
-			className={`cursor-pointer select-none ${
-				isSelected
-					? "bg-[#1d4ed866] outline outline-1 outline-blue-500"
-					: isInterrupt
-						? "bg-[#064e3b66] outline outline-1 outline-emerald-500"
-						: isDomain
-							? "bg-[#581c8766] outline outline-1 outline-purple-400"
-						: isEnemyAction
-							? "bg-[#450a0a66] hover:bg-[#450a0a80]"
-							: "hover:bg-[#3741514d]"
-			} ${isPastOriginalLimit ? "border-l-2 border-l-cyan-400/70 opacity-80" : ""}`}
+			className={`cursor-pointer select-none ${rowClass} ${isPastOriginalLimit ? "border-l-2 border-l-cyan-400/70 opacity-80" : ""}`}
 		>
 			<td
 				className={`w-12 min-w-12 max-w-12 whitespace-nowrap px-2 py-3 ${isEnemyAction ? "text-red-100" : "text-gray-400"}`}
 			>
 				{index + 1}
+				{action.activeOdeLabels && action.activeOdeLabels.length > 0 && (
+					<span
+						className="ml-1 text-pink-300"
+						title={action.activeOdeLabels.join("、")}
+					>
+						♥
+					</span>
+				)}
 			</td>
 			<td className="w-[1%] max-w-32 whitespace-nowrap px-3 py-4">
 				<div
 					className="truncate font-medium leading-5 text-white"
-					title={ctx.characterNames[action.characterId]}
+					title={displayName}
 				>
-					{ctx.characterNames[action.characterId]}
+					{displayName}
 				</div>
 				<div
 					className={`truncate text-xs leading-5 ${isEnemyAction ? "text-[#fecacacc]" : "text-gray-400"}`}
 				>
 					{isDomain
 					? `境界 ${action.actionNo}`
-					: isInterrupt
+					: isAssist
+						? "助战"
+						: action.isMemeAction
+						? "额外"
+						: action.isMemospriteAction && action.actionNo > 0
+						? `第 ${action.actionNo} 动`
+						: action.isMemospriteAction
+						? "额外"
+						: action.isOdeExtraAction
+						? "诗篇"
+						: isInterrupt
 						? "插队"
+						: action.isAssistFollowUp
+						? `额外 ${action.actionNo}`
 						: `第 ${action.actionNo} 动`}
 				</div>
 			</td>
@@ -705,6 +981,22 @@ function ActionRow({
 								return n;
 							});
 						} else if (/^\d*\.?\d*$/.test(nextValue)) {
+							const parsed = Number.parseFloat(nextValue);
+							if (
+								Number.isFinite(parsed) &&
+								parsed > ctx.displayedActionLimit
+							) {
+								ctx.setOverrides((prev) => ({
+									...prev,
+									[action.key]: formatEditableNumber(
+										ctx.displayedActionLimit,
+									),
+								}));
+								ctx.setMessage(
+									"行动值不能超过当前显示上限，已自动贴到显示上限",
+								);
+								return;
+							}
 							ctx.setOverrides((prev) => ({
 								...prev,
 								[action.key]: nextValue,
@@ -720,6 +1012,8 @@ function ActionRow({
 			<td className="px-2 py-3">
 				<div className="flex items-start gap-1">
 					<SkillInput action={action} />
+					<OdeInline action={action} />
+					<MemeInline action={action} />
 					<SkillTargetInline action={action} />
 				</div>
 				{isQFrontCombo(action.skill) && (
@@ -758,16 +1052,43 @@ function ActionRow({
 function SkillInput({ action }: { action: GeneratedAction }) {
 	const ctx = useActionSequence();
 	const char = ctx.charactersById[action.characterId];
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	const displaySkill = action.isDomainFinalAction
 		? action.skill
+		: action.isAssistFollowUp
+			? action.skill
 		: (ctx.skillOverrides[action.key] ?? action.skill);
 	const isDomain = action.isDomainAction;
 	const isDomainFinalAction = action.isDomainFinalAction;
-	const isInterrupt = action.actionNo === 0 && !action.isDomainAction;
+	const isInterrupt =
+		action.actionNo === 0 &&
+		!action.isDomainAction &&
+		!action.isMemospriteAction &&
+		!action.isOdeExtraAction &&
+		!action.isAssistAction;
 	const disabled = char
-		? ctx.characterKinds[action.characterId] !== "角色"
+		? action.isAssistAction ||
+			action.lockedSkill ||
+			action.isMemospriteAction ||
+			ctx.characterKinds[action.characterId] !== "角色"
 		: true;
+	const nonDomainSkillTitle =
+		char && hasSemanticFlag(char.name, "wOnlyInDomain")
+			? "A 普攻，E 战技，Q 大招，F 助战技；W 仅境界内"
+			: "A 普攻，E 战技，Q 大招，W 反击，F 助战技";
+	const domainSkillTitle =
+		char === undefined
+			? "境界内可填写技能"
+			: `境界内可填写 ${getCounterWDomainRule(char.name).allowedSkills
+					.filter(Boolean)
+					.join("、")}`;
+
+	useEffect(() => {
+		if (inputRef.current && document.activeElement !== inputRef.current) {
+			inputRef.current.value = displaySkill;
+		}
+	}, [displaySkill]);
 
 	const commitDraftSkill = (rawSkill: string) => {
 		const normalizedSkill = rawSkill.trim().toUpperCase();
@@ -801,15 +1122,16 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 	return (
 		<>
 			<input
+				ref={inputRef}
 				type="text"
 				defaultValue={displaySkill}
-				maxLength={2}
+				maxLength={6}
 				disabled={disabled}
 				data-export-kind={isDomain ? "domain-skill" : undefined}
 				title={
 					isDomain
-						? "境界内可填写 E、EW、EA、A 或 W"
-						: "A 普攻，E 战技，Q 大招，W 白厄反击，F 姬子助战技"
+						? domainSkillTitle
+						: nonDomainSkillTitle
 				}
 				onFocus={(event) => event.currentTarget.select()}
 				onMouseDown={(event) => event.stopPropagation()}
@@ -839,27 +1161,125 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 	);
 }
 
+function OdeInline({ action }: { action: GeneratedAction }) {
+	const ctx = useActionSequence();
+	if (action.isMemeAction) return null;
+	if (!action.isMemospriteAction || !action.memospriteOwnerId) return null;
+	const owner = ctx.charactersById[action.memospriteOwnerId];
+	if (!owner) return null;
+	if (!hasSkillEffect(owner.name, "Q", "cyreneUltimate")) return null;
+	const cyreneRule = getCyreneUltimateRule(owner.name);
+	const selection = ctx.odeSelections[action.key];
+	const allies = ctx.characters.filter(
+		(character) =>
+			isAllyTarget(character.kind) && toPositiveNumber(character.speed, 0) > 0,
+	);
+	const targetOptions = allies.map((character) => {
+		const ode = getOdeRuleForTarget(cyreneRule, character.name);
+		return {
+			value: character.id,
+			label:
+				character.name.trim() ||
+				getTargetDefaultName(character.kind, ctx.characters.indexOf(character)),
+			title: ode.fullName,
+		};
+	});
+	const validTargetId = targetOptions.some(
+		(option) => option.value === selection?.targetId,
+	)
+		? (selection?.targetId ?? "")
+		: "";
+
+	return (
+		<>
+			<SelectInput
+				value={validTargetId}
+				options={[
+					{ value: "", label: "攻击" },
+					...targetOptions,
+				]}
+				onChange={(targetId) => {
+					ctx.setOdeSelections((prev) => {
+						const next = { ...prev };
+						if (targetId === "") {
+							delete next[action.key];
+							return next;
+						}
+						const target = ctx.characters.find(
+							(character) => character.id === targetId,
+						);
+						const ode = target
+							? getOdeRuleForTarget(cyreneRule, target.name)
+							: cyreneRule.genericOde;
+						next[action.key] = {
+							odeCode: ode.code,
+							targetId,
+						};
+						return next;
+					});
+				}}
+				className="w-28"
+			/>
+		</>
+	);
+}
+
+function MemeInline({ action }: { action: GeneratedAction }) {
+	const ctx = useActionSequence();
+	if (!action.isMemeAction) return null;
+	const targetOptions = getMemeTargetOptions(ctx);
+	const currentTargetId = ctx.memeSelections[action.key] ?? "";
+	const validTargetId = targetOptions.some(
+		(option) => option.value === currentTargetId,
+	)
+		? currentTargetId
+		: "";
+
+	return (
+		<SelectInput
+			value={validTargetId}
+			options={[{ value: "", label: "无目标" }, ...targetOptions]}
+			onChange={(targetId) => {
+				ctx.setMemeSelections((prev) => {
+					const next = { ...prev };
+					if (targetId === "") delete next[action.key];
+					else next[action.key] = targetId;
+					return next;
+				});
+			}}
+			className="w-32"
+		/>
+	);
+}
+
 function SkillTargetInline({ action }: { action: GeneratedAction }) {
 	const ctx = useActionSequence();
 	const char = ctx.charactersById[action.characterId];
-	const targetId = ctx.skillTargets[action.key];
+	const rememberedTargetId =
+		char && shouldRememberSkillTarget(char.name)
+			? ctx.defaultSkillTargets[action.characterId]
+			: undefined;
+	const targetId = ctx.skillTargets[action.key] ?? rememberedTargetId;
 	const skill = action.isDomainFinalAction
 		? action.skill
 		: (ctx.skillOverrides[action.key] ?? action.skill);
-
-	if (
+	const isTargetableSkill = Boolean(
 		char &&
 		isCharacterTarget(char) &&
 		skill.includes("E") &&
-		(hasSkillEffect(char.name, "E", "allyPullToCurrent") ||
-			hasSkillEffect(char.name, "E", "allyAdvance50NotPast"))
-	) {
+		hasTargetableESkill(char.name),
+	);
+
+	if (isTargetableSkill && char) {
 		const allies = ctx.characters.filter(
 			(c) =>
 				c.id !== char.id &&
 				isAllyTarget(c.kind) &&
 				toPositiveNumber(c.speed, 0) > 0,
 		);
+		const validTargetId = allies.some((ally) => ally.id === targetId)
+			? (targetId ?? "")
+			: "";
 		const targetOptions = [
 			{ value: "", label: "无目标" },
 			...allies.map((c) => ({
@@ -872,23 +1292,17 @@ function SkillTargetInline({ action }: { action: GeneratedAction }) {
 
 		return (
 			<SelectInput
-				value={targetId ?? ""}
+				value={validTargetId}
 				options={targetOptions}
-				onChange={(nextTarget) =>
-					ctx.setSkillTargets((prev) => {
-						const next = { ...prev };
-						if (nextTarget === "") delete next[action.key];
-						else next[action.key] = nextTarget;
-						return next;
-					})
-				}
+				onChange={(nextTarget) => ctx.updateSkillTarget(action, nextTarget)}
 				className="flex-1 min-w-0"
 			/>
 		);
 	}
 
-	if (targetId) {
-		const targetName = ctx.characterNames[targetId] ?? targetId;
+	const explicitTargetId = ctx.skillTargets[action.key];
+	if (isTargetableSkill && explicitTargetId) {
+		const targetName = ctx.characterNames[explicitTargetId] ?? explicitTargetId;
 		return (
 			<span className="truncate text-xs text-amber-200/80">→{targetName}</span>
 		);

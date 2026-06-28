@@ -5,13 +5,15 @@ import "./index.css";
 
 // 根据屏幕分辨率自适应根字体大小，解决 Wayland scale=1 下字体过小的问题
 (function adjustFontSize() {
-	const dpr = window.devicePixelRatio || 1;
-	const widthRatio = window.screen.width / 1920;
-	// 仅在屏幕显著大于 1920 时温和提升字体
-	const boost = widthRatio > 1.2 ? Math.min(0.2, (widthRatio - 1) * 0.3) : 0;
-	const scale = Math.max(dpr, 1 + boost);
-	const clamped = Math.min(1.2, Math.max(1, scale));
-	document.documentElement.style.fontSize = `${Math.round(16 * clamped)}px`;
+	document.documentElement.style.fontSize = `16px`;
+	// 判断是否为linux，若为linux则自适应增大字体大小
+	if (navigator.userAgent.toLowerCase().includes("linux")) {
+		const screenWidth = window.screen.width;
+		const screenHeight = window.screen.height;
+		const scaleFactor = Math.min(screenWidth / 1920, screenHeight / 1080);
+		const newFontSize = Math.max(16, 16 * scaleFactor);
+		document.documentElement.style.fontSize = `${newFontSize}px`;
+	}
 })();
 
 // 全局禁用右键菜单（保留自定义右键处理）

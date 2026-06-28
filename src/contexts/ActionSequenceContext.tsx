@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import type {
 	CharacterConfig,
 	GeneratedAction,
+	OdeSelection,
 	SavedData,
 	SkillCode,
 	SpeedAdjustment,
@@ -15,6 +16,7 @@ export type ActionSequenceContextType = {
 	characters: CharacterConfig[];
 	limitPreset: string;
 	customLimit: string;
+	displayedLimit: string;
 	resources: string[];
 	overrides: Record<string, string>;
 	ultOverrides: Record<string, boolean>;
@@ -22,6 +24,9 @@ export type ActionSequenceContextType = {
 	domainEndOverrides: Record<string, boolean>;
 	speedAdjustments: Record<string, SpeedAdjustment>;
 	skillTargets: Record<string, string>;
+	defaultSkillTargets: Record<string, string>;
+	odeSelections: Record<string, OdeSelection>;
+	memeSelections: Record<string, string>;
 	ultInterrupts: Record<string, UltInterrupt[]>;
 	resourceValues: Record<string, Record<string, string>>;
 	actions: GeneratedAction[];
@@ -54,6 +59,7 @@ export type ActionSequenceContextType = {
 	setCharacters: React.Dispatch<React.SetStateAction<CharacterConfig[]>>;
 	setLimitPreset: React.Dispatch<React.SetStateAction<string>>;
 	setCustomLimit: React.Dispatch<React.SetStateAction<string>>;
+	setDisplayedLimit: React.Dispatch<React.SetStateAction<string>>;
 	setResources: React.Dispatch<React.SetStateAction<string[]>>;
 	setOverrides: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 	setUltOverrides: React.Dispatch<
@@ -69,6 +75,15 @@ export type ActionSequenceContextType = {
 		React.SetStateAction<Record<string, SpeedAdjustment>>
 	>;
 	setSkillTargets: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+	setDefaultSkillTargets: React.Dispatch<
+		React.SetStateAction<Record<string, string>>
+	>;
+	setOdeSelections: React.Dispatch<
+		React.SetStateAction<Record<string, OdeSelection>>
+	>;
+	setMemeSelections: React.Dispatch<
+		React.SetStateAction<Record<string, string>>
+	>;
 	setUltInterrupts: React.Dispatch<
 		React.SetStateAction<Record<string, UltInterrupt[]>>
 	>;
@@ -101,6 +116,8 @@ export type ActionSequenceContextType = {
 		resourceName: string,
 		value: string,
 	) => void;
+	cancelHimekoNovaAssist: (action: GeneratedAction) => void;
+	updateSkillTarget: (action: GeneratedAction, targetId: string) => void;
 	updateActionSkill: (action: GeneratedAction, value: string) => void;
 	selectAction: (actionKey: string, additive: boolean) => void;
 	openActionMenu: (

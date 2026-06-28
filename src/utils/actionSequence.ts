@@ -1,9 +1,18 @@
-import { hasSkillEffect, validSkillChars } from "../data/characters";
+import {
+	getEffectRule,
+	hasSemanticFlag as characterHasSemanticFlag,
+	hasSkillEffect,
+	normalizeName,
+	validSkillChars,
+} from "../data/characters";
 
 export {
 	getCharacterDisplayName,
+	getEffectRule,
 	getSpecialActionHint,
+	getSkillEffectOwnerNames,
 	hasPassive,
+	hasSemanticFlag,
 	hasSkillEffect,
 	isQFrontCombo,
 	normalizeName,
@@ -31,12 +40,25 @@ export type SpeedChangeMode = "absolute" | "relative";
 export type GeneratedAction = {
 	key: string;
 	characterId: string;
+	displayName?: string;
+	targetKind?: TargetKind;
 	actionNo: number;
 	actionValue: number;
 	skill: SkillCode;
 	speed: number;
 	isDomainAction?: boolean;
 	isDomainFinalAction?: boolean;
+	isAssistAction?: boolean;
+	isAssistFollowUp?: boolean;
+	assistSourceKey?: string;
+	assistIndex?: number;
+	isMemospriteAction?: boolean;
+	memospriteOwnerId?: string;
+	isMemeAction?: boolean;
+	memeOwnerId?: string;
+	isOdeExtraAction?: boolean;
+	lockedSkill?: boolean;
+	activeOdeLabels?: string[];
 };
 
 export type SpeedAdjustment = {
@@ -49,9 +71,161 @@ export type UltInterrupt = {
 	timing: "before" | "after";
 };
 
+export type OdeSelection = {
+	odeCode: string;
+	targetId: string;
+};
+
+export type OdeRule = {
+	code: string;
+	label: string;
+	fullName: string;
+	targetNames: string[];
+	duration:
+		| "battle"
+		| "nextTurn"
+		| "turns"
+		| "extraTurn"
+		| "nextAttack"
+		| "stacks";
+	effects?: string[];
+	turns?: number;
+	stacks?: number;
+};
+
+export type CyreneUltimateRule = {
+	memospriteName: string;
+	memospriteSkill: SkillCode;
+	defaultResources: string[];
+	genericOde: OdeRule;
+	odes: OdeRule[];
+};
+
+export type MemeAdvanceRule = {
+	memospriteName: string;
+	memospriteSkill: SkillCode;
+	memospriteSpeed: number;
+	advancePercent: number;
+};
+
+export type DomainRule = {
+	defaultBaseSpeed: number;
+	normalEquivalentSpeedCoefficient: number;
+	eidolon1EquivalentSpeedCoefficient: number;
+	extraActionCount: number;
+	endSpeedBonusBaseSpeedRatio: number;
+	defaultResources: string[];
+	allowedSkills: string[];
+	finalSkill: SkillCode;
+};
+
+const defaultCounterWDomainRule: DomainRule = {
+	defaultBaseSpeed: 106.0,
+	normalEquivalentSpeedCoefficient: 0.6,
+	eidolon1EquivalentSpeedCoefficient: 0.66,
+	extraActionCount: 8,
+	endSpeedBonusBaseSpeedRatio: 0.15,
+	defaultResources: ["火种", "毁伤"],
+	allowedSkills: ["", "E", "EW", "EA", "A", "W"],
+	finalSkill: "Q",
+};
+
+export function getCounterWDomainRule(characterName: string): DomainRule {
+	const effectRule = getEffectRule<{ domain?: Partial<DomainRule> }>(
+		characterName,
+		"counterW",
+	);
+	const domainRule = effectRule?.domain ?? {};
+	return {
+		...defaultCounterWDomainRule,
+		...domainRule,
+		defaultResources:
+			domainRule.defaultResources ?? defaultCounterWDomainRule.defaultResources,
+		allowedSkills:
+			domainRule.allowedSkills ?? defaultCounterWDomainRule.allowedSkills,
+		finalSkill: domainRule.finalSkill ?? defaultCounterWDomainRule.finalSkill,
+	};
+}
+
+const defaultCyreneUltimateRule: CyreneUltimateRule = {
+	memospriteName: "德谬歌",
+	memospriteSkill: "Q",
+	defaultResources: ["追忆"],
+	genericOde: {
+		code: "generic",
+		label: "诗篇",
+		fullName: "诗篇",
+		targetNames: [],
+		duration: "turns",
+		turns: 2,
+	},
+	odes: [],
+};
+
+export function getCyreneUltimateRule(characterName: string): CyreneUltimateRule {
+	const effectRule = getEffectRule<Partial<CyreneUltimateRule>>(
+		characterName,
+		"cyreneUltimate",
+	);
+	return {
+		...defaultCyreneUltimateRule,
+		...(effectRule ?? {}),
+		defaultResources:
+			effectRule?.defaultResources ?? defaultCyreneUltimateRule.defaultResources,
+		genericOde: effectRule?.genericOde ?? defaultCyreneUltimateRule.genericOde,
+		odes: effectRule?.odes ?? defaultCyreneUltimateRule.odes,
+	};
+}
+
+const defaultMemeAdvanceRule: MemeAdvanceRule = {
+	memospriteName: "迷迷",
+	memospriteSkill: "拉条",
+	memospriteSpeed: 130,
+	advancePercent: 100,
+};
+
+export function getMemeAdvanceRule(characterName: string): MemeAdvanceRule {
+	const effectRule = getEffectRule<Partial<MemeAdvanceRule>>(
+		characterName,
+		"memeAdvance",
+	);
+	return {
+		...defaultMemeAdvanceRule,
+		...(effectRule ?? {}),
+		memospriteName:
+			effectRule?.memospriteName ?? defaultMemeAdvanceRule.memospriteName,
+		memospriteSkill:
+			effectRule?.memospriteSkill ?? defaultMemeAdvanceRule.memospriteSkill,
+		memospriteSpeed:
+			effectRule?.memospriteSpeed ?? defaultMemeAdvanceRule.memospriteSpeed,
+		advancePercent:
+			effectRule?.advancePercent ?? defaultMemeAdvanceRule.advancePercent,
+	};
+}
+
+export function getOdeRuleForTarget(
+	rule: CyreneUltimateRule,
+	targetName: string,
+) {
+	return (
+		rule.odes.find((ode) =>
+			characterNameMatchesAliases(targetName, ode.targetNames),
+		) ?? rule.genericOde
+	);
+}
+
+export function characterNameMatchesAliases(
+	characterName: string,
+	aliases: string[],
+) {
+	const normalizedName = normalizeName(characterName);
+	return aliases.some((alias) => normalizeName(alias) === normalizedName);
+}
+
 export type SavedData = {
 	limitPreset: string;
 	customLimit: string;
+	displayedLimit?: string;
 	characters: CharacterConfig[];
 	resources: string[];
 	overrides: Record<string, string>;
@@ -60,6 +234,9 @@ export type SavedData = {
 	domainEndOverrides?: Record<string, boolean>;
 	speedAdjustments?: Record<string, SpeedAdjustment>;
 	skillTargets?: Record<string, string>;
+	defaultSkillTargets?: Record<string, string>;
+	odeSelections?: Record<string, OdeSelection>;
+	memeSelections?: Record<string, string>;
 	ultInterrupts?: Record<string, UltInterrupt[]>;
 	resourceValues: Record<string, Record<string, string>>;
 };
@@ -67,6 +244,7 @@ export type SavedData = {
 export const targetKinds: TargetKind[] = ["角色", "忆灵", "非忆灵", "敌人"];
 export const limitPresets = ["150", "300", "500", "自定义"];
 export const maxResources = 6;
+export const defaultResources = ["战技点"];
 
 export function isCharacterTarget(character: CharacterConfig) {
 	return character.kind === "角色";
@@ -80,6 +258,10 @@ export function isEnemyTarget(kind: TargetKind | undefined) {
 	return kind === "敌人";
 }
 
+export function shouldRememberSkillTarget(characterName: string) {
+	return !characterHasSemanticFlag(characterName, "noDefaultSkillTarget");
+}
+
 export function canUseSkillCode(character: CharacterConfig, skill: SkillCode) {
 	if (skill === "") return true;
 	if (!isCharacterTarget(character)) return false;
@@ -89,7 +271,7 @@ export function canUseSkillCode(character: CharacterConfig, skill: SkillCode) {
 		if (!validSkillChars.includes(c)) return false;
 		if (c === "W" && !hasSkillEffect(character.name, "W", "counterW"))
 			return false;
-		if (c === "F" && !hasSkillEffect(character.name, "F", "assistF"))
+		if (c === "W" && characterHasSemanticFlag(character.name, "wOnlyInDomain"))
 			return false;
 	}
 
@@ -182,13 +364,19 @@ function toPositiveInteger(value: string, fallback = 0) {
 }
 
 export function formatActionValue(value: number) {
-	return Number.isInteger(value) ? String(value) : value.toFixed(2);
+	const normalized = normalizeActionValue(value);
+	return Number.isInteger(normalized) ? String(normalized) : normalized.toFixed(2);
 }
 
 export function formatEditableNumber(value: number) {
-	return Number.isInteger(value)
-		? String(value)
-		: value.toFixed(4).replace(/0+$/, "").replace(/\.$/, "");
+	const normalized = normalizeActionValue(value);
+	return Number.isInteger(normalized)
+		? String(normalized)
+		: normalized.toFixed(4).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+export function normalizeActionValue(value: number) {
+	return Math.round((value + Number.EPSILON) * 10000) / 10000;
 }
 
 function isUltimateAction(character: CharacterConfig, actionNo: number) {

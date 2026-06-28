@@ -11,18 +11,26 @@ import {
 	canvasToPngDataUrl,
 	createTarget,
 	defaultCharacters,
+	defaultResources,
 	ensureFileExtension,
 	formatEditableNumber,
 	type GeneratedAction,
+	getCounterWDomainRule,
+	getCyreneUltimateRule,
 	getDefaultSkill,
 	getErrorMessage,
+	getSkillEffectOwnerNames,
 	getTargetDefaultName,
 	getTimestampedFileName,
+	hasSemanticFlag,
 	hasSkillEffect,
+	isAllyTarget,
 	isCharacterTarget,
+	shouldRememberSkillTarget,
 	limitPresets,
 	maxResources,
 	type SavedData,
+	type OdeSelection,
 	type SkillCode,
 	type SpeedAdjustment,
 	type SpeedChangeMode,
@@ -35,12 +43,79 @@ import {
 } from "../utils/actionSequence";
 import { simulateActions } from "../utils/simulateActions";
 
+function getSavedDisplayedLimitFallback(parsed: Partial<SavedData>) {
+	const savedPreset =
+		parsed.limitPreset && limitPresets.includes(parsed.limitPreset)
+			? parsed.limitPreset
+			: "150";
+	const savedCustomLimit = String(parsed.customLimit ?? "");
+	const savedActionLimit =
+		savedPreset === "自定义"
+			? toPositiveNumber(savedCustomLimit, 150)
+			: toPositiveNumber(savedPreset, 150);
+	return formatEditableNumber(savedActionLimit + 100);
+}
+
+function getSavedDisplayedActionLimit(parsed: Partial<SavedData>) {
+	const fallback = toPositiveNumber(getSavedDisplayedLimitFallback(parsed), 250);
+	const savedDisplayedLimit = toPositiveNumber(
+		String(parsed.displayedLimit ?? ""),
+		fallback,
+	);
+	return Math.max(fallback - 100, savedDisplayedLimit);
+}
+
+function clampOverridesToDisplayedLimit(
+	overrides: Record<string, string> | undefined,
+	displayedLimit: number,
+) {
+	if (!overrides) return {};
+	return Object.fromEntries(
+		Object.entries(overrides).map(([key, value]) => {
+			const parsed = Number.parseFloat(value);
+			if (!Number.isFinite(parsed)) return [key, value];
+			return [key, formatEditableNumber(Math.min(parsed, displayedLimit))];
+		}),
+	);
+}
+
+function inlineExportSafeColors(sourceRoot: HTMLElement, clonedRoot: HTMLElement) {
+	const colorProperties = [
+		"color",
+		"backgroundColor",
+		"borderTopColor",
+		"borderRightColor",
+		"borderBottomColor",
+		"borderLeftColor",
+		"outlineColor",
+		"textDecorationColor",
+		"caretColor",
+	] as const;
+	const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll("*")];
+	const clonedElements = [clonedRoot, ...clonedRoot.querySelectorAll("*")];
+
+	for (let index = 0; index < clonedElements.length; index++) {
+		const sourceElement = sourceElements[index];
+		const clonedElement = clonedElements[index];
+		if (!(sourceElement instanceof Element)) continue;
+		if (!(clonedElement instanceof HTMLElement)) continue;
+		const computedStyle = window.getComputedStyle(sourceElement);
+		for (const property of colorProperties) {
+			const value = computedStyle[property];
+			if (value && !value.includes("oklch") && !value.includes("oklab")) {
+				clonedElement.style[property] = value;
+			}
+		}
+	}
+}
+
 export default function ActionSequence() {
 	const [characters, setCharacters] =
 		useState<CharacterConfig[]>(defaultCharacters);
 	const [limitPreset, setLimitPreset] = useState("150");
 	const [customLimit, setCustomLimit] = useState("");
-	const [resources, setResources] = useState<string[]>(["战技点"]);
+	const [displayedLimit, setDisplayedLimit] = useState("250");
+	const [resources, setResources] = useState<string[]>(defaultResources);
 	const [overrides, setOverrides] = useState<Record<string, string>>({});
 	const [ultOverrides, setUltOverrides] = useState<Record<string, boolean>>({});
 	const [skillOverrides, setSkillOverrides] = useState<
@@ -68,6 +143,15 @@ export default function ActionSequence() {
 		Record<string, Record<string, string>>
 	>({});
 	const [skillTargets, setSkillTargets] = useState<Record<string, string>>({});
+	const [defaultSkillTargets, setDefaultSkillTargets] = useState<
+		Record<string, string>
+	>({});
+	const [odeSelections, setOdeSelections] = useState<
+		Record<string, OdeSelection>
+	>({});
+	const [memeSelections, setMemeSelections] = useState<Record<string, string>>(
+		{},
+	);
 	const [ultInterrupts, setUltInterrupts] = useState<
 		Record<string, UltInterrupt[]>
 	>({});
@@ -89,7 +173,82 @@ export default function ActionSequence() {
 		}
 		return toPositiveNumber(limitPreset, 150);
 	}, [customLimit, limitPreset]);
-	const displayedActionLimit = actionLimit + 100;
+	const displayedLimitDefault = actionLimit + 100;
+	const displayedActionLimit = Math.max(
+		actionLimit,
+		toPositiveNumber(displayedLimit, displayedLimitDefault),
+	);
+	const previousActionLimitRef = useRef(actionLimit);
+
+	useEffect(() => {
+		const previousDefault = previousActionLimitRef.current + 100;
+		previousActionLimitRef.current = actionLimit;
+		setDisplayedLimit((prev) => {
+			const parsed = toPositiveNumber(prev, Number.NaN);
+			if (prev === "" || parsed === previousDefault) {
+				return formatEditableNumber(displayedLimitDefault);
+			}
+			return prev;
+		});
+	}, [actionLimit, displayedLimitDefault]);
+
+	useEffect(() => {
+		setOverrides((prev) => {
+			let changed = false;
+			const next = Object.fromEntries(
+				Object.entries(prev).map(([key, value]) => {
+					const parsed = Number.parseFloat(value);
+					if (!Number.isFinite(parsed) || parsed <= displayedActionLimit) {
+						return [key, value];
+					}
+					changed = true;
+					return [key, formatEditableNumber(displayedActionLimit)];
+				}),
+			);
+			return changed ? next : prev;
+		});
+	}, [displayedActionLimit]);
+
+	useEffect(() => {
+		const counterWCharacter = characters.find((character) =>
+			hasSkillEffect(character.name, "W", "counterW"),
+		);
+		const cyreneCharacter = characters.find((character) =>
+			hasSkillEffect(character.name, "Q", "cyreneUltimate"),
+		);
+		const isUsingDefaultResources =
+			resources.length === defaultResources.length &&
+			resources.every((resource, index) => resource === defaultResources[index]);
+		const cyreneDefaultResources = cyreneCharacter
+			? getCyreneUltimateRule(cyreneCharacter.name).defaultResources
+			: [];
+		const counterWDefaultResources = counterWCharacter
+			? getCounterWDomainRule(counterWCharacter.name).defaultResources
+			: [];
+		const nextResources = isUsingDefaultResources
+			? Array.from(
+					new Set([...cyreneDefaultResources, ...counterWDefaultResources]),
+				)
+			: [...resources];
+		if (isUsingDefaultResources && nextResources.length === 0) return;
+		if (cyreneCharacter) {
+			for (const resource of cyreneDefaultResources) {
+				if (
+					nextResources.length < maxResources &&
+					!nextResources.includes(resource)
+				) {
+					nextResources.push(resource);
+				}
+			}
+		}
+		if (
+			nextResources.length === resources.length &&
+			nextResources.every((resource, index) => resource === resources[index])
+		) {
+			return;
+		}
+		setResources(nextResources);
+	}, [characters, resources]);
 
 	// 启动时自动加载上次保存的状态
 	useEffect(() => {
@@ -109,6 +268,7 @@ export default function ActionSequence() {
 				const parsed = JSON.parse(text) as Partial<SavedData>;
 				if (!Array.isArray(parsed.characters)) return;
 				if (parsed.characters.length === 0) return;
+				const savedDisplayedActionLimit = getSavedDisplayedActionLimit(parsed);
 
 				// 导入状态
 				setCharacters(
@@ -140,16 +300,29 @@ export default function ActionSequence() {
 						: "150",
 				);
 				setCustomLimit(String(parsed.customLimit ?? ""));
+				setDisplayedLimit(
+					String(
+						parsed.displayedLimit ?? getSavedDisplayedLimitFallback(parsed),
+					),
+				);
 				setResources(
 					Array.isArray(parsed.resources)
 						? parsed.resources.slice(0, maxResources).map(String)
 						: [],
 				);
-				setOverrides(parsed.overrides ?? {});
+				setOverrides(
+					clampOverridesToDisplayedLimit(
+						parsed.overrides,
+						savedDisplayedActionLimit,
+					),
+				);
 				setUltOverrides(parsed.ultOverrides ?? {});
 				setSkillOverrides(parsed.skillOverrides ?? {});
 				setDomainEndOverrides(parsed.domainEndOverrides ?? {});
 				setSkillTargets(parsed.skillTargets ?? {});
+				setDefaultSkillTargets(parsed.defaultSkillTargets ?? {});
+				setOdeSelections(parsed.odeSelections ?? {});
+				setMemeSelections(parsed.memeSelections ?? {});
 				setUltInterrupts(parsed.ultInterrupts ?? {});
 				setSpeedAdjustments(parsed.speedAdjustments ?? {});
 				setResourceValues(parsed.resourceValues ?? {});
@@ -175,6 +348,9 @@ export default function ActionSequence() {
 				legacyUltOverrides: ultOverrides,
 				speedAdjustments,
 				skillTargets,
+				defaultSkillTargets,
+				odeSelections,
+				memeSelections,
 				ultInterrupts,
 			});
 			setActions(nextActions);
@@ -191,6 +367,9 @@ export default function ActionSequence() {
 		ultOverrides,
 		speedAdjustments,
 		skillTargets,
+		defaultSkillTargets,
+		odeSelections,
+		memeSelections,
 		ultInterrupts,
 	]);
 
@@ -208,6 +387,7 @@ export default function ActionSequence() {
 			const data: SavedData = {
 				limitPreset,
 				customLimit,
+				displayedLimit,
 				characters: characters.map(withoutCharacterOnlyEffects),
 				resources,
 				overrides,
@@ -215,6 +395,9 @@ export default function ActionSequence() {
 				domainEndOverrides,
 				speedAdjustments,
 				skillTargets,
+				defaultSkillTargets,
+				odeSelections,
+				memeSelections,
 				ultInterrupts,
 				resourceValues,
 			};
@@ -236,12 +419,16 @@ export default function ActionSequence() {
 		characters,
 		limitPreset,
 		customLimit,
+		displayedLimit,
 		resources,
 		overrides,
 		skillOverrides,
 		domainEndOverrides,
 		speedAdjustments,
 		skillTargets,
+		defaultSkillTargets,
+		odeSelections,
+		memeSelections,
 		ultInterrupts,
 		resourceValues,
 	]);
@@ -336,6 +523,30 @@ export default function ActionSequence() {
 				),
 			),
 		);
+		setDefaultSkillTargets((prev) => {
+			const next = { ...prev };
+			delete next[id];
+			for (const [casterId, targetId] of Object.entries(next)) {
+				if (targetId === id) delete next[casterId];
+			}
+			return next;
+		});
+		setOdeSelections((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).filter(
+					([actionKey, selection]) =>
+						!actionKey.startsWith(`${id}-`) && selection.targetId !== id,
+				),
+			),
+		);
+		setMemeSelections((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).filter(
+					([actionKey, targetId]) =>
+						!actionKey.startsWith(`${id}-`) && targetId !== id,
+				),
+			),
+		);
 		setUltInterrupts((prev) =>
 			Object.fromEntries(
 				Object.entries(prev).filter(
@@ -373,31 +584,104 @@ export default function ActionSequence() {
 		}));
 	};
 
+	const cancelHimekoNovaAssist = (action: GeneratedAction) => {
+		const sourceKey = action.assistSourceKey ?? action.key;
+		const assistIndex = action.assistIndex ?? 1;
+		setSkillOverrides((prev) => {
+			const currentSkill = prev[sourceKey] ?? "";
+			if (!currentSkill.includes("F")) return prev;
+			const next = { ...prev };
+			const baseSkill = currentSkill.replace(/F/g, "");
+			const restoredSkill =
+				assistIndex >= 2 ? (`F${baseSkill}` as SkillCode) : baseSkill;
+			if (restoredSkill === "") delete next[sourceKey];
+			else next[sourceKey] = restoredSkill;
+			return next;
+		});
+		setMessage(
+			assistIndex >= 2
+				? "已取消第二个姬子·启行助战技，恢复额外回合"
+				: "已取消姬子·启行助战技，恢复原回合",
+		);
+	};
+
+	const updateSkillTarget = (action: GeneratedAction, targetId: string) => {
+		const character = charactersById[action.characterId];
+		setSkillTargets((prev) => {
+			const next = { ...prev };
+			if (targetId === "") delete next[action.key];
+			else next[action.key] = targetId;
+			return next;
+		});
+		if (!character || !shouldRememberSkillTarget(character.name)) return;
+		setDefaultSkillTargets((prev) => {
+			const next = { ...prev };
+			if (targetId === "") delete next[action.characterId];
+			else next[action.characterId] = targetId;
+			return next;
+		});
+	};
+
 	const updateActionSkill = (action: GeneratedAction, value: string) => {
 		const character = charactersById[action.characterId];
 		if (!character) return;
 		if (action.isDomainFinalAction) return;
 		const nextSkill = value.trim().toUpperCase() as SkillCode;
-		const allowedDomainSkills = new Set(["", "E", "EW", "EA", "A", "W"]);
+		const savedSkill = action.isAssistFollowUp
+			? ((nextSkill.includes("F")
+					? "FF"
+					: `F${nextSkill.replace(/F/g, "")}`) as SkillCode)
+			: nextSkill;
+		const domainRule = getCounterWDomainRule(character.name);
+		const allowedDomainSkills = new Set(domainRule.allowedSkills);
 		if (action.isDomainAction && !allowedDomainSkills.has(nextSkill)) {
-			setMessage("白厄境界内只能填写 E、EW、EA、A 或 W");
+			setMessage(
+				`白厄境界内只能填写 ${domainRule.allowedSkills
+					.filter(Boolean)
+					.join("、")}`,
+			);
 			return;
+		}
+		if (
+			!action.isDomainAction &&
+			!action.isAssistFollowUp &&
+			nextSkill.includes("F")
+		) {
+			const hasHimekoNovaAssist = characters.some((c) =>
+				hasSkillEffect(c.name, "F", "himekoNovaAssist"),
+			);
+			if (!hasHimekoNovaAssist) {
+				const ownerNames =
+					getSkillEffectOwnerNames("F", "himekoNovaAssist").join("、") ||
+					"对应角色";
+				setMessage(`队伍中需要有 ${ownerNames} 才能填写 F`);
+				return;
+			}
+			if (hasSkillEffect(character.name, "F", "himekoNovaAssist")) {
+				setMessage("F 只能在姬子·启行以外的队友回合填写");
+				return;
+			}
+			if (!isAllyTarget(character.kind)) {
+				setMessage("F 只能在我方队友回合填写");
+				return;
+			}
 		}
 		if (!action.isDomainAction && !canUseSkillCode(character, nextSkill)) {
 			if (nextSkill.includes("A") && nextSkill.includes("E")) {
 				setMessage("A（普攻）和 E（战技）不能组合");
 			} else if (
 				nextSkill.includes("W") &&
+				hasSkillEffect(character.name, "W", "counterW") &&
+				hasSemanticFlag(character.name, "wOnlyInDomain")
+			) {
+				setMessage("W 只能在境界内填写");
+			} else if (
+				nextSkill.includes("W") &&
 				!hasSkillEffect(character.name, "W", "counterW")
 			) {
-				setMessage(
-					"只有名称为\u201c白厄\u201d或\u201cPhainon\u201d的角色可以填写 W",
-				);
-			} else if (
-				nextSkill.includes("F") &&
-				!hasSkillEffect(character.name, "F", "assistF")
-			) {
-				setMessage("只有名称包含\u201c姬子\u201d的角色可以填写 F");
+				const ownerNames =
+					getSkillEffectOwnerNames("W", "counterW").join("、") || "对应角色";
+				setMessage(`只有 ${ownerNames} 可以填写 W`);
 			} else if (!isCharacterTarget(character)) {
 				setMessage("只有角色可以填写技能");
 			}
@@ -409,10 +693,10 @@ export default function ActionSequence() {
 			const defaultSkill = action.isDomainAction
 				? ""
 				: getDefaultSkill(character, action.actionNo);
-			if (nextSkill === defaultSkill) {
+			if (!action.isAssistFollowUp && nextSkill === defaultSkill) {
 				delete next[action.key];
 			} else {
-				next[action.key] = nextSkill;
+				next[action.key] = savedSkill;
 			}
 			return next;
 		});
@@ -433,7 +717,10 @@ export default function ActionSequence() {
 
 	const selectAction = (actionKey: string, additive: boolean) => {
 		setSelectedActionKeys((prev) => {
-			if (!additive) return new Set([actionKey]);
+			if (!additive) {
+				if (prev.size === 1 && prev.has(actionKey)) return new Set();
+				return new Set([actionKey]);
+			}
 			const next = new Set(prev);
 			if (next.has(actionKey)) {
 				next.delete(actionKey);
@@ -473,11 +760,14 @@ export default function ActionSequence() {
 	const getPhainonDomainEquivalentSpeed = (action: GeneratedAction) => {
 		const character = charactersById[action.characterId];
 		if (!character) return action.speed;
+		const domainRule = getCounterWDomainRule(character.name);
 		const baseSpeed =
 			toPositiveNumber(character.baseSpeed, 0) > 0
 				? toPositiveNumber(character.baseSpeed, action.speed)
-				: 106.0;
-		const coeff = character.hasEidolon1 ? 0.66 : 0.6;
+				: domainRule.defaultBaseSpeed;
+		const coeff = character.hasEidolon1
+			? domainRule.eidolon1EquivalentSpeedCoefficient
+			: domainRule.normalEquivalentSpeedCoefficient;
 		return baseSpeed * coeff;
 	};
 
@@ -492,6 +782,24 @@ export default function ActionSequence() {
 			(candidate) => candidate.key === `${match[1]}${previousIndex}`,
 		);
 		return previousAction?.actionValue ?? action.actionValue;
+	};
+
+	const getAdvancedActionValue = (
+		action: GeneratedAction,
+		value: number,
+		actionSpeed: number,
+	) => {
+		if (action.isDomainAction && value > 0) {
+			const lowerBound = getPreviousDomainActionValue(action);
+			const remainingActionValue = Math.max(0, action.actionValue - lowerBound);
+			const shifted =
+				action.actionValue - (remainingActionValue * Math.min(value, 100)) / 100;
+			return Math.max(lowerBound, shifted);
+		}
+		if (value > 0) {
+			return action.actionValue * (1 - value / 100);
+		}
+		return action.actionValue - (value * 100) / actionSpeed;
 	};
 
 	const applyActionOperation = () => {
@@ -510,9 +818,6 @@ export default function ActionSequence() {
 		}
 
 		if (actionOperation === "advance") {
-			const minActionValue = Math.min(
-				...selectedActions.map((action) => action.actionValue),
-			);
 			setOverrides((prev) => {
 				const next = { ...prev };
 				for (const action of selectedActions) {
@@ -520,26 +825,18 @@ export default function ActionSequence() {
 					const actionSpeed = action.isDomainAction
 						? getPhainonDomainEquivalentSpeed(action)
 						: action.speed;
-					const shifted = action.actionValue - (value * 100) / actionSpeed;
-					if (action.isDomainAction) {
-						const lowerBound = getPreviousDomainActionValue(action);
-						next[action.key] = formatEditableNumber(
-							Math.max(0, Math.max(lowerBound, shifted)),
-						);
-						continue;
-					}
-					const shouldClampToSelectedMinimum =
-						value > 0 && action.actionValue > minActionValue;
-					const clamped = shouldClampToSelectedMinimum
-						? Math.max(minActionValue, shifted)
-						: shifted;
 					next[action.key] = formatEditableNumber(
-						Math.max(0, clamped),
+						Math.min(
+							displayedActionLimit,
+							Math.max(0, getAdvancedActionValue(action, value, actionSpeed)),
+						),
 					);
 				}
 				return next;
 			});
-			setMessage(`已调整 ${selectedActions.length} 条行动的行动值`);
+			setMessage(
+				`已调整 ${selectedActions.length} 条行动的行动值，超出显示上限的结果已自动贴边`,
+			);
 		} else {
 			const missingBaseSpeed = selectedActions.some((action) => {
 				const character = charactersById[action.characterId];
@@ -602,6 +899,7 @@ export default function ActionSequence() {
 	const buildExportData = (): SavedData => ({
 		limitPreset,
 		customLimit,
+		displayedLimit,
 		characters: characters.map(withoutCharacterOnlyEffects),
 		resources,
 		overrides,
@@ -609,6 +907,9 @@ export default function ActionSequence() {
 		domainEndOverrides,
 		speedAdjustments,
 		skillTargets,
+		defaultSkillTargets,
+		odeSelections,
+		memeSelections,
 		ultInterrupts,
 		resourceValues,
 	});
@@ -646,6 +947,10 @@ export default function ActionSequence() {
 
 	const exportImage = async () => {
 		if (!imageExportRef.current) return;
+		if (actions.length > 100) {
+			setMessage("当前行动数超过 100，已锁定图片导出以避免图片过大");
+			return;
+		}
 
 		try {
 			setIsExportingImage(true);
@@ -667,11 +972,12 @@ export default function ActionSequence() {
 					target.scrollHeight + exportPadding,
 				),
 				onclone: (_clonedDocument, clonedElement) => {
-					// 替换所有 oklch/oklab 颜色为十六进制，避免 html2canvas 解析失败
+					inlineExportSafeColors(target, clonedElement);
+					// 克隆节点已写入计算后的颜色；剩余未用到的 oklch/oklab 规则改成透明值，避免 html2canvas 解析失败。
 					_clonedDocument.querySelectorAll("style").forEach((style) => {
 						style.textContent = style.textContent.replace(
 							/oklch\([^)]+\)|oklab\([^)]+\)/g,
-							"inherit",
+							"rgba(0, 0, 0, 0)",
 						);
 					});
 					clonedElement.style.boxSizing = "border-box";
@@ -754,6 +1060,7 @@ export default function ActionSequence() {
 			if (!Array.isArray(parsed.characters)) {
 				throw new Error("characters 缺失");
 			}
+			const savedDisplayedActionLimit = getSavedDisplayedActionLimit(parsed);
 
 			setCharacters(
 				parsed.characters.map((character, index) =>
@@ -784,17 +1091,28 @@ export default function ActionSequence() {
 					: "150",
 			);
 			setCustomLimit(String(parsed.customLimit ?? ""));
+			setDisplayedLimit(
+				String(parsed.displayedLimit ?? getSavedDisplayedLimitFallback(parsed)),
+			);
 			setResources(
 				Array.isArray(parsed.resources)
 					? parsed.resources.slice(0, maxResources).map(String)
 					: [],
 			);
-			setOverrides(parsed.overrides ?? {});
+			setOverrides(
+				clampOverridesToDisplayedLimit(
+					parsed.overrides,
+					savedDisplayedActionLimit,
+				),
+			);
 			setUltOverrides(parsed.ultOverrides ?? {});
 			setSkillOverrides(parsed.skillOverrides ?? {});
 			setDomainEndOverrides(parsed.domainEndOverrides ?? {});
 			setSpeedAdjustments(parsed.speedAdjustments ?? {});
 			setSkillTargets(parsed.skillTargets ?? {});
+			setDefaultSkillTargets(parsed.defaultSkillTargets ?? {});
+			setOdeSelections(parsed.odeSelections ?? {});
+			setMemeSelections(parsed.memeSelections ?? {});
 			setUltInterrupts(parsed.ultInterrupts ?? {});
 			setResourceValues(parsed.resourceValues ?? {});
 			setSelectedActionKeys(new Set());
@@ -841,6 +1159,8 @@ export default function ActionSequence() {
 				setLimitPreset,
 				customLimit,
 				setCustomLimit,
+				displayedLimit,
+				setDisplayedLimit,
 				resources,
 				setResources,
 				overrides,
@@ -855,6 +1175,12 @@ export default function ActionSequence() {
 				setSpeedAdjustments,
 				skillTargets,
 				setSkillTargets,
+				defaultSkillTargets,
+				setDefaultSkillTargets,
+				odeSelections,
+				setOdeSelections,
+				memeSelections,
+				setMemeSelections,
 				ultInterrupts,
 				setUltInterrupts,
 				resourceValues,
@@ -895,6 +1221,8 @@ export default function ActionSequence() {
 				addTarget,
 				removeTarget,
 				updateResourceValue,
+				cancelHimekoNovaAssist,
+				updateSkillTarget,
 				updateActionSkill,
 				selectAction,
 				openActionMenu,
