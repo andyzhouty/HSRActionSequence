@@ -1,204 +1,715 @@
 {
-	"characters": [
-		{
-			"names": ["布洛妮娅", "鸭", "鸭鸭", "Bronya"],
-			"effects": {
-				"A": "selfAdvance30",
-				"E": "allyPullToCurrent"
-			}
-		},
-		{
-			"names": ["星期日", "周日", "Sunday"],
-			"effects": {
-				"E": "allyPullToCurrent"
-			}
-		},
-		{
-			"names": ["花火", "Sparkle"],
-			"effects": {
-				"E": "allyAdvance50NotPast"
-			}
-		},
-		{
-			"names": ["知更鸟", "鸟", "Robin"],
-			"effects": {
-				"Q": "robinUltimate"
-			},
-			"passives": ["firstActionAdvance25"]
-		},
-		{
-			"names": ["开拓者·记忆", "记忆主", "RMC", "Memory Trailblazer"],
-			"effects": {
-				"E": "summonMeme",
-				"M": "memeAdvance"
-			},
-			"effectRules": {
-				"memeAdvance": {
-					"memospriteName": "迷迷",
-					"memospriteSkill": "拉条",
-					"memospriteSpeed": 130,
-					"advancePercent": 100
-				}
-			},
-			"passives": ["firstActionAdvance30"]
-		},
-		{
-			"names": ["白厄", "Phainon"],
-			"effects": {
-				"W": "counterW"
-			},
-			"effectRules": {
-				"counterW": {
-					"domain": {
-						"defaultBaseSpeed": 106.0,
-						"normalEquivalentSpeedCoefficient": 0.6,
-						"eidolon1EquivalentSpeedCoefficient": 0.66,
-						"extraActionCount": 8,
-						"endSpeedBonusBaseSpeedRatio": 0.15,
-						"defaultResources": ["火种", "毁伤"],
-						"allowedSkills": ["", "E", "EW", "EA", "A", "W"],
-						"finalSkill": "Q"
-					}
-				}
-			},
-			"semantics": ["wOnlyInDomain"]
-		},
-		{
-			"names": ["姬子"],
-			"semantics": ["ambiguousBaseName"]
-		},
-		{
-			"names": ["姬子·启行", "Himeko Nova"],
-			"effects": {
-				"F": "himekoNovaAssist"
-			},
-			"effectRules": {
-				"himekoNovaAssist": {
-					"trigger": "allyTurn",
-					"excludeSelf": true,
-					"generatedActionSkill": "F",
-					"generatedActionOrder": "beforeTargetBeforeInterrupts",
-					"targetActionTreatment": "sameActionValueExtraTurn"
-				}
-			}
-		},
-		{
-			"names": ["刻律德菈", "刻律", "刻", "Cerydra"],
-			"effects": {
-				"E": "allyTargetSelectable"
-			}
-		},
-		{
-			"names": ["昔涟", "Cyrene"],
-			"effects": {
-				"Q": "cyreneUltimate"
-			},
-			"effectRules": {
-				"cyreneUltimate": {
-					"memospriteName": "德谬歌",
-					"memospriteSkill": "Q",
-					"defaultResources": ["追忆"],
-					"genericOde": {
-						"code": "generic",
-						"label": "诗篇",
-						"fullName": "诗篇",
-						"targetNames": [],
-						"duration": "turns",
-						"turns": 2
-					},
-					"odes": [
-						{
-							"code": "genesis",
-							"label": "创世",
-							"fullName": "创世之诗",
-							"targetNames": ["开拓者·记忆", "记忆主", "RMC"],
-							"duration": "battle"
-						},
-						{
-							"code": "passage",
-							"label": "门径",
-							"fullName": "门径之诗",
-							"targetNames": ["缇宝", "Tribbie"],
-							"duration": "battle"
-						},
-						{
-							"code": "lifeDeath",
-							"label": "生死",
-							"fullName": "生死之诗",
-							"targetNames": ["遐蝶", "Castorice"],
-							"duration": "battle"
-						},
-						{
-							"code": "trickery",
-							"label": "诡计",
-							"fullName": "诡计之诗",
-							"targetNames": ["赛飞儿", "猫", "猫猫", "Cipher"],
-							"duration": "battle"
-						},
-						{
-							"code": "worldbearing",
-							"label": "负世",
-							"fullName": "负世之诗",
-							"targetNames": ["白厄", "Phainon"],
-							"duration": "battle",
-							"effects": ["endlessCounterWDomain"]
-						},
-						{
-							"code": "law",
-							"label": "律法",
-							"fullName": "律法之诗",
-							"targetNames": ["刻律德菈", "刻律", "刻", "Cerydra"],
-							"duration": "battle"
-						},
-						{
-							"code": "time",
-							"label": "岁月",
-							"fullName": "岁月之诗",
-							"targetNames": ["长夜月", "月", "Evernight"],
-							"duration": "battle"
-						},
-						{
-							"code": "earth",
-							"label": "大地",
-							"fullName": "献予大地之诗",
-							"targetNames": ["丹恒·腾荒", "盾丹", "DHPT"],
-							"duration": "battle"
-						},
-						{
-							"code": "reason",
-							"label": "理性",
-							"fullName": "理性之诗",
-							"targetNames": ["那刻夏", "夏", "Anaxa"],
-							"duration": "nextTurn",
-							"effects": ["immediateTurn"]
-						},
-						{
-							"code": "strife",
-							"label": "纷争",
-							"fullName": "纷争之诗",
-							"targetNames": ["万敌", "Mydei"],
-							"duration": "extraTurn",
-							"effects": ["immediateEnhancedSkill"]
-						},
-						{
-							"code": "ocean",
-							"label": "海洋",
-							"fullName": "海洋之诗",
-							"targetNames": ["海瑟音", "Hysilens"],
-							"duration": "nextAttack"
-						},
-						{
-							"code": "sky",
-							"label": "天空",
-							"fullName": "天空之诗",
-							"targetNames": ["风堇", "Hyacine"],
-							"duration": "stacks",
-							"stacks": 2
-						}
-					]
-				}
-			},
-			"semantics": ["noDefaultSkillTarget"]
-		}
-	]
+    "characters": [
+        {
+            "cid": "1001",
+            "names": ["三月七", "三月", "March 7th", "盾三"],
+            "semantics": ["ambiguousBaseName"],
+            "path": "Preservation"
+        },
+        {
+            "cid": "1002",
+            "names": ["丹恒", "Dan Heng"],
+            "semantics": ["ambiguousBaseName"],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1003",
+            "names": ["姬子"],
+            "semantics": ["ambiguousBaseName"],
+            "path": "Erudition"
+        },
+        {
+            "cid": "1004",
+            "names": ["瓦尔特", "Welt", "杨叔", "老杨"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1005",
+            "names": ["卡芙卡", "Kafka", "卡妈"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1006",
+            "names": ["银狼", "Silver Wolf"],
+            "semantics": ["ambiguousBaseName"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1008",
+            "names": ["阿兰", "Arlan"],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1009",
+            "names": ["艾丝妲", "Asta"],
+            "path": "Harmony"
+        },
+        {
+            "cid": "1013",
+            "names": ["黑塔", "黑塔女士", "Herta", "小黑塔"],
+            "semantics": ["ambiguousBaseName"],
+            "path": "Erudition"
+        },
+        {
+            "cid": "1014",
+            "names": ["Saber", "阿尔托莉雅", "c8", "C8", "呆毛王"],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1015",
+            "names": ["Archer", "卫宫", "红A", "卫宫士郎"],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1101",
+            "names": ["布洛妮娅", "鸭", "鸭鸭", "Bronya"],
+            "effects": {
+                "A": "selfAdvance30",
+                "E": "allyPullToCurrent"
+            },
+            "path": "Harmony"
+        },
+        {
+            "cid": "1102",
+            "names": ["希儿", "Seele", "希尔"],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1103",
+            "names": ["希露瓦", "Serval", "希露瓦姐姐"],
+            "path": "Erudition"
+        },
+        {
+            "cid": "1104",
+            "names": ["杰帕德", "Gepard", "杰哥"],
+            "path": "Preservation"
+        },
+        {
+            "cid": "1105",
+            "names": ["娜塔莎", "Natasha", "娜塔"],
+            "path": "Abundance"
+        },
+        {
+            "cid": "1106",
+            "names": ["佩拉", "Pela"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1107",
+            "names": ["克拉拉", "Clara", "克拉"],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1108",
+            "names": ["桑博", "Sampo"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1109",
+            "names": ["虎克", "Hook"],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1110",
+            "names": ["玲可", "Lynx"],
+            "path": "Abundance"
+        },
+        {
+            "cid": "1111",
+            "names": ["卢卡", "Luka"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1112",
+            "names": ["托帕&账账", "托帕", "账账", "Topaz", "Numby"],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1201",
+            "names": ["青雀", "Qingque", "雀"],
+            "path": "Erudition"
+        },
+        {
+            "cid": "1202",
+            "names": ["停云", "Tingyun"],
+            "path": "Harmony"
+        },
+        {
+            "cid": "1203",
+            "names": ["罗刹", "Luocha"],
+            "path": "Abundance"
+        },
+        {
+            "cid": "1204",
+            "names": ["景元", "Jing Yuan", "景元元"],
+            "path": "Erudition"
+        },
+        {
+            "cid": "1205",
+            "names": ["刃", "Blade", "阿刃"],
+            "semantics": ["ambiguousBaseName"],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1206",
+            "names": ["素裳", "Sushang"],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1207",
+            "names": ["驭空", "Yukong"],
+            "path": "Harmony"
+        },
+        {
+            "cid": "1208",
+            "names": ["符玄", "Fu Xuan", "太卜"],
+            "path": "Preservation"
+        },
+        {
+            "cid": "1209",
+            "names": ["彦卿", "Yanqing", "彦卿卿"],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1210",
+            "names": ["桂乃芬", "Guinaifen", "小桂子"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1211",
+            "names": ["白露", "Bailu"],
+            "path": "Abundance"
+        },
+        {
+            "cid": "1212",
+            "names": ["镜流", "Jingliu"],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1213",
+            "names": [
+                "丹恒·饮月",
+                "丹恒•饮月",
+                "饮月",
+                "龙丹",
+                "Dan Heng • Imbibitor Lunae",
+                "DHIL"
+            ],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1214",
+            "names": ["雪衣", "Xueyi"],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1215",
+            "names": ["寒鸦", "Hanya"],
+            "path": "Harmony"
+        },
+        {
+            "cid": "1217",
+            "names": ["藿藿", "Huohuo", "霍霍"],
+            "path": "Abundance"
+        },
+        {
+            "cid": "1218",
+            "names": ["椒丘", "Jiaoqiu"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1220",
+            "names": ["飞霄", "Feixiao", "飞霄将军", "大飞"],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1221",
+            "names": ["云璃", "Yunli"],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1222",
+            "names": ["灵砂", "Lingsha"],
+            "path": "Abundance"
+        },
+        {
+            "cid": "1223",
+            "names": ["貊泽", "Moze"],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1224",
+            "names": [
+                "三月七·巡猎",
+                "三月七•巡猎",
+                "巡猎三月七",
+                "巡三",
+                "剑三",
+                "March 7th Hunt",
+                "Hunt March 7th"
+            ],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1225",
+            "names": ["忘归人", "Fugue", "停云·忘归人"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1301",
+            "names": ["加拉赫", "Gallagher", "老狗"],
+            "path": "Abundance"
+        },
+        {
+            "cid": "1302",
+            "names": ["银枝", "Argenti"],
+            "path": "Erudition"
+        },
+        {
+            "cid": "1303",
+            "names": ["阮梅", "Ruan Mei"],
+            "path": "Harmony"
+        },
+        {
+            "cid": "1304",
+            "names": ["砂金", "Aventurine", "砂金石"],
+            "path": "Preservation"
+        },
+        {
+            "cid": "1305",
+            "names": ["真理医生", "Dr. Ratio", "真理"],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1306",
+            "names": ["花火", "Sparkle"],
+            "effects": {
+                "E": "allyAdvance50NotPast"
+            },
+            "path": "Harmony"
+        },
+        {
+            "cid": "1307",
+            "names": ["黑天鹅", "Black Swan"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1308",
+            "names": ["黄泉", "Acheron", "泉姐"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1309",
+            "names": ["知更鸟", "鸟", "Robin"],
+            "effects": {
+                "Q": "robinUltimate"
+            },
+            "passives": ["firstActionAdvance25"],
+            "path": "Harmony"
+        },
+        {
+            "cid": "1310",
+            "names": ["流萤", "Firefly"],
+            "effects": {
+                "Q": "fireflyCombustion"
+            },
+            "effectRules": {
+                "fireflyCombustion": {
+                    "countdownName": "完全燃烧倒计时",
+                    "countdownSpeed": 70,
+                    "speedBonus": 60,
+                    "allowedSkills": ["", "A", "E"],
+                    "breakLabel": "击破",
+                    "breakDelayPercent": 10,
+                    "maxBreakDelayTriggers": 3,
+                    "eidolonExtraTurn": 2
+                }
+            },
+            "path": "Destruction"
+        },
+        {
+            "cid": "1312",
+            "names": ["米沙", "Misha"],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1313",
+            "names": ["星期日", "周日", "Sunday"],
+            "effects": {
+                "E": "allyPullToCurrent"
+            },
+            "path": "Harmony"
+        },
+        {
+            "cid": "1314",
+            "names": ["翡翠", "Jade"],
+            "path": "Erudition"
+        },
+        {
+            "cid": "1315",
+            "names": ["波提欧", "Boothill", "波波"],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1317",
+            "names": ["乱破", "Rappa"],
+            "path": "Erudition"
+        },
+        {
+            "cid": "1321",
+            "names": ["大丽花", "The Dahlia", "康士坦丝", "康"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1401",
+            "names": ["大黑塔", "The Herta"],
+            "path": "Erudition"
+        },
+        {
+            "cid": "1402",
+            "names": ["阿格莱雅", "阿雅", "Aglaea", "阿格"],
+            "effects": {
+                "E": "summonGarmentmaker",
+                "Q": "aglaeaSupreme"
+            },
+            "effectRules": {
+                "summonGarmentmaker": {
+                    "memospriteName": "衣匠",
+                    "memospriteSkill": "刺纹之陷",
+                    "memospriteSpeed": 35,
+                    "countdownName": "至高之姿倒计时",
+                    "countdownSpeed": 100,
+                    "stackSpeedBonus": 55,
+                    "maxStacks": 6,
+                    "eidolon4MaxStacks": 7,
+                    "aglaeaSpeedBonusRatioPerStack": 0.15,
+                    "retainedStacksAfterDismiss": 1,
+                    "allowedSupremeSkills": ["", "A", "Q"]
+                }
+            },
+            "path": "Remembrance"
+        },
+        {
+            "cid": "1403",
+            "names": ["缇宝", "Tribbie"],
+            "path": "Harmony"
+        },
+        {
+            "cid": "1404",
+            "names": ["万敌", "Mydei"],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1405",
+            "names": ["那刻夏", "Anaxa"],
+            "path": "Erudition"
+        },
+        {
+            "cid": "1406",
+            "names": ["赛飞儿", "Cipher", "猫", "猫猫"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1407",
+            "names": ["遐蝶", "Castorice"],
+            "path": "Remembrance"
+        },
+        {
+            "cid": "1408",
+            "names": ["白厄", "Phainon"],
+            "effects": {
+                "W": "counterW"
+            },
+            "effectRules": {
+                "counterW": {
+                    "domain": {
+                        "defaultBaseSpeed": 106.0,
+                        "normalEquivalentSpeedCoefficient": 0.6,
+                        "eidolon1EquivalentSpeedCoefficient": 0.66,
+                        "extraActionCount": 8,
+                        "endSpeedBonusBaseSpeedRatio": 0.15,
+                        "defaultResources": ["火种", "毁伤"],
+                        "allowedSkills": ["", "E", "EW", "EA", "A", "W"],
+                        "finalSkill": "Q",
+                        "enemyTriggerSkills": ["W", "EW"]
+                    }
+                }
+            },
+            "semantics": ["wOnlyInDomain"],
+            "path": "Destruction"
+        },
+        {
+            "cid": "1409",
+            "names": ["风堇", "Hyacine"],
+            "path": "Remembrance"
+        },
+        {
+            "cid": "1410",
+            "names": ["海瑟音", "Hysilens"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1412",
+            "names": ["刻律德菈", "刻律", "刻", "Cerydra"],
+            "effects": {
+                "E": "allyTargetSelectable"
+            },
+            "path": "Harmony"
+        },
+        {
+            "cid": "1413",
+            "names": ["长夜月", "月", "Evernight"],
+            "path": "Remembrance"
+        },
+        {
+            "cid": "1414",
+            "names": [
+                "丹恒·腾荒",
+                "丹恒•腾荒",
+                "盾丹",
+                "DHPT",
+                "Dan Heng • Permansor Terrae"
+            ],
+            "passives": ["firstActionAdvance40"],
+            "path": "Preservation"
+        },
+        {
+            "cid": "1415",
+            "names": ["昔涟", "Cyrene"],
+            "effects": {
+                "Q": "cyreneUltimate"
+            },
+            "effectRules": {
+                "cyreneUltimate": {
+                    "memospriteName": "德谬歌",
+                    "memospriteSkill": "Q",
+                    "defaultResources": ["追忆"],
+                    "genericOde": {
+                        "code": "generic",
+                        "label": "诗篇",
+                        "fullName": "诗篇",
+                        "targetNames": [],
+                        "duration": "turns",
+                        "turns": 2
+                    },
+                    "odes": [
+                        {
+                            "code": "genesis",
+                            "label": "创世",
+                            "fullName": "创世之诗",
+                            "targetNames": ["开拓者·记忆", "记忆主", "RMC"],
+                            "duration": "battle"
+                        },
+                        {
+                            "code": "passage",
+                            "label": "门径",
+                            "fullName": "门径之诗",
+                            "targetNames": ["缇宝", "Tribbie"],
+                            "duration": "battle"
+                        },
+                        {
+                            "code": "lifeDeath",
+                            "label": "生死",
+                            "fullName": "生死之诗",
+                            "targetNames": ["遐蝶", "Castorice"],
+                            "duration": "battle"
+                        },
+                        {
+                            "code": "trickery",
+                            "label": "诡计",
+                            "fullName": "诡计之诗",
+                            "targetNames": ["赛飞儿", "猫", "猫猫", "Cipher"],
+                            "duration": "battle"
+                        },
+                        {
+                            "code": "worldbearing",
+                            "label": "负世",
+                            "fullName": "负世之诗",
+                            "targetNames": ["白厄", "Phainon"],
+                            "duration": "battle",
+                            "effects": ["endlessCounterWDomain"]
+                        },
+                        {
+                            "code": "law",
+                            "label": "律法",
+                            "fullName": "律法之诗",
+                            "targetNames": [
+                                "刻律德菈",
+                                "刻律",
+                                "刻",
+                                "Cerydra"
+                            ],
+                            "duration": "battle"
+                        },
+                        {
+                            "code": "time",
+                            "label": "岁月",
+                            "fullName": "岁月之诗",
+                            "targetNames": ["长夜月", "月", "Evernight"],
+                            "duration": "battle"
+                        },
+                        {
+                            "code": "earth",
+                            "label": "大地",
+                            "fullName": "大地之诗",
+                            "targetNames": ["丹恒·腾荒", "盾丹", "DHPT"],
+                            "duration": "battle"
+                        },
+                        {
+                            "code": "reason",
+                            "label": "理性",
+                            "fullName": "理性之诗",
+                            "targetNames": ["那刻夏", "夏", "Anaxa"],
+                            "duration": "nextTurn",
+                            "effects": ["immediateTurn"]
+                        },
+                        {
+                            "code": "strife",
+                            "label": "纷争",
+                            "fullName": "纷争之诗",
+                            "targetNames": ["万敌", "Mydei"],
+                            "duration": "extraTurn",
+                            "effects": ["immediateEnhancedSkill"]
+                        },
+                        {
+                            "code": "ocean",
+                            "label": "海洋",
+                            "fullName": "海洋之诗",
+                            "targetNames": ["海瑟音", "Hysilens"],
+                            "duration": "nextAttack"
+                        },
+                        {
+                            "code": "sky",
+                            "label": "天空",
+                            "fullName": "天空之诗",
+                            "targetNames": ["风堇", "Hyacine"],
+                            "duration": "stacks",
+                            "stacks": 2
+                        }
+                    ]
+                }
+            },
+            "semantics": ["noDefaultSkillTarget"],
+            "path": "Remembrance"
+        },
+        {
+            "cid": "1501",
+            "names": ["火花", "Sparxie"],
+            "path": "Elation"
+        },
+        {
+            "cid": "1502",
+            "names": ["爻光", "Yao Guang"],
+            "path": "Elation"
+        },
+        {
+            "cid": "1504",
+            "names": ["不死途", "Ashveil"],
+            "path": "Hunt"
+        },
+        {
+            "cid": "1505",
+            "names": ["绯英", "Evanescia", "绯"],
+            "path": "Elation"
+        },
+        {
+            "cid": "1506",
+            "names": [
+                "银狼LV.999",
+                "Silver Wolf LV.999",
+                "sp银狼",
+                "SP银狼",
+                "银狼lv999",
+                "银狼Lv999",
+                "银狼LV999",
+                "银狼999",
+                "9狼"
+            ],
+            "path": "Elation"
+        },
+        {
+            "cid": "1507",
+            "names": ["千冶·刃", "千冶•刃", "sp刃", "千冶刃", "Mortenax Blade"],
+            "path": "Nihility"
+        },
+        {
+            "cid": "1508",
+            "names": ["远坂凛", "Rin Tohsaka", "凛"]
+        },
+        {
+            "cid": "1509",
+            "names": ["吉尔伽美什", "Gilgamesh", "金闪闪", "闪"]
+        },
+        {
+            "cid": "1510",
+            "names": [
+                "姬子·启行",
+                "姬子启行",
+                "sp姬子",
+                "SP姬子",
+                "Himeko Nova"
+            ],
+            "effects": {
+                "F": "himekoNovaAssist"
+            },
+            "effectRules": {
+                "himekoNovaAssist": {
+                    "trigger": "allyTurn",
+                    "excludeSelf": true,
+                    "generatedActionSkill": "F",
+                    "generatedActionOrder": "beforeTargetBeforeInterrupts",
+                    "targetActionTreatment": "sameActionValueExtraTurn"
+                }
+            },
+            "path": "Erudition"
+        },
+        {
+            "cid": "8002",
+            "names": [
+                "开拓者·毁灭",
+                "毁灭主",
+                "DMC",
+                "Destruction Trailblazer"
+            ],
+            "path": "Destruction"
+        },
+        {
+            "cid": "8004",
+            "names": [
+                "开拓者·存护",
+                "存护主",
+                "PMC",
+                "Preservation Trailblazer"
+            ],
+            "path": "Preservation"
+        },
+        {
+            "cid": "8006",
+            "names": ["开拓者·同谐", "同谐主", "HMC", "Harmony Trailblazer"],
+            "path": "Harmony"
+        },
+        {
+            "cid": "8008",
+            "names": ["开拓者·记忆", "记忆主", "RMC", "Memory Trailblazer"],
+            "effects": {
+                "E": "summonMeme",
+                "M": "memeAdvance"
+            },
+            "effectRules": {
+                "memeAdvance": {
+                    "memospriteName": "迷迷",
+                    "memospriteSkill": "拉条",
+                    "memospriteSpeed": 130,
+                    "advancePercent": 100
+                }
+            },
+            "passives": ["firstActionAdvance30"],
+            "path": "Remembrance"
+        },
+        {
+            "cid": "8010",
+            "names": ["开拓者·欢愉", "欢愉主", "EMC", "Elation Trailblazer"],
+            "path": "Elation"
+        }
+    ]
 }

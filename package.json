@@ -1,7 +1,7 @@
 {
   "name": "hsractionsequence",
   "private": true,
-  "version": "2026.6.28-3",
+  "version": "2026.6.28-4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,7 +14,7 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "~2.7.1",
     "@tauri-apps/plugin-opener": "^2",
-    "html2canvas": "^1.4.1",
+    "modern-screenshot": "^4.7.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "tailwindcss": "^4.3.1",
