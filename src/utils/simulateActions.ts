@@ -828,12 +828,8 @@ export function simulateActions(
                 activateCombustion(
                     states,
                     casterIndex,
-                    actions,
-                    `${key}-interrupt-${idx}`,
                     caster.character,
-                    caster.actionNo,
                     actionValue,
-                    input,
                 );
             }
             // 插队大招触发阿格莱雅至高之姿，并使自身立即行动。
@@ -1053,12 +1049,8 @@ export function simulateActions(
                 activateCombustion(
                     states,
                     stateIndex,
-                    actions,
-                    key,
                     character,
-                    actionNo,
                     actionValue,
-                    input,
                 );
                 justActivatedCombustion = true;
             }
@@ -1220,7 +1212,6 @@ export function simulateActions(
                 // ── 流萤 完全燃烧中击破触发 ──
                 if (
                     shouldCheckBreakTrigger(
-                        character,
                         states[stateIndex].isInCompleteCombustion,
                         usesUltimate,
                     )

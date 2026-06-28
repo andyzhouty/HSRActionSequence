@@ -166,12 +166,8 @@ export function shouldActivateCombustion(
 export function activateCombustion(
     states: FireflyActionState[],
     stateIndex: number,
-    actions: GeneratedAction[],
-    key: string,
     character: CharacterConfig,
-    actionNo: number,
     actionValue: number,
-    input: SimulateActionsInput,
 ) {
     const rule = getFireflyCombustionRule(character.name);
     // 激活完全燃烧
@@ -217,7 +213,6 @@ export function hasCombustionExtraTurn(character: CharacterConfig): boolean {
 }
 
 export function shouldCheckBreakTrigger(
-    character: CharacterConfig,
     combustionActive: boolean | undefined,
     usesUltimate: boolean,
 ): boolean {
