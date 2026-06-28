@@ -1,15 +1,20 @@
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { save } from "@tauri-apps/plugin-dialog";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
+import * as XLSX from "xlsx";
 import type {
 	GeneratedAction,
 	SpeedChangeMode,
 } from "../../utils/actionSequence";
 import {
+	ensureFileExtension,
 	formatEditableNumber,
 	formatActionValue,
 	getCharacterDisplayName,
 	getCounterWDomainRule,
 	getCyreneUltimateRule,
+	getErrorMessage,
 	getMemeAdvanceRule,
 	getOdeRuleForTarget,
 	getTargetDefaultName,
@@ -155,6 +160,7 @@ export default function ActionPanel() {
 							? "图片过大"
 							: "导出图片"}
 				</button>
+				<ExportExcelButton />
 			</div>
 
 			{/* Floating menu */}
@@ -1309,4 +1315,76 @@ function SkillTargetInline({ action }: { action: GeneratedAction }) {
 	}
 
 	return null;
+}
+
+function ExportExcelButton() {
+	const ctx = useActionSequence();
+	const [exporting, setExporting] = useState(false);
+
+	const doExport = useCallback(async () => {
+		if (ctx.actions.length === 0) {
+			ctx.setMessage("没有行动数据可导出");
+			return;
+		}
+		try {
+			setExporting(true);
+			const header = ["序号", "角色", "动数", "行动值", "技能"];
+			for (const r of ctx.resources) {
+				header.push(r || `资源`);
+			}
+			const rows = ctx.actions.map((a, i) => {
+				const row: (string | number)[] = [
+					i + 1,
+					ctx.characterNames[a.characterId] ?? a.characterId,
+					a.isDomainAction ? `境界${a.actionNo}` : `第${a.actionNo}动`,
+					Number.parseFloat(formatActionValue(a.actionValue)),
+					a.skill,
+				];
+				for (const r of ctx.resources) {
+					row.push(ctx.resourceValues[a.key]?.[r] ?? "");
+				}
+				return row;
+			});
+			const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+			ws["!cols"] = [
+				{ wch: 6 },
+				{ wch: 10 },
+				{ wch: 8 },
+				{ wch: 10 },
+				{ wch: 6 },
+				...ctx.resources.map(() => ({ wch: 10 })),
+			];
+			const wb = XLSX.utils.book_new();
+			XLSX.utils.book_append_sheet(wb, ws, "行动序列");
+			const base64 = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
+
+			const selectedPath = await save({
+				title: "导出 Excel",
+				defaultPath: `action-sequence-${Date.now()}.xlsx`,
+				filters: [{ name: "Excel", extensions: ["xlsx"] }],
+			});
+			if (!selectedPath) {
+				setExporting(false);
+				return;
+			}
+			const filePath = ensureFileExtension(selectedPath, ".xlsx");
+			await invoke("write_base64_file", { path: filePath, dataBase64: base64 });
+			ctx.setMessage(`已导出 Excel 文件：${filePath}`);
+		} catch (error) {
+			ctx.setMessage(`Excel 导出失败：${getErrorMessage(error)}`);
+		} finally {
+			setExporting(false);
+		}
+	}, [ctx.actions, ctx.characterNames, ctx.resources, ctx.resourceValues]);
+
+	return (
+		<button
+			type="button"
+			onClick={doExport}
+			disabled={exporting}
+			className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-gray-600"
+		>
+			{exporting ? "生成中..." : "导出 Excel"}
+		</button>
+	);
 }

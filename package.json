@@ -1,7 +1,7 @@
 {
   "name": "hsractionsequence",
   "private": true,
-  "version": "2026.6.28-2",
+  "version": "2026.6.28-3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,7 +17,8 @@
     "html2canvas": "^1.4.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "tailwindcss": "^4.3.1"
+    "tailwindcss": "^4.3.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.1",

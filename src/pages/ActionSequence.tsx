@@ -973,11 +973,32 @@ export default function ActionSequence() {
 				),
 				onclone: (_clonedDocument, clonedElement) => {
 					inlineExportSafeColors(target, clonedElement);
-					// 克隆节点已写入计算后的颜色；剩余未用到的 oklch/oklab 规则改成透明值，避免 html2canvas 解析失败。
+					// 将原始文档的 <link> 样式表内容移入 <style> 并清理 oklch，避免 html2canvas 解析失败
+					document.querySelectorAll("link[rel=stylesheet]").forEach((link) => {
+						if (!(link instanceof HTMLLinkElement)) return;
+						let css = "";
+						try {
+							css = Array.from(link.sheet?.cssRules ?? [])
+								.map((rule) => rule.cssText)
+								.join("\n");
+						} catch {
+							return;
+						}
+						if (!css) return;
+						const style = _clonedDocument.createElement("style");
+						style.textContent = css.replace(
+							/oklch\([^)]*\)|oklab\([^)]*\)/gi,
+							"rgba(0,0,0,0)",
+						);
+						_clonedDocument.head.appendChild(style);
+					});
+					_clonedDocument
+						.querySelectorAll("link[rel=stylesheet]")
+						.forEach((link) => link.remove());
 					_clonedDocument.querySelectorAll("style").forEach((style) => {
 						style.textContent = style.textContent.replace(
-							/oklch\([^)]+\)|oklab\([^)]+\)/g,
-							"rgba(0, 0, 0, 0)",
+							/oklch\([^)]*\)|oklab\([^)]*\)/gi,
+							"rgba(0,0,0,0)",
 						);
 					});
 					clonedElement.style.boxSizing = "border-box";

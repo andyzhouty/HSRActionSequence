@@ -802,17 +802,6 @@ export function simulateActions(
 			}
 		}
 
-		if (!states[stateIndex].isMemeState) {
-			emitMemeAdvanceAction({
-				input,
-				actions,
-				states,
-				sourceKey: key,
-				actionValue,
-				activeOdes,
-			});
-		}
-
 		// 行动前插队（按添加顺序逐个执行）
 		if (!skipAssistFollowUp) {
 			for (let i = 0; i < beforeInterrupts.length; i++) {
@@ -1071,6 +1060,17 @@ export function simulateActions(
 			for (let i = 0; i < afterInterrupts.length; i++) {
 				emitInterrupt(interrupts.indexOf(afterInterrupts[i]));
 			}
+		}
+
+		if (!states[stateIndex].isMemeState) {
+			emitMemeAdvanceAction({
+				input,
+				actions,
+				states,
+				sourceKey: key,
+				actionValue,
+				activeOdes,
+			});
 		}
 	}
 

@@ -33,6 +33,14 @@ fn write_png_file(path: String, data_url: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn write_base64_file(path: String, data_base64: String) -> Result<(), String> {
+    let contents = general_purpose::STANDARD
+        .decode(&data_base64)
+        .map_err(|error| format!("Base64 解码失败：{error}"))?;
+    fs::write(&path, contents).map_err(|error| format!("文件写入失败：{error}"))
+}
+
+#[tauri::command]
 fn get_autosave_path(app: tauri::AppHandle) -> Result<String, String> {
     let app_dir = app
         .path()
@@ -55,6 +63,7 @@ pub fn run() {
             read_text_file,
             write_text_file,
             write_png_file,
+            write_base64_file,
             get_autosave_path
         ])
         .run(tauri::generate_context!())
