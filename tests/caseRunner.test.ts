@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { type CharacterConfig, type SkillCode, type UltInterrupt } from "../src/utils/actionSequence";
+import type {
+	CharacterConfig,
+	SkillCode,
+	UltInterrupt,
+} from "../src/utils/actionSequence";
 import { simulateActions } from "../src/utils/simulateActions";
 
 /** Helper: 创建角色配置 */
@@ -16,25 +20,31 @@ function char(
 	} = {},
 ): CharacterConfig {
 	return {
-		id, kind: "角色", name,
+		id,
+		kind: "角色",
+		name,
 		speed: String(speed),
 		baseSpeed: String(opts.baseSpeed ?? speed),
 		hasVonwacq: opts.vonwacq ?? false,
 		hasWindSet: opts.windSet ?? false,
 		hasDance: opts.dance ?? false,
-		hasEidolon1: (opts.eidolon ?? 0) >= 1,
-		hasEidolon2: (opts.eidolon ?? 0) >= 2,
-		hasEidolon4: (opts.eidolon ?? 0) >= 4,
+		eidolon: opts.eidolon ?? 0,
+		superimpose: 1,
+		lc_id: 0,
 	};
 }
 
 /** Helper: 技能覆盖 */
-function skillOverrides(entries: Record<string, string>): Record<string, SkillCode> {
+function skillOverrides(
+	entries: Record<string, string>,
+): Record<string, SkillCode> {
 	return entries as Record<string, SkillCode>;
 }
 
 /** Helper: 插队配置 */
-function interrupts(entries: Record<string, UltInterrupt[]>): Record<string, UltInterrupt[]> {
+function interrupts(
+	entries: Record<string, UltInterrupt[]>,
+): Record<string, UltInterrupt[]> {
 	return entries;
 }
 
@@ -82,7 +92,7 @@ function runWithSteps(
 			for (const [key, expectedAV] of steps.assertActionAV) {
 				const action = actions.find((a) => a.key === key);
 				expect(action, `未找到 key=${key}`).toBeDefined();
-				expect(action!.actionValue).toBeCloseTo(expectedAV, 2);
+				expect(action?.actionValue).toBeCloseTo(expectedAV, 2);
 			}
 		}
 
@@ -97,11 +107,13 @@ function runWithSteps(
 		if (steps.assertCountdownAV !== undefined) {
 			const countdown = actions.find((a) => a.displayName === "完全燃烧倒计时");
 			expect(countdown).toBeDefined();
-			expect(countdown!.actionValue).toBeCloseTo(steps.assertCountdownAV, 2);
+			expect(countdown?.actionValue).toBeCloseTo(steps.assertCountdownAV, 2);
 		}
 
 		if (steps.assertDomainCount !== undefined) {
-			expect(actions.filter((a) => a.isDomainAction).length).toBe(steps.assertDomainCount);
+			expect(actions.filter((a) => a.isDomainAction).length).toBe(
+				steps.assertDomainCount,
+			);
 		}
 
 		if (steps.assertDomainInterval) {
@@ -139,7 +151,12 @@ describe("白花鸭鸟", () => {
 			"鸭鸭-2": "E",
 			"白厄-3": "E",
 		}),
-		skillTargets: { "花火-1": "白厄", "花火-2": "白厄", "鸭鸭-1": "白厄", "鸭鸭-2": "白厄" },
+		skillTargets: {
+			"花火-1": "白厄",
+			"花火-2": "白厄",
+			"鸭鸭-1": "白厄",
+			"鸭鸭-2": "白厄",
+		},
 		ultInterrupts: interrupts({
 			"白厄-1": [{ casterId: "知更鸟", timing: "after" }],
 			"白厄-3": [
@@ -161,8 +178,16 @@ describe("流萤E2击破", () => {
 	runWithSteps("E2击破额外回合", {
 		characters: [
 			char("流萤", "流萤", 160, { baseSpeed: 104, eidolon: 2 }),
-			char("大丽花", "大丽花", 150, { eidolon: 1, windSet: true, vonwacq: true }),
-			char("忘归人", "忘归人", 150, { eidolon: 2, windSet: true, vonwacq: true }),
+			char("大丽花", "大丽花", 150, {
+				eidolon: 1,
+				windSet: true,
+				vonwacq: true,
+			}),
+			char("忘归人", "忘归人", 150, {
+				eidolon: 2,
+				windSet: true,
+				vonwacq: true,
+			}),
 			char("同谐主", "同谐主", 160, { eidolon: 6, dance: true, vonwacq: true }),
 		],
 		skillOverrides: skillOverrides({
@@ -178,8 +203,8 @@ describe("流萤E2击破", () => {
 			"流萤-1": [{ casterId: "流萤", timing: "after" }],
 		}),
 		fireflyBreakCounters: { "流萤-2": true, "流萤-2-break-extra-1": true },
-		assertActionAV: [["流萤-2-break-extra-1", 47.50]],
+		assertActionAV: [["流萤-2-break-extra-1", 47.5]],
 		assertCountdownAV: 218.93,
-		assertSpeed: { "流萤": 220 },
+		assertSpeed: { 流萤: 220 },
 	});
 });

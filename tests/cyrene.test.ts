@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import {
-	type CharacterConfig,
-	type SkillCode,
-	type UltInterrupt,
+import type {
+	CharacterConfig,
+	SkillCode,
+	UltInterrupt,
 } from "../src/utils/actionSequence";
 import {
-	simulateActions,
 	type SimulateActionsInput,
+	simulateActions,
 } from "../src/utils/simulateActions";
 
 function character(
@@ -24,9 +24,9 @@ function character(
 		hasVonwacq: false,
 		hasWindSet: false,
 		hasDance: false,
-		hasEidolon1: false,
-		hasEidolon2: false,
-		hasEidolon4: false,
+		eidolon: 0,
+		superimpose: 1,
+		lc_id: 0,
 		...overrides,
 	};
 }
@@ -52,9 +52,7 @@ function input(
 	};
 }
 
-function skills(
-	entries: Record<string, string>,
-): Record<string, SkillCode> {
+function skills(entries: Record<string, string>): Record<string, SkillCode> {
 	return entries;
 }
 
@@ -72,26 +70,25 @@ describe("Cyrene (昔涟)", () => {
 			input({
 				characters: [character("cyrene", "昔涟", 100)],
 				skillOverrides: skills({
-					"cyrene-1": "Q",
+					"cyrene-1": "AQ",
 				}),
 				limit: 210,
 			}),
 		);
 
-		expect(actions.map((a) => a.key).slice(0, 3)).toEqual([
+		expect(actions.map((a) => a.key).slice(0, 4)).toEqual([
 			"cyrene-1",
 			"cyrene-1-memosprite-Q",
+			"cyrene-1-q",
 			"cyrene-2",
 		]);
-		const memosprite = actions.find(
-			(a) => a.key === "cyrene-1-memosprite-Q",
-		);
+		const memosprite = actions.find((a) => a.key === "cyrene-1-memosprite-Q");
 		expect(memosprite).toBeDefined();
-		expect(memosprite!.displayName).toBe("德谬歌");
-		expect(memosprite!.targetKind).toBe("忆灵");
-		expect(memosprite!.isMemospriteAction).toBe(true);
-		expect(memosprite!.memospriteOwnerId).toBe("cyrene");
-		expect(memosprite!.actionValue).toBeCloseTo(100, 4);
+		expect(memosprite?.displayName).toBe("德谬歌");
+		expect(memosprite?.targetKind).toBe("忆灵");
+		expect(memosprite?.isMemospriteAction).toBe(true);
+		expect(memosprite?.memospriteOwnerId).toBe("cyrene");
+		expect(memosprite?.actionValue).toBeCloseTo(100, 4);
 	});
 
 	it("applies generic ode to untargeted ally", () => {
@@ -102,7 +99,7 @@ describe("Cyrene (昔涟)", () => {
 					character("ally", "队友", 80),
 				],
 				skillOverrides: skills({
-					"cyrene-1": "Q",
+					"cyrene-1": "AQ",
 				}),
 				odeSelections: {
 					"cyrene-1-memosprite-Q": {
@@ -114,14 +111,13 @@ describe("Cyrene (昔涟)", () => {
 			}),
 		);
 
-		const memosprite = actions.find(
-			(a) => a.key === "cyrene-1-memosprite-Q",
-		);
+		const memosprite = actions.find((a) => a.key === "cyrene-1-memosprite-Q");
 		expect(memosprite).toBeDefined();
-		// ally (80 spd) acts at AV=125, between memosprite and cyrene-2 (AV=200)
-		expect(actions.map((a) => a.key).slice(0, 3)).toEqual([
+		// ally (80 spd) acts at AV=125, after memosprite and Q (AV=100)
+		expect(actions.map((a) => a.key).slice(0, 4)).toEqual([
 			"cyrene-1",
 			"cyrene-1-memosprite-Q",
+			"cyrene-1-q",
 			"ally-1",
 		]);
 	});
@@ -134,7 +130,7 @@ describe("Cyrene (昔涟)", () => {
 					character("anaxa", "那刻夏", 200),
 				],
 				skillOverrides: skills({
-					"cyrene-1": "Q",
+					"cyrene-1": "AQ",
 				}),
 				odeSelections: {
 					"cyrene-1-memosprite-Q": {
@@ -155,7 +151,7 @@ describe("Cyrene (昔涟)", () => {
 				a.activeOdeLabels?.includes("理性"),
 		);
 		expect(anaxaAction).toBeDefined();
-		expect(anaxaAction!.actionValue).toBeCloseTo(100, 4);
+		expect(anaxaAction?.actionValue).toBeCloseTo(100, 4);
 	});
 
 	it("applies immediateEnhancedSkill ode effect (strife - Mydei)", () => {
@@ -166,7 +162,7 @@ describe("Cyrene (昔涟)", () => {
 					character("mydei", "万敌", 200),
 				],
 				skillOverrides: skills({
-					"cyrene-1": "Q",
+					"cyrene-1": "AQ",
 				}),
 				odeSelections: {
 					"cyrene-1-memosprite-Q": {
@@ -183,9 +179,9 @@ describe("Cyrene (昔涟)", () => {
 			(a) => a.key === "cyrene-1-memosprite-Q-ode-strife",
 		);
 		expect(extraAction).toBeDefined();
-		expect(extraAction!.characterId).toBe("mydei");
-		expect(extraAction!.skill).toBe("E");
-		expect(extraAction!.actionValue).toBeCloseTo(100, 4);
+		expect(extraAction?.characterId).toBe("mydei");
+		expect(extraAction?.skill).toBe("E");
+		expect(extraAction?.actionValue).toBeCloseTo(100, 4);
 	});
 
 	it("does not apply ode to non-matching target name", () => {
@@ -196,7 +192,7 @@ describe("Cyrene (昔涟)", () => {
 					character("other", "其他人", 80),
 				],
 				skillOverrides: skills({
-					"cyrene-1": "Q",
+					"cyrene-1": "AQ",
 				}),
 				odeSelections: {
 					"cyrene-1-memosprite-Q": {
@@ -229,6 +225,6 @@ describe("Cyrene (昔涟)", () => {
 
 		const memosprite = actions.find((a) => a.isMemospriteAction);
 		expect(memosprite).toBeDefined();
-		expect(memosprite!.displayName).toBe("德谬歌");
+		expect(memosprite?.displayName).toBe("德谬歌");
 	});
 });

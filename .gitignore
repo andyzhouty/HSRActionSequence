@@ -25,3 +25,6 @@ dist-ssr
 
 # Action sequence export files
 action-sequence-*.json
+
+# documents for/between AIs
+docs-for-ai/

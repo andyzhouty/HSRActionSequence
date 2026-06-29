@@ -1,13 +1,20 @@
-import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Toggle, NumberInput, TextInput, SelectInput } from "../src/components/action-sequence/Controls";
+import { describe, expect, it, vi } from "vitest";
+import {
+	NumberInput,
+	SelectInput,
+	TextInput,
+	Toggle,
+} from "../src/components/action-sequence/Controls";
 
 // ───── Controls ─────
 
 describe("Toggle", () => {
 	it("renders with label and reflects checked state", () => {
-		const { rerender } = render(<Toggle label="舞舞舞" checked={false} onChange={() => {}} />);
+		const { rerender } = render(
+			<Toggle label="舞舞舞" checked={false} onChange={() => {}} />,
+		);
 		expect(screen.getByText("舞舞舞")).toBeInTheDocument();
 		const btn = screen.getByRole("switch");
 		expect(btn).toHaveAttribute("aria-checked", "false");
@@ -29,7 +36,8 @@ describe("NumberInput", () => {
 		const onChange = vi.fn();
 		render(<NumberInput label="速度 v" value="100" onChange={onChange} />);
 		expect(screen.getByText("速度 v")).toBeInTheDocument();
-		const input = screen.getByRole("textbox") ?? screen.getByDisplayValue("100");
+		const input =
+			screen.getByRole("textbox") ?? screen.getByDisplayValue("100");
 		expect(input).toBeDefined();
 	});
 });
@@ -63,12 +71,17 @@ describe("SelectInput", () => {
 
 // ───── CharacterPanel rendering ─────
 
-import { type CharacterConfig, defaultCharacters } from "../src/utils/actionSequence";
-import { ActionSequenceCtx, type ActionSequenceContextType } from "../src/contexts/ActionSequenceContext";
-import CharacterPanel from "../src/components/action-sequence/CharacterPanel";
 import type { ReactNode } from "react";
+import CharacterPanel from "../src/components/action-sequence/CharacterPanel";
+import {
+	type ActionSequenceContextType,
+	ActionSequenceCtx,
+} from "../src/contexts/ActionSequenceContext";
+import { defaultCharacters } from "../src/utils/actionSequence";
 
-function createMockContext(overrides: Partial<ActionSequenceContextType> = {}): ActionSequenceContextType {
+function createMockContext(
+	overrides: Partial<ActionSequenceContextType> = {},
+): ActionSequenceContextType {
 	const characters = defaultCharacters.map((c, i) => ({
 		...c,
 		id: `c${i + 1}`,
@@ -106,6 +119,8 @@ function createMockContext(overrides: Partial<ActionSequenceContextType> = {}): 
 		setOdeSelections: vi.fn(),
 		memeSelections: {},
 		setMemeSelections: vi.fn(),
+		lastMemeTarget: "",
+		setLastMemeTarget: vi.fn(),
 		ultInterrupts: {},
 		setUltInterrupts: vi.fn(),
 		resourceValues: {},
@@ -113,7 +128,6 @@ function createMockContext(overrides: Partial<ActionSequenceContextType> = {}): 
 		actions: [],
 		setActions: vi.fn(),
 		importText: "",
-		setImportText: vi.fn(),
 		message: "",
 		setMessage: vi.fn(),
 		isExportingImage: false,
@@ -166,9 +180,14 @@ function createMockContext(overrides: Partial<ActionSequenceContextType> = {}): 
 	};
 }
 
-function renderWithContext(ui: ReactNode, ctxOverrides: Partial<ActionSequenceContextType> = {}) {
+function renderWithContext(
+	ui: ReactNode,
+	ctxOverrides: Partial<ActionSequenceContextType> = {},
+) {
 	const ctx = createMockContext(ctxOverrides);
-	return render(<ActionSequenceCtx.Provider value={ctx}>{ui}</ActionSequenceCtx.Provider>);
+	return render(
+		<ActionSequenceCtx.Provider value={ctx}>{ui}</ActionSequenceCtx.Provider>,
+	);
 }
 
 describe("CharacterPanel rendering", () => {
@@ -237,19 +256,19 @@ describe("CharacterPanel rendering", () => {
 		expect(enemyInput.length).toBeGreaterThanOrEqual(1);
 	});
 
-	it("character with hasDance shows toggle for Harmony path", () => {
-		// 停云 is a Harmony character → 舞舞舞 toggle should appear
+	it("Harmony character has light cone dropdown instead of 舞舞舞 toggle", () => {
+		// 停云 is a Harmony character → 舞舞舞 toggle removed, light cone dropdown shown
 		const harmonyChar = defaultCharacters.map((c, i) => ({
 			...c,
 			id: `c${i + 1}`,
 			name: i === 0 ? "停云" : `角色 ${i + 1}`,
 			speed: "100",
 			baseSpeed: "100",
-			hasDance: i === 0,
 		}));
 		renderWithContext(<CharacterPanel />, { characters: harmonyChar });
-		const danceToggles = screen.getAllByText("舞舞舞");
-		expect(danceToggles.length).toBeGreaterThanOrEqual(1);
+		// 舞舞舞 toggle should NOT appear
+		const danceToggles = screen.queryAllByText("舞舞舞");
+		expect(danceToggles.length).toBe(0);
 	});
 });
 
@@ -299,8 +318,8 @@ describe("ActionPanel rendering", () => {
 describe("Action Sequence Context integration", () => {
 	it("provides default character names", () => {
 		const ctx = createMockContext();
-		expect(ctx.characterNames["c1"]).toBe("角色 1");
-		expect(ctx.characterNames["c2"]).toBe("角色 2");
+		expect(ctx.characterNames.c1).toBe("角色 1");
+		expect(ctx.characterNames.c2).toBe("角色 2");
 	});
 
 	it("characters have correct default speed", () => {
@@ -322,7 +341,7 @@ describe("Action Sequence Context integration", () => {
 			expect(c.hasVonwacq).toBe(false);
 			expect(c.hasWindSet).toBe(false);
 			expect(c.hasDance).toBe(false);
-			expect(c.hasEidolon1).toBe(false);
+			expect(c.eidolon).toBe(0);
 		});
 	});
 });

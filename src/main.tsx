@@ -19,7 +19,9 @@ import "./index.css";
 // 全局禁用右键菜单（保留自定义右键处理）
 window.addEventListener("contextmenu", (event) => event.preventDefault());
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Root element not found");
+ReactDOM.createRoot(rootElement).render(
 	<React.StrictMode>
 		<div className="min-h-screen bg-gray-900 text-white">
 			<main className="p-2">

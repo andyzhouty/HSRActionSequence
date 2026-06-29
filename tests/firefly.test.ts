@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import {
-	type CharacterConfig,
-	type SkillCode,
-	type UltInterrupt,
+import type {
+	CharacterConfig,
+	SkillCode,
+	UltInterrupt,
 } from "../src/utils/actionSequence";
 import {
-	simulateActions,
 	type SimulateActionsInput,
+	simulateActions,
 } from "../src/utils/simulateActions";
 
 function character(
@@ -24,9 +24,9 @@ function character(
 		hasVonwacq: false,
 		hasWindSet: false,
 		hasDance: false,
-		hasEidolon1: false,
-		hasEidolon2: false,
-		hasEidolon4: false,
+		eidolon: 0,
+		superimpose: 1,
+		lc_id: 0,
 		...overrides,
 	};
 }
@@ -52,9 +52,7 @@ function input(
 	};
 }
 
-function skills(
-	entries: Record<string, string>,
-): Record<string, SkillCode> {
+function skills(entries: Record<string, string>): Record<string, SkillCode> {
 	return entries;
 }
 
@@ -72,15 +70,20 @@ describe("Firefly Complete Combustion activation", () => {
 			input({
 				characters: [character("firefly", "流萤", 100)],
 				skillOverrides: skills({
-					"firefly-1": "Q",
+					"firefly-1": "AQ",
 				}),
-				fireflyBreakCounters: { "firefly-2": false, "firefly-3": false, "firefly-4": false },
+				fireflyBreakCounters: {
+					"firefly-2": false,
+					"firefly-3": false,
+					"firefly-4": false,
+				},
 				limit: 310,
 			}),
 		);
 
-		expect(actions.map((action) => action.key).slice(0, 4)).toEqual([
+		expect(actions.map((action) => action.key).slice(0, 5)).toEqual([
 			"firefly-1",
+			"firefly-1-q",
 			"firefly-2",
 			"firefly-3",
 			"firefly-4",
@@ -127,7 +130,7 @@ describe("Firefly countdown manual advance", () => {
 		const actions = simulateActions(
 			input({
 				characters: [character("firefly", "流萤", 100)],
-				skillOverrides: skills({ "firefly-1": "Q" }),
+				skillOverrides: skills({ "firefly-1": "AQ" }),
 				limit: 300,
 			}),
 		);
@@ -136,7 +139,7 @@ describe("Firefly countdown manual advance", () => {
 			(a) => a.characterId === "firefly-combustion-countdown",
 		);
 		expect(countdown).toBeDefined();
-		expect(countdown!.actionValue).toBeCloseTo(242.8571, 4);
+		expect(countdown?.actionValue).toBeCloseTo(242.8571, 4);
 
 		const combustionActions = actions.filter(
 			(a) => a.isCombustionAction && a.characterId === "firefly",
@@ -145,9 +148,7 @@ describe("Firefly countdown manual advance", () => {
 
 		// After countdown, no more combustion actions
 		const afterCountdown = actions.filter(
-			(a) =>
-				a.isCombustionAction &&
-				a.actionValue > countdown!.actionValue,
+			(a) => a.isCombustionAction && a.actionValue > countdown?.actionValue,
 		);
 		expect(afterCountdown).toHaveLength(0);
 	});
@@ -156,7 +157,7 @@ describe("Firefly countdown manual advance", () => {
 		const actions = simulateActions(
 			input({
 				characters: [character("firefly", "流萤", 100)],
-				skillOverrides: skills({ "firefly-1": "Q" }),
+				skillOverrides: skills({ "firefly-1": "AQ" }),
 				overrides: {
 					"firefly-combustion-countdown-1": "150",
 				},
@@ -168,13 +169,13 @@ describe("Firefly countdown manual advance", () => {
 			(a) => a.characterId === "firefly-combustion-countdown",
 		);
 		expect(countdown).toBeDefined();
-		expect(countdown!.actionValue).toBeCloseTo(150, 4);
+		expect(countdown?.actionValue).toBeCloseTo(150, 4);
 
 		const fireflyActionsAfterCountdown = actions.filter(
 			(a) =>
 				a.characterId === "firefly" &&
 				!a.isCombustionAction &&
-				a.actionValue > countdown!.actionValue,
+				a.actionValue > countdown?.actionValue,
 		);
 		expect(fireflyActionsAfterCountdown.length).toBeGreaterThan(0);
 	});
@@ -183,7 +184,7 @@ describe("Firefly countdown manual advance", () => {
 		const actions = simulateActions(
 			input({
 				characters: [character("firefly", "流萤", 100)],
-				skillOverrides: skills({ "firefly-1": "Q" }),
+				skillOverrides: skills({ "firefly-1": "AQ" }),
 				overrides: {
 					"firefly-combustion-countdown-1": "300",
 				},
@@ -195,13 +196,13 @@ describe("Firefly countdown manual advance", () => {
 			(a) => a.characterId === "firefly-combustion-countdown",
 		);
 		expect(countdown).toBeDefined();
-		expect(countdown!.actionValue).toBeCloseTo(300, 4);
+		expect(countdown?.actionValue).toBeCloseTo(300, 4);
 
 		const combustionActions = actions.filter(
 			(a) =>
 				a.isCombustionAction &&
 				a.characterId === "firefly" &&
-				a.actionValue < countdown!.actionValue,
+				a.actionValue < countdown?.actionValue,
 		);
 		expect(combustionActions.length).toBeGreaterThanOrEqual(3);
 	});
@@ -214,7 +215,7 @@ describe("Firefly countdown manual advance", () => {
 					character("a", "行动角色", 200),
 				],
 				skillOverrides: skills({
-					"firefly-1": "Q",
+					"firefly-1": "AQ",
 				}),
 				ultInterrupts: {
 					"firefly-2": [{ casterId: "a", timing: "before" }],
@@ -226,9 +227,7 @@ describe("Firefly countdown manual advance", () => {
 		const firefly2 = actions.find((a) => a.key === "firefly-2");
 		expect(firefly2).toBeDefined();
 
-		const interrupt = actions.find(
-			(a) => a.key === "firefly-2-interrupt-0",
-		);
+		const interrupt = actions.find((a) => a.key === "firefly-2-interrupt-0");
 		expect(interrupt).toBeDefined();
 
 		const countdown = actions.find(
@@ -246,7 +245,7 @@ describe("Firefly combustion EE split", () => {
 			input({
 				characters: [character("firefly", "流萤", 100)],
 				skillOverrides: skills({
-					"firefly-1": "Q",
+					"firefly-1": "AQ",
 					"firefly-2": "EE",
 				}),
 				fireflyBreakCounters: { "firefly-2": false },
@@ -255,19 +254,15 @@ describe("Firefly combustion EE split", () => {
 		);
 
 		// After Q, firefly-2 is the next action (100% advance), split into two E actions
-		const e1 = actions.find(
-			(a) => a.key === "firefly-2",
-		);
+		const e1 = actions.find((a) => a.key === "firefly-2");
 		expect(e1).toBeDefined();
-		expect(e1!.skill).toBe("E");
+		expect(e1?.skill).toBe("E");
 
-		const e2 = actions.find(
-			(a) => a.key === "firefly-2-combustion-e1",
-		);
+		const e2 = actions.find((a) => a.key === "firefly-2-combustion-e1");
 		expect(e2).toBeDefined();
-		expect(e2!.skill).toBe("E");
-		expect(e2!.actionValue).toBeCloseTo(100, 4);
-		expect(e2!.isCombustionAction).toBe(true);
+		expect(e2?.skill).toBe("E");
+		expect(e2?.actionValue).toBeCloseTo(100, 4);
+		expect(e2?.isCombustionAction).toBe(true);
 	});
 
 	it("single E on combustion action stays as single E (no split)", () => {
@@ -275,7 +270,7 @@ describe("Firefly combustion EE split", () => {
 			input({
 				characters: [character("firefly", "流萤", 100)],
 				skillOverrides: skills({
-					"firefly-1": "Q",
+					"firefly-1": "AQ",
 					"firefly-2": "E",
 				}),
 				fireflyBreakCounters: { "firefly-2": false },
@@ -284,15 +279,11 @@ describe("Firefly combustion EE split", () => {
 		);
 
 		// Should have the normal E, no extra E generated
-		const extraE = actions.find(
-			(a) => a.key === "firefly-2",
-		);
+		const extraE = actions.find((a) => a.key === "firefly-2");
 		expect(extraE).toBeDefined();
-		expect(extraE!.skill).toBe("E");
+		expect(extraE?.skill).toBe("E");
 
-		const splitE = actions.find(
-			(a) => a.key === "firefly-2-combustion-e1",
-		);
+		const splitE = actions.find((a) => a.key === "firefly-2-combustion-e1");
 		expect(splitE).toBeUndefined();
 	});
 
@@ -313,7 +304,7 @@ describe("Firefly combustion EE split", () => {
 		const action = actions.find((a) => a.key === "firefly-1");
 		expect(action).toBeDefined();
 		// Simulation accepts EE but uses it as-is (not split, not combustion)
-		expect(action!.skill).toBe("EE");
+		expect(action?.skill).toBe("EE");
 	});
 });
 
@@ -345,11 +336,9 @@ describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 
 		// Firefly should be pulled to Sunday's AV=50
 		// So Firefly acts next at AV=50, then Sunday again at AV=100
-		const fireflyAction = actions.find(
-			(a) => a.characterId === "firefly",
-		);
+		const fireflyAction = actions.find((a) => a.characterId === "firefly");
 		expect(fireflyAction).toBeDefined();
-		expect(fireflyAction!.actionValue).toBeCloseTo(50, 4);
+		expect(fireflyAction?.actionValue).toBeCloseTo(50, 4);
 
 		// Action order: Sunday E → Firefly (pulled) → Sunday 2 → ...
 		expect(actions.map((a) => a.characterId).slice(0, 3)).toEqual([
@@ -368,7 +357,7 @@ describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 					character("sunday", "星期日", 200),
 				],
 				skillOverrides: skills({
-					"firefly-1": "Q",
+					"firefly-1": "AQ",
 					"sunday-2": "E",
 				}),
 				skillTargets: {
@@ -390,8 +379,7 @@ describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 		);
 		// There should be combustion actions after Sunday's pull
 		const fireflyAfterPull = fireflyActions.filter(
-			(a) =>
-				a.actionValue >= (sundayEAction?.actionValue ?? 0),
+			(a) => a.actionValue >= (sundayEAction?.actionValue ?? 0),
 		);
 		expect(fireflyAfterPull.length).toBeGreaterThan(0);
 	});
@@ -417,17 +405,13 @@ describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 
 		// Both Sunday actions use E on Firefly
 		// Firefly's AV should be pulled to match Sunday's AV each time
-		const fireflyActions = actions.filter(
-			(a) => a.characterId === "firefly",
-		);
+		const fireflyActions = actions.filter((a) => a.characterId === "firefly");
 
 		// Firefly should always act immediately after Sunday
 		for (let i = 0; i < fireflyActions.length; i++) {
 			const fireflyAV = fireflyActions[i].actionValue;
 			const sundayAction = actions.find(
-				(a) =>
-					a.characterId === "sunday" &&
-					a.actionValue === fireflyAV,
+				(a) => a.characterId === "sunday" && a.actionValue === fireflyAV,
 			);
 			if (sundayAction) {
 				// Firefly's AV should match the Sunday pull at this point

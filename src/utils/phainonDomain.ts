@@ -81,9 +81,10 @@ export function getPhainonDomainInterval(
 		toPositiveNumber(character.baseSpeed, 0) > 0
 			? toPositiveNumber(character.baseSpeed, actionSpeed)
 			: domainRule.defaultBaseSpeed;
-	const coeff = character.hasEidolon1
-		? domainRule.eidolon1EquivalentSpeedCoefficient
-		: domainRule.normalEquivalentSpeedCoefficient;
+	const coeff =
+		character.eidolon >= 1
+			? domainRule.eidolon1EquivalentSpeedCoefficient
+			: domainRule.normalEquivalentSpeedCoefficient;
 	return 10000 / v0 / coeff / Math.max(1, domainRule.extraActionCount - 1);
 }
 
@@ -102,6 +103,7 @@ export function hasPhainonEnemyTriggerSkill(
 	rule: DomainRule,
 	skill: SkillCode,
 ) {
-	return rule.enemyTriggerSkills?.some((trigger) => skill.includes(trigger)) ??
-		false;
+	return (
+		rule.enemyTriggerSkills?.some((trigger) => skill.includes(trigger)) ?? false
+	);
 }

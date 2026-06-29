@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import {
-	type CharacterConfig,
-	type SkillCode,
-	type UltInterrupt,
+import type {
+	CharacterConfig,
+	SkillCode,
+	UltInterrupt,
 } from "../src/utils/actionSequence";
 import {
-	simulateActions,
 	type SimulateActionsInput,
+	simulateActions,
 } from "../src/utils/simulateActions";
 
 function character(
@@ -24,9 +24,9 @@ function character(
 		hasVonwacq: false,
 		hasWindSet: false,
 		hasDance: false,
-		hasEidolon1: false,
-		hasEidolon2: false,
-		hasEidolon4: false,
+		eidolon: 0,
+		superimpose: 1,
+		lc_id: 0,
 		...overrides,
 	};
 }
@@ -52,9 +52,7 @@ function input(
 	};
 }
 
-function skills(
-	entries: Record<string, string>,
-): Record<string, SkillCode> {
+function skills(entries: Record<string, string>): Record<string, SkillCode> {
 	return entries;
 }
 
@@ -84,7 +82,7 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 					// 白厄: 111速 106基础速度 1魂
 					character("phainon", "白厄", 111, {
 						baseSpeed: "106",
-						hasEidolon1: true,
+						eidolon: 1,
 					}),
 					// 知更鸟: 120速 翁瓦克（首动25%拉条被动在 characters.json 中）
 					character("robin", "知更鸟", 120, {
@@ -101,7 +99,7 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 					"bronya-2": "E",
 					"phainon-3": "E",
 					// 第4次白厄行动后，插队鸭鸭Q、花火Q，然后白厄Q开境界
-					"phainon-4": "Q",
+					"phainon-4": "AQ",
 				}),
 				skillTargets: {
 					"sparkle-1": "phainon",
@@ -111,9 +109,7 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 				},
 				ultInterrupts: interrupts({
 					// 白厄第1动E后，插队知更鸟大招
-					"phainon-1": [
-						{ casterId: "robin", timing: "before" },
-					],
+					"phainon-1": [{ casterId: "robin", timing: "before" }],
 					// 白厄第3动E后、第4动Q前，插队鸭鸭Q、花火Q
 					"phainon-3": [
 						{ casterId: "bronya", timing: "before" },
@@ -127,7 +123,7 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 
 		// ── 打印所有行动，便于调试 ──
 		console.log("=== 行动列表 ===");
-		actions.forEach((a) =>
+		actions.forEach((a) => {
 			console.log(
 				a.key.padEnd(30),
 				"| AV:",
@@ -138,8 +134,8 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 				String(a.isDomainAction ?? "").padEnd(5),
 				"| final:",
 				a.isDomainFinalAction ?? "",
-			),
-		);
+			);
+		});
 
 		// ── 基础验证 ──
 		expect(actions.length).toBeGreaterThan(0);
@@ -156,7 +152,7 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 			(a) => a.characterId === "phainon" && a.skill === "Q",
 		);
 		expect(phainonQ).toBeDefined();
-		console.log("\n白厄 Q 在 AV:", phainonQ!.actionValue.toFixed(4));
+		console.log("\n白厄 Q 在 AV:", phainonQ?.actionValue.toFixed(4));
 
 		// Q 后应该进入境界
 		const domainActions = actions.filter((a) => a.isDomainAction);
@@ -175,8 +171,8 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 			(a) => a.key === "phainon-1-interrupt-0",
 		);
 		expect(robinInterrupt).toBeDefined();
-		expect(robinInterrupt!.skill).toBe("Q");
-		expect(robinInterrupt!.characterId).toBe("robin");
+		expect(robinInterrupt?.skill).toBe("Q");
+		expect(robinInterrupt?.characterId).toBe("robin");
 
 		// ── 验证鸭鸭/花火插队大招 ──
 		const bronyaInterrupt = actions.find(
@@ -186,9 +182,9 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 			(a) => a.key === "phainon-3-interrupt-1",
 		);
 		expect(bronyaInterrupt).toBeDefined();
-		expect(bronyaInterrupt!.characterId).toBe("bronya");
+		expect(bronyaInterrupt?.characterId).toBe("bronya");
 		expect(sparkleInterrupt).toBeDefined();
-		expect(sparkleInterrupt!.characterId).toBe("sparkle");
+		expect(sparkleInterrupt?.characterId).toBe("sparkle");
 
 		// ── 验证行动顺序关键节点（知更鸟先动，白厄最后Q开境界） ──
 		const mainActions = actions.filter(
@@ -200,34 +196,25 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 		// 最后行动是白厄 Q（开境界）
 		const phainonQAction = actions.find(
 			(a) =>
-				a.characterId === "phainon" &&
-				a.skill === "Q" &&
-				!a.isDomainAction,
+				a.characterId === "phainon" && a.skill === "Q" && !a.isDomainAction,
 		);
 		expect(phainonQAction).toBeDefined();
 
 		// ── 验证境界终结 ──
 		const finalDomain = domainActions.find((a) => a.isDomainFinalAction);
 		expect(finalDomain).toBeDefined();
-		expect(finalDomain!.skill).toBe("Q");
-		console.log(
-			"境界终结 @ AV:",
-			finalDomain!.actionValue.toFixed(4),
-		);
+		expect(finalDomain?.skill).toBe("Q");
+		console.log("境界终结 @ AV:", finalDomain?.actionValue.toFixed(4));
 
 		// ── 验证境界持续时间 ──
 		// extraActionCount=8 + 1 final, E1 coeff=0.66, baseSpeed=106
 		// 境界应有 8 domain 行动（索引 0-7）+ 1 终结
-		expect(
-			domainActions.filter((a) => !a.isDomainFinalAction).length,
-		).toBe(7);
-		expect(
-			domainActions.filter((a) => a.isDomainFinalAction).length,
-		).toBe(1);
+		expect(domainActions.filter((a) => !a.isDomainFinalAction).length).toBe(7);
+		expect(domainActions.filter((a) => a.isDomainFinalAction).length).toBe(1);
 
 		// ── 验证境界后加速 buff（allies pushed past final AV + speed bonus） ──
 		// 境界结束后，花火和鸭鸭的下一次行动应该被推后
-		const finalAV = finalDomain!.actionValue;
+		const finalAV = finalDomain?.actionValue;
 		const alliesAfter = actions.filter(
 			(a) =>
 				(a.characterId === "sparkle" || a.characterId === "bronya") &&

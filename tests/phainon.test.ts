@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import {
-	type CharacterConfig,
-	type SkillCode,
-	type UltInterrupt,
+import type {
+	CharacterConfig,
+	SkillCode,
+	UltInterrupt,
 } from "../src/utils/actionSequence";
 import {
-	simulateActions,
 	type SimulateActionsInput,
+	simulateActions,
 } from "../src/utils/simulateActions";
 
 function character(
@@ -24,9 +24,9 @@ function character(
 		hasVonwacq: false,
 		hasWindSet: false,
 		hasDance: false,
-		hasEidolon1: false,
-		hasEidolon2: false,
-		hasEidolon4: false,
+		eidolon: 0,
+		superimpose: 1,
+		lc_id: 0,
 		...overrides,
 	};
 }
@@ -46,9 +46,9 @@ function enemy(
 		hasVonwacq: false,
 		hasWindSet: false,
 		hasDance: false,
-		hasEidolon1: false,
-		hasEidolon2: false,
-		hasEidolon4: false,
+		eidolon: 0,
+		superimpose: 1,
+		lc_id: 0,
 		...overrides,
 	};
 }
@@ -74,9 +74,7 @@ function input(
 	};
 }
 
-function skills(
-	entries: Record<string, string>,
-): Record<string, SkillCode> {
+function skills(entries: Record<string, string>): Record<string, SkillCode> {
 	return entries;
 }
 
@@ -94,7 +92,7 @@ describe("Phainon (白厄)", () => {
 			input({
 				characters: [character("phainon", "白厄", 100)],
 				skillOverrides: skills({
-					"phainon-1": "Q",
+					"phainon-1": "AQ",
 				}),
 				limit: 300,
 			}),
@@ -102,7 +100,7 @@ describe("Phainon (白厄)", () => {
 
 		// First action: Q -> starts domain
 		expect(actions[0].key).toBe("phainon-1");
-		expect(actions[0].skill).toBe("Q");
+		expect(actions[0].skill).toBe("A");
 
 		// Domain actions follow (isDomainAction: true)
 		const domainActions = actions.filter((a) => a.isDomainAction);
@@ -128,7 +126,7 @@ describe("Phainon (白厄)", () => {
 			input({
 				characters: [character("phainon", "白厄", 100)],
 				skillOverrides: skills({
-					"phainon-1": "Q",
+					"phainon-1": "AQ",
 				}),
 				limit: 300,
 			}),
@@ -146,16 +144,14 @@ describe("Phainon (白厄)", () => {
 		const actionsE0 = simulateActions(
 			input({
 				characters: [character("phainon", "白厄", 100)],
-				skillOverrides: skills({ "phainon-1": "Q" }),
+				skillOverrides: skills({ "phainon-1": "AQ" }),
 				limit: 300,
 			}),
 		);
 		const actionsE1 = simulateActions(
 			input({
-				characters: [
-					character("phainon", "白厄", 100, { hasEidolon1: true }),
-				],
-				skillOverrides: skills({ "phainon-1": "Q" }),
+				characters: [character("phainon", "白厄", 100, { eidolon: 1 })],
+				skillOverrides: skills({ "phainon-1": "AQ" }),
 				limit: 300,
 			}),
 		);
@@ -166,10 +162,8 @@ describe("Phainon (白厄)", () => {
 		// E1 has higher equivalent speed coefficient (0.66 vs 0.6)
 		// so domain interval is smaller -> domain actions more tightly packed
 		if (domainE0.length > 1 && domainE1.length > 1) {
-			const gapE0 =
-				domainE0[1].actionValue - domainE0[0].actionValue;
-			const gapE1 =
-				domainE1[1].actionValue - domainE1[0].actionValue;
+			const gapE0 = domainE0[1].actionValue - domainE0[0].actionValue;
+			const gapE1 = domainE1[1].actionValue - domainE1[0].actionValue;
 			expect(gapE1).toBeLessThan(gapE0);
 		}
 	});
@@ -182,7 +176,7 @@ describe("Phainon (白厄)", () => {
 					character("ally", "队友", 80),
 				],
 				skillOverrides: skills({
-					"phainon-1": "Q",
+					"phainon-1": "AQ",
 				}),
 				limit: 600,
 			}),
@@ -193,12 +187,12 @@ describe("Phainon (白厄)", () => {
 
 		// After domain ends, ally is paused and pushed past domain end
 		// with speed bonus (15% of baseSpeed)
-		const finalAV = finalDomain!.actionValue;
+		const finalAV = finalDomain?.actionValue;
 		const allyAfter = actions.find(
 			(a) => a.characterId === "ally" && a.actionValue > finalAV,
 		);
 		expect(allyAfter).toBeDefined();
-		expect(allyAfter!.actionValue).toBeGreaterThan(finalAV);
+		expect(allyAfter?.actionValue).toBeGreaterThan(finalAV);
 	});
 
 	it("respects domain end override to end domain early", () => {
@@ -206,7 +200,7 @@ describe("Phainon (白厄)", () => {
 			input({
 				characters: [character("phainon", "白厄", 100)],
 				skillOverrides: skills({
-					"phainon-1": "Q",
+					"phainon-1": "AQ",
 				}),
 				domainEndOverrides: {
 					"phainon-1-domain-2": true,
@@ -231,16 +225,14 @@ describe("Phainon (白厄)", () => {
 					enemy("e1", "敌人", 200),
 				],
 				skillOverrides: skills({
-					"phainon-1": "Q",
+					"phainon-1": "AQ",
 				}),
 				limit: 200,
 			}),
 		);
 
 		// Enemy should act during domain (between domain actions)
-		const enemyActions = actions.filter(
-			(a) => a.characterId === "e1",
-		);
+		const enemyActions = actions.filter((a) => a.characterId === "e1");
 		expect(enemyActions.length).toBeGreaterThan(0);
 	});
 
@@ -252,7 +244,7 @@ describe("Phainon (白厄)", () => {
 					enemy("e1", "敌人", 200),
 				],
 				skillOverrides: skills({
-					"phainon-1": "Q",
+					"phainon-1": "AQ",
 					"phainon-1-domain-0": "W",
 				}),
 				limit: 200,
@@ -260,17 +252,15 @@ describe("Phainon (白厄)", () => {
 		);
 
 		// W skill during domain should trigger an enemy action at the same AV
-		const domainWAction = actions.find(
-			(a) => a.key === "phainon-1-domain-0",
-		);
+		const domainWAction = actions.find((a) => a.key === "phainon-1-domain-0");
 		expect(domainWAction).toBeDefined();
-		expect(domainWAction!.skill).toBe("W");
+		expect(domainWAction?.skill).toBe("W");
 
 		// Enemy should have an action triggered at same AV as domain W action
 		const triggerActions = actions.filter(
 			(a) =>
 				a.key?.includes("enemy") &&
-				a.actionValue === domainWAction!.actionValue,
+				a.actionValue === domainWAction?.actionValue,
 		);
 		expect(triggerActions.length).toBeGreaterThan(0);
 	});
@@ -294,9 +284,7 @@ describe("Phainon (白厄)", () => {
 		expect(domainActions.length).toBeGreaterThan(0);
 
 		// Domain should start from the interrupt action
-		const interruptAction = actions.find(
-			(a) => a.key === "a-1-interrupt-0",
-		);
+		const interruptAction = actions.find((a) => a.key === "a-1-interrupt-0");
 		expect(interruptAction).toBeDefined();
 	});
 
@@ -305,7 +293,7 @@ describe("Phainon (白厄)", () => {
 			input({
 				characters: [character("phainon", "白厄", 100)],
 				skillOverrides: skills({
-					"phainon-1": "Q",
+					"phainon-1": "AQ",
 				}),
 				limit: 600,
 			}),
@@ -317,5 +305,62 @@ describe("Phainon (白厄)", () => {
 
 		const finalDomain = domainActions[domainActions.length - 1];
 		expect(finalDomain.isDomainFinalAction).toBe(true);
+	});
+
+	it("E2 未勾选时 EA 和 EW 降级为普攻（空字符串）", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("phainon", "白厄", 100)],
+				skillOverrides: skills({
+					"phainon-1": "AQ",
+					"phainon-1-domain-0": "EW",
+					"phainon-1-domain-1": "EA",
+					"phainon-1-domain-2": "E",
+				}),
+				limit: 300,
+			}),
+		);
+
+		const domain0 = actions.find((a) => a.key === "phainon-1-domain-0");
+		const domain1 = actions.find((a) => a.key === "phainon-1-domain-1");
+		const domain2 = actions.find((a) => a.key === "phainon-1-domain-2");
+
+		expect(domain0).toBeDefined();
+		expect(domain1).toBeDefined();
+		expect(domain2).toBeDefined();
+
+		// 无 E2：EA 和 EW 降级为 ""（普攻）
+		expect(domain0?.skill).toBe("");
+		expect(domain1?.skill).toBe("");
+		// E 不受影响
+		expect(domain2?.skill).toBe("E");
+	});
+
+	it("E2 勾选时 EA 和 EW 正常生效", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("phainon", "白厄", 100, {
+						eidolon: 2,
+					}),
+				],
+				skillOverrides: skills({
+					"phainon-1": "AQ",
+					"phainon-1-domain-0": "EW",
+					"phainon-1-domain-1": "EA",
+				}),
+				limit: 300,
+			}),
+		);
+
+		const domain0 = actions.find((a) => a.key === "phainon-1-domain-0");
+		const domain1 = actions.find((a) => a.key === "phainon-1-domain-1");
+
+		expect(domain0).toBeDefined();
+		expect(domain1).toBeDefined();
+
+		// 有 E2：EA 和 EW 正常
+		expect(domain0?.skill).toBe("EW");
+		expect(domain1?.skill).toBe("EA");
 	});
 });
