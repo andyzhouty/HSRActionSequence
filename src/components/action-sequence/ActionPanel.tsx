@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo } from "react";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import type { SpeedChangeMode } from "../../utils/actionSequence";
 import {
@@ -714,12 +714,11 @@ function MemeAdvanceSection() {
 		return null;
 	}
 
-	let actionTarget = ctx.charactersById[firstAction.characterId];
-	if (!actionTarget) {
-		actionTarget = ctx.memospriteTargets.find(
+	const actionTarget =
+		ctx.charactersById[firstAction.characterId] ??
+		ctx.memospriteTargets.find(
 			(m) => m.id === firstAction.characterId,
 		);
-	}
 	if (!actionTarget) return null;
 	if (actionTarget.kind === "倒计时") return null;
 

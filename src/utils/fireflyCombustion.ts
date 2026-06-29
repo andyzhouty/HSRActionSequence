@@ -182,6 +182,7 @@ export function activateCombustion(
 			hasDance: false,
 			eidolon: 0,
 			superimpose: 1,
+			lc_id: 0,
 		},
 		baseSpeed: rule.countdownSpeed,
 		currentSpeed: rule.countdownSpeed,

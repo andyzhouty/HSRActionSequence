@@ -1,11 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import lightConeData from "../../data/lightcones.json";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import {
 	defaultCharacters,
 	defaultResources,
 	getCharacterPath,
-	getCounterWDomainRule,
 	getTargetDefaultName,
 	hasPassive,
 	hasSkillEffect,
@@ -183,7 +182,6 @@ function CharacterCard({
 	index: number;
 }) {
 	const ctx = useActionSequence();
-	const counterWDomainRule = getCounterWDomainRule(character.name);
 
 	return (
 		<div className="rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow">
