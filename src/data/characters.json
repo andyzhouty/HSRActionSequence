@@ -3,6 +3,7 @@
     {
       "cid": "1001",
       "names": [
+        "三月七·存护",
         "三月七",
         "三月",
         "March 7th",
@@ -714,6 +715,9 @@
         "遐蝶",
         "Castorice"
       ],
+      "effects": {
+        "Q": "summonPollux"
+      },
       "path": "Remembrance"
     },
     {

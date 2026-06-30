@@ -54,6 +54,22 @@ export interface ActionState extends AglaeaActionState {
 	aglaeaSupremeActive?: boolean;
 	isInGodmode?: boolean;
 	godmodeActionCount?: number;
+
+	// 记忆主【史诗】
+	epic?: number;
+	epicPendingA?: boolean; // 标记开 Q 后在等待下一次 A
+
+	// 昔涟 Q_counter
+	Q_counter?: number;
+
+	// E6 首次大已被拉条标记（防止后续正常 nextAV 覆盖）
+	e6FirstUltimatePulled?: boolean;
+
+	// 遐蝶死龙
+	polluxOnField?: boolean;
+	polluxCount?: number;
+	isPolluxAction?: boolean;
+	e2SavedActionSkill?: SkillCode;
 }
 
 export type ActiveOdeState = {

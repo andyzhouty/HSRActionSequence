@@ -1,9 +1,10 @@
 import { hasPassive, hasSkillEffect } from "../data/characters";
 import {
 	type GeneratedAction,
-	characterNameMatchesAliases,
+	getCharacterCid,
 	getCharacterPath,
 	getCounterWDomainRule,
+	getCyreneUltimateRule,
 	isCharacterTarget,
 	type SkillCode,
 	toPositiveNumber,
@@ -14,6 +15,12 @@ import {
 	handleGarmentmakerAction,
 	isAglaeaCountdownAction,
 } from "./aglaeaGarmentmaker";
+import {
+	hasCastoriceSummon,
+	handlePolluxAction,
+	summonPollux,
+	applyCastoriceE2Pull,
+} from "./castoricePollux";
 import {
 	activateCombustion,
 	checkBreakTrigger,
@@ -52,6 +59,11 @@ import {
 	isAllyTarget,
 	summonMemeState,
 	toNonNegativeNumber,
+	findCyreneState,
+	handleMemoryTrailblazerQ,
+	consumeMemoryTrailblazerEpic,
+	handleCyrenePostUltimate,
+	hasActiveOde,
 } from "./simulateEffects";
 import type {
 	ActionState,
@@ -182,13 +194,17 @@ export function simulateActions(
 			hasPassive(s.character.name, "dancePartnerSpeedBuff30"),
 		);
 		if (dahliaState) {
-			const partnerAliases = ["那刻夏", "波提欧", "流萤", "白厄"];
+			const dancePartnerCidWhitelist = new Set([
+				"1405", // 那刻夏
+				"1315", // 波提欧
+				"1310", // 流萤
+				"1408", // 白厄
+			]);
 			const partner = states.find((s) => s.character.id === input.dancePartner);
 			if (
 				partner &&
-				partnerAliases.some((alias) =>
-					characterNameMatchesAliases(partner.character.name, [alias]),
-				)
+				getCharacterCid(partner.character.name) !== undefined &&
+				dancePartnerCidWhitelist.has(getCharacterCid(partner.character.name)!)
 			) {
 				const v0_dahlia =
 					toPositiveNumber(partner.character.baseSpeed, 0) > 0
@@ -342,6 +358,33 @@ export function simulateActions(
 			continue;
 		}
 
+		// ── 死龙行动 ──
+		if (states[stateIndex].isPolluxAction) {
+			const polluxOverride = input.skillOverrides[key];
+			const resolvedOverridePollux = (
+				polluxOverride !== undefined ? polluxOverride : ""
+			) as SkillCode;
+			handlePolluxAction(
+				states,
+				stateIndex,
+				actions,
+				key,
+				character,
+				actionNo,
+				actionValue,
+				resolvedOverridePollux as SkillCode,
+			);
+			emitMemeAdvanceAction({
+				input,
+				actions,
+				states,
+				sourceKey: key,
+				actionValue,
+				activeOdes,
+			});
+			continue;
+		}
+
 		// ── 衣匠行动：默认攻击处于【间隙织线】的敌方目标并获得层数 ──
 		if (states[stateIndex].isGarmentmakerState) {
 			handleGarmentmakerAction(
@@ -388,6 +431,15 @@ export function simulateActions(
 						cyrene: caster.character,
 						sourceKey: `${key}-interrupt-${gmInterrupts.indexOf(int)}`,
 						actionValue,
+					});
+					handleCyrenePostUltimate({
+						states,
+						casterIndex,
+						character: caster.character,
+						actions,
+						actionValue,
+						activeOdes,
+						isInterrupt: true,
 					});
 				}
 				// 插队大招触发全队拉条（舞舞舞 = (14+2s)%, 忘归人 2魂 = 24%）。
@@ -555,9 +607,13 @@ export function simulateActions(
 			input.skillOverrides,
 			input.legacyUltOverrides,
 		);
+		// E2 遐蝶自拉条后的下一动使用保留技能
+		const e2Skill = states[stateIndex].e2SavedActionSkill;
+		const effectiveOverride = e2Skill ?? resolvedOverride;
+		states[stateIndex].e2SavedActionSkill = undefined;
 		const rawSkill = hasSilverWolfGodmode(character.name)
-			? getGodmodeSkill(states[stateIndex], resolvedOverride)
-			: (resolvedOverride as SkillCode);
+			? getGodmodeSkill(states[stateIndex], effectiveOverride)
+			: (effectiveOverride as SkillCode);
 		const himekoNovaAssist =
 			rawSkill.includes("F") &&
 			isAllyTarget(character.kind) &&
@@ -571,17 +627,24 @@ export function simulateActions(
 	const himekoNovaLowEidolon =
 		himekoNovaAssist !== undefined &&
 		himekoNovaAssist.character.eidolon < 2;
-	const novaFFWhitelist = [
-		"丹恒", "丹恒·腾荒",
-		"三月七", "三月七·巡猎",
-		"长夜月",
-		"瓦尔特",
-		"开拓者·毁灭", "开拓者·存护", "开拓者·同谐", "开拓者·记忆", "开拓者·欢愉",
-		"星期日",
-		"姬子",
-	];
+	const novaFFCidWhitelist = new Set([
+		"1002", // 丹恒
+		"1414", // 丹恒·腾荒
+		"1001", // 三月七
+		"1224", // 三月七·巡猎
+		"1413", // 长夜月
+		"1004", // 瓦尔特
+		"8002", // 开拓者·毁灭
+		"8004", // 开拓者·存护
+		"8006", // 开拓者·同谐
+		"8008", // 开拓者·记忆
+		"8010", // 开拓者·欢愉
+		"1313", // 星期日
+		"1003", // 姬子
+	]);
 	const isNovaFFWhitelisted =
-		characterNameMatchesAliases(character.name, novaFFWhitelist);
+		getCharacterCid(character.name) !== undefined &&
+		novaFFCidWhitelist.has(getCharacterCid(character.name)!);
 	const skipAssistFollowUp =
 		himekoNovaAssist !== undefined &&
 		(assistUseCount >= 2 ||
@@ -636,6 +699,15 @@ export function simulateActions(
 					cyrene: caster.character,
 					sourceKey: `${key}-interrupt-${idx}`,
 					actionValue,
+				});
+				handleCyrenePostUltimate({
+					states,
+					casterIndex,
+					character: caster.character,
+					actions,
+					actionValue,
+					activeOdes,
+					isInterrupt: true,
 				});
 			}
 			// 插队大招触发 24% 全队拉条（舞舞舞、忘归人 2魂等）。
@@ -888,7 +960,19 @@ export function simulateActions(
 			}
 		}
 
-		if (!skipAssistFollowUp) {
+		// E2 遐蝶 QE/QA（Q在前）：跳过 main action，保留技能给自拉条后的下一动
+		const shouldSkipMainForE2Pull =
+			!skipAssistFollowUp &&
+			isCharacterTarget(character) &&
+			hasCastoriceSummon(character.name) &&
+			character.eidolon >= 2 &&
+			hasSelfQ &&
+			qIsFront;
+		if (shouldSkipMainForE2Pull) {
+			states[stateIndex].e2SavedActionSkill = resolvedSkill;
+		}
+
+		if (!skipAssistFollowUp && !shouldSkipMainForE2Pull) {
 			actions.push({
 				key,
 				characterId: character.id,
@@ -951,6 +1035,14 @@ export function simulateActions(
 					cyrene: character,
 					sourceKey: key,
 					actionValue,
+				});
+				handleCyrenePostUltimate({
+					states,
+					casterIndex: stateIndex,
+					character,
+					actions,
+					actionValue,
+					activeOdes,
 				});
 			}
 		}
@@ -1083,7 +1175,9 @@ export function simulateActions(
 			{
 				const nextInterval = 10000 / states[stateIndex].currentSpeed;
 				states[stateIndex].actionNo += 1;
-				if (!justActivatedCombustion) {
+				if (states[stateIndex].e6FirstUltimatePulled) {
+					states[stateIndex].e6FirstUltimatePulled = false;
+				} else if (!justActivatedCombustion) {
 					states[stateIndex].nextActionValue = actionValue + nextInterval;
 				}
 				// 风套：Q 后行动提前 25%
@@ -1215,6 +1309,29 @@ export function simulateActions(
 					summonMemeState(states, character, actionValue);
 				}
 
+				// Memory Trailblazer Q: increment epic
+				if (
+					isCharacterTarget(character) &&
+					hasSkillEffect(character.name, "E", "summonMeme") &&
+					usesUltimate
+				) {
+					handleMemoryTrailblazerQ(states[stateIndex]);
+				}
+
+				// 遐蝶 Q: summon Pollux（死龙）
+				if (
+					isCharacterTarget(character) &&
+					hasCastoriceSummon(character.name) &&
+					usesUltimate &&
+					!states[stateIndex].polluxOnField
+				) {
+					summonPollux(states, character, actionValue);
+					// E2: 自拉条 100%，排在死龙之前
+					if (character.eidolon >= 2) {
+						applyCastoriceE2Pull(states, stateIndex, actionValue);
+					}
+				}
+
 				// Aglaea E/Q: summon Garmentmaker; Q starts/resets Supreme Stance.
 				handleAglaeaSkillEffects(states, stateIndex, skill, actionValue);
 
@@ -1290,6 +1407,47 @@ export function simulateActions(
 						actionValue,
 						input,
 					);
+				}
+			}
+			// ── 记忆主 A 消耗【史诗】并触发德谬歌额外 Q ──
+			// QA（Q在前）的 A 消耗史诗；纯 A 也消耗；AQ（Q在后）的 A 不消耗（A 在 Q 之前）
+			if (
+				isCharacterTarget(character) &&
+				hasSkillEffect(character.name, "E", "summonMeme") &&
+				states[stateIndex].epicPendingA &&
+				(states[stateIndex].epic ?? 0) > 0 &&
+				(resolvedSkill === "" || resolvedSkill === "A") &&
+				(!usesUltimate || qIsFront)
+			) {
+				const consumed = consumeMemoryTrailblazerEpic(states[stateIndex]);
+				if (consumed) {
+					// 若德谬歌对记忆主释放过创世之诗，触发额外德谬歌 Q
+					const cyreneState = findCyreneState(states);
+					if (
+						cyreneState &&
+						hasActiveOde(
+							activeOdes,
+							character.id,
+							"genesis",
+						)
+					) {
+						const cyreneRule = getCyreneUltimateRule(cyreneState.character.name);
+						const epicMemospriteKey = `${key}-epic-memosprite`;
+						actions.push({
+							key: epicMemospriteKey,
+							characterId: `${cyreneState.character.id}-memosprite`,
+							displayName: cyreneRule.memospriteName,
+							targetKind: "忆灵",
+							actionNo: 0,
+							actionValue,
+							skill: "Q" as SkillCode,
+							speed: 0,
+							isMemospriteAction: true,
+							memospriteOwnerId: cyreneState.character.id,
+							isEpicTriggeredMemosprite: true,
+							lockedSkill: true,
+						});
+					}
 				}
 			}
 		} // Clear advance block

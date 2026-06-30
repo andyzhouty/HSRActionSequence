@@ -136,6 +136,183 @@ export function findHimekoNovaAssistState(
 	);
 }
 
+// ── 记忆主【史诗】系统 ──
+
+/** 检查目标是否拥有指定 code 的颂诗 */
+export function hasActiveOde(
+	activeOdes: Map<string, ActiveOdeState[]>,
+	characterId: string,
+	odeCode: string,
+) {
+	return (
+		activeOdes
+			.get(characterId)
+			?.some((activeOde) => activeOde.ode.code === odeCode) ?? false
+	);
+}
+
+/** 找到记忆主状态 */
+export function findMemoryTrailblazerState(states: ActionState[]) {
+	return states.find(
+		(state) =>
+			isCharacterTarget(state.character) &&
+			hasSkillEffect(state.character.name, "E", "summonMeme"),
+	);
+}
+
+/** 记忆主 Q 后增加史诗层数（上限2），标记等待下一次 A */
+export function handleMemoryTrailblazerQ(state: ActionState) {
+	state.epic = Math.min((state.epic ?? 0) + 1, 2);
+	state.epicPendingA = true;
+}
+
+/** 记忆主 A 时消耗一层史诗，返回是否消耗成功 */
+export function consumeMemoryTrailblazerEpic(
+	state: ActionState,
+): boolean {
+	if (!state.epicPendingA) return false;
+	if ((state.epic ?? 0) <= 0) {
+		state.epicPendingA = false;
+		return false;
+	}
+	state.epic = (state.epic ?? 1) - 1;
+	state.epicPendingA = false;
+	return true;
+}
+
+// ── 昔涟 Q_counter 系统 ──
+
+/** 找到昔涟状态 */
+export function findCyreneState(states: ActionState[]) {
+	return states.find(
+		(state) =>
+			isCharacterTarget(state.character) &&
+			hasSkillEffect(state.character.name, "Q", "cyreneUltimate"),
+	);
+}
+
+/** 昔涟 Q 后增加 Q_counter，返回新的计数值 */
+export function incrementCyreneQCounter(state: ActionState): number {
+	state.Q_counter = (state.Q_counter ?? 0) + 1;
+	return state.Q_counter;
+}
+
+/** 判断 Q_counter 是否满足 3n+2（n≥0），触发强化 Q */
+export function shouldTriggerEnhancedQ(Q_counter: number): boolean {
+	if (Q_counter <= 0) return false;
+	// 3n+2 → Q_counter = 2, 5, 8, 11, ...
+	return (Q_counter - 2) % 3 === 0;
+}
+
+/** 判断 Q_counter 是否满足 3k+2（k>0），触发 E6 24% 拉条（排除首次即 Q_counter=2） */
+export function shouldTriggerE6TeamAdvance24(Q_counter: number): boolean {
+	if (Q_counter <= 0) return false;
+	// 3k+2 where k>0 → Q_counter = 5, 8, 11, ...
+	return Q_counter > 2 && (Q_counter - 2) % 3 === 0;
+}
+
+// ── 昔涟 E6 拉条 ──
+
+/** 昔涟/德谬歌 Q 后的完整处理：Q_counter + 强化 Q + E6
+ *  @param isInterrupt - 若为 true（插队情况），E6 首次大时不拉昔涟自身 */
+export function handleCyrenePostUltimate({
+	states,
+	casterIndex,
+	character,
+	actions,
+	actionValue,
+	activeOdes,
+	isInterrupt = false,
+}: {
+	states: ActionState[];
+	casterIndex: number;
+	character: CharacterConfig;
+	actions: GeneratedAction[];
+	actionValue: number;
+	activeOdes: Map<string, ActiveOdeState[]>;
+	isInterrupt?: boolean;
+}) {
+	const cyreneRule = getCyreneUltimateRule(character.name);
+	const qCounter = incrementCyreneQCounter(states[casterIndex]);
+
+	// 强化 Q：Q_counter = 3n+2 时德谬歌获得额外回合
+	if (shouldTriggerEnhancedQ(qCounter)) {
+		const enhancedKey = `${character.id}-enhancedQ-${qCounter}`;
+		actions.push({
+			key: enhancedKey,
+			characterId: `${character.id}-memosprite`,
+			displayName: cyreneRule.memospriteName,
+			targetKind: "忆灵",
+			actionNo: 0,
+			actionValue,
+			skill: "Q" as SkillCode,
+			speed: 0,
+			isMemospriteAction: true,
+			memospriteOwnerId: character.id,
+			isCyreneEnhancedQ: true,
+			lockedSkill: true,
+		});
+		// E6：强化 Q 结束后 24% 全队拉条（Q_counter = 3k+2, k>0）
+		if (
+			character.eidolon >= 6 &&
+			shouldTriggerE6TeamAdvance24(qCounter)
+		) {
+			applyCyreneE6EnhancedQPull(states, actionValue);
+		}
+	}
+	// E6 首次大：全队 100% 拉条（Q_counter = 1 时）
+	if (character.eidolon >= 6 && qCounter === 1) {
+		// 插队情况不拉昔涟自身（若在昔涟回合之前的插队 Q，自身拉条无效）
+		applyCyreneE6FirstUltimatePull(states, casterIndex, actionValue, isInterrupt);
+		// 标记已拉条，防止后续正常 nextAV 计算覆盖
+		states[casterIndex].e6FirstUltimatePulled = true;
+	}
+}
+
+/** 释放昔涟 E6 首次大 100% 全队拉条（同知更鸟顶轴机制，但昔涟自身也可被拉条）
+ *  @param excludeSelf - 若为 true（插队情况），不拉昔涟自身 */
+export function applyCyreneE6FirstUltimatePull(
+	states: ActionState[],
+	cyreneIndex: number,
+	actionValue: number,
+	excludeSelf = false,
+) {
+	// 全队（角色+忆灵）拉到昔涟 Q 的 AV，按知更鸟方式排列
+	const allyOrder = states
+		.map((s, i) => ({ index: i, value: s.nextActionValue }))
+		.filter(
+			({ index }) =>
+				isAllyTarget(states[index].character.kind) &&
+				!(excludeSelf && index === cyreneIndex),
+		)
+		.sort((a, b) => {
+			if (a.value !== b.value) return a.value - b.value;
+			return a.index - b.index;
+		});
+
+	for (let rank = 0; rank < allyOrder.length; rank++) {
+		const target = states[allyOrder[rank].index];
+		if (target.blockNextAdvance) continue;
+		target.nextActionValue = actionValue + rank * 0.0001;
+	}
+}
+
+/** 触发 E6 24% 全队拉条（强化 Q 结束后），但不得越过德谬歌强化 Q 的 AV */
+export function applyCyreneE6EnhancedQPull(
+	states: ActionState[],
+	actionValue: number,
+) {
+	for (const teammate of states) {
+		if (!isAllyTarget(teammate.character.kind)) continue;
+		if (teammate.blockNextAdvance) continue;
+		const advance = 2400 / teammate.currentSpeed;
+		teammate.nextActionValue = Math.max(
+			actionValue,
+			teammate.nextActionValue - advance,
+		);
+	}
+}
+
 export function findMemeAdvanceOwnerState(states: ActionState[]) {
 	return states.find(
 		(state) =>
@@ -420,7 +597,7 @@ export function emitMemeAdvanceAction({
 
 	if (
 		target.character.id !== meme.character.id &&
-		isCharacterTarget(target.character) &&
+		isAllyTarget(target.character.kind) &&
 		!target.blockNextAdvance &&
 		target.nextActionValue > actionValue
 	) {

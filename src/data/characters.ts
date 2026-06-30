@@ -1,6 +1,7 @@
 import characterData from "./characters.json";
 
 type CharacterEntry = {
+	cid: string;
 	names: string[];
 	effects?: Record<string, string>;
 	effectRules?: Record<string, unknown>;
@@ -35,6 +36,11 @@ function findCharacterEntry(name: string) {
 export function getCharacterDisplayName(name: string): string | null {
 	const entry = findCharacterEntry(name);
 	return entry ? entry.names[0] : null;
+}
+
+export function getCharacterCid(name: string): string | undefined {
+	const entry = findCharacterEntry(name);
+	return entry?.cid;
 }
 
 export function getCharacterPath(name: string): string | undefined {

@@ -8,6 +8,7 @@ import {
 } from "../data/characters";
 
 export {
+	getCharacterCid,
 	getCharacterDisplayName,
 	getCharacterPath,
 	getDefaultEffectRule,
@@ -94,6 +95,9 @@ export type GeneratedAction = {
 	lockedSkill?: boolean;
 	activeOdeLabels?: string[];
 	isRomanceAction?: boolean;
+	isCyreneEnhancedQ?: boolean;
+	isEpicTriggeredMemosprite?: boolean; // 记忆主史诗触发的德谬歌额外 Q
+	isPolluxAction?: boolean; // 遐蝶死龙行动
 };
 
 export type SpeedAdjustment = {

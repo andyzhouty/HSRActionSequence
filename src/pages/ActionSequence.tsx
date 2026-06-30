@@ -8,13 +8,13 @@ import { ActionSequenceCtx } from "../contexts/ActionSequenceContext";
 import {
 	type CharacterConfig,
 	canUseSkillCode,
-	characterNameMatchesAliases,
 	createTarget,
 	defaultCharacters,
 	defaultResources,
 	ensureFileExtension,
 	formatEditableNumber,
 	type GeneratedAction,
+	getCharacterCid,
 	getCounterWDomainRule,
 	getCyreneUltimateRule,
 	getDefaultSkill,
@@ -541,20 +541,6 @@ export default function ActionSequence() {
 			),
 		[characters],
 	);
-	const characterKinds = useMemo(
-		() =>
-			Object.fromEntries(
-				characters.map((character) => [character.id, character.kind]),
-			),
-		[characters],
-	);
-	const charactersById = useMemo(
-		() =>
-			Object.fromEntries(
-				characters.map((character) => [character.id, character]),
-			),
-		[characters],
-	);
 	const memospriteTargets = useMemo(
 		() =>
 			characters.flatMap((c) => {
@@ -593,8 +579,42 @@ export default function ActionSequence() {
 						lc_id: 0,
 					});
 				}
+				if (hasSkillEffect(c.name, "Q", "cyreneUltimate")) {
+					const rule = getCyreneUltimateRule(c.name);
+					memos.push({
+						...c,
+						id: `${c.id}-memosprite`,
+						kind: "忆灵",
+						name: rule.memospriteName,
+						speed: "0",
+						baseSpeed: "0",
+						hasVonwacq: false,
+						hasWindSet: false,
+						hasDance: false,
+						eidolon: 0,
+						superimpose: 1,
+						lc_id: 0,
+					});
+				}
 				return memos;
 			}),
+		[characters],
+	);
+
+	const characterKinds = useMemo(
+		() =>
+			Object.fromEntries([
+				...characters.map((character) => [character.id, character.kind] as const),
+				...memospriteTargets.map((m) => [m.id, m.kind] as const),
+			]),
+		[characters, memospriteTargets],
+	);
+
+	const charactersById = useMemo(
+		() =>
+			Object.fromEntries(
+				characters.map((character) => [character.id, character]),
+			),
 		[characters],
 	);
 
@@ -841,17 +861,20 @@ export default function ActionSequence() {
 				hasSkillEffect(c.name, "F", "himekoNovaAssist"),
 			);
 			if (novaChar && novaChar.eidolon < 2) {
-				const novaFFWhitelist = [
-					"丹恒", "丹恒·腾荒",
-					"三月七", "三月七·巡猎",
-					"长夜月",
-					"瓦尔特",
-					"开拓者·毁灭", "开拓者·存护", "开拓者·同谐", "开拓者·记忆", "开拓者·欢愉",
-					"星期日",
-					"姬子",
-				];
+				const novaFFCidWhitelist = new Set([
+					"1002", "1414", // 丹恒, 丹恒·腾荒
+					"1001", "1224", // 三月七, 三月七·巡猎
+					"1413", // 长夜月
+					"1004", // 瓦尔特
+					"8002", "8004", "8006", "8008", "8010", // 开拓者
+					"1313", // 星期日
+					"1003", // 姬子
+				]);
+				const characterCid = getCharacterCid(character.name);
+				const isNovaFFWhitelisted =
+					characterCid !== undefined && novaFFCidWhitelist.has(characterCid);
 				if (
-					!characterNameMatchesAliases(character.name, novaFFWhitelist) &&
+					!isNovaFFWhitelisted &&
 					(nextSkill.match(/F/g)?.length ?? 0) >= 2
 				) {
 					setMessage("当前 sp 姬子未达 2 魂，此角色不可使用 FF 连招");

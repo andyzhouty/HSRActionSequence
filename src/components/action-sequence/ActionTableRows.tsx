@@ -464,10 +464,10 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 		!action.isAssistAction;
 	const disabled = char
 		? action.isAssistAction ||
-			action.lockedSkill ||
-			action.isMemospriteAction ||
+			(action.lockedSkill && !action.isPolluxAction) ||
+			(action.isMemospriteAction && !action.isPolluxAction) ||
 			ctx.characterKinds[action.characterId] !== "角色"
-		: true;
+		: !action.isPolluxAction;
 	const nonDomainSkillTitle =
 		char && hasSemanticFlag(char.name, "wOnlyInDomain")
 			? "A 普攻，E 战技，Q 大招，F 助战技；W 仅境界内"
@@ -485,6 +485,15 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 						.join("、");
 	const supremeSkillTitle =
 		char === undefined ? "至高之姿下可填写技能" : "至高之姿下可填写 A、AQ、Q";
+	const skillTitle = action.isEpicTriggeredMemosprite
+		? "记忆主史诗触发的德谬歌额外攻击"
+		: action.isCyreneEnhancedQ
+			? "昔涟强化Q触发的德谬歌额外回合"
+			: isDomain
+				? domainSkillTitle
+				: action.isAglaeaSupremeAction
+					? supremeSkillTitle
+					: nonDomainSkillTitle;
 	const [draft, setDraft] = useState<string | null>(null);
 	const commitDraftSkill = (rawSkill: string) => {
 		const normalizedSkill = rawSkill.trim().toUpperCase();
@@ -539,13 +548,7 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 				maxLength={6}
 				disabled={disabled}
 				data-export-kind={isDomain ? "domain-skill" : undefined}
-				title={
-					isDomain
-						? domainSkillTitle
-						: action.isAglaeaSupremeAction
-							? supremeSkillTitle
-							: nonDomainSkillTitle
-				}
+				title={skillTitle}
 				onFocus={(event) => event.currentTarget.select()}
 				onMouseDown={(event) => event.stopPropagation()}
 				onPointerDown={(event) => event.stopPropagation()}
@@ -580,6 +583,8 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 function OdeInline({ action }: { action: GeneratedAction }) {
 	const ctx = useActionSequence();
 	if (action.isMemeAction) return null;
+	if (action.isEpicTriggeredMemosprite) return null;
+	if (action.isCyreneEnhancedQ) return null;
 	if (!action.isMemospriteAction || !action.memospriteOwnerId) return null;
 	const owner = ctx.charactersById[action.memospriteOwnerId];
 	if (!owner) return null;
