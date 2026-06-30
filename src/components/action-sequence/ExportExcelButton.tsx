@@ -9,6 +9,7 @@ import {
 	formatActionValue,
 	getCharacterPath,
 	getErrorMessage,
+	isAllyTarget,
 } from "../../utils/actionSequence";
 
 export default function ExportExcelButton() {
@@ -28,7 +29,51 @@ export default function ExportExcelButton() {
 			for (const r of ctx.resources) {
 				header.push(r || `资源`);
 			}
-			const rows = ctx.actions.map((a, i) => {
+			// 收集境界区间（白厄开大后的域），用于遮蔽域内无关友方行动
+			const domainRanges: {
+				casterId: string;
+				startAV: number;
+				endAV: number;
+			}[] = [];
+			for (const a of ctx.actions) {
+				if (a.isDomainAction && !a.isDomainFinalAction) {
+					const existing = domainRanges.find(
+						(r) => r.casterId === a.characterId && r.endAV === 0,
+					);
+					if (!existing) {
+						domainRanges.push({
+							casterId: a.characterId,
+							startAV: a.actionValue,
+							endAV: 0,
+						});
+					}
+				}
+				if (a.isDomainFinalAction) {
+					const range = domainRanges.find(
+						(r) => r.casterId === a.characterId && r.endAV === 0,
+					);
+					if (range) range.endAV = a.actionValue;
+				}
+			}
+
+			const isInsideDomain = (
+				action: (typeof ctx.actions)[number],
+			): boolean => {
+				if (action.isDomainAction) return false; // 域内行动保留
+				if (action.isAhaInstant) return false; // 阿哈时刻保留
+				const charKind =
+					ctx.characterKinds[action.characterId] ?? "角色";
+				if (!isAllyTarget(charKind)) return false; // 敌方可以穿插
+				return domainRanges.some(
+					(r) =>
+						r.casterId !== action.characterId &&
+						action.actionValue >= r.startAV &&
+						action.actionValue <= r.endAV,
+				);
+			};
+
+			const visibleActions = ctx.actions.filter((a) => !isInsideDomain(a));
+			const rows = visibleActions.map((a, i) => {
 				const skillTargetId = ctx.skillTargets[a.key];
 				const odeSelection = ctx.odeSelections[a.key];
 				const memeTargetId = ctx.memeSelections[a.key];

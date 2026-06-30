@@ -1174,7 +1174,7 @@ export default function ActionSequence() {
 			const cleanColor = (css: string) =>
 				css.replace(/oklch\([^)]*\)|oklab\([^)]*\)/gi, "rgba(0,0,0,0)");
 			// 计算紧凑的导出宽度：固定列 + 资源列均分
-			const fixedColWidth = 48 + 80 + 48; // 序号(48) + 行动值(80) + 技能(48)
+			const fixedColWidth = 48 + 100 + 112 + 112; // 序号(48) + 角色(100) + 行动值(112) + 技能(112)
 			const resourceColWidth =
 				resources.length > 0
 					? Math.min(Math.floor(640 / resources.length), 100)
@@ -1188,9 +1188,12 @@ export default function ActionSequence() {
 				style: {
 					boxSizing: "border-box",
 					paddingBottom: `${exportPadding}px`,
+					overflowX: "hidden",
 				},
 				onCloneNode: (cloned) => {
 					if (!(cloned instanceof HTMLElement)) return;
+					// 隐藏滚动条
+					cloned.style.overflowX = "hidden";
 					// 清理 <style> 标签中的 oklab/oklch
 					cloned.querySelectorAll("style").forEach((style) => {
 						style.textContent = cleanColor(style.textContent);

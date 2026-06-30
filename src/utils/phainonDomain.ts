@@ -21,6 +21,7 @@ type PhainonMutableState = {
 	currentSpeed: number;
 	phainonDomainSpeedBonus: number;
 	nextActionValue: number;
+	blockNextAdvance?: boolean;
 };
 
 function isAllyTarget(kind: string): boolean {
@@ -54,6 +55,14 @@ export function applyPhainonDomainPauseAndSpeedBonus(
 	for (let index = 0; index < states.length; index++) {
 		const state = states[index];
 		if (!isAllyTarget(state.character.kind)) continue;
+
+		// 不受加速/拉条影响的角色（如知更鸟大招期间）跳过速度 buff，纯平移 AV
+		if (state.blockNextAdvance) {
+			state.nextActionValue =
+				domainEndActionValue +
+				Math.max(0, state.nextActionValue - startActionValue);
+			continue;
+		}
 
 		const remainingActionDistance =
 			Math.max(
