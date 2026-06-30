@@ -150,10 +150,7 @@ export function simulateActions(
 	if (huohuoState) {
 		for (const s of states) {
 			if (s.character.kind === "角色") {
-				const v0 =
-					toPositiveNumber(s.character.baseSpeed, 0) > 0
-						? toPositiveNumber(s.character.baseSpeed, 100)
-						: 100;
+				const v0 = s.baseSpeed;
 				s.currentSpeed = s.currentSpeed + v0 * 0.12;
 				s.nextActionValue = 10000 / s.currentSpeed;
 			}
@@ -171,10 +168,7 @@ export function simulateActions(
 					s.character.id === meritOwner.character.id ||
 					s.character.id === input.meritTarget
 				) {
-					const v0_merit =
-						toPositiveNumber(s.character.baseSpeed, 0) > 0
-							? toPositiveNumber(s.character.baseSpeed, 100)
-							: 100;
+					const v0_merit = s.baseSpeed;
 					s.currentSpeed = s.currentSpeed + v0_merit * 0.2;
 					s.nextActionValue = 10000 / s.currentSpeed;
 				}
@@ -206,6 +200,12 @@ export function simulateActions(
 		}
 	}
 
+	// 军功目标追踪（模拟中途可被 E 切换）
+	let currentMeritTarget: string | null = input.meritTarget ?? null;
+	const meritOwnerState = states.find((s) =>
+		hasPassive(s.character.name, "meritSpeedBuff20"),
+	);
+
 	let guard = 0;
 
 	while (states.length > 0 && guard < 2000) {
@@ -213,7 +213,10 @@ export function simulateActions(
 
 		// Build candidates
 		const candidates = states.map((state, stateIndex) => {
-			const key = `${state.character.id}-${state.actionNo}`;
+			const key = state.isGarmentmakerState &&
+				state.garmentmakerGeneration
+				? `${state.character.id}-g${state.garmentmakerGeneration}-${state.actionNo}`
+				: `${state.character.id}-${state.actionNo}`;
 			return {
 				stateIndex,
 				key,
@@ -257,6 +260,55 @@ export function simulateActions(
 				speed: ahaSpeed,
 				isAhaInstant: true,
 			});
+			// 阿哈时刻支持 after 插队（不支持 before）
+			const ahaInterrupts = input.ultInterrupts[key] ?? [];
+			for (let ai = 0; ai < ahaInterrupts.length; ai++) {
+				const int = ahaInterrupts[ai];
+				if (int.timing !== "after") continue;
+				const casterIndex = states.findIndex(
+					(s) => s.character.id === int.casterId,
+				);
+				if (casterIndex === -1) continue;
+				const caster = states[casterIndex];
+				actions.push({
+					key: `${key}-interrupt-${ai}`,
+					characterId: caster.character.id,
+					actionNo: 0,
+					actionValue,
+					skill: "Q" as SkillCode,
+					speed: caster.currentSpeed,
+					activeOdeLabels: getActiveOdeLabels(activeOdes, caster.character.id),
+				});
+				emitMemeAdvanceAction({
+					input,
+					actions,
+					states,
+					sourceKey: `${key}-interrupt-${ai}`,
+					actionValue,
+					activeOdes,
+				});
+			}
+			// 银狼 E2：无敌玩家状态下，阿哈行动后可插入额外 A
+			const ahaGodmodeExtra = input.godmodeExtraActions ?? {};
+			if (ahaGodmodeExtra[key]) {
+				const swIndex = states.findIndex(
+					(s) =>
+						hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
+				);
+				if (swIndex !== -1) {
+					const sw = states[swIndex];
+					actions.push({
+						key: `${key}-godmode-A`,
+						characterId: sw.character.id,
+						displayName: "银狼E2",
+						actionNo: 0,
+						actionValue,
+						skill: "A" as SkillCode,
+						speed: sw.currentSpeed,
+						lockedSkill: true,
+					});
+				}
+			}
 			states[stateIndex].actionNo += 1;
 			states[stateIndex].nextActionValue = actionValue + 10000 / ahaSpeed;
 			continue;
@@ -515,25 +567,31 @@ export function simulateActions(
 		const actionSkill = rawSkill.replace(/F/g, "") as SkillCode;
 		const skill = actionSkill;
 		const assistUseCount = rawSkill.match(/F/g)?.length ?? 0;
-		const skipAssistFollowUp =
-			himekoNovaAssist !== undefined && assistUseCount >= 2;
-
-		// 流萤完全燃烧：EE 拆分为两动 E（多出的 E 在 emit 后生成额外行动）
-		const eeSplitCount =
-			states[stateIndex].isInCompleteCombustion &&
-			skill.length > 1 &&
-			[...skill].every((c) => c === "E")
-				? skill.length - 1
-				: 0;
+	// E0/E1 sp姬子：非白名单角色只能触发单 F，且不保留原回合
+	const himekoNovaLowEidolon =
+		himekoNovaAssist !== undefined &&
+		himekoNovaAssist.character.eidolon < 2;
+	const novaFFWhitelist = [
+		"丹恒", "丹恒·腾荒",
+		"三月七", "三月七·巡猎",
+		"长夜月",
+		"瓦尔特",
+		"开拓者·毁灭", "开拓者·存护", "开拓者·同谐", "开拓者·记忆", "开拓者·欢愉",
+		"星期日",
+		"姬子",
+	];
+	const isNovaFFWhitelisted =
+		characterNameMatchesAliases(character.name, novaFFWhitelist);
+	const skipAssistFollowUp =
+		himekoNovaAssist !== undefined &&
+		(assistUseCount >= 2 ||
+			(himekoNovaLowEidolon && !isNovaFFWhitelisted));
 		// 通用 Q 拆分：Q 始终是插队，解析出非 Q 部分作为主行动
 		const hasSelfQ = skill.includes("Q") && skill.length > 1;
 
-		const resolvedSkill =
-			eeSplitCount > 0
-				? ("E" as SkillCode)
-				: hasSelfQ
-					? (skill.replace(/Q/g, "") as SkillCode) || ("" as SkillCode)
-					: skill;
+		const resolvedSkill = hasSelfQ
+			? (skill.replace(/Q/g, "") as SkillCode) || ("" as SkillCode)
+			: skill;
 		const usesUltimate = skill.includes("Q");
 		const qIsFront = skill.length > 1 && skill.startsWith("Q");
 		const actionSpeed = states[stateIndex].currentSpeed;
@@ -706,6 +764,28 @@ export function simulateActions(
 					caster.nextActionValue = actionValue;
 				}
 			}
+			// 银狼 E2：插队 Q 后也可插入额外 A
+			const interruptKey = `${key}-interrupt-${idx}`;
+			const intGodmodeExtra = input.godmodeExtraActions ?? {};
+			if (intGodmodeExtra[interruptKey]) {
+				const swIdx = states.findIndex(
+					(s) =>
+						hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
+				);
+				if (swIdx !== -1) {
+					const sw = states[swIdx];
+					actions.push({
+						key: `${interruptKey}-godmode-A`,
+						characterId: sw.character.id,
+						displayName: "银狼E2",
+						actionNo: 0,
+						actionValue,
+						skill: "A" as SkillCode,
+						speed: sw.currentSpeed,
+						lockedSkill: true,
+					});
+				}
+			}
 		};
 
 		// 按 timing 分组处理
@@ -745,6 +825,36 @@ export function simulateActions(
 					actionValue,
 					activeOdes,
 				});
+				// 协战 F 行动支持插队大招
+				const assistInterrupts = input.ultInterrupts[assistKey] ?? [];
+				for (let ai = 0; ai < assistInterrupts.length; ai++) {
+					const int2 = assistInterrupts[ai];
+					const casterIndex2 = states.findIndex(
+						(s) => s.character.id === int2.casterId,
+					);
+					if (casterIndex2 === -1) continue;
+					const caster2 = states[casterIndex2];
+					actions.push({
+						key: `${assistKey}-interrupt-${ai}`,
+						characterId: caster2.character.id,
+						actionNo: 0,
+						actionValue,
+						skill: "Q" as SkillCode,
+						speed: caster2.currentSpeed,
+						activeOdeLabels: getActiveOdeLabels(
+							activeOdes,
+							caster2.character.id,
+						),
+					});
+					emitMemeAdvanceAction({
+						input,
+						actions,
+						states,
+						sourceKey: `${assistKey}-interrupt-${ai}`,
+						actionValue,
+						activeOdes,
+					});
+				}
 				expirePhainonDomainSpeedBonus(states, actionValue);
 			}
 		}
@@ -768,6 +878,13 @@ export function simulateActions(
 					skill: "Q" as SkillCode,
 					speed: actionSpeed,
 				});
+				// 银狼 Q 在前 → 立即进入无敌玩家，后续 A 作为第一次消耗
+				if (
+					isCharacterTarget(character) &&
+					hasSkillEffect(character.name, "Q", "selfAdvance100")
+				) {
+					activateGodmode(states, stateIndex);
+				}
 			}
 		}
 
@@ -790,6 +907,22 @@ export function simulateActions(
 				memospriteOwnerId: states[stateIndex].memeOwnerId,
 				activeOdeLabels: getActiveOdeLabels(activeOdes, character.id),
 			});
+			// 浪漫之诗：阿格莱雅/衣匠非 Q 行动消耗充能
+			const romanceOwnerId = states[stateIndex].isGarmentmakerState
+				? states[stateIndex].garmentmakerOwnerId
+				: character.id;
+			if (
+				!resolvedSkill.includes("Q")
+			) {
+				const romanceOdes = activeOdes.get(romanceOwnerId ?? "");
+				const romanceActive = romanceOdes?.find(
+					(o) => o.ode.effects?.includes("odeToRomance") && o.romanceCharged,
+				);
+				if (romanceActive) {
+					romanceActive.romanceCharged = false;
+					actions[actions.length - 1].isRomanceAction = true;
+				}
+			}
 			// 银狼无敌玩家：正常行动消耗层数
 			if (
 				hasSilverWolfGodmode(character.name) &&
@@ -835,19 +968,54 @@ export function simulateActions(
 			});
 		}
 
-		// ── 流萤完全燃烧 EE 多出的 E → 生成额外行动 ──
-		if (eeSplitCount > 0 && !skipAssistFollowUp) {
-			for (let ei = 0; ei < eeSplitCount; ei++) {
-				const extraKey = `${key}-combustion-e${ei + 1}`;
-				actions.push({
-					key: extraKey,
-					characterId: character.id,
-					isCombustionAction: true,
-					actionNo,
-					actionValue,
-					skill: "E" as SkillCode,
-					speed: actionSpeed,
-				});
+		// ── 刻律军功目标切换：E 技能可更改军功目标 ──
+		if (
+			meritOwnerState &&
+			character.id === meritOwnerState.character.id &&
+			skill.includes("E") &&
+			!resolvedSkill.includes("Q")
+		) {
+			const eTarget = getSkillTarget(input, key, character);
+			if (eTarget && eTarget !== currentMeritTarget) {
+				// 移除旧目标加速
+				if (currentMeritTarget) {
+					const oldTarget = states.find(
+						(s) => s.character.id === currentMeritTarget,
+					);
+					if (oldTarget) {
+						const oldSpeed = oldTarget.currentSpeed;
+						oldTarget.currentSpeed -= oldTarget.baseSpeed * 0.2;
+						const newSpeed = oldTarget.currentSpeed;
+						const remaining = oldTarget.nextActionValue - actionValue;
+						if (remaining > 0) {
+							oldTarget.nextActionValue =
+								actionValue + remaining * (oldSpeed / newSpeed);
+						} else {
+							oldTarget.nextActionValue =
+								actionValue + 10000 / newSpeed;
+						}
+					}
+				}
+				// 添加新目标加速
+				{
+					const newTarget = states.find(
+						(s) => s.character.id === eTarget,
+					);
+					if (newTarget) {
+						const oldSpeed = newTarget.currentSpeed;
+						newTarget.currentSpeed += newTarget.baseSpeed * 0.2;
+						const newSpeed = newTarget.currentSpeed;
+						const remaining = newTarget.nextActionValue - actionValue;
+						if (remaining > 0) {
+							newTarget.nextActionValue =
+								actionValue + remaining * (oldSpeed / newSpeed);
+						} else {
+							newTarget.nextActionValue =
+								actionValue + 10000 / newSpeed;
+						}
+					}
+				}
+				currentMeritTarget = eTarget;
 			}
 		}
 
@@ -1090,13 +1258,16 @@ export function simulateActions(
 				}
 
 				// 银狼LV.999 Q：进入无敌玩家
-				// Q 在前（如 QA）时自拉条无效；Q 在后（如 AQ）时自拉条 100%
+				// Q 在前（如 QA）时已在 Q-front 处激活，此处跳过
+				// Q 在后（如 AQ）时自拉条 100%
 				if (
 					isCharacterTarget(character) &&
 					hasSkillEffect(character.name, "Q", "selfAdvance100") &&
 					usesUltimate
 				) {
-					activateGodmode(states, stateIndex);
+					if (!qIsFront) {
+						activateGodmode(states, stateIndex);
+					}
 					if (!qIsFront) {
 						states[stateIndex].nextActionValue = actionValue;
 					}

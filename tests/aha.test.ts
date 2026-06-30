@@ -31,6 +31,12 @@ function skills(entries: Record<string, string>): Record<string, SkillCode> {
 	return entries;
 }
 
+function interrupts(
+	entries: Record<string, import("../src/utils/actionSequence").UltInterrupt[]>,
+): Record<string, import("../src/utils/actionSequence").UltInterrupt[]> {
+	return entries;
+}
+
 function input(
 	overrides: Partial<SimulateActionsInput> = {},
 ): SimulateActionsInput {
@@ -237,6 +243,67 @@ describe("Silver Wolf LV.999", () => {
 		expect(sw2?.actionValue).toBeCloseTo(200, 2);
 	});
 
+	it("QA: Q 在前立即进入无敌，A 作为第一次消耗（共 3 次退出）", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("sw", "银狼LV.999", 100)],
+				skillOverrides: skills({
+					"sw-1": "QA",
+					"sw-5": "AQ",
+				}),
+				limit: 600,
+			}),
+		);
+
+		// sw-1: QA → Q 立即进无敌 → A 消耗 1/3
+		// sw-2: A 消耗 2/3
+		// sw-3: A 消耗 3/3 → 退出无敌
+		// sw-4: 自由
+		// sw-5: AQ → 再次进无敌
+		expect(actions.find((a) => a.key === "sw-1-q")?.skill).toBe("Q");
+		expect(actions.find((a) => a.key === "sw-1")?.skill).toBe("A");
+		expect(actions.find((a) => a.key === "sw-1")?.lockedSkill).toBe(true);
+
+		expect(actions.find((a) => a.key === "sw-2")?.skill).toBe("A");
+		expect(actions.find((a) => a.key === "sw-2")?.lockedSkill).toBe(true);
+
+		// sw-3: skill forced to A (getGodmodeSkill), lockedSkill false (退出后检查)
+		expect(actions.find((a) => a.key === "sw-3")?.skill).toBe("A");
+
+		// sw-4: 退出无敌，不再锁定
+		expect(actions.find((a) => a.key === "sw-4")).toBeDefined();
+		expect(actions.find((a) => a.key === "sw-4")?.lockedSkill).toBeFalsy();
+
+		// sw-5: AQ，再次进无敌（Q 在后 → A 不消耗，Q 后进入）
+		expect(actions.find((a) => a.key === "sw-5-q")?.skill).toBe("Q");
+		expect(actions.find((a) => a.key === "sw-5")?.skill).toBe("A");
+	});
+
+	it("E2：在阿哈行动后可插入额外 A", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("sw", "银狼LV.999", 200),
+					character("sparxie", "火花", 160),
+				],
+				skillOverrides: skills({
+					"sw-1": "AQ",
+				}),
+				godmodeExtraActions: {
+					"@aha-1": true,
+				},
+				limit: 200,
+			}),
+		);
+
+		// 阿哈时刻后应有银狼 E2 额外 A（SW 需先于阿哈进入无敌玩家）
+		const extraA = actions.find((a) => a.key === "@aha-1-godmode-A");
+		expect(extraA).toBeDefined();
+		expect(extraA?.skill).toBe("A");
+		expect(extraA?.displayName).toBe("银狼E2");
+		expect(extraA?.characterId).toBe("sw");
+	});
+
 	it("E2：在队友行动后可插入额外 A（不消耗正常行动次数）", () => {
 		const actions = simulateActions(
 			input({
@@ -261,4 +328,33 @@ describe("Silver Wolf LV.999", () => {
 		expect(extraA?.skill).toBe("A");
 		expect(extraA?.displayName).toBe("银狼E2");
 	});
+
+	it("E2：在插队 Q 后也可插入额外 A", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("sw", "银狼LV.999", 100),
+					character("ally", "队友", 100),
+				],
+				skillOverrides: skills({
+					"sw-1": "AQ",
+				}),
+				ultInterrupts: interrupts({
+					"sw-2": [{ casterId: "ally", timing: "after" }],
+				}),
+				godmodeExtraActions: {
+					"sw-2-interrupt-0": true,
+				},
+				limit: 400,
+			}),
+		);
+
+		const extraA = actions.find(
+			(a) => a.key === "sw-2-interrupt-0-godmode-A",
+		);
+		expect(extraA).toBeDefined();
+		expect(extraA?.skill).toBe("A");
+		expect(extraA?.displayName).toBe("银狼E2");
+	});
+
 });

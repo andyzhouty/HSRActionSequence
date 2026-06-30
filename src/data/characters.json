@@ -978,6 +978,19 @@
               ],
               "duration": "stacks",
               "stacks": 2
+            },
+            {
+              "code": "romance",
+              "label": "浪漫",
+              "fullName": "浪漫之诗",
+              "targetNames": [
+                "阿格莱雅",
+                "Aglaea"
+              ],
+              "duration": "battle",
+              "effects": [
+                "odeToRomance"
+              ]
             }
           ]
         }

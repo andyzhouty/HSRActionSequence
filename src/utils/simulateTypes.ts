@@ -61,4 +61,5 @@ export type ActiveOdeState = {
 	remainingTurns?: number;
 	remainingAttacks?: number;
 	stacks?: number;
+	romanceCharged?: boolean;
 };

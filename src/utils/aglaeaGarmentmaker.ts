@@ -20,9 +20,11 @@ export type AglaeaActionState = {
 	garmentmakerOwnerId?: string;
 	garmentmakerStacks?: number;
 	garmentmakerBaseSpeed?: number;
+	garmentmakerGeneration?: number;
 	aglaeaSupremeActive?: boolean;
 	aglaeaCountdownId?: string;
 	aglaeaOwnerId?: string;
+	aglaeaPreSupremeSpeed?: number;
 };
 
 export function hasAglaeaGarmentmaker(characterName: string) {
@@ -90,8 +92,8 @@ export function getGarmentmakerStacks(
 	return findAglaeaState(states, ownerId)?.garmentmakerStacks ?? 0;
 }
 
-function getGarmentmakerSpeed(rule: GarmentmakerRule, stacks: number) {
-	return rule.memospriteSpeed + rule.stackSpeedBonus * stacks;
+function getGarmentmakerSpeed(rule: GarmentmakerRule, stacks: number, aglaeaSpeed: number) {
+	return aglaeaSpeed * (rule.memospriteSpeed / 100) + rule.stackSpeedBonus * stacks;
 }
 
 function setSpeedPreservingActionDistance(
@@ -119,13 +121,14 @@ export function refreshAglaeaSupremeSpeed(
 	if (!state.aglaeaSupremeActive) return;
 	const rule = getGarmentmakerRule(state.character.name);
 	const stacks = state.garmentmakerStacks ?? 0;
+	const preSpeed = state.aglaeaPreSupremeSpeed ?? state.currentSpeed;
 	const nextSpeed =
-		state.currentSpeed +
+		preSpeed +
 		getAglaeaBaseSpeed(state) * rule.aglaeaSpeedBonusRatioPerStack * stacks;
 	setSpeedPreservingActionDistance(state, nextSpeed, actionValue);
 }
 
-function syncGarmentmakerStacksToAglaea(
+export function syncGarmentmakerStacksToAglaea(
 	states: AglaeaActionState[],
 	ownerId: string,
 	stacks: number,
@@ -154,7 +157,7 @@ export function increaseGarmentmakerStacks(
 		(garmentmaker.garmentmakerStacks ?? 0) + 1,
 	);
 	garmentmaker.garmentmakerStacks = nextStacks;
-	garmentmaker.currentSpeed = getGarmentmakerSpeed(rule, nextStacks);
+	garmentmaker.currentSpeed = getGarmentmakerSpeed(rule, nextStacks, aglaea.currentSpeed);
 	syncGarmentmakerStacksToAglaea(states, ownerId, nextStacks, actionValue);
 }
 
@@ -168,12 +171,20 @@ export function summonGarmentmakerState(
 	const ownerState = findAglaeaState(states, owner.id);
 	const retainedStacks = ownerState?.garmentmakerStacks ?? 0;
 	const initialStacks = Math.min(getAglaeaStackLimit(owner), retainedStacks);
-	const currentSpeed = getGarmentmakerSpeed(rule, initialStacks);
+	const aglaeaSpeed = ownerState?.currentSpeed || (Number(owner.speed) || 100);
+	const currentSpeed = getGarmentmakerSpeed(rule, initialStacks, aglaeaSpeed);
+	const baseGarmentmakerSpeed = aglaeaSpeed * (rule.memospriteSpeed / 100);
+
+	// 递增代次，确保每次召唤的衣匠 key 唯一
+	const generation = (ownerState?.garmentmakerGeneration ?? 0) + 1;
+	if (ownerState) ownerState.garmentmakerGeneration = generation;
 
 	if (existing) {
 		existing.garmentmakerStacks = initialStacks;
-		existing.garmentmakerBaseSpeed = rule.memospriteSpeed;
+		existing.garmentmakerBaseSpeed = baseGarmentmakerSpeed;
 		existing.currentSpeed = currentSpeed;
+		existing.actionNo = 1;
+		existing.garmentmakerGeneration = generation;
 		existing.nextActionValue = Math.min(existing.nextActionValue, actionValue);
 		return existing;
 	}
@@ -185,14 +196,14 @@ export function summonGarmentmakerState(
 			kind: "忆灵",
 			name: rule.memospriteName,
 			speed: String(currentSpeed),
-			baseSpeed: String(rule.memospriteSpeed),
+			baseSpeed: String(baseGarmentmakerSpeed),
 			hasVonwacq: false,
 			hasWindSet: false,
 			hasDance: false,
 			eidolon: 0,
 			superimpose: 1,
 		},
-		baseSpeed: rule.memospriteSpeed,
+		baseSpeed: baseGarmentmakerSpeed,
 		currentSpeed,
 		phainonDomainSpeedBonus: 0,
 		actionNo: 1,
@@ -201,7 +212,8 @@ export function summonGarmentmakerState(
 		isGarmentmakerState: true,
 		garmentmakerOwnerId: owner.id,
 		garmentmakerStacks: initialStacks,
-		garmentmakerBaseSpeed: rule.memospriteSpeed,
+		garmentmakerBaseSpeed: baseGarmentmakerSpeed,
+		garmentmakerGeneration: generation,
 	};
 	states.push(garmentmaker);
 	syncGarmentmakerStacksToAglaea(states, owner.id, initialStacks, actionValue);
@@ -252,6 +264,10 @@ export function activateAglaeaSupreme(
 
 	state.aglaeaSupremeActive = true;
 	state.aglaeaCountdownId = countdownId;
+	// 记录进至高之姿前的速度，用于计算速度上限（避免层数叠加）
+	if (state.aglaeaPreSupremeSpeed === undefined) {
+		state.aglaeaPreSupremeSpeed = state.currentSpeed;
+	}
 	refreshAglaeaSupremeSpeed(state, actionValue);
 }
 
@@ -267,15 +283,10 @@ export function handleAglaeaCountdownAction(
 	const ownerId = states[stateIndex].aglaeaOwnerId;
 	if (!ownerId) return;
 	const aglaea = findAglaeaState(states, ownerId);
-	const rule = aglaea ? getGarmentmakerRule(aglaea.character.name) : undefined;
 	const garmentmakerIndex = states.findIndex(
 		(state) =>
 			state.isGarmentmakerState && state.garmentmakerOwnerId === ownerId,
 	);
-	const currentStacks =
-		garmentmakerIndex >= 0
-			? (states[garmentmakerIndex].garmentmakerStacks ?? 0)
-			: (aglaea?.garmentmakerStacks ?? 0);
 
 	actions.push({
 		key,
@@ -295,13 +306,13 @@ export function handleAglaeaCountdownAction(
 	}
 	if (aglaea) {
 		const baseSpeed = getAglaeaBaseSpeed(aglaea);
-		setSpeedPreservingActionDistance(aglaea, baseSpeed, actionValue);
+		const restoreSpeed = aglaea.aglaeaPreSupremeSpeed ?? baseSpeed;
+		setSpeedPreservingActionDistance(aglaea, restoreSpeed, actionValue);
 		aglaea.aglaeaSupremeActive = false;
 		aglaea.aglaeaCountdownId = undefined;
-		aglaea.garmentmakerStacks = Math.min(
-			rule?.retainedStacksAfterDismiss ?? 1,
-			currentStacks,
-		);
+		aglaea.aglaeaPreSupremeSpeed = undefined;
+		// 退出至高之姿后层数清空
+		aglaea.garmentmakerStacks = 0;
 	}
 	states.splice(stateIndex, 1);
 }
@@ -364,7 +375,10 @@ export function handleAglaeaSkillEffects(
 	if (usesUltimate) {
 		summonGarmentmakerState(states, state.character, actionValue);
 		activateAglaeaSupreme(states, stateIndex, actionValue);
-		state.nextActionValue = actionValue;
+		// Q 在前（QA/QE）时主行动已发生，不设立即行动（避免多余空行动）
+		if (!skill.startsWith("Q")) {
+			state.nextActionValue = actionValue;
+		}
 	}
 
 	if (

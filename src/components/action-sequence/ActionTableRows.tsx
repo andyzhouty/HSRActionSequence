@@ -2,6 +2,7 @@ import { useState } from "react";
 import ahaIcon from "../../assets/aha/aha.webp";
 import fireflyUltIcon from "../../assets/skillIcons/SkillIcon_1310_Ultra.webp";
 import swPassiveIcon from "../../assets/skillIcons/SkillIcon_1506_Passive.webp";
+import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import type { GeneratedAction } from "../../utils/actionSequence";
 import {
@@ -291,12 +292,25 @@ export function ActionRow({
 							className="inline-block h-6 w-6"
 						/>
 					</div>
+				) : action.key.includes("-godmode-A") ? (
+					<div className="flex h-full items-center justify-center">
+						<img
+							src={swRank2Icon}
+							alt="E2"
+							className="inline-block h-6 w-6"
+						/>
+					</div>
 				) : (
 					index + 1
 				)}
+				{action.isRomanceAction && (
+					<span className="text-yellow-300" title="浪漫之诗充能">
+						⚡
+					</span>
+				)}
 				{action.activeOdeLabels && action.activeOdeLabels.length > 0 && (
 					<span
-						className="ml-1 text-pink-300"
+						className="text-pink-300"
 						title={action.activeOdeLabels.join("、")}
 					>
 						♥
@@ -516,6 +530,12 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 				type="text"
 				value={resolvedValue}
 				onChange={(event) => setDraft(event.currentTarget.value.toUpperCase())}
+				onKeyDown={(event) => {
+					if (event.key === "Enter") {
+						commitDraftSkill(draft ?? displaySkill);
+						setDraft(null);
+					}
+				}}
 				maxLength={6}
 				disabled={disabled}
 				data-export-kind={isDomain ? "domain-skill" : undefined}

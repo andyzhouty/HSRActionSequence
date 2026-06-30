@@ -132,7 +132,7 @@ describe("Aglaea Supreme Stance activation", () => {
 			"aglaea-1",
 			"aglaea-1-q",
 			"aglaea-2",
-			"aglaea-garmentmaker-1",
+			"aglaea-garmentmaker-g1-1",
 		]);
 		expect(actions.find((action) => action.key === "aglaea-2")).toMatchObject({
 			isAglaeaSupremeAction: true,
@@ -343,7 +343,7 @@ describe("Aglaea countdown manual advance", () => {
 // ───── 全队综合测试 ─────
 
 describe("Aglaea team integration", () => {
-	it("Aglaea+Robin+Sunday+Huohuo: Robin E 起手, 衣匠行动后 Robin Q 插队 (after aglaea-garmentmaker-1)", () => {
+	it("Aglaea+Robin+Sunday+Huohuo: Robin E 起手, 衣匠行动后 Robin Q 插队 (after aglaea-garmentmaker-g1-1)", () => {
 		const actions = simulateActions(
 			input({
 				characters: [
@@ -369,7 +369,7 @@ describe("Aglaea team integration", () => {
 				},
 				ultInterrupts: interrupts({
 					// Robin Q 在衣匠行动后立刻插队（同一 AV）
-					"aglaea-garmentmaker-1": [{ casterId: "robin", timing: "after" }],
+					"aglaea-garmentmaker-g1-1": [{ casterId: "robin", timing: "after" }],
 				}),
 				limit: 300,
 			}),
@@ -396,7 +396,7 @@ describe("Aglaea team integration", () => {
 
 		// 3) Robin Q 在衣匠行动后（同一 AV）直接插队
 		const interrupt = actions.find(
-			(a) => a.key === "aglaea-garmentmaker-1-interrupt-0",
+			(a) => a.key === "aglaea-garmentmaker-g1-1-interrupt-0",
 		);
 		expect(interrupt).toBeDefined();
 		expect(interrupt?.characterId).toBe("robin");

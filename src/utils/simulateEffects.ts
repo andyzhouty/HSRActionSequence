@@ -5,6 +5,7 @@ import {
 	characterNameMatchesAliases,
 	type GeneratedAction,
 	getCyreneUltimateRule,
+	getGarmentmakerRule,
 	getMemeAdvanceRule,
 	getOdeRuleForTarget,
 	isCharacterTarget,
@@ -15,6 +16,11 @@ import {
 	shouldRememberSkillTarget,
 	toSignedNumber,
 } from "./actionSequence";
+import {
+	findGarmentmakerState,
+	getAglaeaStackLimit,
+	syncGarmentmakerStacksToAglaea,
+} from "./aglaeaGarmentmaker";
 import type {
 	ActionState,
 	ActiveOdeState,
@@ -266,15 +272,34 @@ export function applyOdeSelection(
 	if (ode.duration === "turns") effect.remainingTurns = ode.turns ?? 2;
 	if (ode.duration === "nextAttack") effect.remainingAttacks = 1;
 	if (ode.duration === "stacks") effect.stacks = ode.stacks ?? 1;
+	// 浪漫之诗：每次德谬歌 Q 重置充能
+	if (ode.effects?.includes("odeToRomance")) {
+		effect.romanceCharged = true;
+	}
 	if (ode.duration !== "extraTurn") {
-		activeOdes.set(selection.targetId, [
-			...(activeOdes.get(selection.targetId) ?? []),
-			effect,
-		]);
+		// 替换旧的同名 ode（刷新浪漫之诗充能等）
+		const existingList = activeOdes.get(selection.targetId) ?? [];
+		const filtered = existingList.filter((e) => e.ode.code !== ode.code);
+		activeOdes.set(selection.targetId, [...filtered, effect]);
 	}
 
 	if (ode.effects?.includes("immediateTurn") && !target.blockNextAdvance) {
 		target.nextActionValue = actionValue;
+	}
+	// 浪漫之诗：使阿格莱雅衣匠层数立刻达到上限
+	if (ode.effects?.includes("odeToRomance") && target) {
+		const stackLimit = getAglaeaStackLimit(target.character);
+		if (stackLimit > 0) {
+			syncGarmentmakerStacksToAglaea(states, target.character.id, stackLimit, actionValue);
+			const gm = findGarmentmakerState(states, target.character.id);
+			if (gm) {
+				gm.garmentmakerStacks = stackLimit;
+				const rule = getGarmentmakerRule(target.character.name);
+				gm.currentSpeed =
+					target.currentSpeed * (rule.memospriteSpeed / 100) +
+					rule.stackSpeedBonus * stackLimit;
+			}
+		}
 	}
 }
 
@@ -374,7 +399,7 @@ export function emitMemeAdvanceAction({
 	const meme = findMemeState(states, owner.character.id);
 	if (!meme) return;
 	const target = findTargetStateById(states, targetId);
-	if (!target || !isCharacterTarget(target.character)) return;
+	if (!target) return;
 
 	const rule = getMemeAdvanceRule(owner.character.name);
 	actions.push({
@@ -395,6 +420,7 @@ export function emitMemeAdvanceAction({
 
 	if (
 		target.character.id !== meme.character.id &&
+		isCharacterTarget(target.character) &&
 		!target.blockNextAdvance &&
 		target.nextActionValue > actionValue
 	) {

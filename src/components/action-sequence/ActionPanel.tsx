@@ -1,4 +1,5 @@
 import { Fragment, useMemo } from "react";
+import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import type { SpeedChangeMode } from "../../utils/actionSequence";
 import {
@@ -29,17 +30,33 @@ export default function ActionPanel() {
 		limitMarkerIndex === -1 ? ctx.actions.length : limitMarkerIndex;
 
 	// 白厄境界期间：只显示境界动作 + 非忆灵 + 敌人，隐藏我方角色和忆灵
+	// 昔涟自 Q：不显示昔涟Q行，仅显示德谬歌Q
 	const visibleActions = useMemo(() => {
-		const firstDomainIdx = ctx.actions.findIndex((a) => a.isDomainAction);
+		let filtered = ctx.actions.filter((action) => {
+			// 隐藏昔涟自 Q 行（德谬歌 Q 已单独显示）
+			if (
+				action.skill === "Q" &&
+				action.key.endsWith("-q") &&
+				hasSkillEffect(
+					ctx.charactersById[action.characterId]?.name ?? "",
+					"Q",
+					"cyreneUltimate",
+				)
+			) {
+				return false;
+			}
+			return true;
+		});
+		const firstDomainIdx = filtered.findIndex((a) => a.isDomainAction);
 		let lastDomainIdx = -1;
-		for (let i = ctx.actions.length - 1; i >= 0; i--) {
-			if (ctx.actions[i].isDomainAction) {
+		for (let i = filtered.length - 1; i >= 0; i--) {
+			if (filtered[i].isDomainAction) {
 				lastDomainIdx = i;
 				break;
 			}
 		}
-		if (firstDomainIdx === -1 || lastDomainIdx === -1) return ctx.actions;
-		return ctx.actions.filter((action, idx) => {
+		if (firstDomainIdx === -1 || lastDomainIdx === -1) return filtered;
+		return filtered.filter((action, idx) => {
 			if (idx < firstDomainIdx || idx > lastDomainIdx) return true;
 			if (action.isDomainAction) return true;
 			const kind = ctx.characterKinds[action.characterId];
@@ -459,6 +476,9 @@ function MenuContent() {
 
 			{/* Interrupt section */}
 			<InterruptSection />
+
+			{/* Silver Wolf E2 godmode extra section */}
+			<GodmodeExtraSection />
 		</>
 	);
 }
@@ -934,6 +954,74 @@ function InterruptSection() {
 			</div>
 			{existingInterrupts.length > 0 && (
 				<span className="text-xs text-gray-400">插队大招不占用大招周期</span>
+			)}
+		</div>
+	);
+}
+
+function GodmodeExtraSection() {
+	const ctx = useActionSequence();
+	const selectedKeys = [...ctx.selectedActionKeys];
+	if (selectedKeys.length === 0) return null;
+	const firstKey = selectedKeys[0];
+	const firstAction = ctx.actions.find((a) => a.key === firstKey);
+	if (!firstAction) return null;
+	if (firstAction.isDomainAction || firstAction.key.includes("-godmode-A")) return null;
+
+	// 仅队友/阿哈行动时显示
+	const charKind = ctx.characterKinds[firstAction.characterId];
+	const isEligible =
+		charKind === "角色" || charKind === "忆灵" || firstAction.characterId === "@aha";
+	if (!isEligible) return null;
+
+	// 仅银狼在无敌玩家状态时显示
+	const swChar = ctx.characters.find((c) =>
+		hasSkillEffect(c.name, "Q", "selfAdvance100"),
+	);
+	if (!swChar) return null;
+	// 无敌玩家状态：有SW的Q行动记录即视为可能处于无敌玩家中
+	const swInGodmode = ctx.actions.some(
+		(a) =>
+			a.characterId === swChar.id &&
+			(a.skill === "Q" || a.lockedSkill === true),
+	);
+	if (!swInGodmode) return null;
+
+	const isOn = ctx.godmodeExtraActions[firstKey] === true;
+	return (
+		<div className="flex flex-wrap items-center gap-3 border-t border-gray-700 pt-3">
+			<span className="whitespace-nowrap text-sm text-gray-300">
+				银狼 E2 额外行动：
+			</span>
+			<button
+				type="button"
+				onClick={() => {
+					if (isOn) {
+						ctx.setGodmodeExtraActions((prev) => {
+							const next = { ...prev };
+							delete next[firstKey];
+							return next;
+						});
+					} else {
+						ctx.setGodmodeExtraActions((prev) => ({
+							...prev,
+							[firstKey]: true,
+						}));
+					}
+				}}
+				className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+					isOn
+						? "border-violet-500/70 bg-violet-500/20 text-violet-200 hover:bg-violet-500/30"
+						: "border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+				}`}
+			>
+				<img src={swRank2Icon} alt="E2" className="inline-block h-5 w-5" />
+				{isOn ? "已开启" : "已关闭"}
+			</button>
+			{isOn && (
+				<span className="text-xs text-gray-400">
+					行动后银狼插入额外 A
+				</span>
 			)}
 		</div>
 	);

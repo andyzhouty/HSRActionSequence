@@ -93,6 +93,7 @@ export type GeneratedAction = {
 	isAhaInstant?: boolean;
 	lockedSkill?: boolean;
 	activeOdeLabels?: string[];
+	isRomanceAction?: boolean;
 };
 
 export type SpeedAdjustment = {
@@ -368,6 +369,9 @@ export type SavedData = {
 	ultInterrupts?: Record<string, UltInterrupt[]>;
 	resourceValues: Record<string, Record<string, string>>;
 	fireflyBreakCounters?: Record<string, boolean>;
+	godmodeExtraActions?: Record<string, boolean>;
+	meritTarget?: string;
+	dancePartner?: string;
 };
 
 export const targetKinds: TargetKind[] = [

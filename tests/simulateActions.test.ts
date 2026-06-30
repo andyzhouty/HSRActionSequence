@@ -201,7 +201,7 @@ describe("simulateActions", () => {
 			"aglaea-1",
 			"aglaea-1-q",
 			"aglaea-2",
-			"aglaea-garmentmaker-1",
+			"aglaea-garmentmaker-g1-1",
 		]);
 		expect(actions.find((action) => action.key === "aglaea-2")).toMatchObject({
 			isAglaeaSupremeAction: true,
@@ -271,7 +271,7 @@ describe("simulateActions", () => {
 			"a-1-interrupt-0",
 			"a-1",
 			"aglaea-1",
-			"aglaea-garmentmaker-1",
+			"aglaea-garmentmaker-g1-1",
 		]);
 		expect(actions.find((action) => action.key === "aglaea-1")).toMatchObject({
 			isAglaeaSupremeAction: true,
@@ -558,7 +558,7 @@ describe("himeko nova F assist", () => {
 			input({
 				characters: [
 					character("himeko", "姬子·启行", 100),
-					character("a", "行动角色", 100),
+					character("a", "丹恒", 100),
 				],
 				skillOverrides: skills({ "a-1": "FE" }),
 				limit: 250,
@@ -581,5 +581,89 @@ describe("himeko nova F assist", () => {
 		);
 		const assistActions = actions.filter((a) => a.isAssistFollowUp);
 		expect(assistActions).toHaveLength(0);
+	});
+
+	it("E0 sp 姬子：非白名单角色单 F 也跳过原回合", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("himeko", "姬子·启行", 100),
+					character("other", "其他角色", 100),
+				],
+				skillOverrides: skills({ "other-1": "F" }),
+				limit: 250,
+			}),
+		);
+		// 非白名单角色单 F → 跳过原回合，other-1 不应出现
+		const assistFollowUps = actions.filter((a) => a.isAssistFollowUp);
+		expect(assistFollowUps).toHaveLength(0);
+		const assistActions = actions.filter((a) => a.isAssistAction);
+		expect(assistActions.length).toBeGreaterThan(0);
+		expect(assistActions[0].characterId).toBe("himeko");
+	});
+
+	it("E0 sp 姬子：白名单丹恒单 F 保留原回合", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("himeko", "姬子·启行", 100),
+					character("dh", "丹恒", 100),
+				],
+				skillOverrides: skills({ "dh-1": "F" }),
+				limit: 250,
+			}),
+		);
+		// 白名单丹恒单 F → 保留原回合
+		const assistFollowUps = actions.filter((a) => a.isAssistFollowUp);
+		expect(assistFollowUps.length).toBeGreaterThan(0);
+	});
+
+	it("E0 sp 姬子：白名单开拓者·记忆单 F 保留原回合", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("himeko", "姬子·启行", 100),
+					character("rmc", "开拓者·记忆", 100),
+				],
+				skillOverrides: skills({ "rmc-1": "F" }),
+				limit: 250,
+			}),
+		);
+		const assistFollowUps = actions.filter((a) => a.isAssistFollowUp);
+		expect(assistFollowUps.length).toBeGreaterThan(0);
+	});
+
+	it("E2 sp 姬子：任意角色 FF 连招正常", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("himeko", "姬子·启行", 100, { eidolon: 2 }),
+					character("other", "其他角色", 100),
+				],
+				skillOverrides: skills({ "other-1": "FF" }),
+				limit: 250,
+			}),
+		);
+		// E2 时任何角色 FF 都正常（2 次 assist，跳过原回合）
+		const assistActions = actions.filter((a) => a.isAssistAction);
+		expect(assistActions.length).toBe(2);
+		const assistFollowUps = actions.filter((a) => a.isAssistFollowUp);
+		expect(assistFollowUps).toHaveLength(0);
+	});
+
+	it("E0 sp 姬子：非白名单角色单 F 后原角色下一动正常继续", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("himeko", "姬子·启行", 100),
+					character("other", "其他角色", 100),
+				],
+				skillOverrides: skills({ "other-1": "F" }),
+				limit: 500,
+			}),
+		);
+		// 非白名单单 F 后，原角色 other-2 应正常出现（下一动不受影响）
+		const other2 = actions.find((a) => a.key === "other-2");
+		expect(other2).toBeDefined();
 	});
 });

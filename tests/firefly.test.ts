@@ -240,29 +240,29 @@ describe("Firefly countdown manual advance", () => {
 // ───── Firefly Combustion EE Split ─────
 
 describe("Firefly combustion EE split", () => {
-	it("EE on combustion action splits into two E actions at same AV", () => {
+	it("E2 break generates one extra turn at same AV", () => {
 		const actions = simulateActions(
 			input({
-				characters: [character("firefly", "流萤", 100)],
+				characters: [character("firefly", "流萤", 100, { eidolon: 2 })],
 				skillOverrides: skills({
 					"firefly-1": "AQ",
-					"firefly-2": "EE",
+					"firefly-2": "E",
 				}),
-				fireflyBreakCounters: { "firefly-2": false },
+				fireflyBreakCounters: { "firefly-2": true },
 				limit: 210,
 			}),
 		);
 
-		// After Q, firefly-2 is the next action (100% advance), split into two E actions
-		const e1 = actions.find((a) => a.key === "firefly-2");
-		expect(e1).toBeDefined();
-		expect(e1?.skill).toBe("E");
+		// Normal turn with break ON → E2 generates extra turn at same AV
+		const main = actions.find((a) => a.key === "firefly-2");
+		expect(main).toBeDefined();
+		expect(main?.skill).toBe("E");
+		expect(main?.actionValue).toBeCloseTo(100, 4);
 
-		const e2 = actions.find((a) => a.key === "firefly-2-combustion-e1");
-		expect(e2).toBeDefined();
-		expect(e2?.skill).toBe("E");
-		expect(e2?.actionValue).toBeCloseTo(100, 4);
-		expect(e2?.isCombustionAction).toBe(true);
+		const extra = actions.find((a) => a.key === "firefly-2-break-extra-1");
+		expect(extra).toBeDefined();
+		expect(extra?.actionValue).toBeCloseTo(100, 4);
+		expect(extra?.isCombustionAction).toBe(true);
 	});
 
 	it("single E on combustion action stays as single E (no split)", () => {
@@ -418,5 +418,169 @@ describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 				expect(fireflyAV).toBeCloseTo(sundayAction.actionValue, 4);
 			}
 		}
+	});
+});
+
+// ───── E2 Firefly + SP Himeko F assist in break-extra ─────
+
+describe("E2 Firefly break-extra with SP Himeko assist", () => {
+	it("break-extra turn can trigger Himeko F assist", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("firefly", "流萤", 100, { eidolon: 2 }),
+					character("himeko", "姬子·启行", 100, { eidolon: 2 }),
+				],
+				skillOverrides: skills({
+					"firefly-1": "AQ",
+					"firefly-2": "E",
+					"firefly-2-break-extra-1": "F",
+				}),
+				fireflyBreakCounters: {
+					"firefly-2": true,
+					"firefly-2-break-extra-1": true,
+				},
+				limit: 250,
+			}),
+		);
+
+		// break-extra 回合用 F → 应生成 Himeko 助战
+		const assistActions = actions.filter((a) => a.isAssistAction);
+		expect(assistActions.length).toBeGreaterThan(0);
+		expect(assistActions[0].characterId).toBe("himeko");
+	});
+
+	it("break-extra turn can use FE (Himeko assist + skill)", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("firefly", "流萤", 100, { eidolon: 2 }),
+					character("himeko", "姬子·启行", 100, { eidolon: 2 }),
+				],
+				skillOverrides: skills({
+					"firefly-1": "AQ",
+					"firefly-2": "E",
+					"firefly-2-break-extra-1": "FE",
+				}),
+				fireflyBreakCounters: {
+					"firefly-2": true,
+					"firefly-2-break-extra-1": true,
+				},
+				limit: 250,
+			}),
+		);
+
+		const assistActions = actions.filter((a) => a.isAssistAction);
+		expect(assistActions.length).toBeGreaterThan(0);
+	});
+
+	it("break-extra turn F does not generate recursive break-extras", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("firefly", "流萤", 100, { eidolon: 2 }),
+					character("himeko", "姬子·启行", 100, { eidolon: 2 }),
+				],
+				skillOverrides: skills({
+					"firefly-1": "AQ",
+					"firefly-2": "E",
+					"firefly-2-break-extra-1": "FE",
+				}),
+				fireflyBreakCounters: {
+					"firefly-2": true,
+					"firefly-2-break-extra-1": true,
+				},
+				limit: 300,
+			}),
+		);
+
+		// 只有一层 break-extra，不会递归生成更多（排除 himeko assist key 中的 -break-extra-）
+		const breakExtras = actions.filter(
+			(a) =>
+				a.key.includes("-break-extra-") &&
+				a.characterId === "firefly",
+		);
+		expect(breakExtras.length).toBe(1);
+	});
+
+	it("E0 Himeko: break-extra 输入 F → 额外回合消失", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("firefly", "流萤", 100, { eidolon: 2 }),
+					character("himeko", "姬子·启行", 100),
+				],
+				skillOverrides: skills({
+					"firefly-1": "AQ",
+					"firefly-2": "E",
+					"firefly-2-break-extra-1": "F",
+				}),
+				fireflyBreakCounters: {
+					"firefly-2": true,
+					"firefly-2-break-extra-1": true,
+				},
+				limit: 250,
+			}),
+		);
+
+		// E0 Himeko + F → break-extra 消失，仅保留姬子助战
+		const assistActions = actions.filter((a) => a.isAssistAction);
+		expect(assistActions.length).toBe(1);
+		const breakExtra = actions.find((a) => a.key === "firefly-2-break-extra-1");
+		expect(breakExtra).toBeUndefined();
+	});
+
+	it("E2 Himeko: break-extra 输入 FF → 额外回合消失", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("firefly", "流萤", 100, { eidolon: 2 }),
+					character("himeko", "姬子·启行", 100, { eidolon: 2 }),
+				],
+				skillOverrides: skills({
+					"firefly-1": "AQ",
+					"firefly-2": "E",
+					"firefly-2-break-extra-1": "FF",
+				}),
+				fireflyBreakCounters: {
+					"firefly-2": true,
+					"firefly-2-break-extra-1": true,
+				},
+				limit: 250,
+			}),
+		);
+
+		// E2 Himeko + FF → 2 次助战，break-extra 消失
+		const assistActions = actions.filter((a) => a.isAssistAction);
+		expect(assistActions.length).toBe(2);
+		const breakExtra = actions.find((a) => a.key === "firefly-2-break-extra-1");
+		expect(breakExtra).toBeUndefined();
+	});
+
+	it("E2 Himeko: break-extra 输入单 F → 额外回合保留", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("firefly", "流萤", 100, { eidolon: 2 }),
+					character("himeko", "姬子·启行", 100, { eidolon: 2 }),
+				],
+				skillOverrides: skills({
+					"firefly-1": "AQ",
+					"firefly-2": "E",
+					"firefly-2-break-extra-1": "F",
+				}),
+				fireflyBreakCounters: {
+					"firefly-2": true,
+					"firefly-2-break-extra-1": true,
+				},
+				limit: 250,
+			}),
+		);
+
+		// E2 + 单 F → 额外回合保留 + 1 次助战
+		const assistActions = actions.filter((a) => a.isAssistAction);
+		expect(assistActions.length).toBe(1);
+		const breakExtra = actions.find((a) => a.key === "firefly-2-break-extra-1");
+		expect(breakExtra).toBeDefined();
 	});
 });

@@ -44,6 +44,8 @@ export default function CharacterPanel() {
 		ctx.setMemeSelections({});
 		ctx.setUltInterrupts({});
 		ctx.setResourceValues({});
+		ctx.setFireflyBreakCounters({});
+		ctx.setGodmodeExtraActions({});
 		ctx.setSelectedActionKeys(new Set());
 		ctx.closeActionMenu();
 		ctx.setImportText("");
@@ -59,15 +61,21 @@ export default function CharacterPanel() {
 		ctx.setSkillOverrides((prev) => {
 			const next = { ...prev };
 			for (const [actionKey, skill] of Object.entries(prev)) {
-				if (!skill.includes("F")) continue;
-				const restoredSkill = skill.replace(/F/g, "");
-				if (restoredSkill === "") delete next[actionKey];
-				else next[actionKey] = restoredSkill;
+				// 清除 Q（含 QA/AQ/EQ/QE）和 F（姬子助战）
+				if (skill.includes("Q") || skill.includes("F")) {
+					const restored = skill.replace(/Q/g, "").replace(/F/g, "");
+					if (restored === "") delete next[actionKey];
+					else next[actionKey] = restored;
+				}
 			}
 			return next;
 		});
 		ctx.setUltInterrupts({});
 		ctx.setResourceValues({});
+		ctx.setFireflyBreakCounters({});
+		ctx.setGodmodeExtraActions({});
+		ctx.setOdeSelections({});
+		ctx.setDomainEndOverrides({});
 		ctx.setSelectedActionKeys(new Set());
 		ctx.closeActionMenu();
 		ctx.setMessage("已恢复默认行动值");
@@ -217,10 +225,34 @@ function CharacterCard({
 						value={character.name}
 						placeholder={getTargetDefaultName(character.kind, index)}
 						onChange={(value) =>
-							ctx.updateCharacter(character.id, (prev) => ({
-								...prev,
-								name: value,
-							}))
+							ctx.updateCharacter(character.id, (prev) => {
+								const oldPath = getCharacterPath(prev.name);
+								const newPath = getCharacterPath(value);
+								const allLcs =
+									(
+										lightConeData as {
+											lightcones: {
+												id: number;
+												name: string;
+												rarity: number;
+												path: string;
+											}[];
+										}
+									).lightcones ?? [];
+								const lcStillValid =
+									prev.lc_id === 0 ||
+									(newPath
+										? allLcs.some(
+												(lc) => lc.path === newPath && lc.id === prev.lc_id,
+											)
+										: false);
+								return {
+									...prev,
+									name: value,
+									lc_id:
+										oldPath !== newPath && !lcStillValid ? 0 : prev.lc_id,
+								};
+							})
 						}
 					/>
 				) : (

@@ -227,4 +227,90 @@ describe("Cyrene (昔涟)", () => {
 		expect(memosprite).toBeDefined();
 		expect(memosprite?.displayName).toBe("德谬歌");
 	});
+
+	it("romance ode: heart shows battle-long, battery on first non-Q action", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("cyrene", "昔涟", 200),
+					character("aglaea", "阿格莱雅", 120),
+				],
+				skillOverrides: skills({
+					"cyrene-1": "AQ",
+					"aglaea-1": "E",
+				}),
+				odeSelections: {
+					"cyrene-1-memosprite-Q": {
+						odeCode: "romance",
+						targetId: "aglaea",
+					},
+				},
+				limit: 300,
+			}),
+		);
+
+		// 阿格莱雅应有浪漫 ode 标签
+		const aglaeaActions = actions.filter((a) => a.characterId === "aglaea");
+		expect(aglaeaActions.length).toBeGreaterThan(0);
+		// 第一次非 Q 行动应有电池图标
+		const firstNonQ = aglaeaActions.find(
+			(a) => a.skill !== "Q" && !a.key.includes("-q"),
+		);
+		expect(firstNonQ).toBeDefined();
+		expect(firstNonQ?.isRomanceAction).toBe(true);
+		expect(firstNonQ?.activeOdeLabels).toContain("浪漫");
+
+		// 后续行动不应有电池图标
+		const laterActions = aglaeaActions.slice(1);
+		for (const a of laterActions) {
+			if (a.skill !== "Q" && !a.key.includes("-q")) {
+				expect(a.isRomanceAction).toBeFalsy();
+			}
+		}
+	});
+
+	it("romance ode: recharges on second Deimos Q", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("cyrene", "昔涟", 200),
+					character("aglaea", "阿格莱雅", 120),
+				],
+				skillOverrides: skills({
+					"cyrene-1": "AQ",
+					"aglaea-1": "E",
+					"cyrene-2": "AQ",
+				}),
+				odeSelections: {
+					"cyrene-1-memosprite-Q": {
+						odeCode: "romance",
+						targetId: "aglaea",
+					},
+					"cyrene-2-memosprite-Q": {
+						odeCode: "romance",
+						targetId: "aglaea",
+					},
+				},
+				limit: 450,
+			}),
+		);
+
+		// 第一次 Deimos Q 后：aglaea-1 应有电池
+		const first = actions.find((a) => a.key === "aglaea-1");
+		expect(first?.isRomanceAction).toBe(true);
+
+		// 第二次 Deimos Q 后：下一个阿格莱雅非 Q 行动应有电池
+		const secondMemosprite = actions.find(
+			(a) => a.key === "cyrene-2-memosprite-Q",
+		);
+		expect(secondMemosprite).toBeDefined();
+		const afterSecond = actions
+			.slice(actions.indexOf(secondMemosprite!) + 1)
+			.filter((a) => a.characterId === "aglaea");
+		const recharged = afterSecond.find(
+			(a) => a.skill !== "Q" && !a.key.includes("-q") && a.isRomanceAction,
+		);
+		expect(recharged).toBeDefined();
+		expect(recharged?.activeOdeLabels).toContain("浪漫");
+	});
 });

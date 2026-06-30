@@ -8,6 +8,7 @@ import { ActionSequenceCtx } from "../contexts/ActionSequenceContext";
 import {
 	type CharacterConfig,
 	canUseSkillCode,
+	characterNameMatchesAliases,
 	createTarget,
 	defaultCharacters,
 	defaultResources,
@@ -148,6 +149,9 @@ export default function ActionSequence() {
 	const [fireflyBreakCounters, setFireflyBreakCounters] = useState<
 		Record<string, boolean>
 	>({});
+	const [godmodeExtraActions, setGodmodeExtraActions] = useState<
+		Record<string, boolean>
+	>({});
 	const [meritTarget, setMeritTarget] = useState<string | undefined>();
 	const [dancePartner, setDancePartner] = useState<string | undefined>();
 	const [ultInterrupts, setUltInterrupts] = useState<
@@ -164,6 +168,7 @@ export default function ActionSequence() {
 	const imageExportRef = useRef<HTMLDivElement>(null);
 	const autosavePathRef = useRef<string | null>(null);
 	const autosaveTimerRef = useRef<number | null>(null);
+	const seenBreakExtraKeysRef = useRef<Set<string>>(new Set());
 
 	const actionLimit = useMemo(() => {
 		if (limitPreset === "自定义") {
@@ -342,6 +347,10 @@ export default function ActionSequence() {
 				setUltInterrupts(parsed.ultInterrupts ?? {});
 				setSpeedAdjustments(parsed.speedAdjustments ?? {});
 				setResourceValues(parsed.resourceValues ?? {});
+				setFireflyBreakCounters(parsed.fireflyBreakCounters ?? {});
+				setGodmodeExtraActions(parsed.godmodeExtraActions ?? {});
+				setMeritTarget(parsed.meritTarget || undefined);
+				setDancePartner(parsed.dancePartner || undefined);
 				setMessage("已自动恢复上次的排轴数据");
 			} catch {
 				// 首次使用或无上次保存数据，静默忽略
@@ -369,6 +378,9 @@ export default function ActionSequence() {
 				memeSelections,
 				ultInterrupts,
 				fireflyBreakCounters,
+				godmodeExtraActions,
+				meritTarget,
+				dancePartner,
 			});
 			setActions(nextActions);
 		} catch (error) {
@@ -389,6 +401,9 @@ export default function ActionSequence() {
 		memeSelections,
 		ultInterrupts,
 		fireflyBreakCounters,
+		godmodeExtraActions,
+		meritTarget,
+		dancePartner,
 	]);
 
 	useEffect(() => {
@@ -408,6 +423,43 @@ export default function ActionSequence() {
 					continue;
 				}
 				next.add(key);
+			}
+			return changed ? next : prev;
+		});
+		// 流萤 E2：额外回合的击破开关默认 ON（延后倒计时）
+		// seenBreakExtraKeysRef 记录"曾被自动设 ON"的 key，用户关 OFF 后不再自动恢复
+		setFireflyBreakCounters((prev) => {
+			let changed = false;
+			const next = { ...prev };
+			// 清理已不存在的行动 key
+			for (const key of Object.keys(next)) {
+				if (!actionKeys.has(key)) {
+					delete next[key];
+					changed = true;
+				}
+			}
+			// 额外回合（-break-extra-N，末尾为数字）默认 ON
+			for (const key of actionKeys) {
+				if (
+					/break-extra-\d+$/.test(key) &&
+					!(key in next) &&
+					!seenBreakExtraKeysRef.current.has(key)
+				) {
+					next[key] = true;
+					changed = true;
+				}
+			}
+			// 同步 ref：记录所有已存在的相关 key（含从存档恢复的）
+			for (const key of Object.keys(next)) {
+				if (key.includes("-break-extra-")) {
+					seenBreakExtraKeysRef.current.add(key);
+				}
+			}
+			// 只保留当前存在的 key
+			for (const key of seenBreakExtraKeysRef.current) {
+				if (!actionKeys.has(key)) {
+					seenBreakExtraKeysRef.current.delete(key);
+				}
 			}
 			return changed ? next : prev;
 		});
@@ -441,6 +493,9 @@ export default function ActionSequence() {
 				ultInterrupts,
 				resourceValues,
 				fireflyBreakCounters,
+				godmodeExtraActions,
+				meritTarget,
+				dancePartner,
 			};
 
 			invoke("write_text_file", {
@@ -473,6 +528,7 @@ export default function ActionSequence() {
 		ultInterrupts,
 		resourceValues,
 		fireflyBreakCounters,
+		godmodeExtraActions,
 	]);
 
 	const characterNames = useMemo(
@@ -651,6 +707,8 @@ export default function ActionSequence() {
 			);
 			return next;
 		});
+		if (meritTarget === id) setMeritTarget(undefined);
+		if (dancePartner === id) setDancePartner(undefined);
 		closeActionMenu();
 	};
 
@@ -777,6 +835,28 @@ export default function ActionSequence() {
 			if (!isAllyTarget(character.kind)) {
 				setMessage("F 只能在我方队友回合填写");
 				return;
+			}
+			// E0/E1 sp姬子：非白名单角色不可用 FF 连招
+			const novaChar = characters.find((c) =>
+				hasSkillEffect(c.name, "F", "himekoNovaAssist"),
+			);
+			if (novaChar && novaChar.eidolon < 2) {
+				const novaFFWhitelist = [
+					"丹恒", "丹恒·腾荒",
+					"三月七", "三月七·巡猎",
+					"长夜月",
+					"瓦尔特",
+					"开拓者·毁灭", "开拓者·存护", "开拓者·同谐", "开拓者·记忆", "开拓者·欢愉",
+					"星期日",
+					"姬子",
+				];
+				if (
+					!characterNameMatchesAliases(character.name, novaFFWhitelist) &&
+					(nextSkill.match(/F/g)?.length ?? 0) >= 2
+				) {
+					setMessage("当前 sp 姬子未达 2 魂，此角色不可使用 FF 连招");
+					return;
+				}
 			}
 		}
 		if (!action.isDomainAction && !canUseSkillCode(character, nextSkill)) {
@@ -1041,6 +1121,9 @@ export default function ActionSequence() {
 		ultInterrupts,
 		resourceValues,
 		fireflyBreakCounters,
+		godmodeExtraActions,
+		meritTarget,
+		dancePartner,
 	});
 
 	const exportJson = async () => {
@@ -1273,6 +1356,9 @@ export default function ActionSequence() {
 			setUltInterrupts(parsed.ultInterrupts ?? {});
 			setResourceValues(parsed.resourceValues ?? {});
 			setFireflyBreakCounters(parsed.fireflyBreakCounters ?? {});
+			setGodmodeExtraActions(parsed.godmodeExtraActions ?? {});
+			setMeritTarget(parsed.meritTarget || undefined);
+			setDancePartner(parsed.dancePartner || undefined);
 			setSelectedActionKeys(new Set());
 			closeActionMenu();
 			setMessage("导入成功");
@@ -1356,6 +1442,8 @@ export default function ActionSequence() {
 				setUltInterrupts,
 				fireflyBreakCounters,
 				setFireflyBreakCounters,
+				godmodeExtraActions,
+				setGodmodeExtraActions,
 				meritTarget,
 				setMeritTarget,
 				dancePartner,

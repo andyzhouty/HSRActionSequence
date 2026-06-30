@@ -5,7 +5,8 @@ import type {
 	SkillCode,
 } from "./actionSequence";
 import { getFireflyCombustionRule, isCharacterTarget } from "./actionSequence";
-import type { SimulateActionsInput } from "./simulateTypes";
+import { findHimekoNovaAssistState } from "./simulateEffects";
+import type { ActionState, SimulateActionsInput } from "./simulateTypes";
 
 // ── Firefly Complete Combustion ──
 // Character-specific numbers live in characters.json; this module keeps only
@@ -64,7 +65,9 @@ function registerCombustionBreakDelay(
 	applyCountdownDelay(states, stateIndex);
 }
 
-// 处理一次击破触发：生成额外回合（正常回合），累计击破数，更新倒计时
+// 处理一次击破触发：
+// 正常回合 → E2 时生成一个行动值相同紧邻的额外回合
+// 额外回合 → 仅延后倒计时，不再次生成额外回合
 function handleSingleBreakTrigger(
 	states: FireflyActionState[],
 	stateIndex: number,
@@ -77,29 +80,74 @@ function handleSingleBreakTrigger(
 ) {
 	const isBreakExtra = actionKey.includes("-break-extra-");
 
-	if (!isBreakExtra) {
-		// E2 额外回合（独立于倒计时延后）
-		if (character.eidolon >= 2) {
-			states[stateIndex].combustionBreakCount =
-				(states[stateIndex].combustionBreakCount ?? 0) + 1;
-			const breakExtraKey = `${actionKey}-break-extra-${states[stateIndex].combustionBreakCount}`;
+	// 累计击破次数，延后倒计时
+	registerCombustionBreakDelay(states, stateIndex);
+
+	if (!isBreakExtra && character.eidolon >= 2) {
+		// E2：正常回合触发击破 → 获得一个额外回合
+		states[stateIndex].combustionBreakCount =
+			(states[stateIndex].combustionBreakCount ?? 0) + 1;
+		const breakExtraKey = `${actionKey}-break-extra-${states[stateIndex].combustionBreakCount}`;
+		const extraOverride =
+			(input.skillOverrides[breakExtraKey] as string | undefined) ?? "A";
+		const extraSkill = (extraOverride || "A") as SkillCode;
+
+		// 若额外回合使用了 F，触发 sp 姬子助战
+		const extraHasF = extraSkill.includes("F");
+		const assistUseCount = extraHasF ? (extraSkill.match(/F/g)?.length ?? 0) : 0;
+		const himekoAssist =
+			extraHasF
+				? findHimekoNovaAssistState(states as ActionState[], character.id)
+				: undefined;
+
+		const strippedSkill = extraSkill.replace(/F/g, "") as SkillCode;
+
+		// 生成 sp 姬子助战 F 行动（在额外回合之前）
+		if (himekoAssist) {
+			for (let ai = 1; ai <= Math.min(assistUseCount, 2); ai++) {
+				const assistKey =
+					ai === 1
+						? `${breakExtraKey}-assist-F`
+						: `${breakExtraKey}-assist-F-${ai}`;
+				actions.push({
+					key: assistKey,
+					characterId: himekoAssist.character.id,
+					actionNo: 0,
+					actionValue,
+					skill: "F" as SkillCode,
+					speed: himekoAssist.currentSpeed,
+					isAssistAction: true,
+					assistSourceKey: breakExtraKey,
+					assistIndex: ai,
+				});
+			}
+		}
+
+		// E0/E1 sp姬子 任意 F → 额外回合消失
+		// E2 sp姬子 FF → 额外回合消失；单 F 保留额外回合
+		const himekoEidolon = himekoAssist?.character.eidolon ?? 0;
+		const skipBreakExtra =
+			himekoAssist !== undefined &&
+			(himekoEidolon < 2 || assistUseCount >= 2);
+
+		if (!skipBreakExtra) {
 			actions.push({
 				key: breakExtraKey,
 				characterId: character.id,
 				isCombustionAction: true,
 				actionNo,
 				actionValue,
-				skill: "" as SkillCode,
+				skill: strippedSkill || ("A" as SkillCode),
 				speed: states[stateIndex].currentSpeed,
+				isAssistFollowUp: himekoAssist !== undefined,
 			});
-			if (input.fireflyBreakCounters?.[breakExtraKey] === true) {
-				registerCombustionBreakDelay(states, stateIndex);
-			}
+		}
+
+		// 额外回合的击破也计入累计次数，延后倒计时
+		if (input.fireflyBreakCounters?.[breakExtraKey] === true) {
+			registerCombustionBreakDelay(states, stateIndex);
 		}
 	}
-
-	// 累计击破次数（正常和额外都算），最多 3 次
-	registerCombustionBreakDelay(states, stateIndex);
 }
 
 // ── 公开接口 ──

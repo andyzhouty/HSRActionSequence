@@ -30,6 +30,7 @@ export type ActionSequenceContextType = {
 	lastMemeTarget: string;
 	ultInterrupts: Record<string, UltInterrupt[]>;
 	fireflyBreakCounters: Record<string, boolean>;
+	godmodeExtraActions: Record<string, boolean>;
 	meritTarget?: string;
 	dancePartner?: string;
 	resourceValues: Record<string, Record<string, string>>;
@@ -95,6 +96,9 @@ export type ActionSequenceContextType = {
 		React.SetStateAction<Record<string, UltInterrupt[]>>
 	>;
 	setFireflyBreakCounters: React.Dispatch<
+		React.SetStateAction<Record<string, boolean>>
+	>;
+	setGodmodeExtraActions: React.Dispatch<
 		React.SetStateAction<Record<string, boolean>>
 	>;
 	setMeritTarget: React.Dispatch<React.SetStateAction<string | undefined>>;
