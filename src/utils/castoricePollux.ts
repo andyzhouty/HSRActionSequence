@@ -76,6 +76,7 @@ export function summonPollux(
 		hasVonwacq: false,
 		hasWindSet: false,
 		hasDance: false,
+		hasCastoriceTechnique: false,
 		eidolon: 0,
 		superimpose: 1,
 		lc_id: 0,

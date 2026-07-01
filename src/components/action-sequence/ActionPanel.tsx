@@ -974,6 +974,9 @@ function GodmodeExtraSection() {
 	const firstAction = ctx.actions.find((a) => a.key === firstKey);
 	if (!firstAction) return null;
 	if (firstAction.isDomainAction || firstAction.key.includes("-godmode-A")) return null;
+	const toggleKey = firstAction.key.endsWith("-sparxie-extra-q")
+		? firstAction.key.slice(0, -2)
+		: firstKey;
 
 	// 仅队友/阿哈行动时显示
 	const charKind = ctx.characterKinds[firstAction.characterId];
@@ -994,7 +997,7 @@ function GodmodeExtraSection() {
 	);
 	if (!swInGodmode) return null;
 
-	const isOn = ctx.godmodeExtraActions[firstKey] === true;
+	const isOn = ctx.godmodeExtraActions[toggleKey] === true;
 	return (
 		<div className="flex flex-wrap items-center gap-3 border-t border-gray-700 pt-3">
 			<span className="whitespace-nowrap text-sm text-gray-300">
@@ -1006,13 +1009,13 @@ function GodmodeExtraSection() {
 					if (isOn) {
 						ctx.setGodmodeExtraActions((prev) => {
 							const next = { ...prev };
-							delete next[firstKey];
+							delete next[toggleKey];
 							return next;
 						});
 					} else {
 						ctx.setGodmodeExtraActions((prev) => ({
 							...prev,
-							[firstKey]: true,
+							[toggleKey]: true,
 						}));
 					}
 				}}

@@ -330,6 +330,21 @@ function CharacterCard({
 								}))
 							}
 						/>
+						{hasSkillEffect(character.name, "Q", "summonPollux") && (
+							<Toggle
+								className="flex-1"
+								label="遐蝶秘技"
+								checked={character.hasCastoriceTechnique ?? false}
+								onChange={() =>
+									ctx.updateCharacter(character.id, (prev) => ({
+										...prev,
+										hasCastoriceTechnique: !(
+											prev.hasCastoriceTechnique ?? false
+										),
+									}))
+								}
+							/>
+						)}
 					</div>
 					<div className="flex gap-2">
 						<SelectInput

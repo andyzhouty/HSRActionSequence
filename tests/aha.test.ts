@@ -137,6 +137,133 @@ describe("Aha Instant (阿哈时刻)", () => {
 			}
 		}
 	});
+
+	it("爻光 Q 后生成一个额外阿哈时刻", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("yaoguang", "爻光", 120)],
+				skillOverrides: skills({
+					"yaoguang-1": "AQ",
+				}),
+				limit: 300,
+			}),
+		);
+
+		const extraAha = actions.find((a) => a.key === "yaoguang-1-q-extra-aha");
+		const yaoguangQ = actions.find((a) => a.key === "yaoguang-1-q");
+		expect(extraAha).toBeDefined();
+		expect(yaoguangQ).toBeDefined();
+		expect(extraAha?.isAhaInstant).toBe(true);
+		expect(extraAha?.isExtraAha).toBe(true);
+		expect(extraAha?.actionValue).toBeCloseTo(yaoguangQ!.actionValue, 2);
+	});
+
+	it("爻光额外阿哈支持前后插入 Q", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("yaoguang", "爻光", 120),
+					character("ally1", "停云", 100),
+					character("ally2", "布洛妮娅", 90),
+				],
+				skillOverrides: skills({
+					"yaoguang-1": "AQ",
+				}),
+				ultInterrupts: interrupts({
+					"yaoguang-1-q-extra-aha": [
+						{ casterId: "ally1", timing: "before" },
+						{ casterId: "ally2", timing: "after" },
+					],
+				}),
+				limit: 300,
+			}),
+		);
+
+		const beforeQ = actions.find(
+			(a) => a.key === "yaoguang-1-q-extra-aha-interrupt-0",
+		);
+		const extraAha = actions.find((a) => a.key === "yaoguang-1-q-extra-aha");
+		const afterQ = actions.find(
+			(a) => a.key === "yaoguang-1-q-extra-aha-interrupt-1",
+		);
+		expect(beforeQ).toBeDefined();
+		expect(extraAha).toBeDefined();
+		expect(afterQ).toBeDefined();
+		expect(actions.indexOf(beforeQ!)).toBeLessThan(actions.indexOf(extraAha!));
+		expect(actions.indexOf(extraAha!)).toBeLessThan(actions.indexOf(afterQ!));
+	});
+
+	it("火花 2 魂后，任意阿哈时刻后都会跟一个火花额外回合", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("sparxie", "火花", 160, { eidolon: 2 })],
+				limit: 200,
+			}),
+		);
+
+		const aha = actions.find((a) => a.key === "@aha-1");
+		const sparxieExtra = actions.find((a) => a.key === "@aha-1-sparxie-extra");
+		expect(aha).toBeDefined();
+		expect(sparxieExtra).toBeDefined();
+		expect(sparxieExtra?.isSparxieExtraAction).toBe(true);
+		expect(sparxieExtra?.actionValue).toBeCloseTo(aha!.actionValue, 2);
+		expect(actions.indexOf(aha!)).toBeLessThan(actions.indexOf(sparxieExtra!));
+	});
+
+	it("火花额外回合支持前后插入 Q", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("sparxie", "火花", 160, { eidolon: 2 }),
+					character("ally1", "停云", 100),
+					character("ally2", "布洛妮娅", 90),
+				],
+				ultInterrupts: interrupts({
+					"@aha-1-sparxie-extra": [
+						{ casterId: "ally1", timing: "before" },
+						{ casterId: "ally2", timing: "after" },
+					],
+				}),
+				limit: 200,
+			}),
+		);
+
+		const beforeQ = actions.find(
+			(a) => a.key === "@aha-1-sparxie-extra-interrupt-0",
+		);
+		const sparxieExtra = actions.find((a) => a.key === "@aha-1-sparxie-extra");
+		const afterQ = actions.find(
+			(a) => a.key === "@aha-1-sparxie-extra-interrupt-1",
+		);
+		expect(beforeQ).toBeDefined();
+		expect(sparxieExtra).toBeDefined();
+		expect(afterQ).toBeDefined();
+		expect(actions.indexOf(beforeQ!)).toBeLessThan(actions.indexOf(sparxieExtra!));
+		expect(actions.indexOf(sparxieExtra!)).toBeLessThan(actions.indexOf(afterQ!));
+	});
+
+	it("爻光的额外阿哈后也会继续跟火花额外回合", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("sparxie", "火花", 160, { eidolon: 2 }),
+					character("yaoguang", "爻光", 120),
+				],
+				skillOverrides: skills({
+					"yaoguang-1": "AQ",
+				}),
+				limit: 300,
+			}),
+		);
+
+		const extraAha = actions.find((a) => a.key === "yaoguang-1-q-extra-aha");
+		const sparxieExtra = actions.find(
+			(a) => a.key === "yaoguang-1-q-extra-aha-sparxie-extra",
+		);
+		expect(extraAha).toBeDefined();
+		expect(sparxieExtra).toBeDefined();
+		expect(actions.indexOf(extraAha!)).toBeLessThan(actions.indexOf(sparxieExtra!));
+	});
 });
 
 // ───── 银狼LV.999 ─────
@@ -355,6 +482,88 @@ describe("Silver Wolf LV.999", () => {
 		expect(extraA).toBeDefined();
 		expect(extraA?.skill).toBe("A");
 		expect(extraA?.displayName).toBe("银狼E2");
+	});
+
+	it("E2：在火花额外回合后也可插入额外 A", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("sw", "银狼LV.999", 200),
+					character("sparxie", "火花", 160, { eidolon: 2 }),
+				],
+				skillOverrides: skills({
+					"sw-1": "AQ",
+				}),
+				godmodeExtraActions: {
+					"@aha-1-sparxie-extra": true,
+				},
+				limit: 200,
+			}),
+		);
+
+		const extraA = actions.find(
+			(a) => a.key === "@aha-1-sparxie-extra-godmode-A",
+		);
+		expect(extraA).toBeDefined();
+		expect(extraA?.skill).toBe("A");
+		expect(extraA?.displayName).toBe("银狼E2");
+		expect(extraA?.characterId).toBe("sw");
+	});
+
+	it("E2：兼容旧的火花额外回合 Q 行 key", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("sw", "银狼LV.999", 200),
+					character("sparxie", "火花", 160, { eidolon: 2 }),
+				],
+				skillOverrides: skills({
+					"sw-1": "AQ",
+					"@aha-1-sparxie-extra": "AQ",
+				}),
+				godmodeExtraActions: {
+					"@aha-1-sparxie-extra-q": true,
+				},
+				limit: 200,
+			}),
+		);
+
+		const extraA = actions.find(
+			(a) => a.key === "@aha-1-sparxie-extra-godmode-A",
+		);
+		expect(extraA).toBeDefined();
+		expect(extraA?.characterId).toBe("sw");
+	});
+
+	it("imported action-sequence-test.json: Silver Wolf Q before Sparxie extra self-pulls to same AV", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("c1", "sp银狼", 200),
+					character("c2", "爻光", 180, { hasVonwacq: true }),
+					character("c3", "火花", 130, { eidolon: 2 }),
+				],
+				skillOverrides: skills({
+					"c1-1": "E",
+					"c2-1": "EQ",
+				}),
+				ultInterrupts: interrupts({
+					"@aha-1-sparxie-extra": [
+						{ casterId: "c1", timing: "before" },
+					],
+				}),
+				limit: 250,
+			}),
+		);
+
+		const swInterruptQ = actions.find(
+			(a) => a.key === "@aha-1-sparxie-extra-interrupt-0",
+		);
+		const swNextAction = actions.find((a) => a.key === "c1-2");
+		expect(swInterruptQ).toBeDefined();
+		expect(swInterruptQ?.actionValue).toBeCloseTo(69.2041, 3);
+		expect(swNextAction).toBeDefined();
+		expect(swNextAction?.actionValue).toBeCloseTo(swInterruptQ!.actionValue, 3);
 	});
 
 });

@@ -129,6 +129,7 @@ export function ActionRow({
 	const ctx = useActionSequence();
 	const isInterrupt =
 		action.actionNo === 0 &&
+		!action.isSparxieExtraAction &&
 		!action.isDomainAction &&
 		!action.isMemospriteAction &&
 		!action.isOdeExtraAction &&
@@ -340,7 +341,11 @@ export function ActionRow({
 						className={`truncate text-xs leading-5 ${isEnemyAction ? "text-[#fecacacc]" : "text-gray-400"}`}
 					>
 						{action.isAhaInstant
-							? "阿哈"
+							? action.isExtraAha
+								? "额外"
+								: "阿哈"
+							: action.isSparxieExtraAction
+								? "额外"
 							: isDomain
 								? `境界 ${action.actionNo}`
 								: isAssist
@@ -470,6 +475,7 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 	const isDomainFinalAction = action.isDomainFinalAction;
 	const isInterrupt =
 		action.actionNo === 0 &&
+		!action.isSparxieExtraAction &&
 		!action.isDomainAction &&
 		!action.isMemospriteAction &&
 		!action.isOdeExtraAction &&
@@ -478,7 +484,8 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 		? action.isAssistAction ||
 			(action.lockedSkill && !action.isPolluxAction) ||
 			(action.isMemospriteAction && !action.isPolluxAction) ||
-			ctx.characterKinds[action.characterId] !== "角色"
+			(ctx.characterKinds[action.characterId] !== "角色" &&
+				!action.isPolluxAction)
 		: !action.isPolluxAction;
 	const nonDomainSkillTitle =
 		char && hasSemanticFlag(char.name, "wOnlyInDomain")
