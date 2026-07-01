@@ -9,6 +9,10 @@ import {
 	simulateActions,
 } from "../src/utils/simulateActions";
 
+/** Filter out the utility @av0 target from action arrays */
+const stripAv0 = (actions: { key: string; characterId: string }[]) =>
+	actions.filter((a) => a.characterId !== "@av0");
+
 function character(
 	id: string,
 	name: string,
@@ -76,7 +80,7 @@ describe("Cyrene (昔涟)", () => {
 			}),
 		);
 
-		expect(actions.map((a) => a.key).slice(0, 4)).toEqual([
+		expect(stripAv0(actions).map((a) => a.key).slice(0, 4)).toEqual([
 			"cyrene-1",
 			"cyrene-1-memosprite-Q",
 			"cyrene-1-q",
@@ -114,7 +118,7 @@ describe("Cyrene (昔涟)", () => {
 		const memosprite = actions.find((a) => a.key === "cyrene-1-memosprite-Q");
 		expect(memosprite).toBeDefined();
 		// ally (80 spd) acts at AV=125, after memosprite and Q (AV=100)
-		expect(actions.map((a) => a.key).slice(0, 4)).toEqual([
+		expect(stripAv0(actions).map((a) => a.key).slice(0, 4)).toEqual([
 			"cyrene-1",
 			"cyrene-1-memosprite-Q",
 			"cyrene-1-q",

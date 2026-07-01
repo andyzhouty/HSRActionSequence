@@ -4,7 +4,7 @@ import type {
 	GeneratedAction,
 	SkillCode,
 } from "./actionSequence";
-import { toPositiveNumber } from "./actionSequence";
+import { getPolluxRule } from "./actionSequence";
 
 // ── 类型 ──
 
@@ -56,9 +56,8 @@ export function summonPollux(
 	actionValue: number,
 ) {
 	const polluxId = `${owner.id}-pollux`;
-	// 死龙固定 165 速，用户可在角色列表中添加死龙独立条目以调整速度
-	const polluxSpeed = 165;
-	const speed = polluxSpeed;
+	const rule = getPolluxRule(owner.name);
+	const speed = rule.memospriteSpeed;
 
 	// 设置遐蝶状态
 	const castorice = states.find((s) => s.character.id === owner.id);
@@ -71,7 +70,7 @@ export function summonPollux(
 	const polluxChar: CharacterConfig = {
 		id: polluxId,
 		kind: "忆灵",
-		name: "死龙",
+		name: rule.memospriteName,
 		speed: String(speed),
 		baseSpeed: String(speed),
 		hasVonwacq: false,
@@ -107,16 +106,19 @@ export function handlePolluxAction(
 	actionNo: number,
 	actionValue: number,
 	skill: SkillCode,
+	killTriggered = false,
 ) {
 	const polluxState = states[stateIndex];
 	const currentCount = polluxState.polluxCount ?? 0;
 	const nextCount = currentCount + 1;
 	const ownerId = character.id.replace("-pollux", "");
+	const owner = states.find((s) => s.character.id === ownerId);
+	const rule = owner ? getPolluxRule(owner.character.name) : undefined;
 
 	actions.push({
 		key,
 		characterId: character.id,
-		displayName: "死龙",
+		displayName: rule?.memospriteName ?? "死龙",
 		targetKind: "忆灵",
 		actionNo,
 		actionValue,
@@ -128,10 +130,22 @@ export function handlePolluxAction(
 	});
 
 	// 判断是否离场：纯 E（不是 EA）或已达最大回合数
-	const isPureE = skill === "E";
-	const isMaxCount = nextCount >= 3;
+	const isDismissSkill = rule ? skill === rule.dismissSkill : skill === "E";
+	const isMaxCount = rule ? nextCount >= rule.maxActions : nextCount >= 3;
 
-	if (isPureE || isMaxCount) {
+	// 击杀：E 后死龙不消失，速度翻倍（基于基础速度）
+	if (isDismissSkill && killTriggered) {
+		const base = rule?.memospriteSpeed ?? 165;
+		states[stateIndex].currentSpeed += base;
+		polluxState.polluxCount = nextCount;
+		states[stateIndex].actionNo += 1;
+		states[stateIndex].nextActionValue =
+			actionValue + 10000 / states[stateIndex].currentSpeed;
+		states[stateIndex].blockNextAdvance = false;
+		return;
+	}
+
+	if (isDismissSkill || isMaxCount) {
 		// 离场
 		const castorice = states.find((s) => s.character.id === ownerId);
 		if (castorice) {

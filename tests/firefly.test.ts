@@ -9,6 +9,9 @@ import {
 	simulateActions,
 } from "../src/utils/simulateActions";
 
+const stripAv0 = (axs: { characterId: string }[]) =>
+	axs.filter((a) => a.characterId !== "@av0");
+
 function character(
 	id: string,
 	name: string,
@@ -81,7 +84,7 @@ describe("Firefly Complete Combustion activation", () => {
 			}),
 		);
 
-		expect(actions.map((action) => action.key).slice(0, 5)).toEqual([
+		expect(stripAv0(actions).map((action) => action.key).slice(0, 5)).toEqual([
 			"firefly-1",
 			"firefly-1-q",
 			"firefly-2",
@@ -111,7 +114,7 @@ describe("Firefly Complete Combustion activation", () => {
 			}),
 		);
 
-		expect(actions.map((action) => action.key).slice(0, 4)).toEqual([
+		expect(stripAv0(actions).map((action) => action.key).slice(0, 4)).toEqual([
 			"a-1-interrupt-0",
 			"a-1",
 			"firefly-1",
@@ -331,17 +334,17 @@ describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 		);
 
 		// Sunday acts first at AV=50
-		expect(actions[0].key).toBe("sunday-1");
-		expect(actions[0].actionValue).toBeCloseTo(50, 4);
+		expect(stripAv0(actions)[0].key).toBe("sunday-1");
+		expect(stripAv0(actions)[0].actionValue).toBeCloseTo(50, 4);
 
 		// Firefly should be pulled to Sunday's AV=50
 		// So Firefly acts next at AV=50, then Sunday again at AV=100
-		const fireflyAction = actions.find((a) => a.characterId === "firefly");
+		const fireflyAction = stripAv0(actions).find((a) => a.characterId === "firefly");
 		expect(fireflyAction).toBeDefined();
 		expect(fireflyAction?.actionValue).toBeCloseTo(50, 4);
 
 		// Action order: Sunday E → Firefly (pulled) → Sunday 2 → ...
-		expect(actions.map((a) => a.characterId).slice(0, 3)).toEqual([
+		expect(stripAv0(actions).map((a) => a.characterId).slice(0, 3)).toEqual([
 			"sunday",
 			"firefly",
 			"sunday",

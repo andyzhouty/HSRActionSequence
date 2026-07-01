@@ -22,6 +22,7 @@ import {
 	shouldRememberSkillTarget,
 	toPositiveNumber,
 } from "../../utils/actionSequence";
+import { hasHyacineIca } from "../../utils/hyacineIca";
 import { SelectInput } from "./Controls";
 
 function getMemeTargetOptions(ctx: ReturnType<typeof useActionSequence>) {
@@ -148,6 +149,7 @@ export function ActionRow({
 				"cyreneUltimate",
 			),
 	);
+	const isPollux = action.isPolluxAction;
 	const displayName =
 		action.displayName ??
 		ctx.characterNames[action.characterId] ??
@@ -193,6 +195,16 @@ export function ActionRow({
 			return isSelected
 				? "bg-[#9d174d80] outline outline-1 outline-pink-300"
 				: "bg-[#83184366] outline outline-1 outline-pink-400";
+		}
+		if (action.characterId === "@av0") {
+			return isSelected
+				? "bg-[#1e40af80] outline outline-1 outline-blue-300"
+				: "bg-[#1e3a5f66] hover:bg-[#1e3a5f80]";
+		}
+		if (isPollux) {
+			return isSelected
+				? "bg-[#6b21a880] outline outline-1 outline-purple-300"
+				: "bg-[#4c1d9566] hover:bg-[#4c1d9580]";
 		}
 		if (isDomain) {
 			return isSelected
@@ -324,7 +336,7 @@ export function ActionRow({
 				>
 					{displayName}
 				</div>
-				{!action.isAglaeaCountdownAction && !isCombustionCountdown && (
+				{!action.isAglaeaCountdownAction && !isCombustionCountdown && action.characterId !== "@av0" && (
 					<div
 						className={`truncate text-xs leading-5 ${isEnemyAction ? "text-[#fecacacc]" : "text-gray-400"}`}
 					>
@@ -406,6 +418,8 @@ export function ActionRow({
 					{!action.isAglaeaCountdownAction && !isCombustionCountdown && (
 						<CombustionBreakInline action={action} />
 					)}
+					<PolluxKillInline action={action} />
+					<IcaKillInline action={action} />
 					<MemeInline action={action} />
 					<SkillTargetInline action={action} />
 				</div>
@@ -676,6 +690,85 @@ function CombustionBreakInline({ action }: { action: GeneratedAction }) {
 			}`}
 		>
 			{rule.breakLabel}
+		</button>
+	);
+}
+
+function PolluxKillInline({ action }: { action: GeneratedAction }) {
+	const ctx = useActionSequence();
+	if (!action.isPolluxAction) return null;
+	// Only show for dismiss skill (E) actions
+	if (action.skill !== "E") return null;
+	const isKillOn = ctx.castoriceKillToggles[action.key] === true;
+	return (
+		<button
+			type="button"
+			title={
+				isKillOn
+					? "击杀：E 后死龙不消失且速度翻倍（点击关闭）"
+					: "击杀关闭（点击开启：E 后不消失且速度翻倍）"
+			}
+			onMouseDown={(event) => event.stopPropagation()}
+			onPointerDown={(event) => event.stopPropagation()}
+			onClick={(event) => {
+				event.stopPropagation();
+				ctx.setCastoriceKillToggles((prev) => {
+					const next = { ...prev };
+					if (isKillOn) {
+						delete next[action.key];
+					} else {
+						next[action.key] = true;
+					}
+					return next;
+				});
+			}}
+			className={`flex h-7 shrink-0 items-center rounded-md px-2 text-xs font-semibold transition-colors ${
+				isKillOn
+					? "border border-red-500/70 bg-red-500/20 text-red-200"
+					: "border border-gray-600 bg-gray-700 text-gray-500"
+			}`}
+		>
+			击杀
+		</button>
+	);
+}
+
+function IcaKillInline({ action }: { action: GeneratedAction }) {
+	const ctx = useActionSequence();
+	// 仅在队中有风堇时显示
+	const hasHyacine = ctx.characters.some((c) => hasHyacineIca(c.name));
+	if (!hasHyacine) return null;
+	// 风堇自身 A/E 不显示
+	if (hasHyacineIca(ctx.charactersById[action.characterId]?.name ?? "")) return null;
+	// Ica 额外回合不显示
+	if (action.isIcaAction) return null;
+
+	const isOn = ctx.icaKillToggles[action.key] === true;
+	return (
+		<button
+			type="button"
+			title={isOn ? "此行动后小伊卡死亡（点击取消）" : "标记小伊卡死亡（点击开启）"}
+			onMouseDown={(event) => event.stopPropagation()}
+			onPointerDown={(event) => event.stopPropagation()}
+			onClick={(event) => {
+				event.stopPropagation();
+				ctx.setIcaKillToggles((prev) => {
+					const next = { ...prev };
+					if (isOn) {
+						delete next[action.key];
+					} else {
+						next[action.key] = true;
+					}
+					return next;
+				});
+			}}
+			className={`flex h-7 shrink-0 items-center rounded-md px-2 text-xs font-semibold transition-colors ${
+				isOn
+					? "border border-red-500/70 bg-red-500/20 text-red-200"
+					: "border border-gray-600 bg-gray-700 text-gray-500"
+			}`}
+		>
+			Ica死
 		</button>
 	);
 }

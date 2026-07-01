@@ -768,6 +768,9 @@
         "风堇",
         "Hyacine"
       ],
+      "effects": {
+        "E": "summonIca"
+      },
       "path": "Remembrance"
     },
     {
@@ -1230,6 +1233,13 @@
       "breakDelayPercent": 10,
       "maxBreakDelayTriggers": 3,
       "eidolonExtraTurn": 2
+    },
+    "summonPollux": {
+      "memospriteName": "死龙",
+      "memospriteSpeed": 165,
+      "maxActions": 3,
+      "keepSkill": "EA",
+      "dismissSkill": "E"
     }
   }
 }

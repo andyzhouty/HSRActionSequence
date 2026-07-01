@@ -152,6 +152,13 @@ export default function ActionSequence() {
 	const [godmodeExtraActions, setGodmodeExtraActions] = useState<
 		Record<string, boolean>
 	>({});
+	const [castoriceKillToggles, setCastoriceKillToggles] = useState<
+		Record<string, boolean>
+	>({});
+	const [icaKillToggles, setIcaKillToggles] = useState<
+		Record<string, boolean>
+	>({});
+	const [hyacineE2Active, setHyacineE2Active] = useState(true);
 	const [meritTarget, setMeritTarget] = useState<string | undefined>();
 	const [dancePartner, setDancePartner] = useState<string | undefined>();
 	const [ultInterrupts, setUltInterrupts] = useState<
@@ -349,6 +356,7 @@ export default function ActionSequence() {
 				setResourceValues(parsed.resourceValues ?? {});
 				setFireflyBreakCounters(parsed.fireflyBreakCounters ?? {});
 				setGodmodeExtraActions(parsed.godmodeExtraActions ?? {});
+				setCastoriceKillToggles(parsed.castoriceKillToggles ?? {});
 				setMeritTarget(parsed.meritTarget || undefined);
 				setDancePartner(parsed.dancePartner || undefined);
 				setMessage("已自动恢复上次的排轴数据");
@@ -379,6 +387,9 @@ export default function ActionSequence() {
 				ultInterrupts,
 				fireflyBreakCounters,
 				godmodeExtraActions,
+				castoriceKillToggles,
+				icaKillToggles,
+				hyacineE2Active,
 				meritTarget,
 				dancePartner,
 			});
@@ -402,6 +413,9 @@ export default function ActionSequence() {
 		ultInterrupts,
 		fireflyBreakCounters,
 		godmodeExtraActions,
+		castoriceKillToggles,
+		icaKillToggles,
+		hyacineE2Active,
 		meritTarget,
 		dancePartner,
 	]);
@@ -463,6 +477,18 @@ export default function ActionSequence() {
 			}
 			return changed ? next : prev;
 		});
+		// 清理已不存在的 kill toggle key
+		setCastoriceKillToggles((prev) => {
+			let changed = false;
+			const next = { ...prev };
+			for (const key of Object.keys(next)) {
+				if (!actionKeys.has(key)) {
+					delete next[key];
+					changed = true;
+				}
+			}
+			return changed ? next : prev;
+		});
 	}, [actions]);
 
 	// 状态变化时自动保存（防抖 800ms）
@@ -494,6 +520,7 @@ export default function ActionSequence() {
 				resourceValues,
 				fireflyBreakCounters,
 				godmodeExtraActions,
+				castoriceKillToggles,
 				meritTarget,
 				dancePartner,
 			};
@@ -529,6 +556,7 @@ export default function ActionSequence() {
 		resourceValues,
 		fireflyBreakCounters,
 		godmodeExtraActions,
+		castoriceKillToggles,
 	]);
 
 	const characterNames = useMemo(
@@ -586,6 +614,22 @@ export default function ActionSequence() {
 						id: `${c.id}-memosprite`,
 						kind: "忆灵",
 						name: rule.memospriteName,
+						speed: "0",
+						baseSpeed: "0",
+						hasVonwacq: false,
+						hasWindSet: false,
+						hasDance: false,
+						eidolon: 0,
+						superimpose: 1,
+						lc_id: 0,
+					});
+				}
+				if (hasSkillEffect(c.name, "E", "summonIca")) {
+					memos.push({
+						...c,
+						id: `${c.id}-ica`,
+						kind: "忆灵",
+						name: "小伊卡",
 						speed: "0",
 						baseSpeed: "0",
 						hasVonwacq: false,
@@ -1145,6 +1189,7 @@ export default function ActionSequence() {
 		resourceValues,
 		fireflyBreakCounters,
 		godmodeExtraActions,
+		castoriceKillToggles,
 		meritTarget,
 		dancePartner,
 	});
@@ -1383,6 +1428,7 @@ export default function ActionSequence() {
 			setResourceValues(parsed.resourceValues ?? {});
 			setFireflyBreakCounters(parsed.fireflyBreakCounters ?? {});
 			setGodmodeExtraActions(parsed.godmodeExtraActions ?? {});
+			setCastoriceKillToggles(parsed.castoriceKillToggles ?? {});
 			setMeritTarget(parsed.meritTarget || undefined);
 			setDancePartner(parsed.dancePartner || undefined);
 			setSelectedActionKeys(new Set());
@@ -1470,6 +1516,12 @@ export default function ActionSequence() {
 				setFireflyBreakCounters,
 				godmodeExtraActions,
 				setGodmodeExtraActions,
+				castoriceKillToggles,
+				setCastoriceKillToggles,
+				icaKillToggles,
+				setIcaKillToggles,
+				hyacineE2Active,
+				setHyacineE2Active,
 				meritTarget,
 				setMeritTarget,
 				dancePartner,

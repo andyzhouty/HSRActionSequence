@@ -9,6 +9,9 @@ import {
 	simulateActions,
 } from "../src/utils/simulateActions";
 
+const stripAv0 = (axs: { characterId: string }[]) =>
+	axs.filter((a) => a.characterId !== "@av0");
+
 function character(
 	id: string,
 	name: string,
@@ -141,8 +144,8 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 		expect(actions.length).toBeGreaterThan(0);
 
 		// 知更鸟有首动25%拉条 + 翁瓦克40%，应该是第一个行动
-		expect(actions[0].characterId).toBe("robin");
-		expect(actions[0].skill).toBe("E");
+		expect(stripAv0(actions)[0].characterId).toBe("robin");
+		expect(stripAv0(actions)[0].skill).toBe("E");
 
 		// 花火和鸭鸭都有翁瓦克，紧随知更鸟之后
 		// 知更鸟 E → 花火 E → 鸭鸭 E → 白厄 E → 知更鸟 Q(插队)
@@ -187,7 +190,7 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 		expect(sparkleInterrupt?.characterId).toBe("sparkle");
 
 		// ── 验证行动顺序关键节点（知更鸟先动，白厄最后Q开境界） ──
-		const mainActions = actions.filter(
+		const mainActions = stripAv0(actions).filter(
 			(a) => !a.isDomainAction && !a.key.includes("interrupt"),
 		);
 		// 第一个行动是知更鸟

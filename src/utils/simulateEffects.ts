@@ -232,6 +232,7 @@ export function handleCyrenePostUltimate({
 	activeOdes: Map<string, ActiveOdeState[]>;
 	isInterrupt?: boolean;
 }) {
+	void activeOdes;
 	const cyreneRule = getCyreneUltimateRule(character.name);
 	const qCounter = incrementCyreneQCounter(states[casterIndex]);
 

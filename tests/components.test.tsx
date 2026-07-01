@@ -293,7 +293,7 @@ describe("ActionPanel rendering", () => {
 		// "行动序列" appears in title and action count - use getAllByText
 		expect(screen.getAllByText("行动序列").length).toBeGreaterThanOrEqual(1);
 		expect(screen.getByText("序号")).toBeInTheDocument();
-		expect(screen.getAllByText("角色").length).toBeGreaterThanOrEqual(1);
+		expect(screen.getAllByText("目标").length).toBeGreaterThanOrEqual(1);
 		expect(screen.getByText("行动值")).toBeInTheDocument();
 		expect(screen.getByText("技能")).toBeInTheDocument();
 	});

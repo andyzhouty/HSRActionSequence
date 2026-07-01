@@ -9,6 +9,9 @@ import {
 	simulateActions,
 } from "../src/utils/simulateActions";
 
+const stripAv0 = (axs: { characterId: string }[]) =>
+	axs.filter((a) => a.characterId !== "@av0");
+
 function character(
 	id: string,
 	name: string,
@@ -128,7 +131,7 @@ describe("Aglaea Supreme Stance activation", () => {
 			}),
 		);
 
-		expect(actions.map((action) => action.key).slice(0, 4)).toEqual([
+		expect(stripAv0(actions).map((action) => action.key).slice(0, 4)).toEqual([
 			"aglaea-1",
 			"aglaea-1-q",
 			"aglaea-2",
@@ -193,7 +196,7 @@ describe("Aglaea Supreme Stance activation", () => {
 			}),
 		);
 
-		expect(actions.map((action) => action.key).slice(0, 3)).toEqual([
+		expect(stripAv0(actions).map((action) => action.key).slice(0, 3)).toEqual([
 			"a-1-interrupt-0",
 			"a-1",
 			"aglaea-1",
@@ -387,8 +390,8 @@ describe("Aglaea team integration", () => {
 		expect(actions.length).toBeGreaterThan(0);
 
 		// 1) Robin 首动为 E
-		expect(actions[0].key).toBe("robin-1");
-		expect(actions[0].skill).toBe("E");
+		expect(stripAv0(actions)[0].key).toBe("robin-1");
+		expect(stripAv0(actions)[0].skill).toBe("E");
 
 		// 2) Aglaea 前两动都是 E（召唤衣匠 + 第二次行动）
 		expect(actions.find((a) => a.key === "aglaea-1")?.skill).toBe("E");

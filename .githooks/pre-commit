@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Pre-commit hook: abort commit if pnpm build fails
+
+echo "🧪 Running pnpm build..."
+pnpm build
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -ne 0 ]; then
+	echo "❌ pnpm build failed (exit code $EXIT_CODE). Commit aborted."
+	echo "   Fix the errors above and try again."
+	exit 1
+fi
+
+echo "✅ pnpm build passed. Proceeding with commit."
+exit 0

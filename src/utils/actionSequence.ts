@@ -98,6 +98,7 @@ export type GeneratedAction = {
 	isCyreneEnhancedQ?: boolean;
 	isEpicTriggeredMemosprite?: boolean; // 记忆主史诗触发的德谬歌额外 Q
 	isPolluxAction?: boolean; // 遐蝶死龙行动
+	isIcaAction?: boolean; // 风堇小伊卡额外回合
 };
 
 export type SpeedAdjustment = {
@@ -169,6 +170,14 @@ export type FireflyCombustionRule = {
 	breakDelayPercent: number;
 	maxBreakDelayTriggers: number;
 	eidolonExtraTurn: number;
+};
+
+export type PolluxRule = {
+	memospriteName: string;
+	memospriteSpeed: number;
+	maxActions: number;
+	keepSkill: SkillCode;
+	dismissSkill: SkillCode;
 };
 
 export type DomainRule = {
@@ -259,6 +268,31 @@ export function getMemeAdvanceRule(characterName: string): MemeAdvanceRule {
 			effectRule?.memospriteSpeed ?? defaultMemeAdvanceRule.memospriteSpeed,
 		advancePercent:
 			effectRule?.advancePercent ?? defaultMemeAdvanceRule.advancePercent,
+	};
+}
+
+const defaultPolluxRule: PolluxRule =
+	// biome-ignore lint/style/noNonNullAssertion: defaults in characters.json
+	getDefaultEffectRule<PolluxRule>("summonPollux")!;
+
+export function getPolluxRule(characterName: string): PolluxRule {
+	const effectRule = getEffectRule<Partial<PolluxRule>>(
+		characterName,
+		"summonPollux",
+	);
+	return {
+		...defaultPolluxRule,
+		...(effectRule ?? {}),
+		memospriteName:
+			effectRule?.memospriteName ?? defaultPolluxRule.memospriteName,
+		memospriteSpeed:
+			effectRule?.memospriteSpeed ?? defaultPolluxRule.memospriteSpeed,
+		maxActions:
+			effectRule?.maxActions ?? defaultPolluxRule.maxActions,
+		keepSkill:
+			effectRule?.keepSkill ?? defaultPolluxRule.keepSkill,
+		dismissSkill:
+			effectRule?.dismissSkill ?? defaultPolluxRule.dismissSkill,
 	};
 }
 
@@ -374,6 +408,7 @@ export type SavedData = {
 	resourceValues: Record<string, Record<string, string>>;
 	fireflyBreakCounters?: Record<string, boolean>;
 	godmodeExtraActions?: Record<string, boolean>;
+	castoriceKillToggles?: Record<string, boolean>;
 	meritTarget?: string;
 	dancePartner?: string;
 };

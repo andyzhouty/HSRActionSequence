@@ -1,31 +1,31 @@
 {
   "limitPreset": "150",
   "customLimit": "",
-  "displayedLimit": "250",
+  "displayedLimit": "500",
   "characters": [
     {
       "id": "c1",
       "kind": "角色",
-      "name": "遐蝶",
-      "speed": "90",
+      "name": "白厄",
+      "speed": "111",
       "baseSpeed": "",
       "hasVonwacq": false,
       "hasWindSet": false,
       "hasDance": false,
-      "eidolon": 2,
+      "eidolon": 0,
       "superimpose": 1,
       "lc_id": 0
     },
     {
       "id": "c2",
       "kind": "角色",
-      "name": "昔涟",
-      "speed": "200",
+      "name": "刻律",
+      "speed": "500",
       "baseSpeed": "",
       "hasVonwacq": false,
       "hasWindSet": false,
       "hasDance": false,
-      "eidolon": 6,
+      "eidolon": 0,
       "superimpose": 1,
       "lc_id": 0
     },
@@ -57,28 +57,23 @@
     }
   ],
   "resources": [
-    "追忆"
+    "火种",
+    "毁伤"
   ],
   "overrides": {},
   "skillOverrides": {
-    "c1-1": "QE",
-    "c2-1": "EQ",
-    "c2-2": "E",
-    "c1-2": "A"
+    "c1-1": "EQ"
   },
   "domainEndOverrides": {},
   "speedAdjustments": {},
   "skillTargets": {},
   "defaultSkillTargets": {},
-  "odeSelections": {
-    "c2-1-memosprite-Q": {
-      "odeCode": "lifeDeath",
-      "targetId": "c1"
-    }
-  },
+  "odeSelections": {},
   "memeSelections": {},
   "ultInterrupts": {},
   "resourceValues": {},
   "fireflyBreakCounters": {},
-  "godmodeExtraActions": {}
+  "godmodeExtraActions": {},
+  "castoriceKillToggles": {},
+  "meritTarget": "c1"
 }

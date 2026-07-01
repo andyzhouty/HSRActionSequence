@@ -9,6 +9,9 @@ import {
 	simulateActions,
 } from "../src/utils/simulateActions";
 
+const stripAv0 = (axs: { characterId: string }[]) =>
+	axs.filter((a) => a.characterId !== "@av0");
+
 function character(
 	id: string,
 	name: string,
@@ -99,8 +102,8 @@ describe("Phainon (白厄)", () => {
 		);
 
 		// First action: Q -> starts domain
-		expect(actions[0].key).toBe("phainon-1");
-		expect(actions[0].skill).toBe("A");
+		expect(stripAv0(actions)[0].key).toBe("phainon-1");
+		expect(stripAv0(actions)[0].skill).toBe("A");
 
 		// Domain actions follow (isDomainAction: true)
 		const domainActions = actions.filter((a) => a.isDomainAction);

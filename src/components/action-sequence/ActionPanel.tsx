@@ -19,6 +19,7 @@ import {
 import { ActionLimitMarkerRow, ActionRow } from "./ActionTableRows";
 import { SelectInput, TextInput } from "./Controls";
 import ExportExcelButton from "./ExportExcelButton";
+import { hasHyacineIca } from "../../utils/hyacineIca";
 
 export default function ActionPanel() {
 	const ctx = useActionSequence();
@@ -133,7 +134,7 @@ export default function ActionPanel() {
 					<div className="mb-2 flex h-5 items-center gap-3">
 						<span className="text-sm leading-5 text-gray-300">资源列</span>
 					</div>
-					<div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_112px]">
+					<div className="grid grid-cols-1 gap-2">
 						<div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-2">
 							{ctx.resources.map((resource, index) => (
 								<div
@@ -154,15 +155,15 @@ export default function ActionPanel() {
 									</button>
 								</div>
 							))}
+							<button
+								type="button"
+								onClick={ctx.addResource}
+								disabled={ctx.resources.length >= maxResources}
+								className="h-10 rounded-lg border border-blue-500 bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:border-gray-500 disabled:bg-gray-600"
+							>
+								添加资源
+							</button>
 						</div>
-						<button
-							type="button"
-							onClick={ctx.addResource}
-							disabled={ctx.resources.length >= maxResources}
-							className="h-10 rounded-lg bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-gray-600"
-						>
-							添加资源
-						</button>
 					</div>
 				</div>
 			</div>
@@ -254,7 +255,7 @@ export default function ActionPanel() {
 									序号
 								</th>
 								<th className="w-[1%] whitespace-nowrap px-3 py-3 font-semibold">
-									角色
+									目标
 								</th>
 								<th className="whitespace-nowrap px-2 py-3 font-semibold">
 									行动值
@@ -479,6 +480,12 @@ function MenuContent() {
 
 			{/* Silver Wolf E2 godmode extra section */}
 			<GodmodeExtraSection />
+
+			{/* Hyacine E2 section */}
+			<HyacineE2Section />
+
+			{/* Ica kill section */}
+			<IcaKillSection />
 		</>
 	);
 }
@@ -1021,6 +1028,92 @@ function GodmodeExtraSection() {
 			{isOn && (
 				<span className="text-xs text-gray-400">
 					行动后银狼插入额外 A
+				</span>
+			)}
+		</div>
+	);
+}
+
+function HyacineE2Section() {
+	const ctx = useActionSequence();
+	const hasHyacine = ctx.characters.some((c) => hasHyacineIca(c.name));
+	if (!hasHyacine) return null;
+
+	const isOn = ctx.hyacineE2Active;
+	return (
+		<div className="flex flex-wrap items-center gap-3 border-t border-gray-700 pt-3">
+			<span className="whitespace-nowrap text-sm text-gray-300">
+				风堇 E2 全队加速：
+			</span>
+			<button
+				type="button"
+				onClick={() => ctx.setHyacineE2Active(!isOn)}
+				className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+					isOn
+						? "border-emerald-500/70 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30"
+						: "border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+				}`}
+			>
+				{isOn ? "已开启" : "已关闭"}
+			</button>
+			{isOn && (
+				<span className="text-xs text-gray-400">
+					全队 speed += baseSpeed × 30%
+				</span>
+			)}
+		</div>
+	);
+}
+
+function IcaKillSection() {
+	const ctx = useActionSequence();
+	const selectedKeys = [...ctx.selectedActionKeys];
+	if (selectedKeys.length === 0) return null;
+	const firstKey = selectedKeys[0];
+	const firstAction = ctx.actions.find((a) => a.key === firstKey);
+	if (!firstAction) return null;
+
+	const hasHyacine = ctx.characters.some((c) => hasHyacineIca(c.name));
+	if (!hasHyacine) return null;
+
+	if (hasHyacineIca(ctx.charactersById[firstAction.characterId]?.name ?? "")) return null;
+	if (firstAction.isIcaAction) return null;
+	const charKind = ctx.characterKinds[firstAction.characterId];
+	if (charKind === "倒计时" || charKind === "敌人") return null;
+
+	const isOn = ctx.icaKillToggles[firstKey] === true;
+	return (
+		<div className="flex flex-wrap items-center gap-3 border-t border-gray-700 pt-3">
+			<span className="whitespace-nowrap text-sm text-gray-300">
+				小伊卡死亡：
+			</span>
+			<button
+				type="button"
+				onClick={() => {
+					if (isOn) {
+						ctx.setIcaKillToggles((prev) => {
+							const next = { ...prev };
+							delete next[firstKey];
+							return next;
+						});
+					} else {
+						ctx.setIcaKillToggles((prev) => ({
+							...prev,
+							[firstKey]: true,
+						}));
+					}
+				}}
+				className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+					isOn
+						? "border-red-500/70 bg-red-500/20 text-red-200 hover:bg-red-500/30"
+						: "border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+				}`}
+			>
+				{isOn ? "已标记" : "未标记"}
+			</button>
+			{isOn && (
+				<span className="text-xs text-gray-400">
+					此行动后 Ica 死亡，风堇 30% 自拉条
 				</span>
 			)}
 		</div>

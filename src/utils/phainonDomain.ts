@@ -22,6 +22,7 @@ type PhainonMutableState = {
 	phainonDomainSpeedBonus: number;
 	nextActionValue: number;
 	blockNextAdvance?: boolean;
+	phainonDomainFrozenDistance?: number;
 };
 
 function isAllyTarget(kind: string): boolean {
@@ -64,12 +65,16 @@ export function applyPhainonDomainPauseAndSpeedBonus(
 			continue;
 		}
 
+		// 使用冻结时保存的距离，否则现场计算
 		const remainingActionDistance =
+			state.phainonDomainFrozenDistance ??
 			Math.max(
 				0,
 				state.nextActionValue -
 					(index === casterIndex ? domainEndActionValue : startActionValue),
 			) * state.currentSpeed;
+		state.phainonDomainFrozenDistance = undefined;
+
 		if (state.phainonDomainSpeedBonus <= 0) {
 			const baseSpeed = state.baseSpeed > 0 ? state.baseSpeed : 100;
 			const speedBonus = baseSpeed * speedBonusBaseSpeedRatio;
@@ -78,6 +83,25 @@ export function applyPhainonDomainPauseAndSpeedBonus(
 		}
 		state.nextActionValue =
 			domainEndActionValue + remainingActionDistance / state.currentSpeed;
+	}
+}
+
+/** 境界开始时：冻结友方行动（保存剩余距离，推向远处以防被选中） */
+export function freezeAlliesForDomain(
+	states: PhainonMutableState[],
+	casterIndex: number,
+	startActionValue: number,
+) {
+	for (let index = 0; index < states.length; index++) {
+		if (index === casterIndex) continue;
+		const state = states[index];
+		if (!isAllyTarget(state.character.kind)) continue;
+		if (state.blockNextAdvance) continue;
+
+		const remainingDistance =
+			Math.max(0, state.nextActionValue - startActionValue) * state.currentSpeed;
+		state.phainonDomainFrozenDistance = remainingDistance;
+		state.nextActionValue = startActionValue + 99999;
 	}
 }
 

@@ -31,6 +31,9 @@ export type ActionSequenceContextType = {
 	ultInterrupts: Record<string, UltInterrupt[]>;
 	fireflyBreakCounters: Record<string, boolean>;
 	godmodeExtraActions: Record<string, boolean>;
+	castoriceKillToggles: Record<string, boolean>;
+	icaKillToggles: Record<string, boolean>;
+	hyacineE2Active: boolean;
 	meritTarget?: string;
 	dancePartner?: string;
 	resourceValues: Record<string, Record<string, string>>;
@@ -101,6 +104,13 @@ export type ActionSequenceContextType = {
 	setGodmodeExtraActions: React.Dispatch<
 		React.SetStateAction<Record<string, boolean>>
 	>;
+	setCastoriceKillToggles: React.Dispatch<
+		React.SetStateAction<Record<string, boolean>>
+	>;
+	setIcaKillToggles: React.Dispatch<
+		React.SetStateAction<Record<string, boolean>>
+	>;
+	setHyacineE2Active: React.Dispatch<React.SetStateAction<boolean>>;
 	setMeritTarget: React.Dispatch<React.SetStateAction<string | undefined>>;
 	setDancePartner: React.Dispatch<React.SetStateAction<string | undefined>>;
 	setResourceValues: React.Dispatch<

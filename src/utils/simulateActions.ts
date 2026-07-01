@@ -22,6 +22,14 @@ import {
 	applyCastoriceE2Pull,
 } from "./castoricePollux";
 import {
+	applyHyacineE2SpeedBuff,
+	handleHyacineQ,
+	hasHyacineIca,
+	killIca,
+	summonIca,
+	triggerIcaExtraTurn,
+} from "./hyacineIca";
+import {
 	activateCombustion,
 	checkBreakTrigger,
 	handleFireflyCountdownAction,
@@ -32,6 +40,7 @@ import {
 import {
 	applyPhainonDomainPauseAndSpeedBonus,
 	expirePhainonDomainSpeedBonus,
+	freezeAlliesForDomain,
 	getPhainonDomainEndIndex,
 	getPhainonDomainInterval,
 	hasPhainonEnemyTriggerSkill,
@@ -152,6 +161,29 @@ export function simulateActions(
 		states.push(ahaState);
 	}
 
+	// ── 0 行动值：固定倒计时目标，仅在 AV=0 行动一次 ──
+	states.push({
+		character: {
+			id: "@av0",
+			kind: "倒计时",
+			name: "0行动值",
+			speed: "1",
+			baseSpeed: "1",
+			hasVonwacq: false,
+			hasWindSet: false,
+			hasDance: false,
+			eidolon: 0,
+			superimpose: 1,
+			lc_id: 0,
+		},
+		baseSpeed: 1,
+		currentSpeed: 1,
+		phainonDomainSpeedBonus: 0,
+		actionNo: 1,
+		nextActionValue: 0,
+		blockNextAdvance: true,
+	});
+
 	// ── 藿藿 1 魂：全队加速 12% ──
 	const huohuoState = states.find(
 		(s) =>
@@ -162,9 +194,13 @@ export function simulateActions(
 	if (huohuoState) {
 		for (const s of states) {
 			if (s.character.kind === "角色") {
-				const v0 = s.baseSpeed;
+				const v0 =
+					toPositiveNumber(s.character.baseSpeed, 0) > 0
+						? toPositiveNumber(s.character.baseSpeed, 100)
+						: (hasSkillEffect(s.character.name, "W", "counterW") ? s.baseSpeed : 100);
+				const oldSpeed = s.currentSpeed;
 				s.currentSpeed = s.currentSpeed + v0 * 0.12;
-				s.nextActionValue = 10000 / s.currentSpeed;
+				s.nextActionValue = s.nextActionValue * (oldSpeed / s.currentSpeed);
 			}
 		}
 	}
@@ -180,9 +216,13 @@ export function simulateActions(
 					s.character.id === meritOwner.character.id ||
 					s.character.id === input.meritTarget
 				) {
-					const v0_merit = s.baseSpeed;
+					const v0_merit =
+						toPositiveNumber(s.character.baseSpeed, 0) > 0
+							? toPositiveNumber(s.character.baseSpeed, 100)
+							: (hasSkillEffect(s.character.name, "W", "counterW") ? s.baseSpeed : 100);
+					const oldSpeed = s.currentSpeed;
 					s.currentSpeed = s.currentSpeed + v0_merit * 0.2;
-					s.nextActionValue = 10000 / s.currentSpeed;
+					s.nextActionValue = s.nextActionValue * (oldSpeed / s.currentSpeed);
 				}
 			}
 		}
@@ -209,11 +249,17 @@ export function simulateActions(
 				const v0_dahlia =
 					toPositiveNumber(partner.character.baseSpeed, 0) > 0
 						? toPositiveNumber(partner.character.baseSpeed, 100)
-						: 100;
+						: (hasSkillEffect(partner.character.name, "W", "counterW") ? partner.baseSpeed : 100);
+				const oldSpeed = partner.currentSpeed;
 				partner.currentSpeed = partner.currentSpeed + v0_dahlia * 0.3;
-				partner.nextActionValue = 10000 / partner.currentSpeed;
+				partner.nextActionValue = partner.nextActionValue * (oldSpeed / partner.currentSpeed);
 			}
 		}
+	}
+
+	// ── 风堇 E2：全队速度 +30%（不可叠加） ──
+	if (input.hyacineE2Active) {
+		applyHyacineE2SpeedBuff(states);
 	}
 
 	// 军功目标追踪（模拟中途可被 E 切换）
@@ -243,12 +289,15 @@ export function simulateActions(
 			};
 		});
 
-		// Sort by action value, then by character id
+		// Sort by action value, then by character id (@av0 always first at same AV)
 		candidates.sort((a, b) => {
 			if (a.actionValue !== b.actionValue) return a.actionValue - b.actionValue;
-			return states[a.stateIndex].character.id.localeCompare(
-				states[b.stateIndex].character.id,
-			);
+			const aId = states[a.stateIndex].character.id;
+			const bId = states[b.stateIndex].character.id;
+			// @av0 always precedes any other target at the same AV
+			if (aId === "@av0") return -1;
+			if (bId === "@av0") return 1;
+			return aId.localeCompare(bId);
 		});
 
 		const next = candidates[0];
@@ -261,6 +310,34 @@ export function simulateActions(
 		const character = states[stateIndex].character;
 		const actionNo = states[stateIndex].actionNo;
 		const shouldClearAdvanceBlock = states[stateIndex].blockNextAdvance;
+
+		// ── Ica 死亡检查（风堇 A/E 和 Ica 额外回合自身除外） ──
+		if (
+			input.icaKillToggles?.[key] &&
+			character.id !== "@av0" &&
+			!(
+				hasHyacineIca(character.name) &&
+				(actionNo > 0)
+			) &&
+			!character.id.endsWith("-ica")
+		) {
+			killIca(states, actionValue);
+		}
+
+		// ── 0 行动值：仅在 AV=0 行动一次后移除 ──
+		if (character.id === "@av0") {
+			actions.push({
+				key,
+				characterId: character.id,
+				displayName: "0行动值",
+				actionNo: 0,
+				actionValue,
+				skill: "" as SkillCode,
+				speed: 1,
+			});
+			states.splice(stateIndex, 1);
+			continue;
+		}
 
 		// ── 阿哈时刻：欢愉角色存在时生成独立轴 ──
 		if (character.id === "@aha") {
@@ -373,6 +450,7 @@ export function simulateActions(
 				actionNo,
 				actionValue,
 				resolvedOverridePollux as SkillCode,
+				input.castoriceKillToggles?.[key] ?? false,
 			);
 			emitMemeAdvanceAction({
 				input,
@@ -832,6 +910,8 @@ export function simulateActions(
 						maxIndex: domainEndIndex,
 						rule: domainRule,
 					};
+					// 冻结友方：境界期间不行动
+					freezeAlliesForDomain(states, casterIndex, actionValue);
 					// 插队大招后境界第一动与插队大招同 AV
 					caster.nextActionValue = actionValue;
 				}
@@ -1154,6 +1234,8 @@ export function simulateActions(
 					maxIndex: domainEndIndex,
 					rule: domainRule,
 				};
+				// 冻结友方：境界期间不行动
+				freezeAlliesForDomain(states, stateIndex, startAV);
 				// 下一动就是境界第一动（与 Q 同 AV）
 				states[stateIndex].nextActionValue = startAV;
 			}
@@ -1316,6 +1398,41 @@ export function simulateActions(
 					usesUltimate
 				) {
 					handleMemoryTrailblazerQ(states[stateIndex]);
+				}
+
+				// 风堇 Q: summon Ica (if not on field) + afterRain = 3
+				if (
+					isCharacterTarget(character) &&
+					hasHyacineIca(character.name) &&
+					usesUltimate
+				) {
+					handleHyacineQ(states, character.id);
+				}
+
+				// 风堇 E: summon Ica (first E or first E after death)
+				if (
+					isCharacterTarget(character) &&
+					hasHyacineIca(character.name) &&
+					resolvedSkill.includes("E") &&
+					!states[stateIndex].icaOnField
+				) {
+					summonIca(states[stateIndex]);
+				}
+
+				// 风堇 A/E: trigger Ica extra turn (afterRain > 0 && Ica on field)
+				if (
+					isCharacterTarget(character) &&
+					hasHyacineIca(character.name) &&
+					(resolvedSkill === "" || resolvedSkill === "A" || resolvedSkill.includes("E")) &&
+					!resolvedSkill.includes("Q")
+				) {
+					triggerIcaExtraTurn(
+						states,
+						actions,
+						character.id,
+						key,
+						actionValue,
+					);
 				}
 
 				// 遐蝶 Q: summon Pollux（死龙）

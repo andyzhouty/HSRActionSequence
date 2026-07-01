@@ -27,6 +27,9 @@ export type SimulateActionsInput = {
 	fireflyBreakCounters?: Record<string, boolean>;
 	godmodeExtraActions?: Record<string, boolean>;
 	killToggles?: Record<string, boolean>;
+	castoriceKillToggles?: Record<string, boolean>;
+	icaKillToggles?: Record<string, boolean>;
+	hyacineE2Active?: boolean;
 	meritTarget?: string;
 	dancePartner?: string;
 };
@@ -70,6 +73,11 @@ export interface ActionState extends AglaeaActionState {
 	polluxCount?: number;
 	isPolluxAction?: boolean;
 	e2SavedActionSkill?: SkillCode;
+
+	// 风堇小伊卡
+	icaOnField?: boolean;
+	afterRain?: number;
+	hyacineE2SpeedBonus?: number;
 }
 
 export type ActiveOdeState = {

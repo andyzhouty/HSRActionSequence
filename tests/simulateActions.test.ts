@@ -11,6 +11,9 @@ import {
 	simulateActions,
 } from "../src/utils/simulateActions";
 
+const stripAv0 = (axs: { characterId: string }[]) =>
+	axs.filter((a) => a.characterId !== "@av0");
+
 function character(
 	id: string,
 	name: string,
@@ -85,12 +88,12 @@ describe("simulateActions", () => {
 			}),
 		);
 
-		expect(actions.map((action) => action.key).slice(0, 3)).toEqual([
+		expect(stripAv0(actions).map((action) => action.key).slice(0, 3)).toEqual([
 			"slow-1",
 			"fast-1",
 			"fast-2",
 		]);
-		expect(actions[0].actionValue).toBe(30);
+		expect(stripAv0(actions)[0].actionValue).toBe(30);
 	});
 
 	it("uses positive speed adjustment as acceleration and negative as slowdown", () => {
@@ -132,7 +135,7 @@ describe("simulateActions", () => {
 			}),
 		);
 
-		expect(actions.map((action) => action.key).slice(0, 3)).toEqual([
+		expect(stripAv0(actions).map((action) => action.key).slice(0, 3)).toEqual([
 			"a-1",
 			"a-1-q",
 			"b-1",
@@ -197,7 +200,7 @@ describe("simulateActions", () => {
 			}),
 		);
 
-		expect(actions.map((action) => action.key).slice(0, 4)).toEqual([
+		expect(stripAv0(actions).map((action) => action.key).slice(0, 4)).toEqual([
 			"aglaea-1",
 			"aglaea-1-q",
 			"aglaea-2",
@@ -267,7 +270,7 @@ describe("simulateActions", () => {
 			}),
 		);
 
-		expect(actions.map((action) => action.key).slice(0, 4)).toEqual([
+		expect(stripAv0(actions).map((action) => action.key).slice(0, 4)).toEqual([
 			"a-1-interrupt-0",
 			"a-1",
 			"aglaea-1",
@@ -478,7 +481,7 @@ describe("first action advance", () => {
 			}),
 		);
 		// 首动 AV = 10000/100 * (1-0.4) = 60
-		expect(actions[0].actionValue).toBeCloseTo(60, 2);
+		expect(stripAv0(actions)[0].actionValue).toBeCloseTo(60, 2);
 	});
 
 	it("知更鸟 25% 首动提前", () => {
@@ -489,7 +492,7 @@ describe("first action advance", () => {
 			}),
 		);
 		// 首动 AV = 10000/100 * (1-0.25) = 75
-		expect(actions[0].actionValue).toBeCloseTo(75, 2);
+		expect(stripAv0(actions)[0].actionValue).toBeCloseTo(75, 2);
 	});
 });
 
