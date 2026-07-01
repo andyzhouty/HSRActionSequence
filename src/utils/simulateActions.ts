@@ -1401,12 +1401,9 @@ export function simulateActions(
 				}
 
 				// 风堇 Q: summon Ica (if not on field) + afterRain = 3
-				if (
-					isCharacterTarget(character) &&
-					hasHyacineIca(character.name) &&
-					usesUltimate
-				) {
-					handleHyacineQ(states, character.id);
+				const hyIcaCheck = isCharacterTarget(character) && hasHyacineIca(character.name) && usesUltimate;
+				if (hyIcaCheck) {
+					handleHyacineQ(states, actions, character.id, key, actionValue);
 				}
 
 				// 风堇 E: summon Ica (first E or first E after death)

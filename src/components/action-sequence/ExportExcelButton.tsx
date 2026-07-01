@@ -1,5 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
-import { save } from "@tauri-apps/plugin-dialog";
+import { invoke, save } from "../../utils/backend";
 import { useCallback, useState } from "react";
 import * as XLSX from "xlsx";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";

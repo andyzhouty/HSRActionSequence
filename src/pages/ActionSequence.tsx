@@ -1,5 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
-import { open, save } from "@tauri-apps/plugin-dialog";
+import { invoke, open, save } from "../utils/backend";
 import { domToPng } from "modern-screenshot";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ActionPanel from "../components/action-sequence/ActionPanel";

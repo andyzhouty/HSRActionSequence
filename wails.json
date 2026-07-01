@@ -1,0 +1,14 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "hsractionsequence",
+  "outputfilename": "hsractionsequence",
+  "icon": "build/appicon.png",
+  "frontend:install": "pnpm install",
+  "frontend:build": "pnpm run wails:frontend-build",
+  "frontend:dev:watcher": "pnpm dev",
+  "frontend:dev:serverUrl": "http://localhost:1420",
+  "author": {
+    "name": "andyzhou",
+    "email": ""
+  }
+}

@@ -12,9 +12,6 @@ on:
 permissions:
   contents: write
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   windows:
     name: Build Windows installer
@@ -36,49 +33,24 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust dependencies and build output
-        uses: Swatinem/rust-cache@v2
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          workspaces: src-tauri -> target
-          cache-on-failure: true
-          shared-key: windows-tauri
-
-      - name: Cache Tauri bundler tools
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~\AppData\Local\tauri
-          key: tauri-bundler-tools-windows-${{ runner.os }}-${{ hashFiles('src-tauri/Cargo.lock', 'src-tauri/tauri.conf.json', '.github/tauri-updater.conf.json') }}
-          restore-keys: |
-            tauri-bundler-tools-windows-${{ runner.os }}-
+          go-version: "1.23"
+          cache: true
+          cache-dependency-path: go.sum
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check updater signing key
-        shell: bash
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-        run: |
-          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            echo "::error::Set the TAURI_SIGNING_PRIVATE_KEY repository secret before publishing updater-capable Windows builds."
-            exit 1
-          fi
+      - name: Build NSIS installer
+        run: wails build -nsis
 
-      - name: Build and upload Windows installer
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'release'
         with:
-          tagName: ${{ github.event.release.tag_name || inputs.tag }}
-          releaseName: ${{ github.event.release.name || inputs.tag }}
-          releaseBody: "Windows installer includes updater signature artifacts."
-          releaseDraft: false
-          prerelease: ${{ github.event.release.prerelease || false }}
-          args: --bundles nsis --config .github/tauri-updater.conf.json
-          includeUpdaterJson: true
+          tag_name: ${{ github.event.release.tag_name || inputs.tag }}
+          files: build/bin/*.exe

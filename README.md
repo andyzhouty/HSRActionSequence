@@ -1,11 +1,13 @@
 # 星穹铁道排轴可视化工具
 
-本工具使用 Tauri 框架，结合React进行开发。开发目的是为了方便崩坏·星穹铁道的玩家在进行高难本挑战之前，预先对自己的轴进行排演，以便互相交流、分享。
+本工具使用 Wails 框架，结合React进行开发。开发目的是为了方便崩坏·星穹铁道的玩家在进行高难本挑战之前，预先对自己的轴进行排演，以便互相交流、分享。
+
+Wails 桌面图标以根目录 `appicon.png` 为源文件，并在构建前自动同步到 `build/appicon.png`。
 
 ## 项目
 
 - 图标：
-  ![爱门！](./src-tauri/icons/favicon.jpg)
+  ![图标](https://andyzhouty.github.io/hsrlab/favicon.jpg)
 - 参与项目的AI工具
   - DeepSeek V4 Flash
   - DeepSeek V4 Pro

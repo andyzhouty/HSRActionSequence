@@ -23,6 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# Wails build output
+build/
+
 # Action sequence export files
 action-sequence-*.json
 

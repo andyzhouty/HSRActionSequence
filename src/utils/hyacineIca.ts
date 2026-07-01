@@ -69,10 +69,13 @@ export function killIca(
 
 // ── Q 处理 ──
 
-/** 风堇 Q：若 Ica 不在场则召唤，afterRain 直接设为 3 */
+/** 风堇 Q：若 Ica 不在场则召唤，afterRain 直接设为 3，并触发一次不消耗层数的 Ica 额外回合 */
 export function handleHyacineQ(
 	states: HyacineActionState[],
+	actions: GeneratedAction[],
 	characterId: string,
+	sourceKey: string,
+	actionValue: number,
 ) {
 	const hyacine = states.find((s) => s.character.id === characterId);
 	if (!hyacine || !hasHyacineIca(hyacine.character.name)) return;
@@ -82,26 +85,21 @@ export function handleHyacineQ(
 		summonIca(hyacine);
 	}
 	hyacine.afterRain = 3;
+
+	// Q 触发 Ica 额外回合（不消耗 afterRain），用独特 key 防止与 A/E 触发冲突
+	pushIcaAction(actions, characterId, `${sourceKey}-q`, actionValue);
 }
 
 // ── A/E 后处理 ──
 
-/** 风堇 A/E 后：若 afterRain > 0 且 Ica 在场，触发 Ica 额外回合 */
-export function triggerIcaExtraTurn(
-	states: HyacineActionState[],
+function pushIcaAction(
 	actions: GeneratedAction[],
 	characterId: string,
 	sourceKey: string,
 	actionValue: number,
 ) {
-	const hyacine = states.find((s) => s.character.id === characterId);
-	if (!hyacine || !hasHyacineIca(hyacine.character.name)) return;
-	if (!hyacine.icaOnField) return;
-	if ((hyacine.afterRain ?? 0) <= 0) return;
-
-	const icaKey = `${sourceKey}-ica`;
 	actions.push({
-		key: icaKey,
+		key: `${sourceKey}-ica`,
 		characterId: `${characterId}-ica`,
 		displayName: "小伊卡",
 		targetKind: "忆灵",
@@ -114,7 +112,22 @@ export function triggerIcaExtraTurn(
 		isIcaAction: true,
 		lockedSkill: true,
 	});
+}
 
+/** 风堇 A/E 后：若 afterRain > 0 且 Ica 在场，触发 Ica 额外回合并消耗 1 层 */
+export function triggerIcaExtraTurn(
+	states: HyacineActionState[],
+	actions: GeneratedAction[],
+	characterId: string,
+	sourceKey: string,
+	actionValue: number,
+) {
+	const hyacine = states.find((s) => s.character.id === characterId);
+	if (!hyacine || !hasHyacineIca(hyacine.character.name)) return;
+	if (!hyacine.icaOnField) return;
+	if ((hyacine.afterRain ?? 0) <= 0) return;
+
+	pushIcaAction(actions, characterId, sourceKey, actionValue);
 	hyacine.afterRain = (hyacine.afterRain ?? 1) - 1;
 }
 

@@ -132,7 +132,8 @@ describe("Hyacine (风堇) Ica System", () => {
 		);
 
 		const icaActions = actions.filter((a) => a.isIcaAction);
-		expect(icaActions.length).toBe(3);
+		// Q triggers Ica (no decrement) + 3 A triggers = 4 total
+		expect(icaActions.length).toBe(4);
 	});
 
 	it("Ica 死亡后 afterRain 归 0，重新召唤前不触发", () => {
@@ -182,20 +183,20 @@ describe("Hyacine (风堇) Ica System", () => {
 		expect(allyAction?.actionValue).toBeCloseTo(10000 / 104, 1);
 	});
 
-	it("Q 在 Ica 不在场时也召唤 + afterRain=3", () => {
+	it("Q 在 Ica 不在场时也召唤 + QA 后触发额外回合", () => {
 		const actions = simulateActions(
 			input({
 				characters: [character("hyacine", "风堇", 100)],
 				skillOverrides: skills({
-					"hyacine-1": "Q",  // summon Ica + afterRain=3 (before any E)
+					"hyacine-1": "QA",  // Q: summon Ica + afterRain=3 + Ica turn; A: no trigger (after Q already triggered)
 				}),
 				limit: 300,
 			}),
 		);
-		// Q summoned Ica, but afterRain triggered for the next A
-		// (Q itself doesn't trigger Ica, only A/E does)
+		// Q triggers Ica (no decrement) + A from QA (decrement to 2) + 2 more A turns = 4 total
 		const icaActions = actions.filter((a) => a.isIcaAction);
-		expect(icaActions.length).toBe(0);
+		expect(icaActions.length).toBe(4);
+		expect(icaActions[0].skill).toBe("A");
 	});
 
 	it("Ica 额外回合设定 lockedSkill 和 skill='A'", () => {
