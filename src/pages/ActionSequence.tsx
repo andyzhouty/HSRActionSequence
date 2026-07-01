@@ -1195,6 +1195,18 @@ export default function ActionSequence() {
 
 	const exportJson = async () => {
 		const json = JSON.stringify(buildExportData(), null, 2);
+		const hasWailsSaveDialog = Boolean(window?.go?.main?.App?.SaveFileDialog);
+
+		if (!hasWailsSaveDialog) {
+			setImportText(json);
+			try {
+				await navigator.clipboard.writeText(json);
+				setMessage("当前为浏览器开发模式，已将 JSON 填入文本框并复制到剪贴板");
+			} catch {
+				setMessage("当前为浏览器开发模式，已将 JSON 填入文本框");
+			}
+			return;
+		}
 
 		try {
 			const selectedPath = await save({

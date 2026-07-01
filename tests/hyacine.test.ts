@@ -199,6 +199,30 @@ describe("Hyacine (风堇) Ica System", () => {
 		expect(icaActions[0].skill).toBe("A");
 	});
 
+	it("EQ 只触发 Q 提供的免费 Ica 行动，不会额外消耗 afterRain", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("hyacine", "风堇", 100)],
+				skillOverrides: skills({
+					"hyacine-1": "EQ",
+					"hyacine-2": "A",
+					"hyacine-3": "A",
+					"hyacine-4": "A",
+					"hyacine-5": "A",
+				}),
+				limit: 700,
+			}),
+		);
+
+		const icaActions = actions.filter((a) => a.isIcaAction);
+		expect(icaActions.map((a) => a.key)).toEqual([
+			"hyacine-1-q-ica",
+			"hyacine-2-ica",
+			"hyacine-3-ica",
+			"hyacine-4-ica",
+		]);
+	});
+
 	it("Ica 额外回合设定 lockedSkill 和 skill='A'", () => {
 		const actions = simulateActions(
 			input({

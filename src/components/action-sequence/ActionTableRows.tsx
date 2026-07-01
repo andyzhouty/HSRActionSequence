@@ -22,7 +22,6 @@ import {
 	shouldRememberSkillTarget,
 	toPositiveNumber,
 } from "../../utils/actionSequence";
-import { hasHyacineIca } from "../../utils/hyacineIca";
 import { SelectInput } from "./Controls";
 
 function getMemeTargetOptions(ctx: ReturnType<typeof useActionSequence>) {
@@ -419,7 +418,6 @@ export function ActionRow({
 						<CombustionBreakInline action={action} />
 					)}
 					<PolluxKillInline action={action} />
-					<IcaKillInline action={action} />
 					<MemeInline action={action} />
 					<SkillTargetInline action={action} />
 				</div>
@@ -729,46 +727,6 @@ function PolluxKillInline({ action }: { action: GeneratedAction }) {
 			}`}
 		>
 			击杀
-		</button>
-	);
-}
-
-function IcaKillInline({ action }: { action: GeneratedAction }) {
-	const ctx = useActionSequence();
-	// 仅在队中有风堇时显示
-	const hasHyacine = ctx.characters.some((c) => hasHyacineIca(c.name));
-	if (!hasHyacine) return null;
-	// 风堇自身 A/E 不显示
-	if (hasHyacineIca(ctx.charactersById[action.characterId]?.name ?? "")) return null;
-	// Ica 额外回合不显示
-	if (action.isIcaAction) return null;
-
-	const isOn = ctx.icaKillToggles[action.key] === true;
-	return (
-		<button
-			type="button"
-			title={isOn ? "此行动后小伊卡死亡（点击取消）" : "标记小伊卡死亡（点击开启）"}
-			onMouseDown={(event) => event.stopPropagation()}
-			onPointerDown={(event) => event.stopPropagation()}
-			onClick={(event) => {
-				event.stopPropagation();
-				ctx.setIcaKillToggles((prev) => {
-					const next = { ...prev };
-					if (isOn) {
-						delete next[action.key];
-					} else {
-						next[action.key] = true;
-					}
-					return next;
-				});
-			}}
-			className={`flex h-7 shrink-0 items-center rounded-md px-2 text-xs font-semibold transition-colors ${
-				isOn
-					? "border border-red-500/70 bg-red-500/20 text-red-200"
-					: "border border-gray-600 bg-gray-700 text-gray-500"
-			}`}
-		>
-			Ica死
 		</button>
 	);
 }

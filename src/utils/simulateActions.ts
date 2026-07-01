@@ -1421,7 +1421,7 @@ export function simulateActions(
 					isCharacterTarget(character) &&
 					hasHyacineIca(character.name) &&
 					(resolvedSkill === "" || resolvedSkill === "A" || resolvedSkill.includes("E")) &&
-					!resolvedSkill.includes("Q")
+					(!usesUltimate || qIsFront)
 				) {
 					triggerIcaExtraTurn(
 						states,
