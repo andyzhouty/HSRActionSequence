@@ -39,6 +39,7 @@ export type CharacterConfig = {
 	hasVonwacq: boolean;
 	hasWindSet: boolean;
 	hasDance: boolean;
+	hasCastoriceTechnique?: boolean;
 	eidolon: number;
 	superimpose: number;
 	lc_id: number;
@@ -99,6 +100,8 @@ export type GeneratedAction = {
 	isEpicTriggeredMemosprite?: boolean; // 记忆主史诗触发的德谬歌额外 Q
 	isPolluxAction?: boolean; // 遐蝶死龙行动
 	isIcaAction?: boolean; // 风堇小伊卡额外回合
+	isExtraAha?: boolean;
+	isSparxieExtraAction?: boolean;
 };
 
 export type SpeedAdjustment = {
@@ -490,6 +493,7 @@ export function createTarget(
 		hasVonwacq: false,
 		hasWindSet: false,
 		hasDance: false,
+		hasCastoriceTechnique: false,
 		eidolon: 0,
 		superimpose: 1,
 		lc_id: 0,
@@ -506,6 +510,7 @@ export function withoutCharacterOnlyEffects(
 		hasVonwacq: false,
 		hasWindSet: false,
 		hasDance: false,
+		hasCastoriceTechnique: false,
 		eidolon: 0,
 		superimpose: 1,
 		lc_id: 0,

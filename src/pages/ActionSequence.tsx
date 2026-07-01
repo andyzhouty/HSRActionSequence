@@ -21,6 +21,7 @@ import {
 	getFireflyCombustionRule,
 	getGarmentmakerRule,
 	getMemeAdvanceRule,
+	getPolluxRule,
 	getSkillEffectOwnerNames,
 	getTargetDefaultName,
 	getTimestampedFileName,
@@ -623,6 +624,23 @@ export default function ActionSequence() {
 						lc_id: 0,
 					});
 				}
+				if (hasSkillEffect(c.name, "Q", "summonPollux")) {
+					const rule = getPolluxRule(c.name);
+					memos.push({
+						...c,
+						id: `${c.id}-pollux`,
+						kind: "忆灵",
+						name: rule.memospriteName,
+						speed: String(rule.memospriteSpeed),
+						baseSpeed: String(rule.memospriteSpeed),
+						hasVonwacq: false,
+						hasWindSet: false,
+						hasDance: false,
+						eidolon: 0,
+						superimpose: 1,
+						lc_id: 0,
+					});
+				}
 				if (hasSkillEffect(c.name, "E", "summonIca")) {
 					memos.push({
 						...c,
@@ -656,9 +674,12 @@ export default function ActionSequence() {
 	const charactersById = useMemo(
 		() =>
 			Object.fromEntries(
-				characters.map((character) => [character.id, character]),
+				[
+					...characters.map((character) => [character.id, character] as const),
+					...memospriteTargets.map((memosprite) => [memosprite.id, memosprite] as const),
+				],
 			),
-		[characters],
+		[characters, memospriteTargets],
 	);
 
 	const updateCharacter = (
@@ -858,6 +879,13 @@ export default function ActionSequence() {
 			setMessage("Q 不能单独使用，请配合 A/E 使用（如 AQ、EQ）");
 			return;
 		}
+		if (action.isPolluxAction) {
+			const allowedPolluxSkills = new Set(["", "A", "E", "EA"]);
+			if (!allowedPolluxSkills.has(nextSkill)) {
+				setMessage("死龙只能填写 A、E 或 EA");
+				return;
+			}
+		}
 		if (action.isDomainAction && !allowedDomainSkills.has(nextSkill)) {
 			setMessage(
 				`白厄境界内只能填写 ${domainRule.allowedSkills
@@ -925,7 +953,11 @@ export default function ActionSequence() {
 				}
 			}
 		}
-		if (!action.isDomainAction && !canUseSkillCode(character, nextSkill)) {
+		if (
+			!action.isPolluxAction &&
+			!action.isDomainAction &&
+			!canUseSkillCode(character, nextSkill)
+		) {
 			if (nextSkill.includes("A") && nextSkill.includes("E")) {
 				setMessage("A（普攻）和 E（战技）不能组合");
 			} else if (

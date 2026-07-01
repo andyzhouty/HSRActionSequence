@@ -650,4 +650,66 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			expect(newPollux.speed).toBe(165);
 		}
 	});
+
+	it("遐蝶秘技开启时开场自动召唤死龙，并在 AV=0 立即行动", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("castorice", "遐蝶", 100, {
+						hasCastoriceTechnique: true,
+					}),
+				],
+				limit: 200,
+			}),
+		);
+
+		const polluxFirst = actions.find((a) => a.isPolluxAction);
+		expect(polluxFirst).toBeDefined();
+		expect(polluxFirst?.actionNo).toBe(1);
+		expect(polluxFirst?.actionValue).toBe(0);
+	});
+
+	it("遐蝶秘技开场动作计入 3 次上限", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("castorice", "遐蝶", 100, {
+						hasCastoriceTechnique: true,
+					}),
+				],
+				skillOverrides: skills({
+					"castorice-pollux-1": "EA",
+					"castorice-pollux-2": "EA",
+					"castorice-pollux-3": "EA",
+				}),
+				limit: 400,
+			}),
+		);
+
+		const polluxActions = actions.filter((a) => a.isPolluxAction);
+		expect(polluxActions.length).toBe(3);
+		expect(polluxActions.map((a) => a.actionNo)).toEqual([1, 2, 3]);
+	});
+
+	it("遐蝶秘技开启后，死龙在场时后续 Q 不重复召唤", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("castorice", "遐蝶", 100, {
+						hasCastoriceTechnique: true,
+					}),
+				],
+				skillOverrides: skills({
+					"castorice-pollux-1": "EA",
+					"castorice-1": "AQ",
+				}),
+				limit: 300,
+			}),
+		);
+
+		const polluxIds = new Set(
+			actions.filter((a) => a.isPolluxAction).map((a) => a.characterId),
+		);
+		expect(polluxIds.size).toBe(1);
+	});
 });

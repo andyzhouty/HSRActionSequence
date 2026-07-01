@@ -161,6 +161,18 @@ export function simulateActions(
 		states.push(ahaState);
 	}
 
+	// ── 遐蝶秘技：开场自动召唤死龙，并使死龙在 AV=0 立即行动（计入 3 次上限） ──
+	for (const state of [...states]) {
+		if (
+			isCharacterTarget(state.character) &&
+			hasCastoriceSummon(state.character.name) &&
+			state.character.hasCastoriceTechnique &&
+			!state.polluxOnField
+		) {
+			summonPollux(states, state.character, 0);
+		}
+	}
+
 	// ── 0 行动值：固定倒计时目标，仅在 AV=0 行动一次 ──
 	states.push({
 		character: {
@@ -269,6 +281,333 @@ export function simulateActions(
 	);
 
 	let guard = 0;
+
+	const emitExtraAhaAction = (
+		sourceKey: string,
+		actionValue: number,
+	) => {
+		const extraAhaKey = `${sourceKey}-extra-aha`;
+		const extraAhaInterrupts = input.ultInterrupts[extraAhaKey] ?? [];
+		const extraAhaSpeed = calcAhaSpeed();
+
+		for (let ai = 0; ai < extraAhaInterrupts.length; ai++) {
+			const int = extraAhaInterrupts[ai];
+			if (int.timing !== "before") continue;
+			emitSpecialInterruptAction(`${extraAhaKey}-interrupt-${ai}`, int, actionValue);
+		}
+
+		actions.push({
+			key: extraAhaKey,
+			characterId: "@aha",
+			displayName: "阿哈时刻",
+			actionNo: 0,
+			actionValue,
+			skill: "" as SkillCode,
+			speed: extraAhaSpeed,
+			isAhaInstant: true,
+			isExtraAha: true,
+		});
+
+		for (let ai = 0; ai < extraAhaInterrupts.length; ai++) {
+			const int = extraAhaInterrupts[ai];
+			if (int.timing !== "after") continue;
+			emitSpecialInterruptAction(`${extraAhaKey}-interrupt-${ai}`, int, actionValue);
+		}
+
+		const ahaGodmodeExtra = input.godmodeExtraActions ?? {};
+		if (ahaGodmodeExtra[extraAhaKey]) {
+			const swIndex = states.findIndex(
+				(s) =>
+					hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
+			);
+			if (swIndex !== -1) {
+				const sw = states[swIndex];
+				actions.push({
+					key: `${extraAhaKey}-godmode-A`,
+					characterId: sw.character.id,
+					displayName: "银狼E2",
+					actionNo: 0,
+					actionValue,
+					skill: "A" as SkillCode,
+					speed: sw.currentSpeed,
+					lockedSkill: true,
+				});
+			}
+		}
+
+		emitMemeAdvanceAction({
+			input,
+			actions,
+			states,
+			sourceKey: extraAhaKey,
+			actionValue,
+			activeOdes,
+		});
+		emitSparxieExtraAction(extraAhaKey, actionValue);
+	};
+
+	function emitSpecialInterruptAction(
+		interruptKey: string,
+		int: { casterId: string; timing: "before" | "after" },
+		actionValue: number,
+	) {
+		const casterIndex = states.findIndex(
+			(s) => s.character.id === int.casterId,
+		);
+		if (casterIndex === -1) return;
+		const caster = states[casterIndex];
+		const casterSpeed = caster.currentSpeed;
+		actions.push({
+			key: interruptKey,
+			characterId: caster.character.id,
+			actionNo: 0,
+			actionValue,
+			skill: "Q" as SkillCode,
+			speed: casterSpeed,
+			activeOdeLabels: getActiveOdeLabels(activeOdes, caster.character.id),
+		});
+		emitMemeAdvanceAction({
+			input,
+			actions,
+			states,
+			sourceKey: interruptKey,
+			actionValue,
+			activeOdes,
+		});
+		consumeActionOdes(activeOdes, caster.character.id, "Q", false);
+		if (hasSkillEffect(caster.character.name, "Q", "cyreneUltimate")) {
+			emitCyreneMemospriteAction({
+				input,
+				actions,
+				states,
+				activeOdes,
+				cyrene: caster.character,
+				sourceKey: interruptKey,
+				actionValue,
+			});
+			handleCyrenePostUltimate({
+				states,
+				casterIndex,
+				character: caster.character,
+				actions,
+				actionValue,
+				activeOdes,
+				isInterrupt: true,
+			});
+		}
+		if (hasSkillEffect(caster.character.name, "Q", "extraAhaAfterUltimate")) {
+			emitExtraAhaAction(interruptKey, actionValue);
+		}
+		const teamAdvance = getTeamAdvanceOnUltimate(caster.character);
+		if (teamAdvance > 0) {
+			for (let teammateIndex = 0; teammateIndex < states.length; teammateIndex++) {
+				const teammate = states[teammateIndex];
+				if (!canBeAdvancedByDance(teammate.character.kind)) continue;
+				if (teammate.blockNextAdvance) continue;
+				const adv = teamAdvance / teammate.currentSpeed;
+				teammate.nextActionValue = Math.max(
+					actionValue,
+					teammate.nextActionValue - adv,
+				);
+			}
+		}
+		if (isCharacterTarget(caster.character) && caster.character.hasWindSet) {
+			const windAdvance = 2500 / casterSpeed;
+			if (!caster.blockNextAdvance) {
+				caster.nextActionValue = Math.max(
+					actionValue,
+					caster.nextActionValue - windAdvance,
+				);
+			}
+		}
+		if (isAllyTarget(caster.character.kind)) {
+			expirePhainonDomainSpeedBonus(states, actionValue);
+		}
+		if (hasSkillEffect(caster.character.name, "Q", "robinUltimate")) {
+			caster.currentSpeed = 90;
+			caster.nextActionValue = actionValue + 10000 / caster.currentSpeed;
+			caster.blockNextAdvance = true;
+			const allyOrder = states
+				.map((s, i) => ({ index: i, value: s.nextActionValue }))
+				.filter(
+					({ index }) =>
+						index !== casterIndex &&
+						isAllyTarget(states[index].character.kind),
+				)
+				.sort((a, b) => {
+					if (a.value !== b.value) return a.value - b.value;
+					return a.index - b.index;
+				});
+			for (let rank = 0; rank < allyOrder.length; rank++) {
+				states[allyOrder[rank].index].nextActionValue =
+					actionValue + rank * 0.0001;
+			}
+		}
+		if (
+			isCharacterTarget(caster.character) &&
+			hasSkillEffect(caster.character.name, "Q", "selfAdvance100")
+		) {
+			activateGodmode(
+				states as GodmodeState[],
+				casterIndex,
+			);
+			caster.nextActionValue = actionValue;
+		}
+		if (
+			shouldActivateCombustion(
+				caster.character,
+				true,
+				Boolean(caster.isInCompleteCombustion),
+			)
+		) {
+			activateCombustion(states, casterIndex, caster.character, actionValue);
+		}
+		handleAglaeaSkillEffects(states, casterIndex, "Q", actionValue);
+		if (hasSkillEffect(caster.character.name, "W", "counterW")) {
+			const domainRule = getCounterWDomainRule(caster.character.name);
+			const domainInterval = getPhainonDomainInterval(
+				caster.character,
+				casterSpeed,
+			);
+			const isEndlessDomain = hasActiveOdeEffect(
+				activeOdes,
+				caster.character.id,
+				"endlessCounterWDomain",
+			);
+			const maxDomainActionIndex = isEndlessDomain
+				? Math.max(0, Math.ceil((input.limit - actionValue) / domainInterval))
+				: Math.max(0, domainRule.extraActionCount - 1);
+			const domainEndIndex = getPhainonDomainEndIndex(
+				interruptKey,
+				input.domainEndOverrides,
+				maxDomainActionIndex,
+			);
+
+			if (domainEndIndex >= 0) {
+				caster.domainState = {
+					keyPrefix: interruptKey,
+					startAV: actionValue,
+					interval: domainInterval,
+					currentIndex: 0,
+					maxIndex: domainEndIndex,
+					rule: domainRule,
+				};
+				freezeAlliesForDomain(states, casterIndex, actionValue);
+				caster.nextActionValue = actionValue;
+			}
+		}
+		const intGodmodeExtra = input.godmodeExtraActions ?? {};
+		if (intGodmodeExtra[interruptKey]) {
+			const swIdx = states.findIndex(
+				(s) =>
+					hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
+			);
+			if (swIdx !== -1) {
+				const sw = states[swIdx];
+				actions.push({
+					key: `${interruptKey}-godmode-A`,
+					characterId: sw.character.id,
+					displayName: "银狼E2",
+					actionNo: 0,
+					actionValue,
+					skill: "A" as SkillCode,
+					speed: sw.currentSpeed,
+					lockedSkill: true,
+				});
+			}
+		}
+	}
+
+	const emitSparxieExtraAction = (
+		sourceKey: string,
+		actionValue: number,
+	) => {
+		const sparxieState = states.find(
+			(s) =>
+				isCharacterTarget(s.character) &&
+				hasPassive(s.character.name, "ahaExtraTurnAtE2") &&
+				s.character.eidolon >= 2,
+		);
+		if (!sparxieState) return;
+
+		const sparxieKey = `${sourceKey}-sparxie-extra`;
+		const sparxieInterrupts = input.ultInterrupts[sparxieKey] ?? [];
+		const rawSkill = (input.skillOverrides[sparxieKey] ?? "") as SkillCode;
+		const hasSelfQ = rawSkill.includes("Q") && rawSkill.length > 1;
+		const qIsFront = hasSelfQ && rawSkill.startsWith("Q");
+		const resolvedSkill = (
+			hasSelfQ ? rawSkill.replace(/Q/g, "") || "" : rawSkill
+		) as SkillCode;
+
+		for (let ai = 0; ai < sparxieInterrupts.length; ai++) {
+			const int = sparxieInterrupts[ai];
+			if (int.timing !== "before") continue;
+			emitSpecialInterruptAction(`${sparxieKey}-interrupt-${ai}`, int, actionValue);
+		}
+
+		if (hasSelfQ && qIsFront) {
+			actions.push({
+				key: `${sparxieKey}-q`,
+				characterId: sparxieState.character.id,
+				actionNo: 0,
+				actionValue,
+				skill: "Q" as SkillCode,
+				speed: sparxieState.currentSpeed,
+			});
+		}
+
+		actions.push({
+			key: sparxieKey,
+			characterId: sparxieState.character.id,
+			actionNo: 0,
+			actionValue,
+			skill: resolvedSkill,
+			speed: sparxieState.currentSpeed,
+			isSparxieExtraAction: true,
+			activeOdeLabels: getActiveOdeLabels(activeOdes, sparxieState.character.id),
+		});
+
+		if (hasSelfQ && !qIsFront) {
+			actions.push({
+				key: `${sparxieKey}-q`,
+				characterId: sparxieState.character.id,
+				actionNo: 0,
+				actionValue,
+				skill: "Q" as SkillCode,
+				speed: sparxieState.currentSpeed,
+			});
+		}
+
+		for (let ai = 0; ai < sparxieInterrupts.length; ai++) {
+			const int = sparxieInterrupts[ai];
+			if (int.timing !== "after") continue;
+			emitSpecialInterruptAction(`${sparxieKey}-interrupt-${ai}`, int, actionValue);
+		}
+
+		const sparkGodmodeExtra = input.godmodeExtraActions ?? {};
+		if (
+			sparkGodmodeExtra[sparxieKey] ||
+			sparkGodmodeExtra[`${sparxieKey}-q`]
+		) {
+			const swIndex = states.findIndex(
+				(s) =>
+					hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
+			);
+			if (swIndex !== -1) {
+				const sw = states[swIndex];
+				actions.push({
+					key: `${sparxieKey}-godmode-A`,
+					characterId: sw.character.id,
+					displayName: "银狼E2",
+					actionNo: 0,
+					actionValue,
+					skill: "A" as SkillCode,
+					speed: sw.currentSpeed,
+					lockedSkill: true,
+				});
+			}
+		}
+	};
 
 	while (states.length > 0 && guard < 2000) {
 		guard += 1;
@@ -402,6 +741,7 @@ export function simulateActions(
 					});
 				}
 			}
+			emitSparxieExtraAction(key, actionValue);
 			states[stateIndex].actionNo += 1;
 			states[stateIndex].nextActionValue = actionValue + 10000 / ahaSpeed;
 			continue;
@@ -741,7 +1081,7 @@ export function simulateActions(
 		let pendingAssistFollowUpAdvance = 0;
 
 		// 插队大招：在目标行动前/后插入多个施法者的大招行动
-		const emitInterrupt = (idx: number) => {
+			const emitInterrupt = (idx: number) => {
 			const int = interrupts[idx];
 			if (!int) return;
 			const casterIndex = states.findIndex(
@@ -787,6 +1127,9 @@ export function simulateActions(
 					activeOdes,
 					isInterrupt: true,
 				});
+			}
+			if (hasSkillEffect(caster.character.name, "Q", "extraAhaAfterUltimate")) {
+				emitExtraAhaAction(`${key}-interrupt-${idx}`, actionValue);
 			}
 			// 插队大招触发 24% 全队拉条（舞舞舞、忘归人 2魂等）。
 			const teamAdvance2 = getTeamAdvanceOnUltimate(caster.character);
@@ -1037,6 +1380,12 @@ export function simulateActions(
 				) {
 					activateGodmode(states, stateIndex);
 				}
+				if (
+					isCharacterTarget(character) &&
+					hasSkillEffect(character.name, "Q", "extraAhaAfterUltimate")
+				) {
+					emitExtraAhaAction(`${key}-q`, actionValue);
+				}
 			}
 		}
 
@@ -1138,6 +1487,12 @@ export function simulateActions(
 				skill: "Q" as SkillCode,
 				speed: actionSpeed,
 			});
+			if (
+				isCharacterTarget(character) &&
+				hasSkillEffect(character.name, "Q", "extraAhaAfterUltimate")
+			) {
+				emitExtraAhaAction(`${key}-q`, actionValue);
+			}
 		}
 
 		// ── 刻律军功目标切换：E 技能可更改军功目标 ──

@@ -542,6 +542,41 @@ describe("Silver Wolf E2 right-click menu", () => {
 		expect(screen.getByText("银狼 E2 额外行动：")).toBeInTheDocument();
 	});
 
+	it("火花额外回合的 Q 行点击银狼 E2 时，写入主额外回合 key", async () => {
+		const swQ: GeneratedAction = {
+			key: "sw-1-q", characterId: "sw", actionNo: 0, actionValue: 80, skill: "Q", speed: 200,
+		};
+		const sparxieExtraQ: GeneratedAction = {
+			key: "@aha-1-sparxie-extra-q",
+			characterId: "sparxie",
+			actionNo: 0,
+			actionValue: 89,
+			skill: "Q",
+			speed: 160,
+		};
+		const chars = [
+			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "200", baseSpeed: "200", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
+			{ id: "sparxie", name: "火花", kind: "角色" as const, speed: "160", baseSpeed: "160", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
+		];
+		const setGodmodeExtraActions = vi.fn();
+		renderWithContext(<ActionPanel />, {
+			characters: chars,
+			characterNames: { sw: "银狼LV.999", sparxie: "火花" },
+			characterKinds: { sw: "角色", sparxie: "角色" },
+			charactersById: Object.fromEntries(chars.map(c => [c.id, c])),
+			actions: [swQ, sparxieExtraQ],
+			actionMenuOpen: true,
+			actionMenuKey: "@aha-1-sparxie-extra-q",
+			selectedActionKeys: new Set(["@aha-1-sparxie-extra-q"]),
+			setGodmodeExtraActions,
+		});
+
+		await userEvent.click(screen.getByText("已关闭"));
+		expect(setGodmodeExtraActions).toHaveBeenCalledWith(expect.any(Function));
+		const updater = setGodmodeExtraActions.mock.calls[0]?.[0];
+		expect(updater({})).toEqual({ "@aha-1-sparxie-extra": true });
+	});
+
 	it("does NOT show E2 toggle on Aha when SW has no Q or lockedSkill", () => {
 		const swAction: GeneratedAction = {
 			key: "sw-1", characterId: "sw", actionNo: 1, actionValue: 100, skill: "A", speed: 100,
@@ -596,6 +631,58 @@ describe("Skill input Enter key", () => {
 			await userEvent.type(skillInput, "AQ{Enter}");
 			// Enter 键应触发 updateActionSkill
 			expect(updateActionSkill).toHaveBeenCalled();
+		}
+	});
+
+	it("Pollux skill input is editable and Enter commits E", async () => {
+		const action: GeneratedAction = {
+			key: "castorice-pollux-1",
+			characterId: "castorice-pollux",
+			displayName: "死龙",
+			targetKind: "忆灵",
+			actionNo: 1,
+			actionValue: 100,
+			skill: "",
+			speed: 165,
+			isPolluxAction: true,
+			isMemospriteAction: true,
+			memospriteOwnerId: "castorice",
+		};
+		const chars = [
+			{ id: "castorice", name: "遐蝶", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
+		];
+		const pollux = {
+			id: "castorice-pollux",
+			name: "死龙",
+			kind: "忆灵" as const,
+			speed: "165",
+			baseSpeed: "165",
+			hasVonwacq: false,
+			hasWindSet: false,
+			hasDance: false,
+			eidolon: 0,
+			superimpose: 1,
+			lc_id: 0,
+		};
+		const updateActionSkill = vi.fn();
+		renderWithContext(<ActionPanel />, {
+			characters: chars,
+			characterNames: { castorice: "遐蝶", "castorice-pollux": "死龙" },
+			characterKinds: { castorice: "角色", "castorice-pollux": "忆灵" },
+			charactersById: { castorice: chars[0], "castorice-pollux": pollux },
+			memospriteTargets: [pollux],
+			actions: [action],
+			updateActionSkill,
+		});
+
+		const inputs = screen.getAllByRole("textbox");
+		const skillInput = inputs.find((input) => input.getAttribute("maxlength") === "6");
+		expect(skillInput).toBeDefined();
+		expect(skillInput).not.toBeDisabled();
+		if (skillInput) {
+			await userEvent.clear(skillInput);
+			await userEvent.type(skillInput, "E{Enter}");
+			expect(updateActionSkill).toHaveBeenCalledWith(action, "E");
 		}
 	});
 });

@@ -1013,6 +1013,9 @@
         "火花",
         "Sparxie"
       ],
+      "passives": [
+        "ahaExtraTurnAtE2"
+      ],
       "path": "Elation"
     },
     {
@@ -1022,6 +1025,9 @@
         "Yao Guang",
         "Yaoguang"
       ],
+      "effects": {
+        "Q": "extraAhaAfterUltimate"
+      },
       "path": "Elation"
     },
     {
