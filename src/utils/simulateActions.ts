@@ -14,6 +14,7 @@ import {
 	handleAglaeaSkillEffects,
 	handleGarmentmakerAction,
 	isAglaeaCountdownAction,
+	summonGarmentmakerState,
 } from "./aglaeaGarmentmaker";
 import {
 	hasCastoriceSummon,
@@ -23,6 +24,7 @@ import {
 } from "./castoricePollux";
 import {
 	applyHyacineE2SpeedBuff,
+	createIcaAction,
 	handleHyacineQ,
 	hasHyacineIca,
 	killIca,
@@ -66,6 +68,7 @@ import {
 	hasActiveOdeEffect,
 	getTeamAdvanceOnUltimate,
 	isAllyTarget,
+	killMeme,
 	summonMemeState,
 	toNonNegativeNumber,
 	findCyreneState,
@@ -161,7 +164,23 @@ export function simulateActions(
 		states.push(ahaState);
 	}
 
-	// ── 遐蝶秘技：开场自动召唤死龙，并使死龙在 AV=0 立即行动（计入 3 次上限） ──
+	const refreshAhaSchedule = (currentActionValue: number) => {
+		if (!ahaState) return;
+		const oldSpeed = ahaState.currentSpeed;
+		const nextSpeed = calcAhaSpeed();
+		if (oldSpeed <= 0 || nextSpeed <= 0) return;
+		if (ahaState.nextActionValue > currentActionValue) {
+			const remaining = ahaState.nextActionValue - currentActionValue;
+			ahaState.nextActionValue =
+				currentActionValue + remaining * (oldSpeed / nextSpeed);
+		}
+		ahaState.currentSpeed = nextSpeed;
+		ahaState.baseSpeed = nextSpeed;
+		ahaState.character.speed = String(nextSpeed);
+		ahaState.character.baseSpeed = String(nextSpeed);
+	};
+
+	// ── 开场秘技召唤：遐蝶死龙/阿格莱雅衣匠都会在 AV=0 顶轴行动一次 ──
 	for (const state of [...states]) {
 		if (
 			isCharacterTarget(state.character) &&
@@ -170,6 +189,26 @@ export function simulateActions(
 			!state.polluxOnField
 		) {
 			summonPollux(states, state.character, 0);
+			if (state.character.eidolon >= 2) {
+				const castoriceIndex = states.findIndex(
+					(candidate) => candidate.character.id === state.character.id,
+				);
+				if (castoriceIndex >= 0) {
+					applyCastoriceE2Pull(states, castoriceIndex, 0);
+				}
+			}
+		}
+		if (
+			isCharacterTarget(state.character) &&
+			hasSkillEffect(state.character.name, "E", "summonGarmentmaker") &&
+			state.character.hasAglaeaTechnique &&
+			!states.some(
+				(candidate) =>
+					candidate.isGarmentmakerState &&
+					candidate.garmentmakerOwnerId === state.character.id,
+			)
+		) {
+			summonGarmentmakerState(states, state.character, 0);
 		}
 	}
 
@@ -216,6 +255,7 @@ export function simulateActions(
 			}
 		}
 	}
+	refreshAhaSchedule(0);
 
 	// ── 刻律 军功：刻律和军功目标加速 20% ──
 	if (input.meritTarget) {
@@ -239,6 +279,7 @@ export function simulateActions(
 			}
 		}
 	}
+	refreshAhaSchedule(0);
 
 	// ── 大丽花 共舞者：若目标为特定角色则加速 30% ──
 	if (input.dancePartner) {
@@ -268,11 +309,13 @@ export function simulateActions(
 			}
 		}
 	}
+	refreshAhaSchedule(0);
 
 	// ── 风堇 E2：全队速度 +30%（不可叠加） ──
 	if (input.hyacineE2Active) {
 		applyHyacineE2SpeedBuff(states);
 	}
+	refreshAhaSchedule(0);
 
 	// 军功目标追踪（模拟中途可被 E 切换）
 	let currentMeritTarget: string | null = input.meritTarget ?? null;
@@ -281,6 +324,31 @@ export function simulateActions(
 	);
 
 	let guard = 0;
+
+	const emitGodmodeExtraAction = (
+		sourceKey: string,
+		actionValue: number,
+	) => {
+		const godmodeExtraActions = input.godmodeExtraActions ?? {};
+		if (!godmodeExtraActions[sourceKey]) return;
+		const swIndex = states.findIndex(
+			(s) => hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
+		);
+		if (swIndex === -1) return;
+		const sw = states[swIndex];
+		const extraKey = `${sourceKey}-godmode-A`;
+		actions.push({
+			key: extraKey,
+			characterId: sw.character.id,
+			displayName: "银狼E2",
+			actionNo: 0,
+			actionValue,
+			skill: "A" as SkillCode,
+			speed: sw.currentSpeed,
+			lockedSkill: true,
+		});
+		emitGodmodeExtraAction(extraKey, actionValue);
+	};
 
 	const emitExtraAhaAction = (
 		sourceKey: string,
@@ -314,26 +382,7 @@ export function simulateActions(
 			emitSpecialInterruptAction(`${extraAhaKey}-interrupt-${ai}`, int, actionValue);
 		}
 
-		const ahaGodmodeExtra = input.godmodeExtraActions ?? {};
-		if (ahaGodmodeExtra[extraAhaKey]) {
-			const swIndex = states.findIndex(
-				(s) =>
-					hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
-			);
-			if (swIndex !== -1) {
-				const sw = states[swIndex];
-				actions.push({
-					key: `${extraAhaKey}-godmode-A`,
-					characterId: sw.character.id,
-					displayName: "银狼E2",
-					actionNo: 0,
-					actionValue,
-					skill: "A" as SkillCode,
-					speed: sw.currentSpeed,
-					lockedSkill: true,
-				});
-			}
-		}
+		emitGodmodeExtraAction(extraAhaKey, actionValue);
 
 		emitMemeAdvanceAction({
 			input,
@@ -496,26 +545,21 @@ export function simulateActions(
 				caster.nextActionValue = actionValue;
 			}
 		}
-		const intGodmodeExtra = input.godmodeExtraActions ?? {};
-		if (intGodmodeExtra[interruptKey]) {
-			const swIdx = states.findIndex(
-				(s) =>
-					hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
-			);
-			if (swIdx !== -1) {
-				const sw = states[swIdx];
-				actions.push({
-					key: `${interruptKey}-godmode-A`,
-					characterId: sw.character.id,
-					displayName: "银狼E2",
-					actionNo: 0,
-					actionValue,
-					skill: "A" as SkillCode,
-					speed: sw.currentSpeed,
-					lockedSkill: true,
-				});
+		if (isCharacterTarget(caster.character) && hasHyacineIca(caster.character.name)) {
+			handleHyacineQ(states, caster.character.id);
+			actions.push(createIcaAction(caster.character.id, interruptKey, actionValue));
+		}
+		if (
+			isCharacterTarget(caster.character) &&
+			hasCastoriceSummon(caster.character.name) &&
+			!caster.polluxOnField
+		) {
+			summonPollux(states, caster.character, actionValue);
+			if (caster.character.eidolon >= 2) {
+				applyCastoriceE2Pull(states, casterIndex, actionValue);
 			}
 		}
+		emitGodmodeExtraAction(interruptKey, actionValue);
 	}
 
 	const emitSparxieExtraAction = (
@@ -533,16 +577,59 @@ export function simulateActions(
 		const sparxieKey = `${sourceKey}-sparxie-extra`;
 		const sparxieInterrupts = input.ultInterrupts[sparxieKey] ?? [];
 		const rawSkill = (input.skillOverrides[sparxieKey] ?? "") as SkillCode;
+		const himekoNovaAssist =
+			rawSkill.includes("F") &&
+			!hasSkillEffect(sparxieState.character.name, "F", "himekoNovaAssist")
+				? findHimekoNovaAssistState(states, sparxieState.character.id)
+				: undefined;
+		const assistUseCount = rawSkill.match(/F/g)?.length ?? 0;
+		const himekoNovaLowEidolon =
+			himekoNovaAssist !== undefined &&
+			himekoNovaAssist.character.eidolon < 2;
+		const novaFFCidWhitelist = new Set([
+			"1002", "1414", "1001", "1224", "1413", "1004",
+			"8002", "8004", "8006", "8008", "8010", "1313", "1003",
+		]);
+		const sparxieCid = getCharacterCid(sparxieState.character.name);
+		const isNovaFFWhitelisted =
+			sparxieCid !== undefined && novaFFCidWhitelist.has(sparxieCid);
+		const skipAssistFollowUp =
+			himekoNovaAssist !== undefined &&
+			(assistUseCount >= 2 ||
+				(himekoNovaLowEidolon && !isNovaFFWhitelisted));
 		const hasSelfQ = rawSkill.includes("Q") && rawSkill.length > 1;
 		const qIsFront = hasSelfQ && rawSkill.startsWith("Q");
 		const resolvedSkill = (
 			hasSelfQ ? rawSkill.replace(/Q/g, "") || "" : rawSkill
 		) as SkillCode;
+		const strippedSkill = resolvedSkill.replace(/F/g, "") as SkillCode;
 
 		for (let ai = 0; ai < sparxieInterrupts.length; ai++) {
 			const int = sparxieInterrupts[ai];
 			if (int.timing !== "before") continue;
 			emitSpecialInterruptAction(`${sparxieKey}-interrupt-${ai}`, int, actionValue);
+		}
+
+		if (himekoNovaAssist) {
+			for (let ai = 1; ai <= Math.min(assistUseCount, 2); ai++) {
+				const assistKey =
+					ai === 1 ? `${sparxieKey}-assist-F` : `${sparxieKey}-assist-F-${ai}`;
+				actions.push({
+					key: assistKey,
+					characterId: himekoNovaAssist.character.id,
+					actionNo: 0,
+					actionValue,
+					skill: "F" as SkillCode,
+					speed: himekoNovaAssist.currentSpeed,
+					isAssistAction: true,
+					assistSourceKey: sparxieKey,
+					assistIndex: ai,
+					activeOdeLabels: getActiveOdeLabels(
+						activeOdes,
+						himekoNovaAssist.character.id,
+					),
+				});
+			}
 		}
 
 		if (hasSelfQ && qIsFront) {
@@ -556,16 +643,19 @@ export function simulateActions(
 			});
 		}
 
-		actions.push({
-			key: sparxieKey,
-			characterId: sparxieState.character.id,
-			actionNo: 0,
-			actionValue,
-			skill: resolvedSkill,
-			speed: sparxieState.currentSpeed,
-			isSparxieExtraAction: true,
-			activeOdeLabels: getActiveOdeLabels(activeOdes, sparxieState.character.id),
-		});
+		if (!skipAssistFollowUp) {
+			actions.push({
+				key: sparxieKey,
+				characterId: sparxieState.character.id,
+				actionNo: 0,
+				actionValue,
+				skill: strippedSkill,
+				speed: sparxieState.currentSpeed,
+				isSparxieExtraAction: true,
+				isAssistFollowUp: himekoNovaAssist !== undefined,
+				activeOdeLabels: getActiveOdeLabels(activeOdes, sparxieState.character.id),
+			});
+		}
 
 		if (hasSelfQ && !qIsFront) {
 			actions.push({
@@ -584,14 +674,12 @@ export function simulateActions(
 			emitSpecialInterruptAction(`${sparxieKey}-interrupt-${ai}`, int, actionValue);
 		}
 
-		const sparkGodmodeExtra = input.godmodeExtraActions ?? {};
 		if (
-			sparkGodmodeExtra[sparxieKey] ||
-			sparkGodmodeExtra[`${sparxieKey}-q`]
+			(input.godmodeExtraActions ?? {})[`${sparxieKey}-q`] &&
+			!(input.godmodeExtraActions ?? {})[sparxieKey]
 		) {
 			const swIndex = states.findIndex(
-				(s) =>
-					hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
+				(s) => hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
 			);
 			if (swIndex !== -1) {
 				const sw = states[swIndex];
@@ -606,6 +694,8 @@ export function simulateActions(
 					lockedSkill: true,
 				});
 			}
+		} else {
+			emitGodmodeExtraAction(sparxieKey, actionValue);
 		}
 	};
 
@@ -663,8 +753,22 @@ export function simulateActions(
 			killIca(states, actionValue);
 		}
 
+		if (
+			input.memeKillToggles?.[key] &&
+			character.id !== "@av0" &&
+			!states[stateIndex].isMemeState
+		) {
+			killMeme(states, actionValue);
+		}
+
 		// ── 0 行动值：仅在 AV=0 行动一次后移除 ──
 		if (character.id === "@av0") {
+			const av0Interrupts = input.ultInterrupts[key] ?? [];
+			for (let ai = 0; ai < av0Interrupts.length; ai++) {
+				const int = av0Interrupts[ai];
+				if (int.timing !== "before") continue;
+				emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, actionValue);
+			}
 			actions.push({
 				key,
 				characterId: character.id,
@@ -674,6 +778,11 @@ export function simulateActions(
 				skill: "" as SkillCode,
 				speed: 1,
 			});
+			for (let ai = 0; ai < av0Interrupts.length; ai++) {
+				const int = av0Interrupts[ai];
+				if (int.timing !== "after") continue;
+				emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, actionValue);
+			}
 			states.splice(stateIndex, 1);
 			continue;
 		}
@@ -721,26 +830,7 @@ export function simulateActions(
 				});
 			}
 			// 银狼 E2：无敌玩家状态下，阿哈行动后可插入额外 A
-			const ahaGodmodeExtra = input.godmodeExtraActions ?? {};
-			if (ahaGodmodeExtra[key]) {
-				const swIndex = states.findIndex(
-					(s) =>
-						hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
-				);
-				if (swIndex !== -1) {
-					const sw = states[swIndex];
-					actions.push({
-						key: `${key}-godmode-A`,
-						characterId: sw.character.id,
-						displayName: "银狼E2",
-						actionNo: 0,
-						actionValue,
-						skill: "A" as SkillCode,
-						speed: sw.currentSpeed,
-						lockedSkill: true,
-					});
-				}
-			}
+			emitGodmodeExtraAction(key, actionValue);
 			emitSparxieExtraAction(key, actionValue);
 			states[stateIndex].actionNo += 1;
 			states[stateIndex].nextActionValue = actionValue + 10000 / ahaSpeed;
@@ -777,6 +867,12 @@ export function simulateActions(
 
 		// ── 死龙行动 ──
 		if (states[stateIndex].isPolluxAction) {
+			const polluxInterrupts = input.ultInterrupts[key] ?? [];
+			for (let ai = 0; ai < polluxInterrupts.length; ai++) {
+				const int = polluxInterrupts[ai];
+				if (int.timing !== "before") continue;
+				emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, actionValue);
+			}
 			const polluxOverride = input.skillOverrides[key];
 			const resolvedOverridePollux = (
 				polluxOverride !== undefined ? polluxOverride : ""
@@ -800,6 +896,11 @@ export function simulateActions(
 				actionValue,
 				activeOdes,
 			});
+			for (let ai = 0; ai < polluxInterrupts.length; ai++) {
+				const int = polluxInterrupts[ai];
+				if (int.timing !== "after") continue;
+				emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, actionValue);
+			}
 			continue;
 		}
 
@@ -1221,6 +1322,22 @@ export function simulateActions(
 			}
 			// 插队大招触发阿格莱雅至高之姿，并使自身立即行动。
 			handleAglaeaSkillEffects(states, casterIndex, "Q", actionValue);
+			// 风堇插队 Q：召唤/刷新小伊卡并生成小伊卡回合
+			if (isCharacterTarget(caster.character) && hasHyacineIca(caster.character.name)) {
+				handleHyacineQ(states, caster.character.id);
+				actions.push(createIcaAction(caster.character.id, `${key}-interrupt-${idx}`, actionValue));
+			}
+			// 遐蝶插队 Q：召唤死龙并在 E2 时自拉条
+			if (
+				isCharacterTarget(caster.character) &&
+				hasCastoriceSummon(caster.character.name) &&
+				!caster.polluxOnField
+			) {
+				summonPollux(states, caster.character, actionValue);
+				if (caster.character.eidolon >= 2) {
+					applyCastoriceE2Pull(states, casterIndex, actionValue);
+				}
+			}
 			// 插队大招触发白厄境界（改为逐动生成）
 			if (hasSkillEffect(caster.character.name, "W", "counterW")) {
 				const domainRule = getCounterWDomainRule(caster.character.name);
@@ -1261,26 +1378,7 @@ export function simulateActions(
 			}
 			// 银狼 E2：插队 Q 后也可插入额外 A
 			const interruptKey = `${key}-interrupt-${idx}`;
-			const intGodmodeExtra = input.godmodeExtraActions ?? {};
-			if (intGodmodeExtra[interruptKey]) {
-				const swIdx = states.findIndex(
-					(s) =>
-						hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
-				);
-				if (swIdx !== -1) {
-					const sw = states[swIdx];
-					actions.push({
-						key: `${interruptKey}-godmode-A`,
-						characterId: sw.character.id,
-						displayName: "银狼E2",
-						actionNo: 0,
-						actionValue,
-						skill: "A" as SkillCode,
-						speed: sw.currentSpeed,
-						lockedSkill: true,
-					});
-				}
-			}
+			emitGodmodeExtraAction(interruptKey, actionValue);
 		};
 
 		// 按 timing 分组处理
@@ -1547,11 +1645,18 @@ export function simulateActions(
 		}
 
 		// Apply speed adjustment
+		const oldActionSpeed = states[stateIndex].currentSpeed;
 		states[stateIndex].currentSpeed = getNextSpeed(
 			states[stateIndex].currentSpeed,
 			states[stateIndex].baseSpeed,
 			input.speedAdjustments[key],
 		);
+		if (
+			oldActionSpeed !== states[stateIndex].currentSpeed &&
+			getCharacterPath(character.name) === "Elation"
+		) {
+			refreshAhaSchedule(actionValue);
+		}
 		if (isAllyTarget(character.kind)) {
 			expirePhainonDomainSpeedBonus(states, actionValue);
 		}
@@ -1705,7 +1810,9 @@ export function simulateActions(
 									entity.character.id !== targetId &&
 									((entity.isGarmentmakerState &&
 										entity.garmentmakerOwnerId === targetId) ||
-										(entity.isMemeState && entity.memeOwnerId === targetId));
+										(entity.isMemeState && entity.memeOwnerId === targetId) ||
+										(entity.isPolluxAction &&
+											entity.character.id === `${targetId}-pollux`));
 								if (isOwnedSummon && !entity.blockNextAdvance) {
 									entity.nextActionValue = actionValue;
 								}
@@ -1758,7 +1865,20 @@ export function simulateActions(
 				// 风堇 Q: summon Ica (if not on field) + afterRain = 3
 				const hyIcaCheck = isCharacterTarget(character) && hasHyacineIca(character.name) && usesUltimate;
 				if (hyIcaCheck) {
-					handleHyacineQ(states, actions, character.id, key, actionValue);
+					handleHyacineQ(states, character.id);
+					const icaQKey = `${key}-q-ica`;
+					const configured = input.ultInterrupts[icaQKey] ?? [];
+					for (let ai = 0; ai < configured.length; ai++) {
+						const int = configured[ai];
+						if (int.timing !== "before") continue;
+						emitSpecialInterruptAction(`${icaQKey}-interrupt-${ai}`, int, actionValue);
+					}
+					actions.push(createIcaAction(character.id, `${key}-q`, actionValue));
+					for (let ai = 0; ai < configured.length; ai++) {
+						const int = configured[ai];
+						if (int.timing !== "after") continue;
+						emitSpecialInterruptAction(`${icaQKey}-interrupt-${ai}`, int, actionValue);
+					}
 				}
 
 				// 风堇 E: summon Ica (first E or first E after death)
@@ -1778,13 +1898,23 @@ export function simulateActions(
 					(resolvedSkill === "" || resolvedSkill === "A" || resolvedSkill.includes("E")) &&
 					(!usesUltimate || qIsFront)
 				) {
-					triggerIcaExtraTurn(
-						states,
-						actions,
-						character.id,
-						key,
-						actionValue,
-					);
+					const beforeRain = states[stateIndex].afterRain ?? 0;
+					triggerIcaExtraTurn(states, character.id);
+					if ((states[stateIndex].afterRain ?? 0) < beforeRain) {
+						const icaKey = `${key}-ica`;
+						const configured = input.ultInterrupts[icaKey] ?? [];
+						for (let ai = 0; ai < configured.length; ai++) {
+							const int = configured[ai];
+							if (int.timing !== "before") continue;
+							emitSpecialInterruptAction(`${icaKey}-interrupt-${ai}`, int, actionValue);
+						}
+						actions.push(createIcaAction(character.id, key, actionValue));
+						for (let ai = 0; ai < configured.length; ai++) {
+							const int = configured[ai];
+							if (int.timing !== "after") continue;
+							emitSpecialInterruptAction(`${icaKey}-interrupt-${ai}`, int, actionValue);
+						}
+					}
 				}
 
 				// 遐蝶 Q: summon Pollux（死龙）
@@ -1936,25 +2066,7 @@ export function simulateActions(
 			!skipAssistFollowUp &&
 			(isAllyTarget(character.kind) || character.id === "@aha")
 		) {
-			const godmodeExtraActions = input.godmodeExtraActions ?? {};
-			if (godmodeExtraActions[key]) {
-				const swIndex = states.findIndex(
-					(s) => hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
-				);
-				if (swIndex !== -1) {
-					const sw = states[swIndex];
-					actions.push({
-						key: `${key}-godmode-A`,
-						characterId: sw.character.id,
-						displayName: "银狼E2",
-						actionNo: 0,
-						actionValue,
-						skill: "A" as SkillCode,
-						speed: sw.currentSpeed,
-						lockedSkill: true,
-					});
-				}
-			}
+			emitGodmodeExtraAction(key, actionValue);
 		}
 
 		emitMemeAdvanceAction({

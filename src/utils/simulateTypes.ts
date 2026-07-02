@@ -29,6 +29,7 @@ export type SimulateActionsInput = {
 	killToggles?: Record<string, boolean>;
 	castoriceKillToggles?: Record<string, boolean>;
 	icaKillToggles?: Record<string, boolean>;
+	memeKillToggles?: Record<string, boolean>;
 	hyacineE2Active?: boolean;
 	meritTarget?: string;
 	dancePartner?: string;

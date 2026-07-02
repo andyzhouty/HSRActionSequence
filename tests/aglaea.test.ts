@@ -202,6 +202,51 @@ describe("Aglaea Supreme Stance activation", () => {
 			"aglaea-1",
 		]);
 	});
+
+	it("阿格莱雅插队 Q 后，立即行动归属阿格莱雅而非衣匠", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("ally", "行动角色", 100),
+					character("aglaea", "阿格莱雅", 100),
+				],
+				ultInterrupts: {
+					"ally-1": [{ casterId: "aglaea", timing: "before" }],
+				},
+				limit: 160,
+			}),
+		);
+
+		const aglaeaImmediate = actions.find((action) => action.key === "aglaea-1");
+		const garmentmakerFirst = actions.find(
+			(action) => action.isAglaeaGarmentmakerAction,
+		);
+		expect(aglaeaImmediate?.actionValue).toBe(100);
+		expect(garmentmakerFirst?.actionValue).toBe(100);
+		expect(actions.indexOf(aglaeaImmediate!)).toBeLessThan(
+			actions.indexOf(garmentmakerFirst!),
+		);
+	});
+
+	it("阿格莱雅秘技开启时开场自动召唤衣匠，并让衣匠顶轴行动一次", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("aglaea", "阿格莱雅", 100, {
+						hasAglaeaTechnique: true,
+					}),
+				],
+				limit: 120,
+			}),
+		);
+
+		const garmentmakerFirst = actions.find(
+			(action) => action.isAglaeaGarmentmakerAction,
+		);
+		const aglaeaFirst = actions.find((action) => action.key === "aglaea-1");
+		expect(garmentmakerFirst?.actionValue).toBe(0);
+		expect(aglaeaFirst?.actionValue).toBe(100);
+	});
 });
 
 // ───── Aglaea Countdown Manual Advance ─────

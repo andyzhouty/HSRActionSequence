@@ -486,6 +486,9 @@ function MenuContent() {
 
 			{/* Ica kill section */}
 			<IcaKillSection />
+
+			{/* Meme kill section */}
+			<MemeKillSection />
 		</>
 	);
 }
@@ -973,7 +976,7 @@ function GodmodeExtraSection() {
 	const firstKey = selectedKeys[0];
 	const firstAction = ctx.actions.find((a) => a.key === firstKey);
 	if (!firstAction) return null;
-	if (firstAction.isDomainAction || firstAction.key.includes("-godmode-A")) return null;
+	if (firstAction.isDomainAction) return null;
 	const toggleKey = firstAction.key.endsWith("-sparxie-extra-q")
 		? firstAction.key.slice(0, -2)
 		: firstKey;
@@ -1117,6 +1120,62 @@ function IcaKillSection() {
 			{isOn && (
 				<span className="text-xs text-gray-400">
 					此行动后 Ica 死亡，风堇 30% 自拉条
+				</span>
+			)}
+		</div>
+	);
+}
+
+function MemeKillSection() {
+	const ctx = useActionSequence();
+	const selectedKeys = [...ctx.selectedActionKeys];
+	if (selectedKeys.length === 0) return null;
+	const firstKey = selectedKeys[0];
+	const firstAction = ctx.actions.find((a) => a.key === firstKey);
+	if (!firstAction) return null;
+
+	const memeOwner = ctx.characters.find((character) =>
+		hasSkillEffect(character.name, "E", "summonMeme"),
+	);
+	if (!memeOwner) return null;
+
+	if (firstAction.isMemeAction) return null;
+	const charKind = ctx.characterKinds[firstAction.characterId];
+	if (charKind === "倒计时" || charKind === "敌人") return null;
+
+	const isOn = ctx.memeKillToggles[firstKey] === true;
+	return (
+		<div className="flex flex-wrap items-center gap-3 border-t border-gray-700 pt-3">
+			<span className="whitespace-nowrap text-sm text-gray-300">
+				迷迷死亡：
+			</span>
+			<button
+				type="button"
+				onClick={() => {
+					if (isOn) {
+						ctx.setMemeKillToggles((prev) => {
+							const next = { ...prev };
+							delete next[firstKey];
+							return next;
+						});
+					} else {
+						ctx.setMemeKillToggles((prev) => ({
+							...prev,
+							[firstKey]: true,
+						}));
+					}
+				}}
+				className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+					isOn
+						? "border-red-500/70 bg-red-500/20 text-red-200 hover:bg-red-500/30"
+						: "border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+				}`}
+			>
+				{isOn ? "已标记" : "未标记"}
+			</button>
+			{isOn && (
+				<span className="text-xs text-gray-400">
+					此行动后迷迷死亡，记忆主 25% 自拉条
 				</span>
 			)}
 		</div>

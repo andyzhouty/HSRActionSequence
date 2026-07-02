@@ -33,6 +33,7 @@ export type ActionSequenceContextType = {
 	godmodeExtraActions: Record<string, boolean>;
 	castoriceKillToggles: Record<string, boolean>;
 	icaKillToggles: Record<string, boolean>;
+	memeKillToggles: Record<string, boolean>;
 	hyacineE2Active: boolean;
 	meritTarget?: string;
 	dancePartner?: string;
@@ -108,6 +109,9 @@ export type ActionSequenceContextType = {
 		React.SetStateAction<Record<string, boolean>>
 	>;
 	setIcaKillToggles: React.Dispatch<
+		React.SetStateAction<Record<string, boolean>>
+	>;
+	setMemeKillToggles: React.Dispatch<
 		React.SetStateAction<Record<string, boolean>>
 	>;
 	setHyacineE2Active: React.Dispatch<React.SetStateAction<boolean>>;

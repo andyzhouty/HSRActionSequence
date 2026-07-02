@@ -345,6 +345,19 @@ function CharacterCard({
 								}
 							/>
 						)}
+						{hasSkillEffect(character.name, "E", "summonGarmentmaker") && (
+							<Toggle
+								className="flex-1"
+								label="阿格莱雅秘技"
+								checked={character.hasAglaeaTechnique ?? false}
+								onChange={() =>
+									ctx.updateCharacter(character.id, (prev) => ({
+										...prev,
+										hasAglaeaTechnique: !(prev.hasAglaeaTechnique ?? false),
+									}))
+								}
+							/>
+						)}
 					</div>
 					<div className="flex gap-2">
 						<SelectInput

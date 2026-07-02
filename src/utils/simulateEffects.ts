@@ -361,6 +361,20 @@ export function summonMemeState(
 	});
 }
 
+export function killMeme(states: ActionState[], actionValue: number) {
+	const memeIndex = states.findIndex((state) => state.isMemeState);
+	if (memeIndex === -1) return;
+
+	const ownerId = states[memeIndex].memeOwnerId;
+	states.splice(memeIndex, 1);
+	if (!ownerId) return;
+
+	const owner = states.find((state) => state.character.id === ownerId);
+	if (!owner || owner.blockNextAdvance) return;
+	const advance = 2500 / owner.currentSpeed;
+	owner.nextActionValue = Math.max(actionValue, owner.nextActionValue - advance);
+}
+
 // --- Internal state ---
 
 export function getActiveOdeLabels(

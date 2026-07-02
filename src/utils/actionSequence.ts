@@ -40,6 +40,7 @@ export type CharacterConfig = {
 	hasWindSet: boolean;
 	hasDance: boolean;
 	hasCastoriceTechnique?: boolean;
+	hasAglaeaTechnique?: boolean;
 	eidolon: number;
 	superimpose: number;
 	lc_id: number;
@@ -412,6 +413,8 @@ export type SavedData = {
 	fireflyBreakCounters?: Record<string, boolean>;
 	godmodeExtraActions?: Record<string, boolean>;
 	castoriceKillToggles?: Record<string, boolean>;
+	icaKillToggles?: Record<string, boolean>;
+	memeKillToggles?: Record<string, boolean>;
 	meritTarget?: string;
 	dancePartner?: string;
 };
@@ -494,6 +497,7 @@ export function createTarget(
 		hasWindSet: false,
 		hasDance: false,
 		hasCastoriceTechnique: false,
+		hasAglaeaTechnique: false,
 		eidolon: 0,
 		superimpose: 1,
 		lc_id: 0,
@@ -511,6 +515,7 @@ export function withoutCharacterOnlyEffects(
 		hasWindSet: false,
 		hasDance: false,
 		hasCastoriceTechnique: false,
+		hasAglaeaTechnique: false,
 		eidolon: 0,
 		superimpose: 1,
 		lc_id: 0,

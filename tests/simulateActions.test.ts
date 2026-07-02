@@ -551,6 +551,32 @@ describe("meme advance", () => {
 		// 迷迷拉条后希儿应接近记忆主 E 的 AV
 		expect(seeleAction?.actionValue).toBeCloseTo(rmc1?.actionValue, 1);
 	});
+
+	it("迷迷死亡只能通过右键标记触发，并使记忆主 25% 自拉条", () => {
+		const baseInput = input({
+			characters: [
+				character("rmc", "开拓者·记忆", 100),
+				character("ally", "行动角色", 90),
+			],
+			skillOverrides: skills({ "rmc-1": "E" }),
+			limit: 220,
+		});
+		const baseline = simulateActions(baseInput);
+		const actions = simulateActions(
+			input({
+				...baseInput,
+				memeKillToggles: { "ally-1": true },
+			}),
+		);
+
+		const allyFirst = actions.find((a) => a.key === "ally-1");
+		const baselineRmcSecond = baseline.find((a) => a.key === "rmc-2");
+		const rmcSecond = actions.find((a) => a.key === "rmc-2");
+		expect(allyFirst).toBeDefined();
+		expect(baselineRmcSecond).toBeDefined();
+		expect(rmcSecond).toBeDefined();
+		expect((baselineRmcSecond?.actionValue ?? 0) - (rmcSecond?.actionValue ?? 0)).toBeCloseTo(25, 3);
+	});
 });
 
 // ───── F 协战 ─────

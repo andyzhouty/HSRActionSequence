@@ -121,10 +121,10 @@ describe("Aha Instant (阿哈时刻)", () => {
 			}),
 		);
 
-		// 第一动前：160*0.2 + 120*0.1 + 80 = 32 + 12 + 80 = 124 → 第一动 AV ≈ 80.65
+		// 火花先行动并在自身回合后减速，阿哈第一动也会同步重新计算
 		const firstAha = actions.find((a) => a.isAhaInstant && a.actionNo === 1);
 		expect(firstAha).toBeDefined();
-		expect(firstAha!.actionValue).toBeCloseTo(80.65, 1);
+		expect(firstAha!.actionValue).toBeCloseTo(81.9, 1);
 
 		// 火花减速后（160→120）：120*0.2 + 120*0.1 + 80 = 24 + 12 + 80 = 116 → 后续间隔 ≈ 86.21
 		if (actions.length >= 2) {
@@ -263,6 +263,37 @@ describe("Aha Instant (阿哈时刻)", () => {
 		expect(extraAha).toBeDefined();
 		expect(sparxieExtra).toBeDefined();
 		expect(actions.indexOf(extraAha!)).toBeLessThan(actions.indexOf(sparxieExtra!));
+	});
+
+	it("欢愉角色加速后，尚未行动的阿哈行动值会同步提前", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("sparxie", "火花", 160)],
+				speedAdjustments: {
+					"sparxie-1": { value: "40", mode: "absolute" },
+				},
+				limit: 200,
+			}),
+		);
+
+		const firstAha = actions.find((a) => a.key === "@aha-1");
+		expect(firstAha).toBeDefined();
+		expect(firstAha?.actionValue).toBeCloseTo(87.5, 1);
+	});
+
+	it("0行动值支持插入大招", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("sw", "银狼LV.999", 100)],
+				ultInterrupts: interrupts({
+					"@av0-1": [{ casterId: "sw", timing: "before" }],
+				}),
+				limit: 120,
+			}),
+		);
+
+		expect(actions.find((a) => a.key === "@av0-1-interrupt-0")?.skill).toBe("Q");
+		expect(actions.find((a) => a.key === "@av0-1")).toBeDefined();
 	});
 });
 
@@ -533,6 +564,46 @@ describe("Silver Wolf LV.999", () => {
 		);
 		expect(extraA).toBeDefined();
 		expect(extraA?.characterId).toBe("sw");
+	});
+
+	it("E2：可以连续插入两个 2 魂额外回合", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("sw", "银狼LV.999", 200),
+					character("sparxie", "火花", 160, { eidolon: 2 }),
+				],
+				skillOverrides: skills({
+					"sw-1": "AQ",
+				}),
+				godmodeExtraActions: {
+					"@aha-1": true,
+					"@aha-1-godmode-A": true,
+				},
+				limit: 200,
+			}),
+		);
+
+		expect(actions.find((a) => a.key === "@aha-1-godmode-A")).toBeDefined();
+		expect(actions.find((a) => a.key === "@aha-1-godmode-A-godmode-A")).toBeDefined();
+	});
+
+	it("火花额外回合输入 F 时会触发姬子·启行助战，且 2 魂单 F 保留额外回合", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("sparxie", "火花", 160, { eidolon: 2 }),
+					character("himeko", "姬子·启行", 100, { eidolon: 2 }),
+				],
+				skillOverrides: skills({
+					"@aha-1-sparxie-extra": "F",
+				}),
+				limit: 200,
+			}),
+		);
+
+		expect(actions.find((a) => a.key === "@aha-1-sparxie-extra-assist-F")).toBeDefined();
+		expect(actions.find((a) => a.key === "@aha-1-sparxie-extra")).toBeDefined();
 	});
 
 	it("imported action-sequence-test.json: Silver Wolf Q before Sparxie extra self-pulls to same AV", () => {

@@ -158,6 +158,9 @@ export default function ActionSequence() {
 	const [icaKillToggles, setIcaKillToggles] = useState<
 		Record<string, boolean>
 	>({});
+	const [memeKillToggles, setMemeKillToggles] = useState<
+		Record<string, boolean>
+	>({});
 	const [hyacineE2Active, setHyacineE2Active] = useState(true);
 	const [meritTarget, setMeritTarget] = useState<string | undefined>();
 	const [dancePartner, setDancePartner] = useState<string | undefined>();
@@ -357,6 +360,8 @@ export default function ActionSequence() {
 				setFireflyBreakCounters(parsed.fireflyBreakCounters ?? {});
 				setGodmodeExtraActions(parsed.godmodeExtraActions ?? {});
 				setCastoriceKillToggles(parsed.castoriceKillToggles ?? {});
+				setIcaKillToggles(parsed.icaKillToggles ?? {});
+				setMemeKillToggles(parsed.memeKillToggles ?? {});
 				setMeritTarget(parsed.meritTarget || undefined);
 				setDancePartner(parsed.dancePartner || undefined);
 				setMessage("已自动恢复上次的排轴数据");
@@ -389,6 +394,7 @@ export default function ActionSequence() {
 				godmodeExtraActions,
 				castoriceKillToggles,
 				icaKillToggles,
+				memeKillToggles,
 				hyacineE2Active,
 				meritTarget,
 				dancePartner,
@@ -415,6 +421,7 @@ export default function ActionSequence() {
 		godmodeExtraActions,
 		castoriceKillToggles,
 		icaKillToggles,
+		memeKillToggles,
 		hyacineE2Active,
 		meritTarget,
 		dancePartner,
@@ -489,6 +496,28 @@ export default function ActionSequence() {
 			}
 			return changed ? next : prev;
 		});
+		setIcaKillToggles((prev) => {
+			let changed = false;
+			const next = { ...prev };
+			for (const key of Object.keys(next)) {
+				if (!actionKeys.has(key)) {
+					delete next[key];
+					changed = true;
+				}
+			}
+			return changed ? next : prev;
+		});
+		setMemeKillToggles((prev) => {
+			let changed = false;
+			const next = { ...prev };
+			for (const key of Object.keys(next)) {
+				if (!actionKeys.has(key)) {
+					delete next[key];
+					changed = true;
+				}
+			}
+			return changed ? next : prev;
+		});
 	}, [actions]);
 
 	// 状态变化时自动保存（防抖 800ms）
@@ -521,6 +550,8 @@ export default function ActionSequence() {
 				fireflyBreakCounters,
 				godmodeExtraActions,
 				castoriceKillToggles,
+				icaKillToggles,
+				memeKillToggles,
 				meritTarget,
 				dancePartner,
 			};
@@ -557,6 +588,8 @@ export default function ActionSequence() {
 		fireflyBreakCounters,
 		godmodeExtraActions,
 		castoriceKillToggles,
+		icaKillToggles,
+		memeKillToggles,
 	]);
 
 	const characterNames = useMemo(
@@ -1221,6 +1254,8 @@ export default function ActionSequence() {
 		fireflyBreakCounters,
 		godmodeExtraActions,
 		castoriceKillToggles,
+		icaKillToggles,
+		memeKillToggles,
 		meritTarget,
 		dancePartner,
 	});
@@ -1472,6 +1507,8 @@ export default function ActionSequence() {
 			setFireflyBreakCounters(parsed.fireflyBreakCounters ?? {});
 			setGodmodeExtraActions(parsed.godmodeExtraActions ?? {});
 			setCastoriceKillToggles(parsed.castoriceKillToggles ?? {});
+			setIcaKillToggles(parsed.icaKillToggles ?? {});
+			setMemeKillToggles(parsed.memeKillToggles ?? {});
 			setMeritTarget(parsed.meritTarget || undefined);
 			setDancePartner(parsed.dancePartner || undefined);
 			setSelectedActionKeys(new Set());
@@ -1563,6 +1600,8 @@ export default function ActionSequence() {
 				setCastoriceKillToggles,
 				icaKillToggles,
 				setIcaKillToggles,
+				memeKillToggles,
+				setMemeKillToggles,
 				hyacineE2Active,
 				setHyacineE2Active,
 				meritTarget,

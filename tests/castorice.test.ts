@@ -669,6 +669,25 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		expect(polluxFirst?.actionValue).toBe(0);
 	});
 
+	it("遐蝶秘技在 2 魂时开场会触发 100% 自拉条，且排在死龙之前", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("castorice", "遐蝶", 100, {
+						hasCastoriceTechnique: true,
+						eidolon: 2,
+					}),
+				],
+				limit: 200,
+			}),
+		);
+
+		const castoriceFirst = actions.find((a) => a.key === "castorice-1");
+		const polluxFirst = actions.find((a) => a.isPolluxAction);
+		expect(castoriceFirst?.actionValue).toBe(0);
+		expect(polluxFirst?.actionValue).toBeCloseTo(0.0001, 4);
+	});
+
 	it("遐蝶秘技开场动作计入 3 次上限", () => {
 		const actions = simulateActions(
 			input({
@@ -711,5 +730,76 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			actions.filter((a) => a.isPolluxAction).map((a) => a.characterId),
 		);
 		expect(polluxIds.size).toBe(1);
+	});
+
+	it("遐蝶插队Q会正常召唤死龙", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("ally", "停云", 100),
+					character("castorice", "遐蝶", 90),
+				],
+				ultInterrupts: {
+					"ally-1": [{ casterId: "castorice", timing: "before" }],
+				},
+				limit: 200,
+			}),
+		);
+
+		expect(actions.find((a) => a.key === "ally-1-interrupt-0")?.skill).toBe("Q");
+		expect(actions.find((a) => a.isPolluxAction)).toBeDefined();
+	});
+
+	it("星期日拉条遐蝶时会同步拉条死龙", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("castorice", "遐蝶", 150),
+					character("sunday", "星期日", 100),
+				],
+				skillOverrides: skills({
+					"castorice-1": "AQ",
+					"sunday-1": "E",
+				}),
+				skillTargets: {
+					"sunday-1": "castorice",
+				},
+				limit: 200,
+			}),
+		);
+
+		const sunday = actions.find((a) => a.key === "sunday-1");
+		const castoricePulled = actions.find((a) => a.key === "castorice-2");
+		const polluxPulled = actions.find(
+			(a) => a.isPolluxAction && a.actionNo === 2,
+		);
+		expect(sunday).toBeDefined();
+		expect(castoricePulled?.actionValue).toBeCloseTo(sunday!.actionValue, 4);
+		expect(polluxPulled?.actionValue).toBeCloseTo(sunday!.actionValue, 4);
+	});
+
+	it("死龙回合内支持插入角色大招", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("castorice", "遐蝶", 100, {
+						hasCastoriceTechnique: true,
+					}),
+					character("bronya", "布洛妮娅", 90),
+				],
+				ultInterrupts: {
+					"castorice-pollux-1": [{ casterId: "bronya", timing: "before" }],
+				},
+				limit: 200,
+			}),
+		);
+
+		const interrupt = actions.find(
+			(a) => a.key === "castorice-pollux-1-interrupt-0",
+		);
+		const pollux = actions.find((a) => a.key === "castorice-pollux-1");
+		expect(interrupt?.skill).toBe("Q");
+		expect(interrupt?.actionValue).toBe(0);
+		expect(pollux?.actionValue).toBe(0);
 	});
 });

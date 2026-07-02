@@ -239,4 +239,45 @@ describe("Hyacine (风堇) Ica System", () => {
 		expect(icaAction?.lockedSkill).toBe(true);
 		expect(icaAction?.skill).toBe("A");
 	});
+
+	it("Ica 额外回合支持插入角色大招", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("hyacine", "风堇", 100),
+					character("ally", "停云", 90),
+				],
+				skillOverrides: skills({
+					"hyacine-1": "AQ",
+				}),
+				ultInterrupts: {
+					"hyacine-1-q-ica": [{ casterId: "ally", timing: "after" }],
+				},
+				limit: 200,
+			}),
+		);
+
+		expect(actions.find((a) => a.key === "hyacine-1-q-ica")).toBeDefined();
+		expect(
+			actions.find((a) => a.key === "hyacine-1-q-ica-interrupt-0")?.skill,
+		).toBe("Q");
+	});
+
+	it("风堇插队Q会正常召唤并触发小伊卡", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("ally", "停云", 100),
+					character("hyacine", "风堇", 90),
+				],
+				ultInterrupts: {
+					"ally-1": [{ casterId: "hyacine", timing: "before" }],
+				},
+				limit: 200,
+			}),
+		);
+
+		expect(actions.find((a) => a.key === "ally-1-interrupt-0")?.skill).toBe("Q");
+		expect(actions.find((a) => a.key === "ally-1-interrupt-0-ica")).toBeDefined();
+	});
 });
