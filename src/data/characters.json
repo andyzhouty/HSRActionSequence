@@ -645,6 +645,9 @@
         "大黑塔",
         "The Herta"
       ],
+      "effects": {
+        "Q": "selfAdvance100"
+      },
       "path": "Erudition"
     },
     {

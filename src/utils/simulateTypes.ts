@@ -72,6 +72,8 @@ export interface ActionState extends AglaeaActionState {
 	// 遐蝶死龙
 	polluxOnField?: boolean;
 	polluxCount?: number;
+	polluxGeneration?: number;
+	polluxSummonGeneration?: number;
 	isPolluxAction?: boolean;
 	e2SavedActionSkill?: SkillCode;
 

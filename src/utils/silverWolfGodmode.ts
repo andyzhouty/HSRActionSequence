@@ -1,4 +1,4 @@
-import { hasSkillEffect } from "../data/characters";
+import { getCharacterCid } from "../data/characters";
 import { type SkillCode } from "./actionSequence";
 
 export type GodmodeState = {
@@ -7,7 +7,7 @@ export type GodmodeState = {
 };
 
 export function hasSilverWolfGodmode(characterName: string): boolean {
-	return hasSkillEffect(characterName, "Q", "selfAdvance100");
+	return getCharacterCid(characterName) === "1506";
 }
 
 export function isInGodmode(state: { isInGodmode?: boolean }): boolean {

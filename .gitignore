@@ -29,6 +29,10 @@ build/
 # Action sequence export files
 action-sequence-*.json
 
+# Avoid accidentally mixing ad-hoc compiled JS into TS source
+src/**/*.js
+src/**/*.js.map
+
 # documents and prompts for AI
 docs-for-ai/
 todo.md

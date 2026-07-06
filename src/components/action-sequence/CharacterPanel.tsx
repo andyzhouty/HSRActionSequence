@@ -3,7 +3,6 @@ import lightConeData from "../../data/lightcones.json";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import {
 	defaultCharacters,
-	defaultResources,
 	getCharacterPath,
 	getTargetDefaultName,
 	hasPassive,
@@ -28,25 +27,17 @@ export default function CharacterPanel() {
 	>(null);
 
 	const clearAllData = () => {
-		ctx.setCharacters(defaultCharacters);
-		ctx.setLimitPreset("150");
-		ctx.setCustomLimit("");
-		ctx.setDisplayedLimit("250");
-		ctx.setResources(defaultResources);
-		ctx.setOverrides({});
-		ctx.setUltOverrides({});
-		ctx.setSkillOverrides({});
-		ctx.setDomainEndOverrides({});
-		ctx.setSpeedAdjustments({});
-		ctx.setSkillTargets({});
-		ctx.setDefaultSkillTargets({});
-		ctx.setOdeSelections({});
-		ctx.setMemeSelections({});
-		ctx.setUltInterrupts({});
-		ctx.setResourceValues({});
-		ctx.setFireflyBreakCounters({});
-		ctx.setGodmodeExtraActions({});
+		ctx.resetSavedData();
+		ctx.setLastMemeTarget("");
+		ctx.setMeritTarget(undefined);
+		ctx.setDancePartner(undefined);
 		ctx.setSelectedActionKeys(new Set());
+		ctx.setActionOperation("advance");
+		ctx.setOperationValue("");
+		ctx.setAdvanceCeiling("");
+		ctx.setOperationSpeedMode("absolute");
+		ctx.setDraftInterruptCaster("");
+		ctx.setDraftInterruptTiming("before");
 		ctx.closeActionMenu();
 		ctx.setImportText("");
 		ctx.clearAutosaveFile();

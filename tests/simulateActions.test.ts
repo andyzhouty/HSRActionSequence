@@ -527,9 +527,54 @@ describe("wind set", () => {
 	});
 });
 
+describe("The Herta", () => {
+	it("大黑塔 AQ 后，大招会使自身 100% 自拉条", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("herta", "大黑塔", 100)],
+				skillOverrides: skills({
+					"herta-1": "AQ",
+				}),
+				limit: 300,
+			}),
+		);
+
+		const firstAction = actions.find((action) => action.key === "herta-1");
+		const ultimateAction = actions.find((action) => action.key === "herta-1-q");
+		const nextAction = actions.find((action) => action.key === "herta-2");
+
+		expect(firstAction?.skill).toBe("A");
+		expect(firstAction?.actionValue).toBeCloseTo(100, 2);
+		expect(ultimateAction?.skill).toBe("Q");
+		expect(ultimateAction?.actionValue).toBeCloseTo(100, 2);
+		expect(nextAction?.actionValue).toBeCloseTo(100, 2);
+		expect(nextAction?.lockedSkill).not.toBe(true);
+		expect(actions.some((action) => action.key.includes("-godmode-A"))).toBe(
+			false,
+		);
+	});
+});
+
 // ───── 迷迷拉条 ─────
 
 describe("meme advance", () => {
+	it("记忆主 Q 也会召唤迷迷", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("rmc", "开拓者·记忆", 100)],
+				skillOverrides: skills({
+					"rmc-1": "AQ",
+				}),
+				limit: 220,
+			}),
+		);
+
+		const memeAction = actions.find((a) => a.characterId === "rmc-meme");
+		expect(actions.find((a) => a.key === "rmc-1-q")).toBeDefined();
+		expect(memeAction).toBeDefined();
+		expect(memeAction!.actionValue).toBeGreaterThan(100);
+	});
+
 	it("迷迷将目标拉到当前 AV", () => {
 		const actions = simulateActions(
 			input({
@@ -576,6 +621,75 @@ describe("meme advance", () => {
 		expect(baselineRmcSecond).toBeDefined();
 		expect(rmcSecond).toBeDefined();
 		expect((baselineRmcSecond?.actionValue ?? 0) - (rmcSecond?.actionValue ?? 0)).toBeCloseTo(25, 3);
+	});
+
+	it("迷迷可以死在自己回合，并在行动后使记忆主 25% 自拉条", () => {
+		const baseInput = input({
+			characters: [
+				character("rmc", "开拓者·记忆", 200),
+				character("ally", "行动角色", 90),
+			],
+			skillOverrides: skills({ "rmc-1": "E" }),
+			limit: 220,
+		});
+		const baseline = simulateActions(baseInput);
+		const actions = simulateActions(
+			input({
+				...baseInput,
+				memeKillToggles: { "rmc-meme-1": true },
+			}),
+		);
+
+		const memeAction = actions.find((a) => a.key === "rmc-meme-1");
+		const baselineRmcSecond = baseline.find((a) => a.key === "rmc-3");
+		const rmcSecond = actions.find((a) => a.key === "rmc-3");
+		expect(memeAction).toBeDefined();
+		expect(baselineRmcSecond).toBeDefined();
+		expect(rmcSecond).toBeDefined();
+		expect((baselineRmcSecond?.actionValue ?? 0) - (rmcSecond?.actionValue ?? 0)).toBeCloseTo(12.5, 3);
+		expect(rmcSecond!.actionValue).toBeGreaterThan(
+			memeAction!.actionValue,
+		);
+	});
+
+	it("星期日不能单独拉条迷迷，但拉记忆主时会顺带拉迷迷", () => {
+		const baseInput = input({
+			characters: [
+				character("rmc", "开拓者·记忆", 120),
+				character("sunday", "星期日", 160),
+			],
+			skillOverrides: skills({
+				"rmc-1": "E",
+				"sunday-1": "E",
+			}),
+			limit: 220,
+		});
+		const directTarget = simulateActions(
+			input({
+				...baseInput,
+				skillTargets: {
+					"sunday-1": "rmc-meme",
+				},
+			}),
+		);
+		const ownerTarget = simulateActions(
+			input({
+				...baseInput,
+				skillTargets: {
+					"sunday-1": "rmc",
+				},
+			}),
+		);
+
+		const directMeme = directTarget.find(
+			(a) => a.characterId === "rmc-meme" && a.actionNo === 2,
+		);
+		const ownerMeme = ownerTarget.find(
+			(a) => a.characterId === "rmc-meme" && a.actionNo === 2,
+		);
+		expect(directMeme).toBeDefined();
+		expect(ownerMeme).toBeDefined();
+		expect(ownerMeme!.actionValue).toBeLessThan(directMeme!.actionValue);
 	});
 });
 

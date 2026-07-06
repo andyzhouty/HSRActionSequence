@@ -399,7 +399,6 @@ export type SavedData = {
 	characters: CharacterConfig[];
 	resources: string[];
 	overrides: Record<string, string>;
-	advanceCeiling?: string;
 	ultOverrides?: Record<string, boolean>;
 	skillOverrides?: Record<string, SkillCode>;
 	domainEndOverrides?: Record<string, boolean>;
@@ -415,6 +414,7 @@ export type SavedData = {
 	castoriceKillToggles?: Record<string, boolean>;
 	icaKillToggles?: Record<string, boolean>;
 	memeKillToggles?: Record<string, boolean>;
+	hyacineE2Active?: boolean;
 	meritTarget?: string;
 	dancePartner?: string;
 };
@@ -437,6 +437,21 @@ export function isCharacterTarget(character: CharacterConfig) {
 
 export function isAllyTarget(kind: TargetKind | undefined) {
 	return kind === "角色" || kind === "忆灵";
+}
+
+export function canSelectSkillTargetForAction(
+	character: CharacterConfig,
+	target: CharacterConfig,
+) {
+	if (character.id === target.id) return false;
+	if (!isAllyTarget(target.kind)) return false;
+	if (
+		hasSkillEffect(character.name, "E", "sundayPullWithMemosprite") &&
+		target.kind === "忆灵"
+	) {
+		return false;
+	}
+	return true;
 }
 
 export function isEnemyTarget(kind: TargetKind | undefined) {
@@ -560,9 +575,7 @@ export function toSignedNumber(value: string | undefined, fallback = 0) {
 
 export function formatActionValue(value: number) {
 	const normalized = normalizeActionValue(value);
-	return Number.isInteger(normalized)
-		? String(normalized)
-		: normalized.toFixed(2);
+	return normalized.toFixed(2);
 }
 
 export function formatEditableNumber(value: number) {

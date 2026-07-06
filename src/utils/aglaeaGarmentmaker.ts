@@ -373,7 +373,9 @@ export function handleAglaeaSkillEffects(
 	}
 
 	if (usesUltimate) {
-		summonGarmentmakerState(states, state.character, actionValue);
+		if (!findGarmentmakerState(states, state.character.id)) {
+			summonGarmentmakerState(states, state.character, actionValue);
+		}
 		activateAglaeaSupreme(states, stateIndex, actionValue);
 		// 仅 QA/QE 这类 Q 在前的组合不补立即行动；纯插队 Q 需要让阿格莱雅拿回当前 AV。
 		if (skill === "Q" || !skill.startsWith("Q")) {

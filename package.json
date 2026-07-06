@@ -1,7 +1,7 @@
 {
   "name": "hsractionsequence",
   "private": true,
-  "version": "2026.7.1-2",
+  "version": "2026.7.6",
   "type": "module",
   "scripts": {
     "dev": "vite",

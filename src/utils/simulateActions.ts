@@ -447,6 +447,13 @@ export function simulateActions(
 		if (hasSkillEffect(caster.character.name, "Q", "extraAhaAfterUltimate")) {
 			emitExtraAhaAction(interruptKey, actionValue);
 		}
+		if (
+			isCharacterTarget(caster.character) &&
+			hasSkillEffect(caster.character.name, "E", "summonMeme")
+		) {
+			summonMemeState(states, caster.character, actionValue);
+			handleMemoryTrailblazerQ(states[casterIndex]);
+		}
 		const teamAdvance = getTeamAdvanceOnUltimate(caster.character);
 		if (teamAdvance > 0) {
 			for (let teammateIndex = 0; teammateIndex < states.length; teammateIndex++) {
@@ -496,10 +503,12 @@ export function simulateActions(
 			isCharacterTarget(caster.character) &&
 			hasSkillEffect(caster.character.name, "Q", "selfAdvance100")
 		) {
-			activateGodmode(
-				states as GodmodeState[],
-				casterIndex,
-			);
+			if (hasSilverWolfGodmode(caster.character.name)) {
+				activateGodmode(
+					states as GodmodeState[],
+					casterIndex,
+				);
+			}
 			caster.nextActionValue = actionValue;
 		}
 		if (
@@ -707,7 +716,11 @@ export function simulateActions(
 			const key = state.isGarmentmakerState &&
 				state.garmentmakerGeneration
 				? `${state.character.id}-g${state.garmentmakerGeneration}-${state.actionNo}`
-				: `${state.character.id}-${state.actionNo}`;
+				: state.isPolluxAction &&
+					  state.polluxGeneration &&
+					  state.polluxGeneration > 1
+					? `${state.character.id}-${state.actionNo}-g${state.polluxGeneration}`
+					: `${state.character.id}-${state.actionNo}`;
 			return {
 				stateIndex,
 				key,
@@ -1304,10 +1317,12 @@ export function simulateActions(
 				isCharacterTarget(caster.character) &&
 				hasSkillEffect(caster.character.name, "Q", "selfAdvance100")
 			) {
-				activateGodmode(
-					states as GodmodeState[],
-					casterIndex,
-				);
+				if (hasSilverWolfGodmode(caster.character.name)) {
+					activateGodmode(
+						states as GodmodeState[],
+						casterIndex,
+					);
+				}
 				caster.nextActionValue = actionValue;
 			}
 			// 插队大招触发流萤完全燃烧。
@@ -1781,40 +1796,57 @@ export function simulateActions(
 				) {
 					const targetId = getSkillTarget(input, key, character);
 					if (targetId) {
-						const isSundayAndHarmonyTarget =
+						const targetState = states.find(
+							(state) => state.character.id === targetId,
+						);
+						const isSundayInvalidDirectMemospriteTarget =
 							hasSkillEffect(
 								character.name,
 								"E",
 								"sundayPullWithMemosprite",
 							) &&
-							getCharacterPath(
-								states.find((s) => s.character.id === targetId)
-									?.character.name ?? "",
-							) === "Harmony";
-						if (!isSundayAndHarmonyTarget) {
-							for (const teammate of states) {
-								if (
-									teammate.character.id === targetId &&
-									!teammate.blockNextAdvance
-								) {
-									teammate.nextActionValue = actionValue;
+							targetState !== undefined &&
+							!isCharacterTarget(targetState.character);
+						if (!isSundayInvalidDirectMemospriteTarget) {
+							const isSundayAndHarmonyTarget =
+								hasSkillEffect(
+									character.name,
+									"E",
+									"sundayPullWithMemosprite",
+								) &&
+								getCharacterPath(
+									states.find((s) => s.character.id === targetId)
+										?.character.name ?? "",
+								) === "Harmony";
+							if (!isSundayAndHarmonyTarget) {
+								for (const teammate of states) {
+									if (
+										teammate.character.id === targetId &&
+										!teammate.blockNextAdvance
+									) {
+										teammate.nextActionValue = actionValue;
+									}
 								}
 							}
-						}
-						// Sunday additionally pulls the target's owned summons
-						if (
-							hasSkillEffect(character.name, "E", "sundayPullWithMemosprite")
-						) {
-							for (const entity of states) {
-								const isOwnedSummon =
-									entity.character.id !== targetId &&
-									((entity.isGarmentmakerState &&
-										entity.garmentmakerOwnerId === targetId) ||
-										(entity.isMemeState && entity.memeOwnerId === targetId) ||
-										(entity.isPolluxAction &&
-											entity.character.id === `${targetId}-pollux`));
-								if (isOwnedSummon && !entity.blockNextAdvance) {
-									entity.nextActionValue = actionValue;
+							// Sunday additionally pulls the target's owned summons
+							if (
+								hasSkillEffect(
+									character.name,
+									"E",
+									"sundayPullWithMemosprite",
+								)
+							) {
+								for (const entity of states) {
+									const isOwnedSummon =
+										entity.character.id !== targetId &&
+										((entity.isGarmentmakerState &&
+											entity.garmentmakerOwnerId === targetId) ||
+											(entity.isMemeState && entity.memeOwnerId === targetId) ||
+											(entity.isPolluxAction &&
+												entity.character.id === `${targetId}-pollux`));
+									if (isOwnedSummon && !entity.blockNextAdvance) {
+										entity.nextActionValue = actionValue;
+									}
 								}
 							}
 						}
@@ -1844,11 +1876,11 @@ export function simulateActions(
 					}
 				}
 
-				// Memory Trailblazer E: summon Meme as a 130-speed memosprite.
+				// Memory Trailblazer E/Q: summon Meme as a 130-speed memosprite.
 				if (
 					isCharacterTarget(character) &&
 					hasSkillEffect(character.name, "E", "summonMeme") &&
-					skill.includes("E")
+					(skill.includes("E") || usesUltimate)
 				) {
 					summonMemeState(states, character, actionValue);
 				}
@@ -1981,7 +2013,7 @@ export function simulateActions(
 					hasSkillEffect(character.name, "Q", "selfAdvance100") &&
 					usesUltimate
 				) {
-					if (!qIsFront) {
+					if (!qIsFront && hasSilverWolfGodmode(character.name)) {
 						activateGodmode(states, stateIndex);
 					}
 					if (!qIsFront) {
@@ -2006,6 +2038,10 @@ export function simulateActions(
 						actionValue,
 						input,
 					);
+				}
+
+				if (input.memeKillToggles?.[key] && states[stateIndex]?.isMemeState) {
+					killMeme(states, actionValue);
 				}
 			}
 			// ── 记忆主 A 消耗【史诗】并触发德谬歌额外 Q ──

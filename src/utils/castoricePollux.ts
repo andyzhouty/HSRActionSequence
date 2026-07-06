@@ -16,6 +16,8 @@ export interface CastoriceActionState {
 	blockNextAdvance: boolean;
 	polluxOnField?: boolean;
 	polluxCount?: number;
+	polluxGeneration?: number;
+	polluxSummonGeneration?: number;
 	isPolluxAction?: boolean;
 }
 
@@ -61,9 +63,11 @@ export function summonPollux(
 
 	// 设置遐蝶状态
 	const castorice = states.find((s) => s.character.id === owner.id);
+	const nextGeneration = (castorice?.polluxSummonGeneration ?? 0) + 1;
 	if (castorice) {
 		castorice.polluxOnField = true;
 		castorice.polluxCount = 0;
+		castorice.polluxSummonGeneration = nextGeneration;
 	}
 
 	// 创建死龙忆灵
@@ -93,6 +97,7 @@ export function summonPollux(
 		isPolluxAction: true,
 		polluxOnField: undefined,
 		polluxCount: 0,
+		polluxGeneration: nextGeneration,
 	} as unknown as CastoriceActionState);
 }
 
@@ -134,6 +139,17 @@ export function handlePolluxAction(
 	const isDismissSkill = rule ? skill === rule.dismissSkill : skill === "E";
 	const isMaxCount = rule ? nextCount >= rule.maxActions : nextCount >= 3;
 
+	// 达到最大行动次数后必须离场；第三回合即使击杀也不能继续获得第四动。
+	if (isMaxCount) {
+		const castorice = states.find((s) => s.character.id === ownerId);
+		if (castorice) {
+			castorice.polluxOnField = false;
+			castorice.polluxCount = undefined;
+		}
+		states.splice(stateIndex, 1);
+		return;
+	}
+
 	// 击杀：E 后死龙不消失，速度翻倍（基于基础速度）
 	if (isDismissSkill && killTriggered) {
 		const base = rule?.memospriteSpeed ?? 165;
@@ -146,7 +162,7 @@ export function handlePolluxAction(
 		return;
 	}
 
-	if (isDismissSkill || isMaxCount) {
+	if (isDismissSkill) {
 		// 离场
 		const castorice = states.find((s) => s.character.id === ownerId);
 		if (castorice) {

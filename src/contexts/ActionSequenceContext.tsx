@@ -39,7 +39,6 @@ export type ActionSequenceContextType = {
 	dancePartner?: string;
 	resourceValues: Record<string, Record<string, string>>;
 	actions: GeneratedAction[];
-	setActions: React.Dispatch<React.SetStateAction<GeneratedAction[]>>;
 	setIsExportingImage: React.Dispatch<React.SetStateAction<boolean>>;
 	importText: string;
 	message: string;
@@ -147,6 +146,7 @@ export type ActionSequenceContextType = {
 		resourceName: string,
 		value: string,
 	) => void;
+	resetSavedData: () => void;
 	clearAutosaveFile: () => void;
 	cancelHimekoNovaAssist: (action: GeneratedAction) => void;
 	updateSkillTarget: (action: GeneratedAction, targetId: string) => void;

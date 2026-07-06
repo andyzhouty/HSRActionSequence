@@ -247,6 +247,83 @@ describe("Aglaea Supreme Stance activation", () => {
 		expect(garmentmakerFirst?.actionValue).toBe(0);
 		expect(aglaeaFirst?.actionValue).toBe(100);
 	});
+
+	it("星期日不能单独拉条衣匠，但拉阿格莱雅时会顺带拉衣匠", () => {
+		const baseInput = input({
+			characters: [
+				character("aglaea", "阿格莱雅", 120),
+				character("sunday", "星期日", 160),
+			],
+			skillOverrides: skills({
+				"aglaea-1": "E",
+				"sunday-1": "E",
+			}),
+			limit: 220,
+		});
+		const directTarget = simulateActions(
+			input({
+				...baseInput,
+				skillTargets: {
+					"sunday-1": "aglaea-garmentmaker",
+				},
+			}),
+		);
+		const ownerTarget = simulateActions(
+			input({
+				...baseInput,
+				skillTargets: {
+					"sunday-1": "aglaea",
+				},
+			}),
+		);
+
+		const directGarmentmaker = directTarget.find(
+			(a) => a.isAglaeaGarmentmakerAction && a.actionNo === 2,
+		);
+		const ownerGarmentmaker = ownerTarget.find(
+			(a) => a.isAglaeaGarmentmakerAction && a.actionNo === 2,
+		);
+		expect(directGarmentmaker).toBeDefined();
+		expect(ownerGarmentmaker).toBeDefined();
+		expect(ownerGarmentmaker!.actionValue).toBeLessThan(
+			directGarmentmaker!.actionValue,
+		);
+	});
+
+	it("阿格莱雅插队 Q 不会额外把已在场衣匠拉到当前 AV", () => {
+		const baseInput = input({
+			characters: [
+				character("aglaea", "阿格莱雅", 200),
+				character("ally", "行动角色", 90),
+			],
+			skillOverrides: skills({
+				"aglaea-1": "E",
+			}),
+			limit: 220,
+		});
+		const baseline = simulateActions(baseInput);
+		const interrupt = simulateActions(
+			input({
+				...baseInput,
+				ultInterrupts: {
+					"ally-1": [{ casterId: "aglaea", timing: "before" }],
+				},
+			}),
+		);
+
+		const baselineGarmentmaker = baseline.find(
+			(a) => a.isAglaeaGarmentmakerAction && a.actionNo === 2,
+		);
+		const interruptGarmentmaker = interrupt.find(
+			(a) => a.isAglaeaGarmentmakerAction && a.actionNo === 2,
+		);
+		expect(baselineGarmentmaker).toBeDefined();
+		expect(interruptGarmentmaker).toBeDefined();
+		expect(interruptGarmentmaker!.actionValue).toBeCloseTo(
+			baselineGarmentmaker!.actionValue,
+			4,
+		);
+	});
 });
 
 // ───── Aglaea Countdown Manual Advance ─────

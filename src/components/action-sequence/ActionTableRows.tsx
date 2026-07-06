@@ -4,8 +4,10 @@ import fireflyUltIcon from "../../assets/skillIcons/SkillIcon_1310_Ultra.webp";
 import swPassiveIcon from "../../assets/skillIcons/SkillIcon_1506_Passive.webp";
 import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
+import { getDisplayOrderedActions } from "../../utils/actionDisplayOrder";
 import type { GeneratedAction } from "../../utils/actionSequence";
 import {
+	canSelectSkillTargetForAction,
 	formatActionValue,
 	formatEditableNumber,
 	getCounterWDomainRule,
@@ -22,6 +24,7 @@ import {
 	shouldRememberSkillTarget,
 	toPositiveNumber,
 } from "../../utils/actionSequence";
+import { hasSilverWolfGodmode } from "../../utils/silverWolfGodmode";
 import { SelectInput } from "./Controls";
 
 function getMemeTargetOptions(ctx: ReturnType<typeof useActionSequence>) {
@@ -52,6 +55,7 @@ function isMemospriteAvailableForAction(
 	memosprite: import("../../utils/actionSequence").CharacterConfig,
 	currentActionKey: string,
 ): boolean {
+	const orderedActions = getDisplayOrderedActions(ctx.actions);
 	const isGarmentmaker = memosprite.id.endsWith("-garmentmaker");
 	const isMeme = memosprite.id.endsWith("-meme");
 	const isCyreneMemosprite = memosprite.id.endsWith("-memosprite");
@@ -67,12 +71,12 @@ function isMemospriteAvailableForAction(
 			: "-memosprite";
 	const ownerId = memosprite.id.slice(0, -suffix.length);
 
-	const selectedIndex = ctx.actions.findIndex(
+	const selectedIndex = orderedActions.findIndex(
 		(a) => a.key === currentActionKey,
 	);
 	if (selectedIndex <= 0) return false;
 
-	return ctx.actions.slice(0, selectedIndex).some((action) => {
+	return orderedActions.slice(0, selectedIndex).some((action) => {
 		if (action.characterId !== ownerId) return false;
 		if (action.isDomainAction || action.isMemospriteAction) return false;
 		const skill = ctx.skillOverrides[action.key] ?? action.skill;
@@ -156,6 +160,7 @@ export function ActionRow({
 		action.characterId;
 	const isSelected = ctx.selectedActionKeys.has(action.key);
 	const speedAdjustment = ctx.speedAdjustments[action.key];
+	const [actionValueDraft, setActionValueDraft] = useState<string | null>(null);
 	const getPreviousDomainActionValue = () => {
 		const match = action.key.match(/^(.*-domain-)(\d+)$/);
 		if (!match) return undefined;
@@ -171,7 +176,7 @@ export function ActionRow({
 	const validateDomainActionValueOverride = () => {
 		if (!action.isDomainAction) return;
 		const rawValue =
-			ctx.overrides[action.key] ?? formatActionValue(action.actionValue);
+			ctx.overrides[action.key] ?? formatEditableNumber(action.actionValue);
 		if (rawValue === "") return;
 		const parsed = Number.parseFloat(rawValue);
 		if (!Number.isFinite(parsed)) return;
@@ -271,8 +276,8 @@ export function ActionRow({
 			}}
 			title={
 				speedAdjustment
-					? `速度: ${action.speed} (后续${speedAdjustment.mode === "relative" ? `${speedAdjustment.value}%` : speedAdjustment.value})`
-					: `速度: ${action.speed}`
+					? `速度: ${action.speed} (后续${speedAdjustment.mode === "relative" ? `${speedAdjustment.value}%` : speedAdjustment.value}) / 行动值: ${formatActionValue(action.actionValue)}`
+					: `速度: ${action.speed} / 行动值: ${formatActionValue(action.actionValue)}`
 			}
 			className={`cursor-pointer select-none ${rowClass} ${isPastOriginalLimit ? "border-l-2 border-l-cyan-400/70 opacity-80" : ""}`}
 		>
@@ -292,10 +297,8 @@ export function ActionRow({
 						<img src={ahaIcon} alt="🎭" className="inline-block h-6 w-6" />
 					</div>
 				) : action.skill === "Q" &&
-				  hasSkillEffect(
+				  hasSilverWolfGodmode(
 						ctx.charactersById[action.characterId]?.name ?? "",
-						"Q",
-						"selfAdvance100",
 					) ? (
 					<div className="flex h-full items-center justify-center">
 						<img
@@ -376,10 +379,24 @@ export function ActionRow({
 					type="text"
 					inputMode="decimal"
 					value={
-						ctx.overrides[action.key] ?? formatActionValue(action.actionValue)
+						actionValueDraft ??
+						formatActionValue(
+							Number.parseFloat(
+								ctx.overrides[action.key] ??
+									formatEditableNumber(action.actionValue),
+							),
+						)
 					}
+					onFocus={() => {
+						const currentValue = Number.parseFloat(
+							ctx.overrides[action.key] ??
+								formatEditableNumber(action.actionValue),
+						);
+						setActionValueDraft(formatActionValue(currentValue));
+					}}
 					onChange={(event) => {
 						const nextValue = event.target.value;
+						setActionValueDraft(nextValue);
 						if (nextValue === "") {
 							ctx.setOverrides((prev) => {
 								const n = { ...prev };
@@ -409,7 +426,10 @@ export function ActionRow({
 					}}
 					onClick={(event) => event.stopPropagation()}
 					onContextMenu={(event) => event.stopPropagation()}
-					onBlur={validateDomainActionValueOverride}
+					onBlur={() => {
+						setActionValueDraft(null);
+						validateDomainActionValueOverride();
+					}}
 					className="h-10 w-full rounded-lg border border-gray-600 bg-gray-700 px-2 font-mono text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
 				/>
 			</td>
@@ -792,8 +812,7 @@ function SkillTargetInline({ action }: { action: GeneratedAction }) {
 		);
 		const allies = [...ctx.characters, ...availableMemos].filter(
 			(c) =>
-				c.id !== char.id &&
-				isAllyTarget(c.kind) &&
+				canSelectSkillTargetForAction(char, c) &&
 				toPositiveNumber(c.speed, 0) > 0,
 		);
 		const validTargetId = allies.some((ally) => ally.id === targetId)

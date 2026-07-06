@@ -1,15 +1,15 @@
 import { Fragment, useMemo } from "react";
 import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
+import { getDisplayOrderedActions } from "../../utils/actionDisplayOrder";
 import type { SpeedChangeMode } from "../../utils/actionSequence";
 import {
+	canSelectSkillTargetForAction,
 	formatActionValue,
-	formatEditableNumber,
 	getCharacterDisplayName,
 	getMemeAdvanceRule,
 	getTargetDefaultName,
 	hasSkillEffect,
-	isAllyTarget,
 	isCharacterTarget,
 	limitPresets,
 	maxResources,
@@ -20,20 +20,20 @@ import { ActionLimitMarkerRow, ActionRow } from "./ActionTableRows";
 import { SelectInput, TextInput } from "./Controls";
 import ExportExcelButton from "./ExportExcelButton";
 import { hasHyacineIca } from "../../utils/hyacineIca";
+import { hasSilverWolfGodmode } from "../../utils/silverWolfGodmode";
 
 export default function ActionPanel() {
 	const ctx = useActionSequence();
 	const isImageExportLocked = ctx.actions.length > 100;
-	const limitMarkerIndex = ctx.actions.findIndex(
-		(action) => action.actionValue > ctx.actionLimit,
+	const orderedActions = useMemo(
+		() => getDisplayOrderedActions(ctx.actions),
+		[ctx.actions],
 	);
-	const limitMarkerPosition =
-		limitMarkerIndex === -1 ? ctx.actions.length : limitMarkerIndex;
 
 	// 白厄境界期间：只显示境界动作 + 非忆灵 + 敌人，隐藏我方角色和忆灵
 	// 昔涟自 Q：不显示昔涟Q行，仅显示德谬歌Q
 	const visibleActions = useMemo(() => {
-		let filtered = ctx.actions.filter((action) => {
+		let filtered = orderedActions.filter((action) => {
 			// 隐藏昔涟自 Q 行（德谬歌 Q 已单独显示）
 			if (
 				action.skill === "Q" &&
@@ -65,7 +65,12 @@ export default function ActionPanel() {
 				return true;
 			return false;
 		});
-	}, [ctx.actions, ctx.characterKinds]);
+	}, [orderedActions, ctx.characterKinds, ctx.charactersById]);
+	const limitMarkerIndex = visibleActions.findIndex(
+		(action) => action.actionValue > ctx.actionLimit,
+	);
+	const limitMarkerPosition =
+		limitMarkerIndex === -1 ? visibleActions.length : limitMarkerIndex;
 
 	return (
 		<section className="min-w-0 rounded-2xl bg-gray-800 p-4 shadow">
@@ -117,7 +122,7 @@ export default function ActionPanel() {
 							type="text"
 							inputMode="decimal"
 							value={ctx.displayedLimit}
-							placeholder={formatEditableNumber(ctx.actionLimit + 100)}
+							placeholder={formatActionValue(ctx.actionLimit + 100)}
 							title="默认跟随行动值上限 + 100"
 							onChange={(event) => {
 								const nextValue = event.target.value;
@@ -275,7 +280,7 @@ export default function ActionPanel() {
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-gray-700">
-							{ctx.actions.length === 0 ? (
+							{visibleActions.length === 0 ? (
 								<tr>
 									<td
 										colSpan={4 + ctx.resources.length}
@@ -303,7 +308,7 @@ export default function ActionPanel() {
 											/>
 										</Fragment>
 									))}
-									{limitMarkerPosition === ctx.actions.length && (
+									{limitMarkerPosition === visibleActions.length && (
 										<ActionLimitMarkerRow
 											colSpan={4 + ctx.resources.length}
 											actionLimit={ctx.actionLimit}
@@ -516,8 +521,7 @@ function SkillTargetSection() {
 	);
 	const allies = [...ctx.characters, ...availableMemos].filter(
 		(c) =>
-			c.id !== character.id &&
-			isAllyTarget(c.kind) &&
+			canSelectSkillTargetForAction(character, c) &&
 			toPositiveNumber(c.speed, 0) > 0,
 	);
 	const rememberedTargetId = shouldRememberSkillTarget(character.name)
@@ -583,6 +587,7 @@ function isMemospriteAvailableForAction(
 	memosprite: import("../../utils/actionSequence").CharacterConfig,
 	currentActionKey: string,
 ): boolean {
+	const orderedActions = getDisplayOrderedActions(ctx.actions);
 	const isGarmentmaker = memosprite.id.endsWith("-garmentmaker");
 	const isMeme = memosprite.id.endsWith("-meme");
 	const isCyreneMemosprite = memosprite.id.endsWith("-memosprite");
@@ -597,12 +602,12 @@ function isMemospriteAvailableForAction(
 			: "-memosprite";
 	const ownerId = memosprite.id.slice(0, -suffix.length);
 
-	const selectedIndex = ctx.actions.findIndex(
+	const selectedIndex = orderedActions.findIndex(
 		(a) => a.key === currentActionKey,
 	);
 	if (selectedIndex <= 0) return false;
 
-	return ctx.actions.slice(0, selectedIndex).some((action) => {
+	return orderedActions.slice(0, selectedIndex).some((action) => {
 		if (action.characterId !== ownerId) return false;
 		if (action.isDomainAction || action.isMemospriteAction) return false;
 		const skill = ctx.skillOverrides[action.key] ?? action.skill;
@@ -718,15 +723,16 @@ function hasMemeBeenSummonedBeforeAction(
 	ownerId: string,
 	actionKey: string,
 ) {
-	const selectedIndex = ctx.actions.findIndex(
+	const orderedActions = getDisplayOrderedActions(ctx.actions);
+	const selectedIndex = orderedActions.findIndex(
 		(action) => action.key === actionKey,
 	);
 	if (selectedIndex <= 0) return false;
-	return ctx.actions.slice(0, selectedIndex).some((action) => {
+	return orderedActions.slice(0, selectedIndex).some((action) => {
 		if (action.characterId !== ownerId) return false;
 		if (action.isDomainAction || action.isMemospriteAction) return false;
 		const skill = ctx.skillOverrides[action.key] ?? action.skill;
-		return skill.includes("E");
+		return skill.includes("E") || skill.includes("Q");
 	});
 }
 
@@ -988,9 +994,7 @@ function GodmodeExtraSection() {
 	if (!isEligible) return null;
 
 	// 仅银狼在无敌玩家状态时显示
-	const swChar = ctx.characters.find((c) =>
-		hasSkillEffect(c.name, "Q", "selfAdvance100"),
-	);
+	const swChar = ctx.characters.find((c) => hasSilverWolfGodmode(c.name));
 	if (!swChar) return null;
 	// 无敌玩家状态：有SW的Q行动记录即视为可能处于无敌玩家中
 	const swInGodmode = ctx.actions.some(
@@ -1085,7 +1089,7 @@ function IcaKillSection() {
 	if (hasHyacineIca(ctx.charactersById[firstAction.characterId]?.name ?? "")) return null;
 	if (firstAction.isIcaAction) return null;
 	const charKind = ctx.characterKinds[firstAction.characterId];
-	if (charKind === "倒计时" || charKind === "敌人") return null;
+	if (charKind === "倒计时") return null;
 
 	const isOn = ctx.icaKillToggles[firstKey] === true;
 	return (
@@ -1138,10 +1142,8 @@ function MemeKillSection() {
 		hasSkillEffect(character.name, "E", "summonMeme"),
 	);
 	if (!memeOwner) return null;
-
-	if (firstAction.isMemeAction) return null;
 	const charKind = ctx.characterKinds[firstAction.characterId];
-	if (charKind === "倒计时" || charKind === "敌人") return null;
+	if (charKind === "倒计时") return null;
 
 	const isOn = ctx.memeKillToggles[firstKey] === true;
 	return (

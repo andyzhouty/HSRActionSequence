@@ -651,6 +651,31 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		}
 	});
 
+	it("死龙第三回合即使击杀，也不会获得第四回合", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("castorice", "遐蝶", 100)],
+				skillOverrides: skills({
+					"castorice-1": "AQ",
+					"castorice-pollux-1": "EA",
+					"castorice-pollux-2": "EA",
+					"castorice-pollux-3": "E",
+				}),
+				castoriceKillToggles: {
+					"castorice-pollux-3": true,
+				},
+				limit: 800,
+			}),
+		);
+
+		const polluxActions = actions.filter((a) => a.isPolluxAction);
+		expect(polluxActions).toHaveLength(3);
+		expect(polluxActions.map((a) => a.actionNo)).toEqual([1, 2, 3]);
+		expect(
+			actions.find((a) => a.isPolluxAction && a.actionNo === 4),
+		).toBeUndefined();
+	});
+
 	it("遐蝶秘技开启时开场自动召唤死龙，并在 AV=0 立即行动", () => {
 		const actions = simulateActions(
 			input({
@@ -778,6 +803,102 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		expect(polluxPulled?.actionValue).toBeCloseTo(sunday!.actionValue, 4);
 	});
 
+	it("星期日不能单独拉条死龙", () => {
+		const baseInput = input({
+			characters: [
+				character("castorice", "遐蝶", 150),
+				character("sunday", "星期日", 100),
+			],
+			skillOverrides: skills({
+				"castorice-1": "AQ",
+				"sunday-1": "E",
+			}),
+			limit: 220,
+		});
+		const baseline = simulateActions(baseInput);
+		const actions = simulateActions(
+			input({
+				...baseInput,
+				skillTargets: {
+					"sunday-1": "castorice-pollux",
+				},
+			}),
+		);
+
+		const baselinePolluxPulled = baseline.find(
+			(a) => a.isPolluxAction && a.actionNo === 2,
+		);
+		const polluxPulled = actions.find(
+			(a) => a.isPolluxAction && a.actionNo === 2,
+		);
+		expect(baselinePolluxPulled).toBeDefined();
+		expect(polluxPulled?.actionValue).toBeCloseTo(
+			baselinePolluxPulled?.actionValue ?? 0,
+			4,
+		);
+	});
+
+	it("2魂开秘技遐蝶94速，周日166速每动E拉遐蝶时，前三次会同步拉条死龙", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("castorice", "遐蝶", 94, {
+						eidolon: 2,
+						hasCastoriceTechnique: true,
+					}),
+					character("sunday", "星期日", 166),
+				],
+				skillOverrides: skills({
+					"sunday-1": "E",
+					"sunday-2": "E",
+					"sunday-3": "E",
+					"sunday-4": "E",
+					"castorice-pollux-1": "EA",
+					"castorice-pollux-2": "EA",
+					"castorice-pollux-3": "EA",
+				}),
+				skillTargets: {
+					"sunday-1": "castorice",
+					"sunday-2": "castorice",
+					"sunday-3": "castorice",
+					"sunday-4": "castorice",
+				},
+				limit: 500,
+			}),
+		);
+
+		const sunday1 = actions.find((a) => a.key === "sunday-1");
+		const sunday2 = actions.find((a) => a.key === "sunday-2");
+		const sunday3 = actions.find((a) => a.key === "sunday-3");
+		const sunday4 = actions.find((a) => a.key === "sunday-4");
+		const castorice2 = actions.find((a) => a.key === "castorice-2");
+		const castorice3 = actions.find((a) => a.key === "castorice-3");
+		const castorice4 = actions.find((a) => a.key === "castorice-4");
+		const castorice5 = actions.find((a) => a.key === "castorice-5");
+		const pollux2 = actions.find(
+			(a) => a.isPolluxAction && a.actionNo === 2,
+		);
+		const pollux3 = actions.find(
+			(a) => a.isPolluxAction && a.actionNo === 3,
+		);
+		const pollux4 = actions.find(
+			(a) => a.isPolluxAction && a.actionNo === 4,
+		);
+
+		expect(actions.find((a) => a.key === "castorice-1")?.actionValue).toBe(0);
+		expect(
+			actions.find((a) => a.key === "castorice-pollux-1")?.actionValue,
+		).toBeCloseTo(0.0001, 4);
+
+		expect(castorice2?.actionValue).toBeCloseTo(sunday1?.actionValue ?? 0, 4);
+		expect(pollux2?.actionValue).toBeCloseTo(sunday1?.actionValue ?? 0, 4);
+		expect(castorice3?.actionValue).toBeCloseTo(sunday2?.actionValue ?? 0, 4);
+		expect(pollux3?.actionValue).toBeCloseTo(sunday2?.actionValue ?? 0, 4);
+		expect(castorice4?.actionValue).toBeCloseTo(sunday3?.actionValue ?? 0, 4);
+		expect(pollux4).toBeUndefined();
+		expect(castorice5?.actionValue).toBeCloseTo(sunday4?.actionValue ?? 0, 4);
+	});
+
 	it("死龙回合内支持插入角色大招", () => {
 		const actions = simulateActions(
 			input({
@@ -801,5 +922,157 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		expect(interrupt?.skill).toBe("Q");
 		expect(interrupt?.actionValue).toBe(0);
 		expect(pollux?.actionValue).toBe(0);
+	});
+
+	it("死龙自爆回合后插遐蝶Q可无缝重召死龙", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("castorice", "遐蝶", 100, {
+						hasCastoriceTechnique: true,
+					}),
+				],
+				skillOverrides: skills({
+					"castorice-pollux-1": "E",
+					"castorice-pollux-1-g2": "EA",
+				}),
+				ultInterrupts: {
+					"castorice-pollux-1": [{ casterId: "castorice", timing: "after" }],
+				},
+				limit: 250,
+			}),
+		);
+
+		const dismissPollux = actions.find((a) => a.key === "castorice-pollux-1");
+		const interruptQ = actions.find(
+			(a) => a.key === "castorice-pollux-1-interrupt-0",
+		);
+		const resummonedPollux = actions.find(
+			(a) => a.key === "castorice-pollux-1-g2",
+		);
+
+		expect(dismissPollux?.skill).toBe("E");
+		expect(interruptQ?.skill).toBe("Q");
+		expect(interruptQ?.actionValue).toBeCloseTo(
+			dismissPollux?.actionValue ?? 0,
+			4,
+		);
+		expect(resummonedPollux).toBeDefined();
+		expect(resummonedPollux?.actionValue).toBeCloseTo(
+			interruptQ?.actionValue ?? 0,
+			4,
+		);
+	});
+
+	it("死龙第三回合后插遐蝶Q可无缝重召死龙", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("castorice", "遐蝶", 100, {
+						hasCastoriceTechnique: true,
+					}),
+				],
+				skillOverrides: skills({
+					"castorice-pollux-1": "EA",
+					"castorice-pollux-2": "EA",
+					"castorice-pollux-3": "EA",
+					"castorice-pollux-1-g2": "EA",
+				}),
+				ultInterrupts: {
+					"castorice-pollux-3": [{ casterId: "castorice", timing: "after" }],
+				},
+				limit: 400,
+			}),
+		);
+
+		const thirdPollux = actions.find((a) => a.key === "castorice-pollux-3");
+		const interruptQ = actions.find(
+			(a) => a.key === "castorice-pollux-3-interrupt-0",
+		);
+		const resummonedPollux = actions.find(
+			(a) => a.key === "castorice-pollux-1-g2",
+		);
+
+		expect(thirdPollux?.skill).toBe("EA");
+		expect(interruptQ?.skill).toBe("Q");
+		expect(interruptQ?.actionValue).toBeCloseTo(
+			thirdPollux?.actionValue ?? 0,
+			4,
+		);
+		expect(resummonedPollux).toBeDefined();
+		expect(resummonedPollux?.actionValue).toBeCloseTo(
+			interruptQ?.actionValue ?? 0,
+			4,
+		);
+	});
+
+	it("取消星期日对遐蝶的 E 目标后，遐蝶第三动 EQ 重召的死龙不会卡在第一次拉条位置", () => {
+		const baseInput = input({
+			characters: [
+				character("castorice", "遐蝶", 94, {
+					eidolon: 2,
+					hasCastoriceTechnique: true,
+				}),
+				character("sunday", "星期日", 164, {
+					hasVonwacq: true,
+					hasWindSet: true,
+				}),
+			],
+			skillOverrides: skills({
+				"sunday-1": "E",
+				"castorice-3": "EQ",
+				"castorice-pollux-1": "EA",
+				"castorice-pollux-2": "EA",
+				"castorice-pollux-3": "EA",
+			}),
+			limit: 500,
+		});
+
+		const withTarget = simulateActions({
+			...baseInput,
+			skillTargets: {
+				"sunday-1": "castorice",
+			},
+		});
+		const withoutTarget = simulateActions(baseInput);
+		console.log(
+			"withTarget:",
+			withTarget
+				.map((a) => `${a.key}:${a.skill}@${a.actionValue.toFixed(4)}`)
+				.join(", "),
+		);
+		console.log(
+			"withoutTarget:",
+			withoutTarget
+				.map((a) => `${a.key}:${a.skill}@${a.actionValue.toFixed(4)}`)
+				.join(", "),
+		);
+
+		const sunday1WithTarget = withTarget.find((a) => a.key === "sunday-1");
+		const castorice3WithTarget = withTarget.find((a) => a.key === "castorice-3");
+		expect(sunday1WithTarget?.actionValue).toBeCloseTo(36.59, 2);
+		expect(castorice3WithTarget?.actionValue).toBeCloseTo(212.77, 2);
+
+		const castorice3QNoTargetIndex = withoutTarget.findIndex(
+			(a) => a.key === "castorice-3-q",
+		);
+		expect(castorice3QNoTargetIndex).toBeGreaterThan(-1);
+
+		const castorice3QNoTarget = withoutTarget[castorice3QNoTargetIndex];
+		const repolluxNoTarget = withoutTarget
+			.slice(castorice3QNoTargetIndex + 1)
+			.find((a) => a.isPolluxAction);
+		const sunday1NoTarget = withoutTarget.find((a) => a.key === "sunday-1");
+
+		expect(sunday1NoTarget?.actionValue).toBeCloseTo(36.59, 2);
+		expect(repolluxNoTarget).toBeDefined();
+		expect(repolluxNoTarget?.actionValue).toBeCloseTo(
+			(castorice3QNoTarget?.actionValue ?? 0) + 0.0001,
+			4,
+		);
+		expect(repolluxNoTarget?.actionValue).not.toBeCloseTo(
+			sunday1NoTarget?.actionValue ?? 0,
+			2,
+		);
 	});
 });
