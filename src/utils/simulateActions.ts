@@ -32,6 +32,19 @@ import {
 	triggerIcaExtraTurn,
 } from "./hyacineIca";
 import {
+	consumeEvernightSpeedBuff,
+	handleEveyAction,
+	hasEvernightEvey,
+	summonEveyState,
+} from "./evernightEvey";
+import {
+	advanceSouldragon,
+	emitImmediateSouldragonAction,
+	emitSouldragonAction,
+	hasDanHengSouldragon,
+	summonSouldragonState,
+} from "./danHengSouldragon";
+import {
 	activateCombustion,
 	checkBreakTrigger,
 	handleFireflyCountdownAction,
@@ -124,7 +137,83 @@ export function simulateActions(
 			};
 		});
 
-	const actions: GeneratedAction[] = [];
+	const souldragonOwner = states.find(
+		(state) =>
+			isCharacterTarget(state.character) &&
+			hasDanHengSouldragon(state.character.name),
+	);
+	let currentBondmateTarget = input.characters.some(
+		(character) =>
+			character.id === input.bondmateTarget && character.kind === "角色",
+	)
+		? (input.bondmateTarget ?? null)
+		: null;
+	if (souldragonOwner && currentBondmateTarget) {
+		summonSouldragonState(states, souldragonOwner.character, 0);
+	}
+
+	const rawActions: GeneratedAction[] = [];
+	let actions: GeneratedAction[];
+	const handleRecordedAction = (action: GeneratedAction) => {
+		if (!souldragonOwner || action.isSouldragonAction) return;
+
+		if (
+			souldragonOwner.character.eidolon >= 2 &&
+			action.characterId === souldragonOwner.character.id &&
+			action.skill === "Q"
+		) {
+			advanceSouldragon(states, souldragonOwner.character.id, action.actionValue, 1);
+		}
+
+		const odeSelection = input.odeSelections[action.key];
+		if (
+			action.isMemospriteAction &&
+			odeSelection?.targetId === souldragonOwner.character.id
+		) {
+			emitImmediateSouldragonAction(
+				states,
+				souldragonOwner.character.id,
+				actions,
+				action.actionValue,
+				action.key,
+			);
+		}
+
+		const attacker = input.characters.find(
+			(character) => character.id === action.characterId,
+		);
+		const isForcedNonAttack =
+			action.characterId === souldragonOwner.character.id && action.skill === "E";
+		if (
+			attacker?.kind === "角色" &&
+			action.characterId === currentBondmateTarget &&
+			!isForcedNonAttack &&
+			input.attackDisabled?.[action.key] !== true
+		) {
+			// 境界内双字符技能码（如 EW、EA）视为两次攻击，龙灵提前两次
+			const domainDoubleAttack =
+				action.isDomainAction && action.skill.length === 2;
+			const souldragonAdvance = domainDoubleAttack ? 0.3 : 0.15;
+			advanceSouldragon(
+				states,
+				souldragonOwner.character.id,
+				action.actionValue,
+				souldragonAdvance,
+			);
+		}
+	};
+	actions = new Proxy(rawActions, {
+		get(target, property, receiver) {
+			if (property !== "push") return Reflect.get(target, property, receiver);
+			return (...items: GeneratedAction[]) => {
+				for (const item of items) {
+					Array.prototype.push.call(target, item);
+					handleRecordedAction(item);
+				}
+				return target.length;
+			};
+		},
+	});
 	const activeOdes = new Map<string, ActiveOdeState[]>();
 
 	// ── 阿哈时刻：检测欢愉角色 ──
@@ -188,7 +277,7 @@ export function simulateActions(
 			state.character.hasCastoriceTechnique &&
 			!state.polluxOnField
 		) {
-			summonPollux(states, state.character, 0);
+			summonPollux(states, state.character, 0, { sameActionPriority: -1 });
 			if (state.character.eidolon >= 2) {
 				const castoriceIndex = states.findIndex(
 					(candidate) => candidate.character.id === state.character.id,
@@ -209,6 +298,16 @@ export function simulateActions(
 			)
 		) {
 			summonGarmentmakerState(states, state.character, 0);
+		}
+		if (
+			isCharacterTarget(state.character) &&
+			hasEvernightEvey(state.character.name) &&
+			!state.eveyOnField
+		) {
+			summonEveyState(states, state.character, 0, {
+				immediate: true,
+				sameActionPriority: -2,
+			});
 		}
 	}
 
@@ -406,6 +505,7 @@ export function simulateActions(
 		if (casterIndex === -1) return;
 		const caster = states[casterIndex];
 		const casterSpeed = caster.currentSpeed;
+		caster.lastActionValue = actionValue;
 		actions.push({
 			key: interruptKey,
 			characterId: caster.character.id,
@@ -453,6 +553,16 @@ export function simulateActions(
 		) {
 			summonMemeState(states, caster.character, actionValue);
 			handleMemoryTrailblazerQ(states[casterIndex]);
+		}
+		if (
+			isCharacterTarget(caster.character) &&
+			hasEvernightEvey(caster.character.name) &&
+			!caster.eveyOnField
+		) {
+			summonEveyState(states, caster.character, actionValue, {
+				immediate: true,
+				sameActionPriority: -2,
+			});
 		}
 		const teamAdvance = getTeamAdvanceOnUltimate(caster.character);
 		if (teamAdvance > 0) {
@@ -563,7 +673,9 @@ export function simulateActions(
 			hasCastoriceSummon(caster.character.name) &&
 			!caster.polluxOnField
 		) {
-			summonPollux(states, caster.character, actionValue);
+			summonPollux(states, caster.character, actionValue, {
+				sameActionPriority: -1,
+			});
 			if (caster.character.eidolon >= 2) {
 				applyCastoriceE2Pull(states, casterIndex, actionValue);
 			}
@@ -708,6 +820,71 @@ export function simulateActions(
 		}
 	};
 
+	const emitEvernightSelfDestructAction = (
+		sourceKey: string,
+		actionValue: number,
+	) => {
+		const eveyIndex = states.findIndex((state) => state.isEveyAction);
+		if (eveyIndex === -1) return;
+		const eveyState = states[eveyIndex];
+		const ownerId = eveyState.character.id.replace("-evey", "");
+		const ownerState = states.find((state) => state.character.id === ownerId);
+		if (!ownerState?.eveyOnField) return;
+		const sourceResourceValue = input.resourceValues?.[sourceKey]?.["忆质"];
+		const parsed = Number.parseFloat(sourceResourceValue ?? "");
+		const hasNumericValue =
+			(sourceResourceValue ?? "").trim() !== "" && Number.isFinite(parsed);
+		const isAutoThresholdBurst = hasNumericValue && parsed >= 16;
+		const isBlockedByInsufficient = hasNumericValue && parsed < 16;
+		const isManualSelfDestruct =
+			!hasNumericValue && input.evernightSelfDestructToggles?.[sourceKey] === true;
+		if (isBlockedByInsufficient) return;
+		if (!isAutoThresholdBurst && !isManualSelfDestruct) return;
+
+		const key =
+			eveyState.eveyGeneration && eveyState.eveyGeneration > 1
+				? `${eveyState.character.id}-${eveyState.actionNo}-g${eveyState.eveyGeneration}`
+				: `${eveyState.character.id}-${eveyState.actionNo}`;
+		const resolvedActionValue = toNonNegativeNumber(
+			input.overrides[key],
+			actionValue,
+		);
+		const interrupts = input.ultInterrupts[key] ?? [];
+		for (let ai = 0; ai < interrupts.length; ai++) {
+			const int = interrupts[ai];
+			if (int.timing !== "before") continue;
+			emitSpecialInterruptAction(
+				`${key}-interrupt-${ai}`,
+				int,
+				resolvedActionValue,
+			);
+		}
+		eveyState.nextActionValue = resolvedActionValue;
+		handleEveyAction(
+			states,
+			eveyIndex,
+			actions,
+			key,
+			resolvedActionValue,
+			"E" as SkillCode,
+			{
+				lockedSkill: true,
+				selfDestruct: !isAutoThresholdBurst,
+				thresholdBurst: isAutoThresholdBurst,
+				resourceValue: sourceResourceValue,
+			},
+		);
+		for (let ai = 0; ai < interrupts.length; ai++) {
+			const int = interrupts[ai];
+			if (int.timing !== "after") continue;
+			emitSpecialInterruptAction(
+				`${key}-interrupt-${ai}`,
+				int,
+				resolvedActionValue,
+			);
+		}
+	};
+
 	while (states.length > 0 && guard < 2000) {
 		guard += 1;
 
@@ -716,6 +893,10 @@ export function simulateActions(
 			const key = state.isGarmentmakerState &&
 				state.garmentmakerGeneration
 				? `${state.character.id}-g${state.garmentmakerGeneration}-${state.actionNo}`
+				: state.isEveyAction &&
+					  state.eveyGeneration &&
+					  state.eveyGeneration > 1
+					? `${state.character.id}-${state.actionNo}-g${state.eveyGeneration}`
 				: state.isPolluxAction &&
 					  state.polluxGeneration &&
 					  state.polluxGeneration > 1
@@ -731,15 +912,27 @@ export function simulateActions(
 			};
 		});
 
-		// Sort by action value, then by character id (@av0 always first at same AV)
+		// Sort by action value, then by same-AV priority/state order (@av0 always first).
 		candidates.sort((a, b) => {
 			if (a.actionValue !== b.actionValue) return a.actionValue - b.actionValue;
 			const aId = states[a.stateIndex].character.id;
 			const bId = states[b.stateIndex].character.id;
-			// @av0 always precedes any other target at the same AV
+			// @av0 is a fixed sentinel and always precedes other AV=0 actions.
 			if (aId === "@av0") return -1;
 			if (bId === "@av0") return 1;
-			return aId.localeCompare(bId);
+			const aPriority = states[a.stateIndex].sameActionPriority ?? 0;
+			const bPriority = states[b.stateIndex].sameActionPriority ?? 0;
+			if (aPriority !== bPriority) return aPriority - bPriority;
+			const aImmediatePollux = Boolean(
+				states[a.stateIndex].isImmediatePolluxSummon,
+			);
+			const bImmediatePollux = Boolean(
+				states[b.stateIndex].isImmediatePolluxSummon,
+			);
+			if (aImmediatePollux !== bImmediatePollux) {
+				return aImmediatePollux ? -1 : 1;
+			}
+			return a.stateIndex - b.stateIndex;
 		});
 
 		const next = candidates[0];
@@ -752,6 +945,10 @@ export function simulateActions(
 		const character = states[stateIndex].character;
 		const actionNo = states[stateIndex].actionNo;
 		const shouldClearAdvanceBlock = states[stateIndex].blockNextAdvance;
+		states[stateIndex].lastActionValue = actionValue;
+		// Same-AV priorities order only the queued next action. Once selected,
+		// the state returns to normal scheduling priority.
+		states[stateIndex].sameActionPriority = 0;
 
 		// ── Ica 死亡检查（风堇 A/E 和 Ica 额外回合自身除外） ──
 		if (
@@ -850,6 +1047,16 @@ export function simulateActions(
 			continue;
 		}
 
+		if (states[stateIndex].isSouldragonAction) {
+			emitSouldragonAction(
+				states[stateIndex],
+				actions,
+				actionValue,
+				key,
+			);
+			continue;
+		}
+
 		// ── 流萤完全燃烧倒计时行动 ──
 		if (isFireflyCountdownAction(states[stateIndex])) {
 			handleFireflyCountdownAction(
@@ -914,6 +1121,42 @@ export function simulateActions(
 				if (int.timing !== "after") continue;
 				emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, actionValue);
 			}
+			emitEvernightSelfDestructAction(key, actionValue);
+			continue;
+		}
+
+		if (states[stateIndex].isEveyAction) {
+			const eveyInterrupts = input.ultInterrupts[key] ?? [];
+			for (let ai = 0; ai < eveyInterrupts.length; ai++) {
+				const int = eveyInterrupts[ai];
+				if (int.timing !== "before") continue;
+				emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, actionValue);
+			}
+			handleEveyAction(
+				states,
+				stateIndex,
+				actions,
+				key,
+				actionValue,
+				(input.skillOverrides[key] ?? "") as SkillCode,
+				{
+					resourceValue: input.resourceValues?.[key]?.["忆质"],
+				},
+			);
+			emitMemeAdvanceAction({
+				input,
+				actions,
+				states,
+				sourceKey: key,
+				actionValue,
+				activeOdes,
+			});
+			for (let ai = 0; ai < eveyInterrupts.length; ai++) {
+				const int = eveyInterrupts[ai];
+				if (int.timing !== "after") continue;
+				emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, actionValue);
+			}
+			emitEvernightSelfDestructAction(key, actionValue);
 			continue;
 		}
 
@@ -1054,6 +1297,7 @@ export function simulateActions(
 				actionValue,
 				activeOdes,
 			});
+			emitEvernightSelfDestructAction(key, actionValue);
 			continue;
 		}
 
@@ -1189,6 +1433,8 @@ export function simulateActions(
 			: skill;
 		const usesUltimate = skill.includes("Q");
 		const qIsFront = skill.length > 1 && skill.startsWith("Q");
+		const hasEvernightNextTurnSpeedBuff =
+			(states[stateIndex].evernightNextTurnSpeedBonus ?? 0) > 0;
 		const actionSpeed = states[stateIndex].currentSpeed;
 
 		const interrupts = input.ultInterrupts[key] ?? [];
@@ -1204,6 +1450,7 @@ export function simulateActions(
 			if (casterIndex === -1) return;
 			const caster = states[casterIndex];
 			const casterSpeed = caster.currentSpeed;
+			caster.lastActionValue = actionValue;
 			actions.push({
 				key: `${key}-interrupt-${idx}`,
 				characterId: caster.character.id,
@@ -1348,10 +1595,22 @@ export function simulateActions(
 				hasCastoriceSummon(caster.character.name) &&
 				!caster.polluxOnField
 			) {
-				summonPollux(states, caster.character, actionValue);
+				summonPollux(states, caster.character, actionValue, {
+					sameActionPriority: -1,
+				});
 				if (caster.character.eidolon >= 2) {
 					applyCastoriceE2Pull(states, casterIndex, actionValue);
 				}
+			}
+			if (
+				isCharacterTarget(caster.character) &&
+				hasEvernightEvey(caster.character.name) &&
+				!caster.eveyOnField
+			) {
+				summonEveyState(states, caster.character, actionValue, {
+					immediate: true,
+					sameActionPriority: -2,
+				});
 			}
 			// 插队大招触发白厄境界（改为逐动生成）
 			if (hasSkillEffect(caster.character.name, "W", "counterW")) {
@@ -1585,6 +1844,7 @@ export function simulateActions(
 					actions,
 					actionValue,
 					activeOdes,
+					excludeSelf: qIsFront,
 				});
 			}
 		}
@@ -1656,6 +1916,27 @@ export function simulateActions(
 					}
 				}
 				currentMeritTarget = eTarget;
+			}
+		}
+
+		if (hasEvernightNextTurnSpeedBuff) {
+			consumeEvernightSpeedBuff(states[stateIndex]);
+		}
+
+		if (
+			souldragonOwner &&
+			character.id === souldragonOwner.character.id &&
+			resolvedSkill.includes("E")
+		) {
+			const nextBondmate = getSkillTarget(input, key, character);
+			const validTarget = states.find(
+				(state) =>
+					state.character.id === nextBondmate &&
+					state.character.kind === "角色",
+			);
+			if (validTarget && nextBondmate !== currentBondmateTarget) {
+				currentBondmateTarget = nextBondmate;
+				summonSouldragonState(states, souldragonOwner.character, actionValue);
 			}
 		}
 
@@ -1842,6 +2123,8 @@ export function simulateActions(
 										((entity.isGarmentmakerState &&
 											entity.garmentmakerOwnerId === targetId) ||
 											(entity.isMemeState && entity.memeOwnerId === targetId) ||
+											(entity.isEveyAction &&
+												entity.character.id === `${targetId}-evey`) ||
 											(entity.isPolluxAction &&
 												entity.character.id === `${targetId}-pollux`));
 									if (isOwnedSummon && !entity.blockNextAdvance) {
@@ -1883,6 +2166,18 @@ export function simulateActions(
 					(skill.includes("E") || usesUltimate)
 				) {
 					summonMemeState(states, character, actionValue);
+				}
+
+				if (
+					isCharacterTarget(character) &&
+					hasEvernightEvey(character.name) &&
+					(resolvedSkill.includes("E") || usesUltimate) &&
+					!states[stateIndex].eveyOnField
+				) {
+					summonEveyState(states, character, actionValue, {
+						immediate: true,
+						sameActionPriority: -2,
+					});
 				}
 
 				// Memory Trailblazer Q: increment epic
@@ -1956,10 +2251,13 @@ export function simulateActions(
 					usesUltimate &&
 					!states[stateIndex].polluxOnField
 				) {
-					summonPollux(states, character, actionValue);
-					// E2: 自拉条 100%，排在死龙之前
+					summonPollux(states, character, actionValue, {
+						sameActionPriority: -1,
+					});
 					if (character.eidolon >= 2) {
-						applyCastoriceE2Pull(states, stateIndex, actionValue);
+						applyCastoriceE2Pull(states, stateIndex, actionValue, {
+							queuePolluxAtCurrentAction: true,
+						});
 					}
 				}
 
@@ -2113,6 +2411,7 @@ export function simulateActions(
 			actionValue,
 			activeOdes,
 		});
+		emitEvernightSelfDestructAction(key, actionValue);
 	}
 
 	return actions;

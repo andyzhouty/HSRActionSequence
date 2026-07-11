@@ -232,6 +232,74 @@ describe("Cyrene (昔涟)", () => {
 		expect(memosprite?.displayName).toBe("德谬歌");
 	});
 
+	it("6魂首次大招的100%拉条会作用于昔涟自身及同AV已行动角色", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("ally", "队友", 100),
+					character("cyrene", "昔涟", 100, { eidolon: 6 }),
+				],
+				skillOverrides: skills({
+					"cyrene-1": "AQ",
+				}),
+				limit: 220,
+			}),
+		);
+
+		const allyFirst = actions.find((action) => action.key === "ally-1");
+		const cyreneFirst = actions.find((action) => action.key === "cyrene-1");
+		const allySecond = actions.find((action) => action.key === "ally-2");
+		const cyreneSecond = actions.find((action) => action.key === "cyrene-2");
+
+		expect(allyFirst?.actionValue).toBeCloseTo(100, 4);
+		expect(cyreneFirst?.actionValue).toBeCloseTo(100, 4);
+		expect(cyreneSecond?.actionValue).toBeCloseTo(100, 4);
+		expect(allySecond?.actionValue).toBeCloseTo(100.0001, 4);
+	});
+
+	it("6魂昔涟 QE 时自身不吃首次 100% 拉条", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("cyrene", "昔涟", 200, { eidolon: 6 })],
+				skillOverrides: skills({
+					"cyrene-1": "QE",
+				}),
+				limit: 120,
+			}),
+		);
+
+		const cyreneSecond = actions.find(
+			(action) => action.key === "cyrene-2",
+		);
+		expect(cyreneSecond?.actionValue).toBeCloseTo(100, 4);
+	});
+
+	it("德谬歌不能选择昔涟自身作为颂诗目标", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("cyrene", "昔涟", 100)],
+				skillOverrides: skills({
+					"cyrene-1": "AQ",
+				}),
+				odeSelections: {
+					"cyrene-1-memosprite-Q": {
+						odeCode: "generic",
+						targetId: "cyrene",
+					},
+				},
+				limit: 110,
+			}),
+		);
+
+		const memosprite = actions.find(
+			(action) => action.key === "cyrene-1-memosprite-Q",
+		);
+		expect(memosprite).toBeDefined();
+		expect(
+			actions.some((action) => action.isOdeExtraAction),
+		).toBe(false);
+	});
+
 	it("romance ode: heart shows battle-long, battery on first non-Q action", () => {
 		const actions = simulateActions(
 			input({

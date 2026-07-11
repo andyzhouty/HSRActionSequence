@@ -99,6 +99,12 @@ export function validateActionSkillInput(params: {
 			return "死龙只能填写 A、E 或 EA";
 		}
 	}
+	if (action.isEveyAction) {
+		const allowedEveySkills = new Set(["", "A", "E"]);
+		if (!allowedEveySkills.has(nextSkill)) {
+			return "长夜只能填写 A、E，或留空按 A 处理";
+		}
+	}
 	if (action.isDomainAction && !allowedDomainSkills.has(nextSkill)) {
 		return `白厄境界内只能填写 ${domainRule.allowedSkills
 			.filter(Boolean)
@@ -166,6 +172,7 @@ export function validateActionSkillInput(params: {
 	}
 	if (
 		!action.isPolluxAction &&
+		!action.isEveyAction &&
 		!action.isDomainAction &&
 		!canUseSkillCode(character, nextSkill)
 	) {

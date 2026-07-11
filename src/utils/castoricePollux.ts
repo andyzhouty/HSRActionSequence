@@ -19,6 +19,8 @@ export interface CastoriceActionState {
 	polluxGeneration?: number;
 	polluxSummonGeneration?: number;
 	isPolluxAction?: boolean;
+	isImmediatePolluxSummon?: boolean;
+	sameActionPriority?: number;
 }
 
 // ── 判断 ──
@@ -56,6 +58,9 @@ export function summonPollux(
 	states: CastoriceActionState[],
 	owner: CharacterConfig,
 	actionValue: number,
+	options?: {
+		sameActionPriority?: number;
+	},
 ) {
 	const polluxId = `${owner.id}-pollux`;
 	const rule = getPolluxRule(owner.name);
@@ -95,9 +100,11 @@ export function summonPollux(
 		nextActionValue: actionValue,
 		blockNextAdvance: false,
 		isPolluxAction: true,
+		isImmediatePolluxSummon: true,
 		polluxOnField: undefined,
 		polluxCount: 0,
 		polluxGeneration: nextGeneration,
+		sameActionPriority: options?.sameActionPriority,
 	} as unknown as CastoriceActionState);
 }
 
@@ -134,6 +141,9 @@ export function handlePolluxAction(
 		memospriteOwnerId: ownerId,
 		isPolluxAction: true,
 	});
+
+	polluxState.sameActionPriority = 0;
+	polluxState.isImmediatePolluxSummon = false;
 
 	// 判断是否离场：纯 E（不是 EA）或已达最大回合数
 	const isDismissSkill = rule ? skill === rule.dismissSkill : skill === "E";
@@ -186,16 +196,26 @@ export function applyCastoriceE2Pull(
 	states: CastoriceActionState[],
 	castoriceIndex: number,
 	actionValue: number,
+	options?: {
+		queuePolluxAtCurrentAction?: boolean;
+	},
 ) {
 	const castorice = states[castoriceIndex];
-	// 自拉条 100%，不过 Q 的 AV
 	castorice.nextActionValue = actionValue;
 
-	// 确保死龙排在遐蝶之后（同 AV 但排序更后）
 	const polluxIndex = states.findIndex(
 		(s) => s.isPolluxAction && s.character.id.endsWith("-pollux"),
 	);
 	if (polluxIndex >= 0) {
-		states[polluxIndex].nextActionValue = actionValue + 0.0001;
+		if (options?.queuePolluxAtCurrentAction) {
+			// A normal Q queues two normal actions at the same AV: Castorice first,
+			// then Pollux, before unrelated normal turns.
+			castorice.sameActionPriority = -2;
+			states[polluxIndex].nextActionValue = actionValue;
+			states[polluxIndex].sameActionPriority = -1;
+		} else {
+			// Technique and interrupt Q keep their existing display offset.
+			states[polluxIndex].nextActionValue = actionValue + 0.0001;
+		}
 	}
 }

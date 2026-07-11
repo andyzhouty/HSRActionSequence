@@ -10,6 +10,7 @@ import {
 	getMemeAdvanceRule,
 	getTargetDefaultName,
 	hasSkillEffect,
+	isLockedResourceNameForCharacters,
 	isCharacterTarget,
 	limitPresets,
 	maxResources,
@@ -141,25 +142,43 @@ export default function ActionPanel() {
 					</div>
 					<div className="grid grid-cols-1 gap-2">
 						<div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-2">
-							{ctx.resources.map((resource, index) => (
-								<div
-									key={`resource-editor-${resource}`}
-									className="grid grid-cols-[minmax(0,1fr)_64px] gap-2"
-								>
-									<TextInput
-										value={resource}
-										placeholder="资源名称"
-										onChange={(value) => ctx.updateResource(index, value)}
-									/>
-									<button
-										type="button"
-										onClick={() => ctx.removeResource(index)}
-										className="h-10 rounded-lg border border-gray-600 bg-gray-800 px-2 text-xs text-gray-200 whitespace-nowrap hover:bg-gray-700"
+							{ctx.resources.map((resource, index) => {
+								const isLocked = isLockedResourceNameForCharacters(
+									resource,
+									ctx.characters,
+								);
+								return (
+									<div
+										key={`resource-editor-${resource}`}
+										className="grid grid-cols-[minmax(0,1fr)_64px] gap-2"
 									>
-										删除
-									</button>
-								</div>
-							))}
+										<TextInput
+											value={resource}
+											placeholder="资源名称"
+											disabled={isLocked}
+											title={
+												isLocked
+													? "长夜月在场时，【忆质】固定存在且不可修改"
+													: undefined
+											}
+											onChange={(value) => ctx.updateResource(index, value)}
+										/>
+										{isLocked ? (
+											<div className="flex h-10 items-center justify-center rounded-lg border border-gray-700 bg-gray-900 px-2 text-xs text-gray-500">
+												固定
+											</div>
+										) : (
+											<button
+												type="button"
+												onClick={() => ctx.removeResource(index)}
+												className="h-10 rounded-lg border border-gray-600 bg-gray-800 px-2 text-xs text-gray-200 whitespace-nowrap hover:bg-gray-700"
+											>
+												删除
+											</button>
+										)}
+									</div>
+								);
+							})}
 							<button
 								type="button"
 								onClick={ctx.addResource}
@@ -494,6 +513,9 @@ function MenuContent() {
 
 			{/* Meme kill section */}
 			<MemeKillSection />
+
+			{/* Evernight self-destruction section */}
+			<EvernightSelfDestructSection />
 		</>
 	);
 }
@@ -591,21 +613,47 @@ function isMemospriteAvailableForAction(
 	const isGarmentmaker = memosprite.id.endsWith("-garmentmaker");
 	const isMeme = memosprite.id.endsWith("-meme");
 	const isCyreneMemosprite = memosprite.id.endsWith("-memosprite");
+	const isEvey = memosprite.id.endsWith("-evey");
 
 	// 非战内召唤的忆灵始终可用
-	if (!isGarmentmaker && !isMeme && !isCyreneMemosprite) return true;
+	if (!isGarmentmaker && !isMeme && !isCyreneMemosprite && !isEvey) return true;
 
 	const suffix = isGarmentmaker
 		? "-garmentmaker"
 		: isMeme
 			? "-meme"
-			: "-memosprite";
+			: isCyreneMemosprite
+				? "-memosprite"
+				: "-evey";
 	const ownerId = memosprite.id.slice(0, -suffix.length);
 
 	const selectedIndex = orderedActions.findIndex(
 		(a) => a.key === currentActionKey,
 	);
-	if (selectedIndex <= 0) return false;
+	if (selectedIndex <= 0) return isEvey;
+
+	if (isEvey) {
+		let onField = true;
+		for (const action of orderedActions.slice(0, selectedIndex)) {
+			if (
+				action.characterId === ownerId &&
+				!action.isDomainAction &&
+				!action.isMemospriteAction
+			) {
+				const skill = ctx.skillOverrides[action.key] ?? action.skill;
+				if (!onField && (skill.includes("E") || skill.includes("Q"))) {
+					onField = true;
+				}
+			}
+			if (action.characterId === `${ownerId}-evey`) {
+				const skill = ctx.skillOverrides[action.key] ?? action.skill;
+				if ((skill || "A") === "E") {
+					onField = false;
+				}
+			}
+		}
+		return onField;
+	}
 
 	return orderedActions.slice(0, selectedIndex).some((action) => {
 		if (action.characterId !== ownerId) return false;
@@ -656,6 +704,40 @@ function DomainEndSection() {
 			</span>
 		</div>
 	);
+}
+
+function hasEveyOnFieldBeforeAction(
+	ctx: ReturnType<typeof useActionSequence>,
+	actionKey: string,
+) {
+	const owner = ctx.characters.find((character) =>
+		hasSkillEffect(character.name, "E", "summonEvey"),
+	);
+	if (!owner) return false;
+	if (actionKey.startsWith(`${owner.id}-evey-`)) return true;
+	const orderedActions = getDisplayOrderedActions(ctx.actions);
+	const selectedIndex = orderedActions.findIndex((action) => action.key === actionKey);
+	if (selectedIndex === -1) return false;
+	let onField = true;
+	for (const action of orderedActions.slice(0, selectedIndex)) {
+		if (
+			action.characterId === owner.id &&
+			!action.isDomainAction &&
+			!action.isMemospriteAction
+		) {
+			const skill = ctx.skillOverrides[action.key] ?? action.skill;
+			if (!onField && (skill.includes("E") || skill.includes("Q"))) {
+				onField = true;
+			}
+		}
+		if (action.characterId === `${owner.id}-evey`) {
+			const skill = ctx.skillOverrides[action.key] ?? action.skill;
+			if ((skill || "A") === "E") {
+				onField = false;
+			}
+		}
+	}
+	return onField;
 }
 
 function AssistCancelSection() {
@@ -1180,6 +1262,77 @@ function MemeKillSection() {
 					此行动后迷迷死亡，记忆主 25% 自拉条
 				</span>
 			)}
+		</div>
+	);
+}
+
+function EvernightSelfDestructSection() {
+	const ctx = useActionSequence();
+	const selectedKeys = [...ctx.selectedActionKeys];
+	if (selectedKeys.length === 0) return null;
+	const firstKey = selectedKeys[0];
+	const firstAction = ctx.actions.find((action) => action.key === firstKey);
+	if (!firstAction) return null;
+
+	const owner = ctx.characters.find((character) =>
+		hasSkillEffect(character.name, "E", "summonEvey"),
+	);
+	if (!owner) return null;
+	if (firstAction.characterId === "@av0" || firstAction.isDomainAction) return null;
+	if (!hasEveyOnFieldBeforeAction(ctx, firstKey)) return null;
+
+	const rawValue = ctx.resourceValues[firstKey]?.["忆质"] ?? "";
+	const parsedValue = Number.parseFloat(rawValue);
+	const hasNumericValue = rawValue.trim() !== "" && Number.isFinite(parsedValue);
+	const isAutoSelfDestruct = hasNumericValue && parsedValue >= 16;
+	const isBlockedByInsufficient = hasNumericValue && parsedValue < 16;
+	const isManualSelfDestruct =
+		!hasNumericValue && ctx.evernightSelfDestructToggles[firstKey] === true;
+	const isOn = isAutoSelfDestruct || isManualSelfDestruct;
+	const hint = isAutoSelfDestruct
+		? "当前忆质 >= 16，长夜会在本回合结束后自动以锁定 E 立刻行动并离场"
+		: isBlockedByInsufficient
+			? "当前忆质 < 16，视为误操作，本次不会自爆"
+			: isOn
+				? "本回合结束后长夜会以锁定 E 立刻行动并离场"
+				: "未填写忆质时，可通过右键手动标记自爆";
+	return (
+		<div className="flex flex-wrap items-center gap-3 border-t border-gray-700 pt-3">
+			<span className="whitespace-nowrap text-sm text-gray-300">
+				长夜自爆：
+			</span>
+			<button
+				type="button"
+				disabled={isAutoSelfDestruct || isBlockedByInsufficient}
+				onClick={() => {
+					if (isOn) {
+						ctx.setEvernightSelfDestructToggles((prev) => {
+							const next = { ...prev };
+							delete next[firstKey];
+							return next;
+						});
+					} else {
+						ctx.setEvernightSelfDestructToggles((prev) => ({
+							...prev,
+							[firstKey]: true,
+						}));
+					}
+				}}
+				className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+					isOn
+						? "border-red-500/70 bg-red-500/20 text-red-200 hover:bg-red-500/30"
+						: "border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+				} ${isAutoSelfDestruct || isBlockedByInsufficient ? "cursor-not-allowed opacity-70" : ""}`}
+			>
+				{isAutoSelfDestruct ? "已自爆" : isOn ? "已标记" : "未标记"}
+			</button>
+			<span
+				className={`text-xs ${
+					isBlockedByInsufficient ? "text-amber-300" : "text-gray-400"
+				}`}
+			>
+				{hint}
+			</span>
 		</div>
 	);
 }

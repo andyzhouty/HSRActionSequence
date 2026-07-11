@@ -3,6 +3,7 @@ import {
 	defaultCharacters,
 	defaultResources,
 	formatEditableNumber,
+	normalizeResourcesForCharacters,
 	limitPresets,
 	maxResources,
 	type OdeSelection,
@@ -110,13 +111,17 @@ export type NormalizedSavedData = SavedData & {
 	castoriceKillToggles: Record<string, boolean>;
 	icaKillToggles: Record<string, boolean>;
 	memeKillToggles: Record<string, boolean>;
+	evernightSelfDestructToggles: Record<string, boolean>;
+	evernightThresholdBurstToggles: Record<string, boolean>;
 	hyacineE2Active: boolean;
+	attackDisabled: Record<string, boolean>;
 };
 
 export function toNormalizedSavedData(
 	parsed: Partial<SavedData>,
 ): NormalizedSavedData {
 	const savedDisplayedActionLimit = getSavedDisplayedActionLimit(parsed);
+	const normalizedCharacters = toNormalizedCharacters(parsed);
 	return {
 		limitPreset:
 			parsed.limitPreset && limitPresets.includes(parsed.limitPreset)
@@ -126,10 +131,13 @@ export function toNormalizedSavedData(
 		displayedLimit: String(
 			parsed.displayedLimit ?? getSavedDisplayedLimitFallback(parsed),
 		),
-		characters: toNormalizedCharacters(parsed),
-		resources: Array.isArray(parsed.resources)
-			? parsed.resources.slice(0, maxResources).map(String)
-			: [],
+		characters: normalizedCharacters,
+		resources: normalizeResourcesForCharacters(
+			Array.isArray(parsed.resources)
+				? parsed.resources.slice(0, maxResources).map(String)
+				: [],
+			normalizedCharacters,
+		),
 		overrides: clampOverridesToDisplayedLimit(
 			parsed.overrides,
 			savedDisplayedActionLimit,
@@ -149,9 +157,14 @@ export function toNormalizedSavedData(
 		castoriceKillToggles: parsed.castoriceKillToggles ?? {},
 		icaKillToggles: parsed.icaKillToggles ?? {},
 		memeKillToggles: parsed.memeKillToggles ?? {},
+		evernightSelfDestructToggles: parsed.evernightSelfDestructToggles ?? {},
+		evernightThresholdBurstToggles:
+			parsed.evernightThresholdBurstToggles ?? {},
 		hyacineE2Active: parsed.hyacineE2Active ?? true,
 		meritTarget: parsed.meritTarget || undefined,
 		dancePartner: parsed.dancePartner || undefined,
+		bondmateTarget: parsed.bondmateTarget || undefined,
+		attackDisabled: parsed.attackDisabled ?? {},
 	};
 }
 
@@ -178,7 +191,10 @@ export function createDefaultSavedData(): NormalizedSavedData {
 		castoriceKillToggles: {},
 		icaKillToggles: {},
 		memeKillToggles: {},
+		evernightSelfDestructToggles: {},
+		evernightThresholdBurstToggles: {},
 		hyacineE2Active: true,
+		attackDisabled: {},
 	});
 }
 

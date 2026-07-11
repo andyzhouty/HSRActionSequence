@@ -53,18 +53,24 @@ export function TextInput({
 	value,
 	onChange,
 	placeholder,
+	disabled = false,
+	title,
 }: {
 	value: string;
 	onChange: (value: string) => void;
 	placeholder?: string;
+	disabled?: boolean;
+	title?: string;
 }) {
 	return (
 		<input
 			type="text"
 			value={value}
 			placeholder={placeholder}
+			disabled={disabled}
+			title={title}
 			onChange={(event) => onChange(event.target.value)}
-			className="h-10 w-full rounded-lg border border-gray-600 bg-gray-700 px-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+			className="h-10 w-full rounded-lg border border-gray-600 bg-gray-700 px-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
 		/>
 	);
 }

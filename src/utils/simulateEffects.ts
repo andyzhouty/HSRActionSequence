@@ -214,7 +214,8 @@ export function shouldTriggerE6TeamAdvance24(Q_counter: number): boolean {
 // ── 昔涟 E6 拉条 ──
 
 /** 昔涟/德谬歌 Q 后的完整处理：Q_counter + 强化 Q + E6
- *  @param isInterrupt - 若为 true（插队情况），E6 首次大时不拉昔涟自身 */
+ *  @param isInterrupt - 插队 Q 不拉昔涟自身
+ *  @param excludeSelf - Q 在前（QE/QA）时，昔涟自身的拉条无效 */
 export function handleCyrenePostUltimate({
 	states,
 	casterIndex,
@@ -223,6 +224,7 @@ export function handleCyrenePostUltimate({
 	actionValue,
 	activeOdes,
 	isInterrupt = false,
+	excludeSelf = false,
 }: {
 	states: ActionState[];
 	casterIndex: number;
@@ -231,6 +233,7 @@ export function handleCyrenePostUltimate({
 	actionValue: number;
 	activeOdes: Map<string, ActiveOdeState[]>;
 	isInterrupt?: boolean;
+	excludeSelf?: boolean;
 }) {
 	void activeOdes;
 	const cyreneRule = getCyreneUltimateRule(character.name);
@@ -263,10 +266,15 @@ export function handleCyrenePostUltimate({
 	}
 	// E6 首次大：全队 100% 拉条（Q_counter = 1 时）
 	if (character.eidolon >= 6 && qCounter === 1) {
-		// 插队情况不拉昔涟自身（若在昔涟回合之前的插队 Q，自身拉条无效）
-		applyCyreneE6FirstUltimatePull(states, casterIndex, actionValue, isInterrupt);
-		// 标记已拉条，防止后续正常 nextAV 计算覆盖
-		states[casterIndex].e6FirstUltimatePulled = true;
+		const shouldExcludeSelf = isInterrupt || excludeSelf;
+		applyCyreneE6FirstUltimatePull(
+			states,
+			casterIndex,
+			actionValue,
+			shouldExcludeSelf,
+		);
+		// 只有自身确实被拉到当前 AV 时，才跳过后续正常间隔计算。
+		states[casterIndex].e6FirstUltimatePulled = !shouldExcludeSelf;
 	}
 }
 
@@ -278,12 +286,22 @@ export function applyCyreneE6FirstUltimatePull(
 	actionValue: number,
 	excludeSelf = false,
 ) {
-	// 全队（角色+忆灵）拉到昔涟 Q 的 AV，按知更鸟方式排列
+	// 普通首次 Q 时，昔涟自身已经完成本次行动，必须占据拉条后的第一动。
+	// 不把自身混入旧 AV 排序，否则同 AV 的其他状态可能占用 rank 0。
+	if (!excludeSelf) {
+		const cyrene = states[cyreneIndex];
+		if (cyrene && !cyrene.blockNextAdvance) {
+			cyrene.nextActionValue = actionValue;
+		}
+	}
+
+	// 其余队友（角色+忆灵）按拉条前的相对 AV 排列。
 	const allyOrder = states
 		.map((s, i) => ({ index: i, value: s.nextActionValue }))
 		.filter(
 			({ index }) =>
 				isAllyTarget(states[index].character.kind) &&
+				index !== cyreneIndex &&
 				!(excludeSelf && index === cyreneIndex),
 		)
 		.sort((a, b) => {
@@ -294,7 +312,8 @@ export function applyCyreneE6FirstUltimatePull(
 	for (let rank = 0; rank < allyOrder.length; rank++) {
 		const target = states[allyOrder[rank].index];
 		if (target.blockNextAdvance) continue;
-		target.nextActionValue = actionValue + rank * 0.0001;
+		const rankOffset = excludeSelf ? 0 : 1;
+		target.nextActionValue = actionValue + (rank + rankOffset) * 0.0001;
 	}
 }
 
@@ -445,7 +464,7 @@ export function applyOdeSelection(
 	activeOdes: Map<string, ActiveOdeState[]>,
 	actionValue: number,
 ) {
-	if (!selection) return;
+	if (!selection || selection.targetId === cyrene.id) return;
 	const rule = getCyreneUltimateRule(cyrene.name);
 	const target = findTargetStateById(states, selection.targetId);
 	if (!target) return;
@@ -537,7 +556,7 @@ export function emitCyreneMemospriteAction({
 		actionValue,
 	);
 	const selection = input.odeSelections[memospriteKey];
-	const selectedTarget = selection
+	const selectedTarget = selection && selection.targetId !== cyrene.id
 		? findTargetStateById(states, selection.targetId)
 		: undefined;
 	const selectedOde =

@@ -807,6 +807,10 @@
         "月",
         "Evernight"
       ],
+      "effects": {
+        "E": "summonEvey",
+        "Q": "summonEvey"
+      },
       "path": "Remembrance"
     },
     {
@@ -818,8 +822,9 @@
         "DHPT",
         "Dan Heng • Permansor Terrae"
       ],
-      "passives": [
-        "firstActionAdvance40"
+		"passives": [
+			"firstActionAdvance40",
+			"souldragonBondmate"
       ],
       "path": "Preservation",
       "effects": {
@@ -1232,6 +1237,12 @@
       "eidolon4MaxStacks": 7,
       "aglaeaSpeedBonusRatioPerStack": 0.15,
       "retainedStacksAfterDismiss": 1
+    },
+    "summonEvey": {
+      "memospriteName": "长夜",
+      "memospriteSpeed": 160,
+      "keepSkill": "A",
+      "dismissSkill": "E"
     },
     "fireflyCombustion": {
       "countdownName": "完全燃烧倒计时",

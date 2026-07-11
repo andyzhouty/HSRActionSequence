@@ -278,6 +278,35 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		expect(mainE?.actionValue).toBeCloseTo(100, 1);
 	});
 
+	it("E2 EQ 后遐蝶和死龙依次紧邻 Q，先于无关角色的正常回合", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("castorice", "遐蝶", 100, { eidolon: 2 }),
+					character("ally", "队友", 100),
+				],
+				skillOverrides: skills({
+					"castorice-1": "EQ",
+				}),
+				limit: 150,
+			}),
+		);
+
+		const qIndex = actions.findIndex((action) => action.key === "castorice-1-q");
+		const polluxIndex = actions.findIndex(
+			(action) => action.key === "castorice-pollux-1",
+		);
+		const castoriceSecondIndex = actions.findIndex(
+			(action) => action.key === "castorice-2",
+		);
+		const allyIndex = actions.findIndex((action) => action.key === "ally-1");
+
+		expect(qIndex).toBeGreaterThan(-1);
+		expect(castoriceSecondIndex).toBe(qIndex + 1);
+		expect(polluxIndex).toBe(castoriceSecondIndex + 1);
+		expect(allyIndex).toBeGreaterThan(polluxIndex);
+	});
+
 	it("死龙 AV 间距正确（165 速 = 10000/165 ≈ 60.6 AV）", () => {
 		const actions = simulateActions(
 			input({
@@ -775,6 +804,37 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		expect(actions.find((a) => a.isPolluxAction)).toBeDefined();
 	});
 
+	it("死龙召唤时会排在同AV且序号更大的既有忆灵行动之前", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("aglaea", "阿格莱雅", 100),
+					character("castorice", "遐蝶", 100),
+				],
+				skillOverrides: skills({
+					"aglaea-1": "E",
+					"castorice-1": "AQ",
+				}),
+				overrides: {
+					"castorice-1": "211.1111",
+				},
+				limit: 220,
+			}),
+		);
+
+		const garmentmakerSecond = actions.find(
+			(action) => action.key === "aglaea-garmentmaker-g1-2",
+		);
+		const pollux = actions.find((action) => action.key === "castorice-pollux-1");
+		expect(garmentmakerSecond).toBeDefined();
+		expect(pollux).toBeDefined();
+		expect(pollux?.actionValue).toBeCloseTo(
+			garmentmakerSecond?.actionValue ?? 0,
+			4,
+		);
+		expect(actions.indexOf(pollux!)).toBeLessThan(actions.indexOf(garmentmakerSecond!));
+	});
+
 	it("星期日拉条遐蝶时会同步拉条死龙", () => {
 		const actions = simulateActions(
 			input({
@@ -1051,7 +1111,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		const sunday1WithTarget = withTarget.find((a) => a.key === "sunday-1");
 		const castorice3WithTarget = withTarget.find((a) => a.key === "castorice-3");
 		expect(sunday1WithTarget?.actionValue).toBeCloseTo(36.59, 2);
-		expect(castorice3WithTarget?.actionValue).toBeCloseTo(212.77, 2);
+		expect(castorice3WithTarget?.actionValue).toBeCloseTo(142.97, 2);
 
 		const castorice3QNoTargetIndex = withoutTarget.findIndex(
 			(a) => a.key === "castorice-3-q",
@@ -1067,8 +1127,17 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		expect(sunday1NoTarget?.actionValue).toBeCloseTo(36.59, 2);
 		expect(repolluxNoTarget).toBeDefined();
 		expect(repolluxNoTarget?.actionValue).toBeCloseTo(
-			(castorice3QNoTarget?.actionValue ?? 0) + 0.0001,
+			castorice3QNoTarget?.actionValue ?? 0,
 			4,
+		);
+		const castoricePulledActionIndex = withoutTarget.findIndex(
+			(action) => action.key === "castorice-4",
+		);
+		expect(castoricePulledActionIndex).toBe(
+			castorice3QNoTargetIndex + 1,
+		);
+		expect(withoutTarget.indexOf(repolluxNoTarget!)).toBe(
+			castoricePulledActionIndex + 1,
 		);
 		expect(repolluxNoTarget?.actionValue).not.toBeCloseTo(
 			sunday1NoTarget?.actionValue ?? 0,

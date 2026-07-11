@@ -6,6 +6,7 @@ import {
 } from "react";
 import {
 	getCyreneUltimateRule,
+	getEveyRule,
 	getErrorMessage,
 	getGarmentmakerRule,
 	getMemeAdvanceRule,
@@ -47,14 +48,20 @@ function buildSimulationConfig(
 		odeSelections: savedData.odeSelections,
 		memeSelections: savedData.memeSelections,
 		ultInterrupts: savedData.ultInterrupts,
+		resourceValues: savedData.resourceValues,
 		fireflyBreakCounters: savedData.fireflyBreakCounters,
 		godmodeExtraActions: savedData.godmodeExtraActions,
 		castoriceKillToggles: savedData.castoriceKillToggles,
 		icaKillToggles: savedData.icaKillToggles,
 		memeKillToggles: savedData.memeKillToggles,
+		evernightSelfDestructToggles: savedData.evernightSelfDestructToggles,
+		evernightThresholdBurstToggles:
+			savedData.evernightThresholdBurstToggles,
 		hyacineE2Active: savedData.hyacineE2Active,
 		meritTarget: savedData.meritTarget,
 		dancePartner: savedData.dancePartner,
+		bondmateTarget: savedData.bondmateTarget,
+		attackDisabled: savedData.attackDisabled,
 	};
 }
 
@@ -117,6 +124,23 @@ function buildMemospriteTargets(characters: CharacterConfig[]) {
 			memos.push({
 				...character,
 				id: `${character.id}-pollux`,
+				kind: "忆灵",
+				name: rule.memospriteName,
+				speed: String(rule.memospriteSpeed),
+				baseSpeed: String(rule.memospriteSpeed),
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 0,
+				superimpose: 1,
+				lc_id: 0,
+			});
+		}
+		if (hasSkillEffect(character.name, "E", "summonEvey")) {
+			const rule = getEveyRule(character.name);
+			memos.push({
+				...character,
+				id: `${character.id}-evey`,
 				kind: "忆灵",
 				name: rule.memospriteName,
 				speed: String(rule.memospriteSpeed),
@@ -242,11 +266,23 @@ export function useGeneratedActions({
 			);
 			const nextIcaKillToggles = pruneToggleMap(prev.icaKillToggles);
 			const nextMemeKillToggles = pruneToggleMap(prev.memeKillToggles);
+			const nextEvernightSelfDestructToggles = pruneToggleMap(
+				prev.evernightSelfDestructToggles,
+			);
+			const nextEvernightThresholdBurstToggles = pruneToggleMap(
+				prev.evernightThresholdBurstToggles,
+			);
+			const nextAttackDisabled = pruneToggleMap(prev.attackDisabled);
 			changed =
 				changed ||
 				nextCastoriceKillToggles !== prev.castoriceKillToggles ||
 				nextIcaKillToggles !== prev.icaKillToggles ||
-				nextMemeKillToggles !== prev.memeKillToggles;
+				nextMemeKillToggles !== prev.memeKillToggles ||
+				nextEvernightSelfDestructToggles !==
+					prev.evernightSelfDestructToggles ||
+				nextEvernightThresholdBurstToggles !==
+					prev.evernightThresholdBurstToggles ||
+				nextAttackDisabled !== prev.attackDisabled;
 
 			if (!changed) return prev;
 			return {
@@ -258,6 +294,10 @@ export function useGeneratedActions({
 				castoriceKillToggles: nextCastoriceKillToggles,
 				icaKillToggles: nextIcaKillToggles,
 				memeKillToggles: nextMemeKillToggles,
+				evernightSelfDestructToggles: nextEvernightSelfDestructToggles,
+				evernightThresholdBurstToggles:
+					nextEvernightThresholdBurstToggles,
+				attackDisabled: nextAttackDisabled,
 			};
 		});
 		setSelectedActionKeys((prev) => {
@@ -278,32 +318,36 @@ export function useGeneratedActions({
 		updateSavedData,
 	]);
 
-	const characterNames = useMemo(
-		() =>
-			Object.fromEntries(
+	const characterNames = useMemo(() => {
+		const names = Object.fromEntries(
 				savedData.characters.map((character, index) => [
 					character.id,
 					character.name.trim() || getTargetDefaultName(character.kind, index),
 				]),
-			),
-		[savedData.characters],
-	);
+			);
+		for (const action of actionsResult.actions) {
+			if (action.displayName) names[action.characterId] = action.displayName;
+		}
+		return names;
+	}, [savedData.characters, actionsResult.actions]);
 
 	const memospriteTargets = useMemo(
 		() => buildMemospriteTargets(savedData.characters),
 		[savedData.characters],
 	);
 
-	const characterKinds = useMemo(
-		() =>
-			Object.fromEntries([
+	const characterKinds = useMemo(() => {
+		const kinds = Object.fromEntries([
 				...savedData.characters.map(
 					(character) => [character.id, character.kind] as const,
 				),
 				...memospriteTargets.map((memosprite) => [memosprite.id, memosprite.kind] as const),
-			]),
-		[savedData.characters, memospriteTargets],
-	);
+			]);
+		for (const action of actionsResult.actions) {
+			if (action.targetKind) kinds[action.characterId] = action.targetKind;
+		}
+		return kinds;
+	}, [savedData.characters, memospriteTargets, actionsResult.actions]);
 
 	const charactersById = useMemo(
 		() =>

@@ -31,6 +31,8 @@ export default function CharacterPanel() {
 		ctx.setLastMemeTarget("");
 		ctx.setMeritTarget(undefined);
 		ctx.setDancePartner(undefined);
+		ctx.setBondmateTarget(undefined);
+		ctx.setAttackDisabled({});
 		ctx.setSelectedActionKeys(new Set());
 		ctx.setActionOperation("advance");
 		ctx.setOperationValue("");
@@ -64,6 +66,7 @@ export default function CharacterPanel() {
 		ctx.setUltInterrupts({});
 		ctx.setResourceValues({});
 		ctx.setFireflyBreakCounters({});
+		ctx.setAttackDisabled({});
 		ctx.setGodmodeExtraActions({});
 		ctx.setOdeSelections({});
 		ctx.setDomainEndOverrides({});
@@ -507,6 +510,27 @@ function CharacterCard({
 										})),
 								]}
 								onChange={(value) => ctx.setDancePartner(value || undefined)}
+								className="flex-1"
+							/>
+						</div>
+					)}
+					{hasPassive(character.name, "souldragonBondmate") && (
+						<div className="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-2">
+							<span className="text-sm text-gray-300">初始同袍</span>
+							<SelectInput
+								value={String(ctx.bondmateTarget ?? "")}
+								options={[
+									{ value: "", label: "无初始同袍" },
+									...ctx.characters
+										.filter((candidate) => candidate.kind === "角色")
+										.map((candidate) => ({
+											value: candidate.id,
+											label: candidate.name.trim() || candidate.id,
+										})),
+								]}
+								onChange={(value) =>
+									ctx.setBondmateTarget(value || undefined)
+								}
 								className="flex-1"
 							/>
 						</div>

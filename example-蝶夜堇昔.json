@@ -1,0 +1,84 @@
+{
+  "limitPreset": "500",
+  "customLimit": "",
+  "displayedLimit": "500",
+  "characters": [
+    {
+      "id": "castorice",
+      "kind": "角色",
+      "name": "遐蝶",
+      "speed": "94",
+      "baseSpeed": "94",
+      "hasVonwacq": false,
+      "hasWindSet": false,
+      "hasDance": false,
+      "eidolon": 2,
+      "superimpose": 1,
+      "lc_id": 0
+    },
+    {
+      "id": "evernight",
+      "kind": "角色",
+      "name": "长夜月",
+      "speed": "100",
+      "baseSpeed": "100",
+      "hasVonwacq": false,
+      "hasWindSet": false,
+      "hasDance": false,
+      "eidolon": 0,
+      "superimpose": 1,
+      "lc_id": 0
+    },
+    {
+      "id": "hyacine",
+      "kind": "角色",
+      "name": "风堇",
+      "speed": "101",
+      "baseSpeed": "101",
+      "hasVonwacq": false,
+      "hasWindSet": false,
+      "hasDance": false,
+      "eidolon": 0,
+      "superimpose": 1,
+      "lc_id": 0
+    },
+    {
+      "id": "cyrene",
+      "kind": "角色",
+      "name": "昔涟",
+      "speed": "150",
+      "baseSpeed": "150",
+      "hasVonwacq": false,
+      "hasWindSet": false,
+      "hasDance": false,
+      "eidolon": 0,
+      "superimpose": 1,
+      "lc_id": 0
+    }
+  ],
+  "resources": ["忆质", "战技点"],
+  "overrides": {},
+  "resourceValues": {},
+  "skillOverrides": {
+    "castorice-pollux-1": "EA",
+    "castorice-pollux-2": "E",
+    "evernight-evey-1": "A",
+    "evernight-1": "E",
+    "hyacine-1": "EQ",
+    "hyacine-2": "A",
+    "cyrene-1": "AQ"
+  },
+  "ultInterrupts": {
+    "castorice-pollux-2": [{ "casterId": "castorice", "timing": "after" }],
+    "evernight-evey-2": [{ "casterId": "evernight", "timing": "after" }]
+  },
+  "odeSelections": {
+    "cyrene-1-memosprite-Q": {
+      "odeCode": "lifeDeath",
+      "targetId": "castorice"
+    }
+  },
+  "evernightSelfDestructToggles": {
+    "hyacine-1": true
+  }
+}

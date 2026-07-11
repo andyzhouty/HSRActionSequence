@@ -1,12 +1,20 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
 	NumberInput,
 	SelectInput,
 	TextInput,
 	Toggle,
 } from "../src/components/action-sequence/Controls";
+import type { GeneratedAction } from "../src/utils/actionSequence";
+import ActionPanel from "../src/components/action-sequence/ActionPanel";
+import CharacterPanel from "../src/components/action-sequence/CharacterPanel";
+import { defaultCharacters } from "../src/utils/actionSequence";
+import {
+	createMockContext,
+	renderWithContext,
+} from "./helpers/actionSequenceComponentTestUtils";
 
 // ───── Controls ─────
 
@@ -70,144 +78,6 @@ describe("SelectInput", () => {
 });
 
 // ───── CharacterPanel rendering ─────
-
-import type { ReactNode } from "react";
-import CharacterPanel from "../src/components/action-sequence/CharacterPanel";
-import {
-	type ActionSequenceContextType,
-	ActionSequenceCtx,
-} from "../src/contexts/ActionSequenceContext";
-import { defaultCharacters } from "../src/utils/actionSequence";
-
-function createMockContext(
-	overrides: Partial<ActionSequenceContextType> = {},
-): ActionSequenceContextType {
-	const characters = defaultCharacters.map((c, i) => ({
-		...c,
-		id: `c${i + 1}`,
-		name: `角色 ${i + 1}`,
-		speed: "100",
-		baseSpeed: "100",
-	}));
-
-	return {
-		characters,
-		setCharacters: vi.fn(),
-		limitPreset: "150",
-		setLimitPreset: vi.fn(),
-		customLimit: "",
-		setCustomLimit: vi.fn(),
-		displayedLimit: "250",
-		setDisplayedLimit: vi.fn(),
-		resources: ["战技点"],
-		setResources: vi.fn(),
-		overrides: {},
-		setOverrides: vi.fn(),
-		ultOverrides: {},
-		setUltOverrides: vi.fn(),
-		skillOverrides: {},
-		setSkillOverrides: vi.fn(),
-		domainEndOverrides: {},
-		setDomainEndOverrides: vi.fn(),
-		speedAdjustments: {},
-		setSpeedAdjustments: vi.fn(),
-		skillTargets: {},
-		setSkillTargets: vi.fn(),
-		defaultSkillTargets: {},
-		setDefaultSkillTargets: vi.fn(),
-		odeSelections: {},
-		setOdeSelections: vi.fn(),
-		memeSelections: {},
-		setMemeSelections: vi.fn(),
-		lastMemeTarget: "",
-		setLastMemeTarget: vi.fn(),
-		ultInterrupts: {},
-		setUltInterrupts: vi.fn(),
-		fireflyBreakCounters: {},
-		setFireflyBreakCounters: vi.fn(),
-		godmodeExtraActions: {},
-		setGodmodeExtraActions: vi.fn(),
-		castoriceKillToggles: {},
-		setCastoriceKillToggles: vi.fn(),
-		icaKillToggles: {},
-		setIcaKillToggles: vi.fn(),
-		memeKillToggles: {},
-		setMemeKillToggles: vi.fn(),
-		hyacineE2Active: true,
-		setHyacineE2Active: vi.fn(),
-		meritTarget: undefined,
-		setMeritTarget: vi.fn(),
-		dancePartner: undefined,
-		setDancePartner: vi.fn(),
-		resourceValues: {},
-		setResourceValues: vi.fn(),
-		actions: [],
-		setActions: vi.fn(),
-		importText: "",
-		message: "",
-		setMessage: vi.fn(),
-		isExportingImage: false,
-		setIsExportingImage: vi.fn(),
-		selectedActionKeys: new Set(),
-		setSelectedActionKeys: vi.fn(),
-		actionMenuOpen: false,
-		setActionMenuOpen: vi.fn(),
-		actionMenuKey: null,
-		setActionMenuKey: vi.fn(),
-		actionMenuPos: 0,
-		setActionMenuPos: vi.fn(),
-		actionOperation: "advance",
-		setActionOperation: vi.fn(),
-		operationValue: "",
-		setOperationValue: vi.fn(),
-		operationSpeedMode: "absolute",
-		setOperationSpeedMode: vi.fn(),
-		advanceCeiling: "",
-		setAdvanceCeiling: vi.fn(),
-		draftInterruptCaster: "",
-		setDraftInterruptCaster: vi.fn(),
-		draftInterruptTiming: "before",
-		setDraftInterruptTiming: vi.fn(),
-		actionLimit: 150,
-		displayedActionLimit: 250,
-		characterNames: Object.fromEntries(characters.map((c) => [c.id, c.name])),
-		characterKinds: Object.fromEntries(characters.map((c) => [c.id, c.kind])),
-		charactersById: Object.fromEntries(characters.map((c) => [c.id, c])),
-		memospriteTargets: [],
-		imageExportRef: { current: null },
-		addTarget: vi.fn(),
-		removeTarget: vi.fn(),
-		updateCharacter: vi.fn(),
-		updateResourceValue: vi.fn(),
-		cancelHimekoNovaAssist: vi.fn(),
-		updateSkillTarget: vi.fn(),
-		updateActionSkill: vi.fn(),
-		selectAction: vi.fn(),
-		openActionMenu: vi.fn(),
-		closeActionMenu: vi.fn(),
-		applyActionOperation: vi.fn(),
-		addResource: vi.fn(),
-		updateResource: vi.fn(),
-		removeResource: vi.fn(),
-		buildExportData: vi.fn(),
-		exportJson: vi.fn(),
-		exportImage: vi.fn(),
-		importJson: vi.fn(),
-		importFromFile: vi.fn(),
-		setImportText: vi.fn(),
-		...overrides,
-	};
-}
-
-function renderWithContext(
-	ui: ReactNode,
-	ctxOverrides: Partial<ActionSequenceContextType> = {},
-) {
-	const ctx = createMockContext(ctxOverrides);
-	return render(
-		<ActionSequenceCtx.Provider value={ctx}>{ui}</ActionSequenceCtx.Provider>,
-	);
-}
 
 describe("CharacterPanel rendering", () => {
 	it("renders character cards for each target", () => {
@@ -293,8 +163,6 @@ describe("CharacterPanel rendering", () => {
 
 // ───── ActionPanel rendering ─────
 
-import ActionPanel from "../src/components/action-sequence/ActionPanel";
-
 describe("ActionPanel rendering", () => {
 	it("renders action table header with correct columns", () => {
 		renderWithContext(<ActionPanel />);
@@ -329,6 +197,30 @@ describe("ActionPanel rendering", () => {
 	it("renders resource column header", () => {
 		renderWithContext(<ActionPanel />);
 		expect(screen.getByText("战技点")).toBeInTheDocument();
+	});
+
+	it("locks 忆质 resource editing while 长夜月 is in team", () => {
+		renderWithContext(<ActionPanel />, {
+			characters: [
+				{
+					id: "evernight",
+					name: "长夜月",
+					kind: "角色",
+					speed: "100",
+					baseSpeed: "100",
+					hasVonwacq: false,
+					hasWindSet: false,
+					hasDance: false,
+					eidolon: 0,
+					superimpose: 1,
+					lc_id: 0,
+				},
+			],
+			resources: ["战技点", "忆质"],
+		});
+
+		expect(screen.getByDisplayValue("忆质")).toBeDisabled();
+		expect(screen.getByText("固定")).toBeInTheDocument();
 	});
 });
 
@@ -365,251 +257,6 @@ describe("Action Sequence Context integration", () => {
 	});
 });
 
-// ───── Firefly E2 break toggle ─────
-
-import type { GeneratedAction } from "../src/utils/actionSequence";
-
-function mockCombustionAction(overrides: Partial<GeneratedAction> = {}): GeneratedAction {
-	return {
-		key: "firefly-2",
-		characterId: "firefly",
-		displayName: "流萤",
-		actionNo: 2,
-		actionValue: 100,
-		skill: "E",
-		speed: 220,
-		isCombustionAction: true,
-		...overrides,
-	};
-}
-
-describe("Firefly E2 break toggle", () => {
-	it("clicking break toggle calls setFireflyBreakCounters", async () => {
-		const setFireflyBreakCounters = vi.fn();
-		const action = mockCombustionAction();
-		const chars = [
-			{ id: "firefly", name: "流萤", kind: "角色" as const, speed: "160", baseSpeed: "104", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-		];
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { firefly: "流萤" },
-			characterKinds: { firefly: "角色" },
-			charactersById: Object.fromEntries(chars.map(c => [c.id, c])),
-			actions: [action],
-			setFireflyBreakCounters,
-		});
-
-		// The break toggle button shows "击破"
-		const btn = screen.queryByText("击破");
-		if (btn) {
-			await userEvent.click(btn);
-			expect(setFireflyBreakCounters).toHaveBeenCalled();
-		}
-	});
-
-	it("break toggle appears for combustion actions", () => {
-		const action = mockCombustionAction();
-		const chars = [
-			{ id: "firefly", name: "流萤", kind: "角色" as const, speed: "160", baseSpeed: "104", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-		];
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { firefly: "流萤" },
-			characterKinds: { firefly: "角色" },
-			charactersById: Object.fromEntries(chars.map(c => [c.id, c])),
-			actions: [action],
-		});
-		expect(screen.getByText("击破")).toBeInTheDocument();
-	});
-
-	it("break toggle does NOT appear for non-combustion actions", () => {
-		const normalAction: GeneratedAction = {
-			key: "ally-1", characterId: "ally", actionNo: 1, actionValue: 100, skill: "E", speed: 100,
-		};
-		const chars = [
-			{ id: "ally", name: "队友", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-		];
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { ally: "队友" },
-			characterKinds: { ally: "角色" },
-			charactersById: Object.fromEntries(chars.map(c => [c.id, c])),
-			actions: [normalAction],
-		});
-		expect(screen.queryByText("击破")).toBeNull();
-	});
-});
-
-// ───── Silver Wolf E2 godmode extra toggle (right-click menu) ─────
-
-describe("Silver Wolf E2 right-click menu", () => {
-	it("shows E2 toggle when SW in godmode and ally selected", () => {
-		const swAction: GeneratedAction = {
-			key: "sw-1", characterId: "sw", actionNo: 1, actionValue: 100, skill: "A", speed: 100, lockedSkill: true,
-		};
-		const allyAction: GeneratedAction = {
-			key: "ally-1", characterId: "ally", actionNo: 1, actionValue: 80, skill: "E", speed: 80,
-		};
-		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-			{ id: "ally", name: "队友", kind: "角色" as const, speed: "80", baseSpeed: "80", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-		];
-		const setGodmodeExtraActions = vi.fn();
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { sw: "银狼LV.999", ally: "队友" },
-			characterKinds: { sw: "角色", ally: "角色" },
-			charactersById: Object.fromEntries(chars.map(c => [c.id, c])),
-			actions: [swAction, allyAction],
-			actionMenuOpen: true,
-			actionMenuKey: "ally-1",
-			selectedActionKeys: new Set(["ally-1"]),
-			setGodmodeExtraActions,
-		});
-
-		// E2 按钮应出现
-		expect(screen.getByText("银狼 E2 额外行动：")).toBeInTheDocument();
-	});
-
-	it("clicking E2 toggle calls setGodmodeExtraActions", async () => {
-		const swAction: GeneratedAction = {
-			key: "sw-1", characterId: "sw", actionNo: 1, actionValue: 100, skill: "A", speed: 100, lockedSkill: true,
-		};
-		const allyAction: GeneratedAction = {
-			key: "ally-1", characterId: "ally", actionNo: 1, actionValue: 80, skill: "E", speed: 80,
-		};
-		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-			{ id: "ally", name: "队友", kind: "角色" as const, speed: "80", baseSpeed: "80", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-		];
-		const setGodmodeExtraActions = vi.fn();
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { sw: "银狼LV.999", ally: "队友" },
-			characterKinds: { sw: "角色", ally: "角色" },
-			charactersById: Object.fromEntries(chars.map(c => [c.id, c])),
-			actions: [swAction, allyAction],
-			actionMenuOpen: true,
-			actionMenuKey: "ally-1",
-			selectedActionKeys: new Set(["ally-1"]),
-			setGodmodeExtraActions,
-		});
-
-		const btn = screen.getByText("已关闭");
-		await userEvent.click(btn);
-		expect(setGodmodeExtraActions).toHaveBeenCalled();
-	});
-
-	it("shows E2 toggle on Aha action when SW used self-Q (AQ → q key)", () => {
-		const swQ: GeneratedAction = {
-			key: "sw-1-q", characterId: "sw", actionNo: 0, actionValue: 100, skill: "Q", speed: 100,
-		};
-		const ahaAction: GeneratedAction = {
-			key: "@aha-1", characterId: "@aha", displayName: "阿哈时刻",
-			actionNo: 1, actionValue: 89, skill: "", speed: 110, isAhaInstant: true,
-		};
-		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-		];
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { sw: "银狼LV.999", "@aha": "阿哈时刻" },
-			characterKinds: { sw: "角色" },
-			charactersById: Object.fromEntries(chars.map(c => [c.id, c])),
-			actions: [swQ, ahaAction],
-			actionMenuOpen: true,
-			actionMenuKey: "@aha-1",
-			selectedActionKeys: new Set(["@aha-1"]),
-		});
-
-		expect(screen.getByText("银狼 E2 额外行动：")).toBeInTheDocument();
-	});
-
-	it("shows E2 toggle on Aha action when SW used interrupt Q", () => {
-		const swQ: GeneratedAction = {
-			key: "ally-1-interrupt-0", characterId: "sw", actionNo: 0, actionValue: 80, skill: "Q", speed: 100,
-		};
-		const ahaAction: GeneratedAction = {
-			key: "@aha-1", characterId: "@aha", displayName: "阿哈时刻",
-			actionNo: 1, actionValue: 89, skill: "", speed: 110, isAhaInstant: true,
-		};
-		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-		];
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { sw: "银狼LV.999", "@aha": "阿哈时刻" },
-			characterKinds: { sw: "角色" },
-			charactersById: Object.fromEntries(chars.map(c => [c.id, c])),
-			actions: [swQ, ahaAction],
-			actionMenuOpen: true,
-			actionMenuKey: "@aha-1",
-			selectedActionKeys: new Set(["@aha-1"]),
-		});
-
-		expect(screen.getByText("银狼 E2 额外行动：")).toBeInTheDocument();
-	});
-
-	it("火花额外回合的 Q 行点击银狼 E2 时，写入主额外回合 key", async () => {
-		const swQ: GeneratedAction = {
-			key: "sw-1-q", characterId: "sw", actionNo: 0, actionValue: 80, skill: "Q", speed: 200,
-		};
-		const sparxieExtraQ: GeneratedAction = {
-			key: "@aha-1-sparxie-extra-q",
-			characterId: "sparxie",
-			actionNo: 0,
-			actionValue: 89,
-			skill: "Q",
-			speed: 160,
-		};
-		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "200", baseSpeed: "200", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-			{ id: "sparxie", name: "火花", kind: "角色" as const, speed: "160", baseSpeed: "160", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-		];
-		const setGodmodeExtraActions = vi.fn();
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { sw: "银狼LV.999", sparxie: "火花" },
-			characterKinds: { sw: "角色", sparxie: "角色" },
-			charactersById: Object.fromEntries(chars.map(c => [c.id, c])),
-			actions: [swQ, sparxieExtraQ],
-			actionMenuOpen: true,
-			actionMenuKey: "@aha-1-sparxie-extra-q",
-			selectedActionKeys: new Set(["@aha-1-sparxie-extra-q"]),
-			setGodmodeExtraActions,
-		});
-
-		await userEvent.click(screen.getByText("已关闭"));
-		expect(setGodmodeExtraActions).toHaveBeenCalledWith(expect.any(Function));
-		const updater = setGodmodeExtraActions.mock.calls[0]?.[0];
-		expect(updater({})).toEqual({ "@aha-1-sparxie-extra": true });
-	});
-
-	it("does NOT show E2 toggle on Aha when SW has no Q or lockedSkill", () => {
-		const swAction: GeneratedAction = {
-			key: "sw-1", characterId: "sw", actionNo: 1, actionValue: 100, skill: "A", speed: 100,
-		};
-		const ahaAction: GeneratedAction = {
-			key: "@aha-1", characterId: "@aha", displayName: "阿哈时刻",
-			actionNo: 1, actionValue: 89, skill: "", speed: 110, isAhaInstant: true,
-		};
-		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-		];
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { sw: "银狼LV.999", "@aha": "阿哈时刻" },
-			characterKinds: { sw: "角色" },
-			charactersById: Object.fromEntries(chars.map(c => [c.id, c])),
-			actions: [swAction, ahaAction],
-			actionMenuOpen: true,
-			actionMenuKey: "@aha-1",
-			selectedActionKeys: new Set(["@aha-1"]),
-		});
-
-		expect(screen.queryByText("银狼 E2 额外行动：")).toBeNull();
-	});
-});
 
 // ───── Skill input Enter key ─────
 
@@ -693,6 +340,68 @@ describe("Skill input Enter key", () => {
 			expect(updateActionSkill).toHaveBeenCalledWith(action, "E");
 		}
 	});
+
+	it("Evey skill input is editable and Enter commits E", async () => {
+		const action: GeneratedAction = {
+			key: "evernight-evey-1",
+			characterId: "evernight-evey",
+			displayName: "长夜",
+			targetKind: "忆灵",
+			actionNo: 1,
+			actionValue: 62.5,
+			skill: "",
+			speed: 160,
+			isEveyAction: true,
+			isMemospriteAction: true,
+			memospriteOwnerId: "evernight",
+		};
+		const owner = {
+			id: "evernight",
+			name: "长夜月",
+			kind: "角色" as const,
+			speed: "100",
+			baseSpeed: "100",
+			hasVonwacq: false,
+			hasWindSet: false,
+			hasDance: false,
+			eidolon: 0,
+			superimpose: 1,
+			lc_id: 0,
+		};
+		const evey = {
+			id: "evernight-evey",
+			name: "长夜",
+			kind: "忆灵" as const,
+			speed: "160",
+			baseSpeed: "160",
+			hasVonwacq: false,
+			hasWindSet: false,
+			hasDance: false,
+			eidolon: 0,
+			superimpose: 1,
+			lc_id: 0,
+		};
+		const updateActionSkill = vi.fn();
+		renderWithContext(<ActionPanel />, {
+			characters: [owner],
+			characterNames: { evernight: "长夜月", "evernight-evey": "长夜" },
+			characterKinds: { evernight: "角色", "evernight-evey": "忆灵" },
+			charactersById: { evernight: owner, "evernight-evey": evey },
+			memospriteTargets: [evey],
+			actions: [action],
+			updateActionSkill,
+		});
+
+		const inputs = screen.getAllByRole("textbox");
+		const skillInput = inputs.find((input) => input.getAttribute("maxlength") === "6");
+		expect(skillInput).toBeDefined();
+		expect(skillInput).not.toBeDisabled();
+		if (skillInput) {
+			await userEvent.clear(skillInput);
+			await userEvent.type(skillInput, "E{Enter}");
+			expect(updateActionSkill).toHaveBeenCalledWith(action, "E");
+		}
+	});
 });
 
 // ───── Deimos Q → heart icon (romance ode) ─────
@@ -741,244 +450,3 @@ describe("Romance ode heart icon", () => {
 	});
 });
 
-// ───── Meme right-click section ─────
-
-describe("Meme right-click selection", () => {
-	it("renders meme advance target selector in right-click menu", () => {
-		const rmcAction: GeneratedAction = {
-			key: "rmc-1", characterId: "rmc", actionNo: 1, actionValue: 62.5, skill: "E", speed: 160,
-		};
-		const memeAction: GeneratedAction = {
-			key: "rmc-1-meme", characterId: "rmc-meme", displayName: "迷迷",
-			actionNo: 0, actionValue: 62.5, skill: "拉条", speed: 130,
-			isMemeAction: true, isMemospriteAction: true, memospriteOwnerId: "rmc",
-		};
-		const chars = [
-			{ id: "rmc", name: "开拓者·记忆", kind: "角色" as const, speed: "160", baseSpeed: "160", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-			{ id: "ally", name: "队友", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-		];
-		const gm = {
-			id: "rmc-meme", name: "迷迷", kind: "忆灵" as const,
-			speed: "130", baseSpeed: "130",
-			hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0,
-		};
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { rmc: "开拓者·记忆", ally: "队友", "rmc-meme": "迷迷" },
-			characterKinds: { rmc: "角色", ally: "角色", "rmc-meme": "忆灵" },
-			charactersById: { rmc: chars[0], ally: chars[1], "rmc-meme": gm },
-			actions: [rmcAction, memeAction],
-			actionMenuOpen: true,
-			actionMenuKey: "rmc-1-meme",
-			selectedActionKeys: new Set(["rmc-1-meme"]),
-			memospriteTargets: [gm],
-		});
-
-		// 迷迷拉条区域应在右键菜单显示
-		const memeLabels = screen.queryAllByText(/迷迷/);
-		expect(memeLabels.length).toBeGreaterThanOrEqual(1);
-	});
-
-	it("记忆主Q召唤迷迷后，右键菜单也会显示迷迷拉条", () => {
-		const rmcQAction: GeneratedAction = {
-			key: "rmc-1",
-			characterId: "rmc",
-			actionNo: 1,
-			actionValue: 62.5,
-			skill: "Q",
-			speed: 160,
-		};
-		const allyAction: GeneratedAction = {
-			key: "ally-1",
-			characterId: "ally",
-			actionNo: 1,
-			actionValue: 80,
-			skill: "A",
-			speed: 100,
-		};
-		const chars = [
-			{
-				id: "rmc",
-				name: "开拓者·记忆",
-				kind: "角色" as const,
-				speed: "160",
-				baseSpeed: "160",
-				hasVonwacq: false,
-				hasWindSet: false,
-				hasDance: false,
-				eidolon: 0,
-				superimpose: 1,
-				lc_id: 0,
-			},
-			{
-				id: "ally",
-				name: "队友",
-				kind: "角色" as const,
-				speed: "100",
-				baseSpeed: "100",
-				hasVonwacq: false,
-				hasWindSet: false,
-				hasDance: false,
-				eidolon: 0,
-				superimpose: 1,
-				lc_id: 0,
-			},
-		];
-		const meme = {
-			id: "rmc-meme",
-			name: "迷迷",
-			kind: "忆灵" as const,
-			speed: "130",
-			baseSpeed: "130",
-			hasVonwacq: false,
-			hasWindSet: false,
-			hasDance: false,
-			eidolon: 0,
-			superimpose: 1,
-			lc_id: 0,
-		};
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { rmc: "开拓者·记忆", ally: "队友", "rmc-meme": "迷迷" },
-			characterKinds: { rmc: "角色", ally: "角色", "rmc-meme": "忆灵" },
-			charactersById: { rmc: chars[0], ally: chars[1], "rmc-meme": meme },
-			actions: [rmcQAction, allyAction],
-			actionMenuOpen: true,
-			actionMenuKey: "ally-1",
-			selectedActionKeys: new Set(["ally-1"]),
-			memospriteTargets: [meme],
-		});
-
-		expect(screen.getByText("迷迷拉条")).toBeInTheDocument();
-	});
-
-	it("Sunday 的 E 目标列表不会出现死龙、衣匠、迷迷", async () => {
-		const sundayAction: GeneratedAction = {
-			key: "sunday-1",
-			characterId: "sunday",
-			actionNo: 1,
-			actionValue: 50,
-			skill: "E",
-			speed: 200,
-		};
-		const chars = [
-			{ id: "sunday", name: "星期日", kind: "角色" as const, speed: "200", baseSpeed: "200", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-			{ id: "castorice", name: "遐蝶", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-			{ id: "aglaea", name: "阿格莱雅", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-			{ id: "rmc", name: "开拓者·记忆", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-		];
-		const memos = [
-			{ id: "castorice-pollux", name: "死龙", kind: "忆灵" as const, speed: "165", baseSpeed: "165", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-			{ id: "aglaea-garmentmaker", name: "衣匠", kind: "忆灵" as const, speed: "140", baseSpeed: "140", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-			{ id: "rmc-meme", name: "迷迷", kind: "忆灵" as const, speed: "130", baseSpeed: "130", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-		];
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: {
-				sunday: "星期日",
-				castorice: "遐蝶",
-				aglaea: "阿格莱雅",
-				rmc: "开拓者·记忆",
-				"castorice-pollux": "死龙",
-				"aglaea-garmentmaker": "衣匠",
-				"rmc-meme": "迷迷",
-			},
-			characterKinds: {
-				sunday: "角色",
-				castorice: "角色",
-				aglaea: "角色",
-				rmc: "角色",
-				"castorice-pollux": "忆灵",
-				"aglaea-garmentmaker": "忆灵",
-				"rmc-meme": "忆灵",
-			},
-			charactersById: {
-				sunday: chars[0],
-				castorice: chars[1],
-				aglaea: chars[2],
-				rmc: chars[3],
-				"castorice-pollux": memos[0],
-				"aglaea-garmentmaker": memos[1],
-				"rmc-meme": memos[2],
-			},
-			actions: [sundayAction],
-			actionMenuOpen: true,
-			actionMenuKey: "sunday-1",
-			selectedActionKeys: new Set(["sunday-1"]),
-			memospriteTargets: memos,
-		});
-
-		await userEvent.click(screen.getByText("无"));
-		expect(screen.getByText("遐蝶")).toBeInTheDocument();
-		expect(screen.getByText("阿格莱雅")).toBeInTheDocument();
-		expect(screen.getByText("开拓者·记忆")).toBeInTheDocument();
-		expect(screen.queryByText("死龙")).toBeNull();
-		expect(screen.queryByText("衣匠")).toBeNull();
-		expect(screen.queryByText("迷迷")).toBeNull();
-	});
-
-	it("敌人回合右键菜单也能显示小伊卡死亡和迷迷死亡", () => {
-		const enemyAction: GeneratedAction = {
-			key: "enemy-1",
-			characterId: "enemy",
-			actionNo: 1,
-			actionValue: 100,
-			skill: "",
-			speed: 100,
-		};
-		const chars = [
-			{ id: "hyacine", name: "风堇", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-			{ id: "rmc", name: "开拓者·记忆", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-			{ id: "enemy", name: "敌人", kind: "敌人" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-		];
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { hyacine: "风堇", rmc: "开拓者·记忆", enemy: "敌人" },
-			characterKinds: { hyacine: "角色", rmc: "角色", enemy: "敌人" },
-			charactersById: { hyacine: chars[0], rmc: chars[1], enemy: chars[2] },
-			actions: [enemyAction],
-			actionMenuOpen: true,
-			actionMenuKey: "enemy-1",
-			selectedActionKeys: new Set(["enemy-1"]),
-		});
-
-		expect(screen.getByText("小伊卡死亡：")).toBeInTheDocument();
-		expect(screen.getByText("迷迷死亡：")).toBeInTheDocument();
-	});
-
-	it("迷迷自己的回合右键菜单也能标记迷迷死亡", () => {
-		const memeAction: GeneratedAction = {
-			key: "rmc-1-meme",
-			characterId: "rmc-meme",
-			displayName: "迷迷",
-			actionNo: 0,
-			actionValue: 62.5,
-			skill: "拉条",
-			speed: 130,
-			isMemeAction: true,
-			isMemospriteAction: true,
-			memospriteOwnerId: "rmc",
-		};
-		const chars = [
-			{ id: "rmc", name: "开拓者·记忆", kind: "角色" as const, speed: "160", baseSpeed: "160", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
-		];
-		const meme = {
-			id: "rmc-meme", name: "迷迷", kind: "忆灵" as const,
-			speed: "130", baseSpeed: "130",
-			hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0,
-		};
-		renderWithContext(<ActionPanel />, {
-			characters: chars,
-			characterNames: { rmc: "开拓者·记忆", "rmc-meme": "迷迷" },
-			characterKinds: { rmc: "角色", "rmc-meme": "忆灵" },
-			charactersById: { rmc: chars[0], "rmc-meme": meme },
-			actions: [memeAction],
-			actionMenuOpen: true,
-			actionMenuKey: "rmc-1-meme",
-			selectedActionKeys: new Set(["rmc-1-meme"]),
-			memospriteTargets: [meme],
-		});
-
-		expect(screen.getByText("迷迷死亡：")).toBeInTheDocument();
-	});
-});

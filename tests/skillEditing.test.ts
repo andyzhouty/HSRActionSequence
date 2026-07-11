@@ -61,3 +61,31 @@ describe("validateActionSkillInput for sp Himeko F", () => {
 		expect(result).toBe("sp 姬子自己回合不能使用 FF 连招");
 	});
 });
+
+describe("validateActionSkillInput for Evey", () => {
+	it("允许忆灵长夜填写 A 和 E", () => {
+		const owner = character("evernight", "长夜月");
+		const evey = character("evernight-evey", "长夜", { kind: "忆灵" });
+		const eveyAction = action("evernight-evey", {
+			isEveyAction: true,
+			isMemospriteAction: true,
+			memospriteOwnerId: "evernight",
+		});
+
+		const resultA = validateActionSkillInput({
+			action: eveyAction,
+			character: evey,
+			characters: [owner],
+			nextSkill: "A",
+		});
+		const resultE = validateActionSkillInput({
+			action: eveyAction,
+			character: evey,
+			characters: [owner],
+			nextSkill: "E",
+		});
+
+		expect(resultA).toBeNull();
+		expect(resultE).toBeNull();
+	});
+});

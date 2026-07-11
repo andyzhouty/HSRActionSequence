@@ -103,6 +103,11 @@ export type GeneratedAction = {
 	isIcaAction?: boolean; // 风堇小伊卡额外回合
 	isExtraAha?: boolean;
 	isSparxieExtraAction?: boolean;
+	isEveyAction?: boolean;
+	isEveySelfDestructAction?: boolean;
+	isEveyThresholdBurstAction?: boolean;
+	isSouldragonAction?: boolean;
+	souldragonOwnerId?: string;
 };
 
 export type SpeedAdjustment = {
@@ -180,6 +185,13 @@ export type PolluxRule = {
 	memospriteName: string;
 	memospriteSpeed: number;
 	maxActions: number;
+	keepSkill: SkillCode;
+	dismissSkill: SkillCode;
+};
+
+export type EveyRule = {
+	memospriteName: string;
+	memospriteSpeed: number;
 	keepSkill: SkillCode;
 	dismissSkill: SkillCode;
 };
@@ -300,6 +312,27 @@ export function getPolluxRule(characterName: string): PolluxRule {
 	};
 }
 
+const defaultEveyRule: EveyRule =
+	// biome-ignore lint/style/noNonNullAssertion: defaults in characters.json
+	getDefaultEffectRule<EveyRule>("summonEvey")!;
+
+export function getEveyRule(characterName: string): EveyRule {
+	const effectRule = getEffectRule<Partial<EveyRule>>(
+		characterName,
+		"summonEvey",
+	);
+	return {
+		...defaultEveyRule,
+		...(effectRule ?? {}),
+		memospriteName:
+			effectRule?.memospriteName ?? defaultEveyRule.memospriteName,
+		memospriteSpeed:
+			effectRule?.memospriteSpeed ?? defaultEveyRule.memospriteSpeed,
+		keepSkill: effectRule?.keepSkill ?? defaultEveyRule.keepSkill,
+		dismissSkill: effectRule?.dismissSkill ?? defaultEveyRule.dismissSkill,
+	};
+}
+
 const defaultGarmentmakerRule: GarmentmakerRule =
 	// biome-ignore lint/style/noNonNullAssertion: defaults in characters.json
 	getDefaultEffectRule<GarmentmakerRule>("summonGarmentmaker")!;
@@ -414,9 +447,13 @@ export type SavedData = {
 	castoriceKillToggles?: Record<string, boolean>;
 	icaKillToggles?: Record<string, boolean>;
 	memeKillToggles?: Record<string, boolean>;
+	evernightSelfDestructToggles?: Record<string, boolean>;
+	evernightThresholdBurstToggles?: Record<string, boolean>;
 	hyacineE2Active?: boolean;
 	meritTarget?: string;
 	dancePartner?: string;
+	bondmateTarget?: string;
+	attackDisabled?: Record<string, boolean>;
 };
 
 export const targetKinds: TargetKind[] = [
@@ -430,9 +467,44 @@ export const targetKinds: TargetKind[] = [
 export const limitPresets = ["150", "300", "500", "自定义"];
 export const maxResources = 6;
 export const defaultResources = ["战技点"];
+export const evernightResourceName = "忆质";
 
 export function isCharacterTarget(character: CharacterConfig) {
 	return character.kind === "角色";
+}
+
+export function hasEvernightCharacter(characters: CharacterConfig[]) {
+	return characters.some((character) =>
+		isCharacterTarget(character) &&
+		hasSkillEffect(character.name, "E", "summonEvey"),
+	);
+}
+
+export function normalizeResourcesForCharacters(
+	resources: string[],
+	characters: CharacterConfig[],
+) {
+	const hasEvernight = hasEvernightCharacter(characters);
+	const filtered = resources.filter(
+		(resource) => resource !== evernightResourceName,
+	);
+	if (!hasEvernight) {
+		return filtered.slice(0, maxResources);
+	}
+	if (filtered.length >= maxResources) {
+		return [
+			evernightResourceName,
+			...filtered.slice(0, Math.max(0, maxResources - 1)),
+		];
+	}
+	return [evernightResourceName, ...filtered];
+}
+
+export function isLockedResourceNameForCharacters(
+	resourceName: string,
+	characters: CharacterConfig[],
+) {
+	return hasEvernightCharacter(characters) && resourceName === evernightResourceName;
 }
 
 export function isAllyTarget(kind: TargetKind | undefined) {
@@ -471,12 +543,19 @@ export function canUseSkillCode(character: CharacterConfig, skill: SkillCode) {
 		if (!validSkillChars.includes(c)) return false;
 		if (c === "W" && !hasSkillEffect(character.name, "W", "counterW"))
 			return false;
-		if (c === "W" && characterHasSemanticFlag(character.name, "wOnlyInDomain"))
-			return false;
 	}
 
-	// AE/EA 不能组合
+	// AE/EA 不能组合（白厄 E2 以上境界内允许 EA/EW）
 	if (skill.includes("A") && skill.includes("E")) return false;
+
+	// 非 E2 白厄境界外不可输入 EA/EW（E2 以上允许，引擎自动降级处理）
+	if (
+		characterHasSemanticFlag(character.name, "wOnlyInDomain") &&
+		character.eidolon < 2 &&
+		(skill === "EA" || skill === "EW")
+	) {
+		return false;
+	}
 
 	// Q 不能单独出现（Q 始终是插队，必须与 A 或 E 搭配）
 	if (skill === "Q") return false;

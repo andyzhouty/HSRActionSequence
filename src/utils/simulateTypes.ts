@@ -24,15 +24,20 @@ export type SimulateActionsInput = {
 	odeSelections: Record<string, OdeSelection>;
 	memeSelections: Record<string, string>;
 	ultInterrupts: Record<string, UltInterrupt[]>;
+	resourceValues?: Record<string, Record<string, string>>;
 	fireflyBreakCounters?: Record<string, boolean>;
 	godmodeExtraActions?: Record<string, boolean>;
 	killToggles?: Record<string, boolean>;
 	castoriceKillToggles?: Record<string, boolean>;
 	icaKillToggles?: Record<string, boolean>;
 	memeKillToggles?: Record<string, boolean>;
+	evernightSelfDestructToggles?: Record<string, boolean>;
+	evernightThresholdBurstToggles?: Record<string, boolean>;
 	hyacineE2Active?: boolean;
 	meritTarget?: string;
 	dancePartner?: string;
+	bondmateTarget?: string;
+	attackDisabled?: Record<string, boolean>;
 };
 
 // ── 内部状态类型 ──
@@ -75,12 +80,27 @@ export interface ActionState extends AglaeaActionState {
 	polluxGeneration?: number;
 	polluxSummonGeneration?: number;
 	isPolluxAction?: boolean;
+	// A freshly summoned Pollux must win ties against existing memosprite turns.
+	isImmediatePolluxSummon?: boolean;
 	e2SavedActionSkill?: SkillCode;
 
 	// 风堇小伊卡
 	icaOnField?: boolean;
 	afterRain?: number;
 	hyacineE2SpeedBonus?: number;
+
+	// 长夜月长夜
+	eveyOnField?: boolean;
+	eveyGeneration?: number;
+	eveySummonGeneration?: number;
+	isEveyAction?: boolean;
+	evernightNextTurnSpeedBonus?: number;
+
+	// 同 AV 的细粒度排序/拉条判定
+	sameActionPriority?: number;
+	lastActionValue?: number;
+	isSouldragonAction?: boolean;
+	souldragonOwnerId?: string;
 }
 
 export type ActiveOdeState = {

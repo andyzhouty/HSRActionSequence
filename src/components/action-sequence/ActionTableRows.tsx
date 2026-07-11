@@ -3,6 +3,7 @@ import ahaIcon from "../../assets/aha/aha.webp";
 import fireflyUltIcon from "../../assets/skillIcons/SkillIcon_1310_Ultra.webp";
 import swPassiveIcon from "../../assets/skillIcons/SkillIcon_1506_Passive.webp";
 import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
+import souldragonIcon from "../../assets/skillIcons/SkillIcon_1414_BP.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import { getDisplayOrderedActions } from "../../utils/actionDisplayOrder";
 import type { GeneratedAction } from "../../utils/actionSequence";
@@ -13,6 +14,7 @@ import {
 	getCounterWDomainRule,
 	getCyreneUltimateRule,
 	getFireflyCombustionRule,
+	getCharacterCid,
 	getOdeRuleForTarget,
 	getTargetDefaultName,
 	hasSemanticFlag,
@@ -59,22 +61,48 @@ function isMemospriteAvailableForAction(
 	const isGarmentmaker = memosprite.id.endsWith("-garmentmaker");
 	const isMeme = memosprite.id.endsWith("-meme");
 	const isCyreneMemosprite = memosprite.id.endsWith("-memosprite");
+	const isEvey = memosprite.id.endsWith("-evey");
 
 	// 昔涟的德谬歌由 Q 即刻召唤，同样需要等 Q 之后
 	// 非战内召唤的忆灵始终可用
-	if (!isGarmentmaker && !isMeme && !isCyreneMemosprite) return true;
+	if (!isGarmentmaker && !isMeme && !isCyreneMemosprite && !isEvey) return true;
 
 	const suffix = isGarmentmaker
 		? "-garmentmaker"
 		: isMeme
 			? "-meme"
-			: "-memosprite";
+			: isCyreneMemosprite
+				? "-memosprite"
+				: "-evey";
 	const ownerId = memosprite.id.slice(0, -suffix.length);
 
 	const selectedIndex = orderedActions.findIndex(
 		(a) => a.key === currentActionKey,
 	);
-	if (selectedIndex <= 0) return false;
+	if (selectedIndex <= 0) return isEvey;
+
+	if (isEvey) {
+		let onField = true;
+		for (const action of orderedActions.slice(0, selectedIndex)) {
+			if (
+				action.characterId === ownerId &&
+				!action.isDomainAction &&
+				!action.isMemospriteAction
+			) {
+				const skill = ctx.skillOverrides[action.key] ?? action.skill;
+				if (!onField && (skill.includes("E") || skill.includes("Q"))) {
+					onField = true;
+				}
+			}
+			if (action.characterId === `${ownerId}-evey`) {
+				const skill = ctx.skillOverrides[action.key] ?? action.skill;
+				if ((skill || "A") === "E") {
+					onField = false;
+				}
+			}
+		}
+		return onField;
+	}
 
 	return orderedActions.slice(0, selectedIndex).some((action) => {
 		if (action.characterId !== ownerId) return false;
@@ -136,6 +164,7 @@ export function ActionRow({
 		!action.isSparxieExtraAction &&
 		!action.isDomainAction &&
 		!action.isMemospriteAction &&
+		!action.isEveyAction &&
 		!action.isOdeExtraAction &&
 		!action.isAssistAction;
 	const isAssist = action.isAssistAction;
@@ -211,6 +240,11 @@ export function ActionRow({
 				? "bg-[#6b21a880] outline outline-1 outline-purple-300"
 				: "bg-[#4c1d9566] hover:bg-[#4c1d9580]";
 		}
+		if (action.isEveyAction) {
+			return isSelected
+				? "bg-[#8F435C99] outline outline-1 outline-pink-200"
+				: "bg-[#8F435C] hover:bg-[#79354C]";
+		}
 		if (isDomain) {
 			return isSelected
 				? "bg-[#7e22ce80] outline outline-1 outline-purple-300"
@@ -263,6 +297,7 @@ export function ActionRow({
 	return (
 		<tr
 			key={action.key}
+			data-action-key={action.key}
 			onClick={(event) =>
 				ctx.selectAction(action.key, event.ctrlKey || event.metaKey)
 			}
@@ -295,6 +330,14 @@ export function ActionRow({
 				) : action.isAhaInstant ? (
 					<div className="flex h-full items-center justify-center">
 						<img src={ahaIcon} alt="🎭" className="inline-block h-6 w-6" />
+					</div>
+				) : action.isSouldragonAction ? (
+					<div className="flex h-full items-center justify-center">
+						<img
+							src={souldragonIcon}
+							alt="龙灵"
+							className="inline-block h-7 w-7"
+						/>
 					</div>
 				) : action.skill === "Q" &&
 				  hasSilverWolfGodmode(
@@ -339,7 +382,10 @@ export function ActionRow({
 				>
 					{displayName}
 				</div>
-				{!action.isAglaeaCountdownAction && !isCombustionCountdown && action.characterId !== "@av0" && (
+				{!action.isAglaeaCountdownAction &&
+					!isCombustionCountdown &&
+					!action.isSouldragonAction &&
+					action.characterId !== "@av0" && (
 					<div
 						className={`truncate text-xs leading-5 ${isEnemyAction ? "text-[#fecacacc]" : "text-gray-400"}`}
 					>
@@ -351,10 +397,12 @@ export function ActionRow({
 								? "额外"
 							: isDomain
 								? `境界 ${action.actionNo}`
-								: isAssist
-									? "助战"
-									: action.isMemeAction
-										? "额外"
+						: isAssist
+							? "助战"
+							: action.isEveySelfDestructAction
+								? "额外"
+							: action.isMemeAction
+								? "额外"
 										: action.isMemospriteAction && action.actionNo > 0
 											? `第 ${action.actionNo} 动`
 											: action.isMemospriteAction
@@ -435,7 +483,9 @@ export function ActionRow({
 			</td>
 			<td className="px-2 py-3">
 				<div className="flex items-center gap-1">
-					{!action.isAglaeaCountdownAction && !isCombustionCountdown && (
+					{!action.isAglaeaCountdownAction &&
+						!isCombustionCountdown &&
+						!action.isSouldragonAction && (
 						<SkillInput action={action} />
 					)}
 					<OdeInline action={action} />
@@ -445,6 +495,7 @@ export function ActionRow({
 					<PolluxKillInline action={action} />
 					<MemeInline action={action} />
 					<SkillTargetInline action={action} />
+					<AttackInline action={action} />
 				</div>
 				{isQFrontCombo(action.skill) && (
 					<div className="mt-0.5 text-[10px] leading-3 text-gray-500">
@@ -476,6 +527,51 @@ export function ActionRow({
 	);
 }
 
+function AttackInline({ action }: { action: GeneratedAction }) {
+	const ctx = useActionSequence();
+	const attacker = ctx.charactersById[action.characterId];
+	const hasSouldragonOwner = ctx.characters.some(
+		(character) => getCharacterCid(character.name) === "1414",
+	);
+	if (
+		!hasSouldragonOwner ||
+		!attacker ||
+		attacker.kind !== "角色" ||
+		action.isSouldragonAction
+	) {
+		return null;
+	}
+
+	const isForcedOff =
+		getCharacterCid(attacker.name) === "1414" && action.skill === "E";
+	const isEnabled = !isForcedOff && ctx.attackDisabled[action.key] !== true;
+
+	return (
+		<button
+			type="button"
+			disabled={isForcedOff}
+			aria-pressed={isEnabled}
+			onClick={(event) => {
+				event.stopPropagation();
+				if (isForcedOff) return;
+				ctx.setAttackDisabled((prev) => {
+					const next = { ...prev };
+					if (isEnabled) next[action.key] = true;
+					else delete next[action.key];
+					return next;
+				});
+			}}
+			className={`h-8 rounded-md border px-2 text-xs font-medium ${
+				isEnabled
+					? "border-red-500/60 bg-red-900/50 text-red-100 hover:bg-red-800/60"
+					: "border-gray-600 bg-gray-800 text-gray-500 disabled:cursor-not-allowed"
+			}`}
+		>
+			攻击
+		</button>
+	);
+}
+
 function SkillInput({ action }: { action: GeneratedAction }) {
 	const ctx = useActionSequence();
 	const char = ctx.charactersById[action.characterId];
@@ -498,15 +594,19 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 		!action.isSparxieExtraAction &&
 		!action.isDomainAction &&
 		!action.isMemospriteAction &&
+		!action.isEveyAction &&
 		!action.isOdeExtraAction &&
 		!action.isAssistAction;
 	const disabled = char
 		? action.isAssistAction ||
 			(action.lockedSkill && !action.isPolluxAction) ||
-			(action.isMemospriteAction && !action.isPolluxAction) ||
+			(action.isMemospriteAction &&
+				!action.isPolluxAction &&
+				!action.isEveyAction) ||
 			(ctx.characterKinds[action.characterId] !== "角色" &&
-				!action.isPolluxAction)
-		: !action.isPolluxAction;
+				!action.isPolluxAction &&
+				!action.isEveyAction)
+		: !action.isPolluxAction && !action.isEveyAction;
 	const nonDomainSkillTitle =
 		char && hasSemanticFlag(char.name, "wOnlyInDomain")
 			? "A 普攻，E 战技，Q 大招，F 助战技；W 仅境界内"
@@ -632,7 +732,9 @@ function OdeInline({ action }: { action: GeneratedAction }) {
 	const selection = ctx.odeSelections[action.key];
 	const allies = ctx.characters.filter(
 		(character) =>
-			isAllyTarget(character.kind) && toPositiveNumber(character.speed, 0) > 0,
+			isAllyTarget(character.kind) &&
+			character.id !== owner.id &&
+			toPositiveNumber(character.speed, 0) > 0,
 	);
 	const targetOptions = allies.map((character) => {
 		const ode = getOdeRuleForTarget(cyreneRule, character.name);

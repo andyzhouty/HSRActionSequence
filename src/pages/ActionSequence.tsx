@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ActionPanel from "../components/action-sequence/ActionPanel";
 import CharacterPanel from "../components/action-sequence/CharacterPanel";
 import { ActionSequenceCtx } from "../contexts/ActionSequenceContext";
@@ -35,12 +35,16 @@ import {
 	validateActionSkillInput,
 } from "./action-sequence/skillEditing";
 import {
+	evernightResourceName,
+	isLockedResourceNameForCharacters,
+	normalizeResourcesForCharacters,
 	type CharacterConfig,
 	type GeneratedAction,
 	maxResources,
 	type SavedData,
 	type SkillCode,
 } from "../utils/actionSequence";
+import { hasDanHengSouldragon } from "../utils/danHengSouldragon";
 
 export default function ActionSequence() {
 	const [selectedActionKeys, setSelectedActionKeys] = useState<Set<string>>(
@@ -112,13 +116,38 @@ export default function ActionSequence() {
 	setIcaKillToggles,
 	memeKillToggles,
 	setMemeKillToggles,
+	evernightSelfDestructToggles,
+	setEvernightSelfDestructToggles,
+	evernightThresholdBurstToggles,
+	setEvernightThresholdBurstToggles,
 	hyacineE2Active,
 	setHyacineE2Active,
 	meritTarget,
 	setMeritTarget,
 	dancePartner,
 	setDancePartner,
+	bondmateTarget,
+	setBondmateTarget,
+	attackDisabled,
+	setAttackDisabled,
 } = useActionSequenceSavedData();
+
+	// 长夜月在队伍时自动锁死"忆质"资源列
+	useEffect(() => {
+		setResources((prev) => normalizeResourcesForCharacters(prev, characters));
+	}, [characters, setResources]);
+
+	// 盾丹自动默认同袍：有盾丹且用户未手动设置时，自动选第一个非盾丹角色（或盾丹自身）
+	useEffect(() => {
+		const dhpt = characters.find(
+			(c) => c.kind === "角色" && hasDanHengSouldragon(c.name),
+		);
+		if (!dhpt || bondmateTarget !== undefined) return;
+		const otherChar = characters.find(
+			(c) => c.kind === "角色" && c.id !== dhpt.id,
+		);
+		setBondmateTarget(otherChar?.id ?? dhpt.id);
+	}, [characters, bondmateTarget, setBondmateTarget]);
 
 	const applySavedData = useCallback(
 		(
@@ -236,6 +265,7 @@ export default function ActionSequence() {
 		setSelectedActionKeys((prev) => removeTargetFromSelectionKeys(prev, id));
 		if (meritTarget === id) setMeritTarget(undefined);
 		if (dancePartner === id) setDancePartner(undefined);
+		if (bondmateTarget === id) setBondmateTarget(undefined);
 		closeActionMenu();
 	};
 
@@ -324,11 +354,19 @@ const updateActionSkill = (action: GeneratedAction, value: string) => {
 	};
 
 	const updateResource = (index: number, value: string) => {
+		if (isLockedResourceNameForCharacters(resources[index] ?? "", characters)) return;
+		if (
+			value.trim() === evernightResourceName &&
+			!isLockedResourceNameForCharacters(resources[index] ?? "", characters)
+		) {
+			return;
+		}
 		setResources((prev) => updateResourceNames(prev, index, value));
 	};
 
 	const removeResource = (index: number) => {
 		const removedName = resources[index];
+		if (isLockedResourceNameForCharacters(removedName ?? "", characters)) return;
 		setResources((prev) => removeResourceName(prev, index));
 		setResourceValues((prev) => removeResourceFromValues(prev, removedName));
 	};
@@ -387,12 +425,20 @@ const updateActionSkill = (action: GeneratedAction, value: string) => {
 				setIcaKillToggles,
 				memeKillToggles,
 				setMemeKillToggles,
+				evernightSelfDestructToggles,
+				setEvernightSelfDestructToggles,
+				evernightThresholdBurstToggles,
+				setEvernightThresholdBurstToggles,
 				hyacineE2Active,
 				setHyacineE2Active,
 				meritTarget,
 				setMeritTarget,
 				dancePartner,
 				setDancePartner,
+				bondmateTarget,
+				setBondmateTarget,
+				attackDisabled,
+				setAttackDisabled,
 				resourceValues,
 				setResourceValues,
 				actions,

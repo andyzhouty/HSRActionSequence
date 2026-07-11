@@ -7,6 +7,7 @@ import {
 	getCharacterCid,
 	getCyreneUltimateRule,
 	hasSkillEffect,
+	normalizeResourcesForCharacters,
 	maxResources,
 	type OdeSelection,
 	type SavedData,
@@ -57,9 +58,17 @@ type SavedDataFieldSetters = {
 	>;
 	setIcaKillToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 	setMemeKillToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
+	setEvernightSelfDestructToggles: Dispatch<
+		SetStateAction<Record<string, boolean>>
+	>;
+	setEvernightThresholdBurstToggles: Dispatch<
+		SetStateAction<Record<string, boolean>>
+	>;
 	setHyacineE2Active: Dispatch<SetStateAction<boolean>>;
 	setMeritTarget: Dispatch<SetStateAction<string | undefined>>;
 	setDancePartner: Dispatch<SetStateAction<string | undefined>>;
+	setBondmateTarget: Dispatch<SetStateAction<string | undefined>>;
+	setAttackDisabled: Dispatch<SetStateAction<Record<string, boolean>>>;
 };
 
 export function useActionSequenceSavedData() {
@@ -89,22 +98,27 @@ export function useActionSequenceSavedData() {
 		[],
 	);
 
-	const setSavedField = <K extends keyof NormalizedSavedData>(
-		key: K,
-		updater: SetStateAction<NormalizedSavedData[K]>,
-	) => {
-		updateSavedData((prev) => ({
-			...prev,
-			[key]:
-				typeof updater === "function"
-					? (updater as (
-							value: NormalizedSavedData[K],
-						) => NormalizedSavedData[K])(prev[key])
-					: updater,
-		}));
-	};
+	const setSavedField = useCallback(
+		<K extends keyof NormalizedSavedData>(
+			key: K,
+			updater: SetStateAction<NormalizedSavedData[K]>,
+		) => {
+			updateSavedData((prev) => {
+				const nextValue =
+					typeof updater === "function"
+						? (updater as (
+								value: NormalizedSavedData[K],
+							) => NormalizedSavedData[K])(prev[key])
+						: updater;
+				return Object.is(nextValue, prev[key])
+					? prev
+					: { ...prev, [key]: nextValue };
+			});
+		},
+		[updateSavedData],
+	);
 
-	const setters: SavedDataFieldSetters = {
+	const setters = useMemo<SavedDataFieldSetters>(() => ({
 		setCharacters: (updater) => setSavedField("characters", updater),
 		setLimitPreset: (updater) => setSavedField("limitPreset", updater),
 		setCustomLimit: (updater) => setSavedField("customLimit", updater),
@@ -134,11 +148,17 @@ export function useActionSequenceSavedData() {
 			setSavedField("icaKillToggles", updater),
 		setMemeKillToggles: (updater) =>
 			setSavedField("memeKillToggles", updater),
+		setEvernightSelfDestructToggles: (updater) =>
+			setSavedField("evernightSelfDestructToggles", updater),
+		setEvernightThresholdBurstToggles: (updater) =>
+			setSavedField("evernightThresholdBurstToggles", updater),
 		setHyacineE2Active: (updater) =>
 			setSavedField("hyacineE2Active", updater),
 		setMeritTarget: (updater) => setSavedField("meritTarget", updater),
 		setDancePartner: (updater) => setSavedField("dancePartner", updater),
-	};
+		setBondmateTarget: (updater) => setSavedField("bondmateTarget", updater),
+		setAttackDisabled: (updater) => setSavedField("attackDisabled", updater),
+	}), [setSavedField]);
 
 	useEffect(() => {
 		const previousDefault = previousActionLimitRef.current + 100;
@@ -222,15 +242,40 @@ export function useActionSequenceSavedData() {
 					}
 				}
 			}
+			const normalizedResources = normalizeResourcesForCharacters(
+				nextResources,
+				prev.characters,
+			);
 			if (
-				nextResources.length === prev.resources.length &&
-				nextResources.every(
+				normalizedResources.length === prev.resources.length &&
+				normalizedResources.every(
 					(resource, index) => resource === prev.resources[index],
 				)
 			) {
 				return prev;
 			}
-			return { ...prev, resources: nextResources };
+			const removedResources = prev.resources.filter(
+				(resource) => !normalizedResources.includes(resource),
+			);
+			const nextResourceValues =
+				removedResources.length === 0
+					? prev.resourceValues
+					: Object.fromEntries(
+							Object.entries(prev.resourceValues).map(([actionKey, values]) => [
+								actionKey,
+								Object.fromEntries(
+									Object.entries(values).filter(
+										([resourceName]) =>
+											!removedResources.includes(resourceName),
+									),
+								),
+							]),
+						);
+			return {
+				...prev,
+				resources: normalizedResources,
+				resourceValues: nextResourceValues,
+			};
 		});
 	}, [characters, updateSavedData]);
 
