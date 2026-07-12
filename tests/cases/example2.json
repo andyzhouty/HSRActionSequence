@@ -1,0 +1,126 @@
+{
+    "limitPreset": "150",
+    "customLimit": "",
+    "displayedLimit": "250",
+    "characters": [
+        {
+            "id": "c1",
+            "kind": "角色",
+            "name": "遐蝶",
+            "speed": "94",
+            "baseSpeed": "",
+            "hasVonwacq": false,
+            "hasWindSet": false,
+            "hasDance": false,
+            "hasCastoriceTechnique": false,
+            "hasAglaeaTechnique": false,
+            "eidolon": 6,
+            "superimpose": 5,
+            "lc_id": 23040
+        },
+        {
+            "id": "c2",
+            "kind": "角色",
+            "name": "长夜月",
+            "speed": "112",
+            "baseSpeed": "",
+            "hasVonwacq": false,
+            "hasWindSet": false,
+            "hasDance": false,
+            "hasCastoriceTechnique": false,
+            "hasAglaeaTechnique": false,
+            "eidolon": 6,
+            "superimpose": 5,
+            "lc_id": 23049
+        },
+        {
+            "id": "c3",
+            "kind": "角色",
+            "name": "风堇",
+            "speed": "273",
+            "baseSpeed": "",
+            "hasVonwacq": false,
+            "hasWindSet": false,
+            "hasDance": false,
+            "hasCastoriceTechnique": false,
+            "hasAglaeaTechnique": false,
+            "eidolon": 6,
+            "superimpose": 5,
+            "lc_id": 23042
+        },
+        {
+            "id": "c4",
+            "kind": "角色",
+            "name": "昔涟",
+            "speed": "243",
+            "baseSpeed": "",
+            "hasVonwacq": false,
+            "hasWindSet": false,
+            "hasDance": false,
+            "hasCastoriceTechnique": false,
+            "hasAglaeaTechnique": false,
+            "eidolon": 6,
+            "superimpose": 5,
+            "lc_id": 23052
+        }
+    ],
+    "resources": [
+        "忆质",
+        "战技点",
+        "追忆"
+    ],
+    "overrides": {},
+    "ultOverrides": {},
+    "skillOverrides": {
+        "c2-evey-1": "A",
+        "c1-1": "E",
+        "c1-pollux-1": "E"
+    },
+    "domainEndOverrides": {},
+    "speedAdjustments": {},
+    "skillTargets": {},
+    "defaultSkillTargets": {},
+    "odeSelections": {},
+    "memeSelections": {},
+    "ultInterrupts": {
+        "c2-evey-2": [
+            {
+                "casterId": "c1",
+                "timing": "after"
+            }
+        ],
+        "c1-1": [
+            {
+                "casterId": "c2",
+                "timing": "before"
+            }
+        ],
+        "c1-pollux-1": [
+            {
+                "casterId": "c4",
+                "timing": "after"
+            },
+            {
+                "casterId": "c3",
+                "timing": "after"
+            }
+        ]
+    },
+    "resourceValues": {
+        "c2-evey-1": {
+            "忆质": "16"
+        },
+        "c1-1": {
+            "忆质": "16"
+        }
+    },
+    "fireflyBreakCounters": {},
+    "godmodeExtraActions": {},
+    "castoriceKillToggles": {},
+    "icaKillToggles": {},
+    "memeKillToggles": {},
+    "evernightSelfDestructToggles": {},
+    "evernightThresholdBurstToggles": {},
+    "hyacineE2Active": true,
+    "attackDisabled": {}
+}

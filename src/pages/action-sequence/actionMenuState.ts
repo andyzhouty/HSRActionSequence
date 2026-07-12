@@ -47,7 +47,9 @@ export function getAdvanceCeilingValue(params: {
 }) {
 	const { actions, advanceCeiling } = params;
 	const ceilingIndex = Number.parseInt(advanceCeiling, 10);
-	return advanceCeiling !== "" && Number.isFinite(ceilingIndex) && ceilingIndex >= 1
+	return advanceCeiling !== "" &&
+		Number.isFinite(ceilingIndex) &&
+		ceilingIndex >= 1
 		? (actions[ceilingIndex - 1]?.actionValue ?? 0)
 		: 0;
 }

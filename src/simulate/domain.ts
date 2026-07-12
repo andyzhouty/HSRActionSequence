@@ -1,8 +1,14 @@
+import {
+	applyPhainonDomainPauseAndSpeedBonus,
+	hasPhainonEnemyTriggerSkill,
+} from "../mechanics/phainonDomain";
 import type { GeneratedAction, SkillCode } from "../utils/actionSequence";
-import type { ActionState, ActiveOdeState, SimulateActionsInput } from "./types";
-import { getActiveOdeLabels } from "./effects";
-import { hasPhainonEnemyTriggerSkill, applyPhainonDomainPauseAndSpeedBonus } from "../mechanics/phainonDomain";
-import { toNonNegativeNumber } from "./effects";
+import { getActiveOdeLabels, toNonNegativeNumber } from "./effects";
+import type {
+	ActionState,
+	ActiveOdeState,
+	SimulateActionsInput,
+} from "./types";
 
 /**
  * Handle a domain-linked action iteration (白厄境界内连动).
@@ -50,7 +56,10 @@ export function handleDomainAction(
 	});
 
 	// ── W/EW 敌人立即行动 ──
-	if (!isFinalDomainAction && hasPhainonEnemyTriggerSkill(ds.rule, domainSkill)) {
+	if (
+		!isFinalDomainAction &&
+		hasPhainonEnemyTriggerSkill(ds.rule, domainSkill)
+	) {
 		for (const enemyState of states) {
 			if (enemyState.character.kind !== "敌人") continue;
 			actions.push({
@@ -69,7 +78,8 @@ export function handleDomainAction(
 	if (isFinalDomainAction) {
 		states[stateIndex].domainState = undefined;
 		states[stateIndex].actionNo += 1;
-		states[stateIndex].nextActionValue = domainAV + 10000 / states[stateIndex].currentSpeed;
+		states[stateIndex].nextActionValue =
+			domainAV + 10000 / states[stateIndex].currentSpeed;
 		applyPhainonDomainPauseAndSpeedBonus(
 			states,
 			stateIndex,
@@ -79,7 +89,8 @@ export function handleDomainAction(
 		);
 	} else {
 		ds.currentIndex += 1;
-		states[stateIndex].nextActionValue = ds.startAV + ds.interval * ds.currentIndex;
+		states[stateIndex].nextActionValue =
+			ds.startAV + ds.interval * ds.currentIndex;
 	}
 	return true;
 }

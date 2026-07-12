@@ -2,6 +2,17 @@ import { useCallback, useEffect, useState } from "react";
 import ActionPanel from "../components/action-sequence/ActionPanel";
 import CharacterPanel from "../components/action-sequence/CharacterPanel";
 import { ActionSequenceCtx } from "../contexts/ActionSequenceContext";
+import { hasDanHengSouldragon } from "../mechanics/danHengSouldragon";
+import {
+	type CharacterConfig,
+	evernightResourceName,
+	type GeneratedAction,
+	isLockedResourceNameForCharacters,
+	maxResources,
+	normalizeResourcesForCharacters,
+	type SavedData,
+	type SkillCode,
+} from "../utils/actionSequence";
 import {
 	addCharacterTarget,
 	addResourceName,
@@ -17,11 +28,6 @@ import {
 	updateResourceNames,
 	updateResourceValueRecord,
 } from "./action-sequence/editorState";
-import { useActionImageExport } from "./action-sequence/useActionImageExport";
-import { useActionMenuOperations } from "./action-sequence/useActionMenuOperations";
-import { useGeneratedActions } from "./action-sequence/useGeneratedActions";
-import { useActionSequencePersistence } from "./action-sequence/useActionSequencePersistence";
-import { useActionSequenceSavedData } from "./action-sequence/useActionSequenceSavedData";
 import {
 	canSelectSkillTarget,
 	clearActionSkillTarget,
@@ -34,17 +40,11 @@ import {
 	updateSkillOverrideRecord,
 	validateActionSkillInput,
 } from "./action-sequence/skillEditing";
-import {
-	evernightResourceName,
-	isLockedResourceNameForCharacters,
-	normalizeResourcesForCharacters,
-	type CharacterConfig,
-	type GeneratedAction,
-	maxResources,
-	type SavedData,
-	type SkillCode,
-} from "../utils/actionSequence";
-import { hasDanHengSouldragon } from "../mechanics/danHengSouldragon";
+import { useActionImageExport } from "./action-sequence/useActionImageExport";
+import { useActionMenuOperations } from "./action-sequence/useActionMenuOperations";
+import { useActionSequencePersistence } from "./action-sequence/useActionSequencePersistence";
+import { useActionSequenceSavedData } from "./action-sequence/useActionSequenceSavedData";
+import { useGeneratedActions } from "./action-sequence/useGeneratedActions";
 
 export default function ActionSequence() {
 	const [selectedActionKeys, setSelectedActionKeys] = useState<Set<string>>(
@@ -58,8 +58,9 @@ export default function ActionSequence() {
 	);
 	const [operationValue, setOperationValue] = useState("");
 	const [advanceCeiling, setAdvanceCeiling] = useState("");
-	const [operationSpeedMode, setOperationSpeedMode] =
-		useState<"absolute" | "relative">("absolute");
+	const [operationSpeedMode, setOperationSpeedMode] = useState<
+		"absolute" | "relative"
+	>("absolute");
 	const [lastMemeTarget, setLastMemeTarget] = useState<string>("");
 	const [draftInterruptCaster, setDraftInterruptCaster] = useState("");
 	const [draftInterruptTiming, setDraftInterruptTiming] = useState<
@@ -67,70 +68,70 @@ export default function ActionSequence() {
 	>("before");
 	const [message, setMessage] = useState("");
 	const {
-	savedData,
-	updateSavedData,
-	actionLimit,
-	displayedActionLimit,
-	exportData,
-	normalizeAndSetSavedData,
-	resetSavedData,
-	characters,
-	setCharacters,
-	limitPreset,
-	setLimitPreset,
-	customLimit,
-	setCustomLimit,
-	displayedLimit,
-	setDisplayedLimit,
-	resources,
-	setResources,
-	overrides,
-	setOverrides,
-	ultOverrides,
-	setUltOverrides,
-	skillOverrides,
-	setSkillOverrides,
-	domainEndOverrides,
-	setDomainEndOverrides,
-	speedAdjustments,
-	setSpeedAdjustments,
-	skillTargets,
-	setSkillTargets,
-	defaultSkillTargets,
-	setDefaultSkillTargets,
-	odeSelections,
-	setOdeSelections,
-	memeSelections,
-	setMemeSelections,
-	ultInterrupts,
-	setUltInterrupts,
-	resourceValues,
-	setResourceValues,
-	fireflyBreakCounters,
-	setFireflyBreakCounters,
-	godmodeExtraActions,
-	setGodmodeExtraActions,
-	castoriceKillToggles,
-	setCastoriceKillToggles,
-	icaKillToggles,
-	setIcaKillToggles,
-	memeKillToggles,
-	setMemeKillToggles,
-	evernightSelfDestructToggles,
-	setEvernightSelfDestructToggles,
-	evernightThresholdBurstToggles,
-	setEvernightThresholdBurstToggles,
-	hyacineE2Active,
-	setHyacineE2Active,
-	meritTarget,
-	setMeritTarget,
-	dancePartner,
-	setDancePartner,
-	bondmateTarget,
-	setBondmateTarget,
-	attackDisabled,
-	setAttackDisabled,
-} = useActionSequenceSavedData();
+		savedData,
+		updateSavedData,
+		actionLimit,
+		displayedActionLimit,
+		exportData,
+		normalizeAndSetSavedData,
+		resetSavedData,
+		characters,
+		setCharacters,
+		limitPreset,
+		setLimitPreset,
+		customLimit,
+		setCustomLimit,
+		displayedLimit,
+		setDisplayedLimit,
+		resources,
+		setResources,
+		overrides,
+		setOverrides,
+		ultOverrides,
+		setUltOverrides,
+		skillOverrides,
+		setSkillOverrides,
+		domainEndOverrides,
+		setDomainEndOverrides,
+		speedAdjustments,
+		setSpeedAdjustments,
+		skillTargets,
+		setSkillTargets,
+		defaultSkillTargets,
+		setDefaultSkillTargets,
+		odeSelections,
+		setOdeSelections,
+		memeSelections,
+		setMemeSelections,
+		ultInterrupts,
+		setUltInterrupts,
+		resourceValues,
+		setResourceValues,
+		fireflyBreakCounters,
+		setFireflyBreakCounters,
+		godmodeExtraActions,
+		setGodmodeExtraActions,
+		castoriceKillToggles,
+		setCastoriceKillToggles,
+		icaKillToggles,
+		setIcaKillToggles,
+		memeKillToggles,
+		setMemeKillToggles,
+		evernightSelfDestructToggles,
+		setEvernightSelfDestructToggles,
+		evernightThresholdBurstToggles,
+		setEvernightThresholdBurstToggles,
+		hyacineE2Active,
+		setHyacineE2Active,
+		meritTarget,
+		setMeritTarget,
+		dancePartner,
+		setDancePartner,
+		bondmateTarget,
+		setBondmateTarget,
+		attackDisabled,
+		setAttackDisabled,
+	} = useActionSequenceSavedData();
 
 	// 长夜月在队伍时自动锁死"忆质"资源列
 	useEffect(() => {
@@ -227,16 +228,12 @@ export default function ActionSequence() {
 		setMessage,
 	});
 
-	const {
-		imageExportRef,
-		isExportingImage,
-		setIsExportingImage,
-		exportImage,
-	} = useActionImageExport({
-		actionCount: actions.length,
-		resources,
-		setMessage,
-	});
+	const { imageExportRef, isExportingImage, setIsExportingImage, exportImage } =
+		useActionImageExport({
+			actionCount: actions.length,
+			resources,
+			setMessage,
+		});
 
 	const updateCharacter = (
 		id: string,
@@ -258,7 +255,9 @@ export default function ActionSequence() {
 		setDomainEndOverrides((prev) => filterActionKeyedRecord(prev, id));
 		setSpeedAdjustments((prev) => filterActionKeyedRecord(prev, id));
 		setSkillTargets((prev) => filterActionKeyedRecord(prev, id));
-		setDefaultSkillTargets((prev) => removeTargetFromDefaultSkillTargets(prev, id));
+		setDefaultSkillTargets((prev) =>
+			removeTargetFromDefaultSkillTargets(prev, id),
+		);
 		setOdeSelections((prev) => removeTargetFromOdeSelections(prev, id));
 		setMemeSelections((prev) => removeTargetFromMemeSelections(prev, id));
 		setUltInterrupts((prev) => filterActionKeyedRecord(prev, id));
@@ -281,81 +280,82 @@ export default function ActionSequence() {
 	};
 
 	const cancelHimekoNovaAssist = (action: GeneratedAction) => {
-	const sourceKey = action.assistSourceKey ?? action.key;
-	const assistIndex = action.assistIndex ?? 1;
-	setSkillOverrides((prev) => {
-		const restoredSkill = getCanceledNovaAssistSkill(
-			prev[sourceKey] ?? "",
-			assistIndex,
+		const sourceKey = action.assistSourceKey ?? action.key;
+		const assistIndex = action.assistIndex ?? 1;
+		setSkillOverrides((prev) => {
+			const restoredSkill = getCanceledNovaAssistSkill(
+				prev[sourceKey] ?? "",
+				assistIndex,
+			);
+			if (restoredSkill === null) return prev;
+			const next = { ...prev };
+			if (restoredSkill === "") delete next[sourceKey];
+			else next[sourceKey] = restoredSkill;
+			return next;
+		});
+		setMessage(getCanceledNovaAssistMessage(assistIndex));
+	};
+	const updateSkillTarget = (action: GeneratedAction, targetId: string) => {
+		const character = charactersById[action.characterId];
+		const target = targetId ? charactersById[targetId] : undefined;
+		const canSelect = canSelectSkillTarget({ character, target });
+		setSkillTargets((prev) =>
+			updateActionSkillTargetRecord({
+				actionKey: action.key,
+				canSelect,
+				record: prev,
+				targetId,
+			}),
 		);
-		if (restoredSkill === null) return prev;
-		const next = { ...prev };
-		if (restoredSkill === "") delete next[sourceKey];
-		else next[sourceKey] = restoredSkill;
-		return next;
-	});
-	setMessage(getCanceledNovaAssistMessage(assistIndex));
-};
-const updateSkillTarget = (action: GeneratedAction, targetId: string) => {
-	const character = charactersById[action.characterId];
-	const target = targetId ? charactersById[targetId] : undefined;
-	const canSelect = canSelectSkillTarget({ character, target });
-	setSkillTargets((prev) =>
-		updateActionSkillTargetRecord({
-			actionKey: action.key,
-			canSelect,
-			record: prev,
-			targetId,
-		}),
-	);
-	if (!character || !shouldRememberTargetForCharacter(character.name)) return;
-	setDefaultSkillTargets((prev) =>
-		updateActionSkillTargetRecord({
-			actionKey: action.characterId,
-			canSelect,
-			record: prev,
-			targetId,
-		}),
-	);
-};
-const updateActionSkill = (action: GeneratedAction, value: string) => {
-	const character = charactersById[action.characterId];
-	if (!character) return;
-	const nextSkill = value.trim().toUpperCase() as SkillCode;
-	const validationMessage = validateActionSkillInput({
-		action,
-		character,
-		characters,
-		nextSkill,
-	});
-	if (validationMessage === "__IGNORE__") return;
-	if (validationMessage) {
-		setMessage(validationMessage);
-		return;
-	}
-
-	const savedSkill = getSavedSkillCode(action, nextSkill);
-	setSkillOverrides((prev) =>
-		updateSkillOverrideRecord({
+		if (!character || !shouldRememberTargetForCharacter(character.name)) return;
+		setDefaultSkillTargets((prev) =>
+			updateActionSkillTargetRecord({
+				actionKey: action.characterId,
+				canSelect,
+				record: prev,
+				targetId,
+			}),
+		);
+	};
+	const updateActionSkill = (action: GeneratedAction, value: string) => {
+		const character = charactersById[action.characterId];
+		if (!character) return;
+		const nextSkill = value.trim().toUpperCase() as SkillCode;
+		const validationMessage = validateActionSkillInput({
 			action,
 			character,
+			characters,
 			nextSkill,
-			record: prev,
-			savedSkill,
-		}),
-	);
-	setUltOverrides((prev) => removeActionBooleanOverride(prev, action.key));
-	if (!nextSkill.includes("E")) {
-		setSkillTargets((prev) => clearActionSkillTarget(prev, action.key));
-	}
-};
+		});
+		if (validationMessage === "__IGNORE__") return;
+		if (validationMessage) {
+			setMessage(validationMessage);
+			return;
+		}
+
+		const savedSkill = getSavedSkillCode(action, nextSkill);
+		setSkillOverrides((prev) =>
+			updateSkillOverrideRecord({
+				action,
+				character,
+				nextSkill,
+				record: prev,
+				savedSkill,
+			}),
+		);
+		setUltOverrides((prev) => removeActionBooleanOverride(prev, action.key));
+		if (!nextSkill.includes("E")) {
+			setSkillTargets((prev) => clearActionSkillTarget(prev, action.key));
+		}
+	};
 	const addResource = () => {
 		if (resources.length >= maxResources) return;
 		setResources((prev) => addResourceName(prev));
 	};
 
 	const updateResource = (index: number, value: string) => {
-		if (isLockedResourceNameForCharacters(resources[index] ?? "", characters)) return;
+		if (isLockedResourceNameForCharacters(resources[index] ?? "", characters))
+			return;
 		if (
 			value.trim() === evernightResourceName &&
 			!isLockedResourceNameForCharacters(resources[index] ?? "", characters)
@@ -367,7 +367,8 @@ const updateActionSkill = (action: GeneratedAction, value: string) => {
 
 	const removeResource = (index: number) => {
 		const removedName = resources[index];
-		if (isLockedResourceNameForCharacters(removedName ?? "", characters)) return;
+		if (isLockedResourceNameForCharacters(removedName ?? "", characters))
+			return;
 		setResources((prev) => removeResourceName(prev, index));
 		setResourceValues((prev) => removeResourceFromValues(prev, removedName));
 	};
@@ -514,6 +515,3 @@ const updateActionSkill = (action: GeneratedAction, value: string) => {
 		</ActionSequenceCtx.Provider>
 	);
 }
-
-
-

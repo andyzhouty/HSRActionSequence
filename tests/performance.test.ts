@@ -75,9 +75,7 @@ describe("Performance: heavy scenarios", () => {
 					"bronya-1": "phainon",
 				},
 				ultInterrupts: {
-					"phainon-1": [
-						{ casterId: "robin", timing: "before" },
-					],
+					"phainon-1": [{ casterId: "robin", timing: "before" }],
 					"phainon-2-domain-3": [
 						{ casterId: "sparkle", timing: "before" },
 						{ casterId: "bronya", timing: "after" },

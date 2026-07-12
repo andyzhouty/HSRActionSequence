@@ -1,16 +1,18 @@
-import {
-	type GeneratedAction,
-} from "../utils/actionSequence";
-import type { ActiveOdeState, SimulateActionsInput, ActionState } from "./types";
-import { selectNextAction } from "./scheduler";
-import { handleSpecialAction } from "./specialActions";
-import { handleDomainAction } from "./domain";
+import type { GeneratedAction } from "../utils/actionSequence";
 import { createActionContext } from "./context";
-import { runPreActionChecks } from "./preAction";
-import { runPostActionCleanup } from "./postAction";
+import { handleDomainAction } from "./domain";
 import { handleGarmentmakerActionTurn } from "./garmentmakerAction";
 import { handleNormalAction, type NormalActionResult } from "./normalAction";
+import { runPostActionCleanup } from "./postAction";
+import { runPreActionChecks } from "./preAction";
 import type { SimulationCallbacks, SimulationRuntime } from "./runtime";
+import { selectNextAction } from "./scheduler";
+import { handleSpecialAction } from "./specialActions";
+import type {
+	ActionState,
+	ActiveOdeState,
+	SimulateActionsInput,
+} from "./types";
 
 export type SimulationLoopCallbacks = SimulationCallbacks;
 
@@ -21,7 +23,7 @@ export function runSimulationLoop(params: {
 	actions: GeneratedAction[];
 	activeOdes: Map<string, ActiveOdeState[]>;
 	souldragonOwner: ActionState | undefined;
-	currentBondmateTarget: string | null;
+	currentBondmateTarget: { value: string | null };
 	calcAhaSpeed: () => number;
 	refreshAhaSchedule: (actionValue: number) => void;
 	callbacks: SimulationLoopCallbacks;
@@ -29,12 +31,10 @@ export function runSimulationLoop(params: {
 	const runtime: SimulationRuntime = {
 		...params,
 		currentMeritTarget: params.input.meritTarget ?? null,
-		currentBondmateTarget: params.currentBondmateTarget,
+		currentBondmateTarget: params.currentBondmateTarget as { value: string | null },
 	};
 	const { input, states, actions, activeOdes } = runtime;
-	const {
-		emitSpecialInterruptAction,
-	} = runtime.callbacks;
+	const { emitSpecialInterruptAction } = runtime.callbacks;
 
 	let guard = 0;
 
@@ -51,11 +51,21 @@ export function runSimulationLoop(params: {
 
 		runPreActionChecks(runtime, context);
 
-		if (handleSpecialAction({
-			input, states, actions, activeOdes, stateIndex, key, actionValue, character, actionNo,
-			calcAhaSpeed: runtime.calcAhaSpeed,
-			callbacks: runtime.callbacks,
-		})) {
+		if (
+			handleSpecialAction({
+				input,
+				states,
+				actions,
+				activeOdes,
+				stateIndex,
+				key,
+				actionValue,
+				character,
+				actionNo,
+				calcAhaSpeed: runtime.calcAhaSpeed,
+				callbacks: runtime.callbacks,
+			})
+		) {
 			continue;
 		}
 
@@ -64,24 +74,41 @@ export function runSimulationLoop(params: {
 		}
 
 		// ── 境界内连动 ──
-		if (handleDomainAction(states, stateIndex, actions, character, activeOdes, input)) {
+		if (
+			handleDomainAction(
+				states,
+				stateIndex,
+				actions,
+				character,
+				activeOdes,
+				input,
+			)
+		) {
 			continue;
 		}
 
 		// ── 普通行动处理（含境界激活） ──
-		const normalResult: NormalActionResult = handleNormalAction(runtime, context);
-		const { skipAssistFollowUp } = normalResult;
+		const normalResult: NormalActionResult = handleNormalAction(
+			runtime,
+			context,
+		);
+		const { skipAssistFollowUp, clearAdvanceBlockAfterAction } = normalResult;
 
 		// ── 行动后收尾 ──
 		const keyInterrupts = input.ultInterrupts[key] ?? [];
 		const afterInterrupts = keyInterrupts.filter((i) => i.timing === "after");
 		runPostActionCleanup(runtime, context, {
 			skipAssistFollowUp,
+			clearAdvanceBlockAfterAction,
 			afterInterrupts,
 			emitInterrupt: (interrupt) => {
 				const idx = keyInterrupts.indexOf(interrupt);
 				if (idx >= 0) {
-					emitSpecialInterruptAction(`${key}-interrupt-${idx}`, interrupt, actionValue);
+					emitSpecialInterruptAction(
+						`${key}-interrupt-${idx}`,
+						interrupt,
+						actionValue,
+					);
 				}
 			},
 		});

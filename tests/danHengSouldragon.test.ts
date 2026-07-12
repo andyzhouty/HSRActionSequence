@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { CharacterConfig, SkillCode } from "../src/utils/actionSequence";
 import {
 	type SimulateActionsInput,
 	simulateActions,
 } from "../src/simulate/actions";
+import type { CharacterConfig, SkillCode } from "../src/utils/actionSequence";
 
 function character(
 	id: string,
@@ -246,10 +246,6 @@ describe("Dan Heng Permansor Terrae Souldragon", () => {
 		// 双段攻击(EW)应比单段(E)使龙灵更早行动
 		expect(singleSd2).toBeDefined();
 		expect(doubleSd2).toBeDefined();
-		expect(doubleSd2!.actionValue).toBeLessThan(singleSd2!.actionValue);
+		expect(doubleSd2?.actionValue).toBeLessThan(singleSd2?.actionValue);
 	});
 });
-
-
-
-

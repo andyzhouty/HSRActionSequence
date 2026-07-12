@@ -8,7 +8,7 @@
  * Run manually: npx vitest run tests/backend.test.ts
  */
 
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // We test the internal helper logic by extracting and testing it directly.
 // Since wailsMethodToName is not exported, we replicate its logic here.
@@ -95,7 +95,9 @@ describe("save dialog option serialization", () => {
 	});
 
 	it("extracts defaultFilename from path", () => {
-		const json = buildSaveOptions({ defaultPath: "C:\\Users\\test\\file.json" });
+		const json = buildSaveOptions({
+			defaultPath: "C:\\Users\\test\\file.json",
+		});
 		const parsed = JSON.parse(json);
 		expect(parsed.defaultFilename).toBe("file.json");
 	});

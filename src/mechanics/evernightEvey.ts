@@ -35,12 +35,16 @@ function getEffectiveDismissSpeedBuff(
 		const parsed = Number.parseFloat(resourceValue ?? "");
 		const consumed = Number.isFinite(parsed) && parsed >= 16 ? parsed : 16;
 		const extraPercent = Math.min(consumed, 40);
-		return EVERNIGHT_BASE_SPEED_BUFF + (EVERNIGHT_BASE_SPEED * extraPercent) / 100;
+		return (
+			EVERNIGHT_BASE_SPEED_BUFF + (EVERNIGHT_BASE_SPEED * extraPercent) / 100
+		);
 	}
 	const parsed = Number.parseFloat(resourceValue ?? "");
 	const consumed = Number.isFinite(parsed) && parsed < 0 ? Math.abs(parsed) : 0;
 	const extraPercent = Math.min(consumed, 40);
-	return EVERNIGHT_BASE_SPEED_BUFF + (EVERNIGHT_BASE_SPEED * extraPercent) / 100;
+	return (
+		EVERNIGHT_BASE_SPEED_BUFF + (EVERNIGHT_BASE_SPEED * extraPercent) / 100
+	);
 }
 
 function applyEvernightDisappearSpeedBuff(
@@ -77,10 +81,7 @@ export function hasEvernightEvey(characterName: string): boolean {
 	return hasSkillEffect(characterName, "E", "summonEvey");
 }
 
-export function findEveyState(
-	states: EveyActionState[],
-	ownerId: string,
-) {
+export function findEveyState(states: EveyActionState[], ownerId: string) {
 	return states.find(
 		(state) => state.isEveyAction && state.character.id === `${ownerId}-evey`,
 	);
@@ -122,7 +123,9 @@ export function summonEveyState(
 		baseSpeed: speed,
 		currentSpeed: speed,
 		actionNo: 1,
-		nextActionValue: options?.immediate ? actionValue : actionValue + 10000 / speed,
+		nextActionValue: options?.immediate
+			? actionValue
+			: actionValue + 10000 / speed,
 		blockNextAdvance: false,
 		isEveyAction: true,
 		eveyGeneration: nextGeneration,
@@ -146,8 +149,12 @@ export function handleEveyAction(
 ) {
 	const state = states[stateIndex];
 	const ownerId = state.character.id.replace("-evey", "");
-	const ownerState = states.find((candidate) => candidate.character.id === ownerId);
-	const rule = ownerState ? getEveyRule(ownerState.character.name) : getEveyRule("");
+	const ownerState = states.find(
+		(candidate) => candidate.character.id === ownerId,
+	);
+	const rule = ownerState
+		? getEveyRule(ownerState.character.name)
+		: getEveyRule("");
 	const resolvedSkill = skill === "" ? rule.keepSkill : skill;
 	const dismissSource: EveyDismissSource = options?.thresholdBurst
 		? "thresholdBurst"
@@ -180,10 +187,7 @@ export function handleEveyAction(
 			applyEvernightDisappearSpeedBuff(
 				ownerState,
 				actionValue,
-				getEffectiveDismissSpeedBuff(
-					options?.resourceValue,
-					dismissSource,
-				),
+				getEffectiveDismissSpeedBuff(options?.resourceValue, dismissSource),
 			);
 		}
 		states.splice(stateIndex, 1);
@@ -194,4 +198,3 @@ export function handleEveyAction(
 	state.nextActionValue = actionValue + 10000 / state.currentSpeed;
 	state.blockNextAdvance = false;
 }
-

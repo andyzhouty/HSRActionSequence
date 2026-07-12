@@ -38,12 +38,15 @@ type SaveDialogOptions = {
 };
 
 type InvokeArgs = Record<string, unknown>;
+type WailsMethod = (...args: unknown[]) => unknown;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function wailsInvoke(method: string, args?: InvokeArgs): Promise<any> {
+async function wailsInvoke(
+	method: string,
+	args?: InvokeArgs,
+): Promise<unknown> {
 	const app = window?.go?.main?.App;
 	if (!app) throw new Error("Wails runtime not available");
-	const fn = (app as Record<string, Function>)[method];
+	const fn = (app as unknown as Record<string, WailsMethod>)[method];
 	if (!fn) throw new Error(`Method ${method} not found`);
 	if (args) {
 		const argNames: Record<string, string[]> = {
@@ -73,33 +76,48 @@ function wailsMethodToName(method: string): string {
 	return map[method] ?? method;
 }
 
-export async function invoke<T = string>(method: string, args?: InvokeArgs): Promise<T> {
+export async function invoke<T = string>(
+	method: string,
+	args?: InvokeArgs,
+): Promise<T> {
 	return wailsInvoke(wailsMethodToName(method), args) as Promise<T>;
 }
 
-export async function save(options?: SaveDialogOptions): Promise<string | null> {
+export async function save(
+	options?: SaveDialogOptions,
+): Promise<string | null> {
 	const app = window?.go?.main?.App;
 	if (!app?.SaveFileDialog) return null;
-	const json = options ? JSON.stringify({
-		title: options.title,
-		defaultFilename: options.defaultPath?.split("/").pop()?.split("\\").pop(),
-		filters: options.filters?.map((f) => ({
-			displayName: f.name,
-			pattern: f.extensions.map((e) => `*.${e}`).join(";"),
-		})),
-	}) : "";
+	const json = options
+		? JSON.stringify({
+				title: options.title,
+				defaultFilename: options.defaultPath
+					?.split("/")
+					.pop()
+					?.split("\\")
+					.pop(),
+				filters: options.filters?.map((f) => ({
+					displayName: f.name,
+					pattern: f.extensions.map((e) => `*.${e}`).join(";"),
+				})),
+			})
+		: "";
 	return app.SaveFileDialog(json);
 }
 
-export async function open(options?: OpenDialogOptions): Promise<string | null> {
+export async function open(
+	options?: OpenDialogOptions,
+): Promise<string | null> {
 	const app = window?.go?.main?.App;
 	if (!app?.OpenFileDialog) return null;
-	const json = options ? JSON.stringify({
-		title: options.title,
-		filters: options.filters?.map((f) => ({
-			displayName: f.name,
-			pattern: f.extensions.map((e) => `*.${e}`).join(";"),
-		})),
-	}) : "";
+	const json = options
+		? JSON.stringify({
+				title: options.title,
+				filters: options.filters?.map((f) => ({
+					displayName: f.name,
+					pattern: f.extensions.map((e) => `*.${e}`).join(";"),
+				})),
+			})
+		: "";
 	return app.OpenFileDialog(json);
 }

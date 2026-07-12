@@ -1,5 +1,10 @@
 import { getCharacterPath, hasSkillEffect } from "../data/characters";
 import {
+	findGarmentmakerState,
+	getAglaeaStackLimit,
+	syncGarmentmakerStacksToAglaea,
+} from "../mechanics/aglaeaGarmentmaker";
+import {
 	type CharacterConfig,
 	canUseSkillCode,
 	type GeneratedAction,
@@ -16,11 +21,6 @@ import {
 	shouldRememberSkillTarget,
 	toSignedNumber,
 } from "../utils/actionSequence";
-import {
-	findGarmentmakerState,
-	getAglaeaStackLimit,
-	syncGarmentmakerStacksToAglaea,
-} from "../mechanics/aglaeaGarmentmaker";
 import type {
 	ActionState,
 	ActiveOdeState,
@@ -167,9 +167,7 @@ export function handleMemoryTrailblazerQ(state: ActionState) {
 }
 
 /** 记忆主 A 时消耗一层史诗，返回是否消耗成功 */
-export function consumeMemoryTrailblazerEpic(
-	state: ActionState,
-): boolean {
+export function consumeMemoryTrailblazerEpic(state: ActionState): boolean {
 	if (!state.epicPendingA) return false;
 	if ((state.epic ?? 0) <= 0) {
 		state.epicPendingA = false;
@@ -213,8 +211,7 @@ export function shouldTriggerE6TeamAdvance24(Q_counter: number): boolean {
 
 // ── 昔涟 E6 拉条 ──
 
-/** 昔涟/德谬歌 Q 后的完整处理：Q_counter + 强化 Q + E6。
- * QE/QA 的 Q 已发生在自身正常行动之前，因此不能再拉自身；其他 Q 均参与全队排序。 */
+/** 昔涟/德谬歌 Q 后的完整处理：Q_counter + 强化 Q + E6。 */
 export function handleCyrenePostUltimate({
 	states,
 	casterIndex,
@@ -223,6 +220,7 @@ export function handleCyrenePostUltimate({
 	actionValue,
 	activeOdes,
 	excludeSelf = false,
+	sortSelfByOriginalActionOrder = false,
 }: {
 	states: ActionState[];
 	casterIndex: number;
@@ -231,6 +229,7 @@ export function handleCyrenePostUltimate({
 	actionValue: number;
 	activeOdes: Map<string, ActiveOdeState[]>;
 	excludeSelf?: boolean;
+	sortSelfByOriginalActionOrder?: boolean;
 }) {
 	void activeOdes;
 	const cyreneRule = getCyreneUltimateRule(character.name);
@@ -254,50 +253,46 @@ export function handleCyrenePostUltimate({
 			lockedSkill: true,
 		});
 		// E6：强化 Q 结束后 24% 全队拉条（Q_counter = 3k+2, k>0）
-		if (
-			character.eidolon >= 6 &&
-			shouldTriggerE6TeamAdvance24(qCounter)
-		) {
+		if (character.eidolon >= 6 && shouldTriggerE6TeamAdvance24(qCounter)) {
 			applyCyreneE6EnhancedQPull(states, actionValue);
 		}
 	}
 	// E6 首次大：全队 100% 拉条（Q_counter = 1 时）
 	if (character.eidolon >= 6 && qCounter === 1) {
-		const shouldExcludeSelf = excludeSelf;
 		applyCyreneE6FirstUltimatePull(
 			states,
 			casterIndex,
 			actionValue,
-			shouldExcludeSelf,
+			excludeSelf,
+			sortSelfByOriginalActionOrder,
 		);
 	}
 }
 
-/** 释放昔涟 E6 首次大 100% 全队拉条（同知更鸟顶轴机制，但昔涟自身也可被拉条）
- *  @param excludeSelf - 若为 true（插队情况），不拉昔涟自身 */
+/** 释放昔涟 E6 首次大 100% 全队拉条。 */
 export function applyCyreneE6FirstUltimatePull(
 	states: ActionState[],
 	cyreneIndex: number,
 	actionValue: number,
 	excludeSelf = false,
+	sortSelfByOriginalActionOrder = false,
 ) {
-	// 普通首次 Q 时，昔涟自身已经完成本次行动，必须占据拉条后的第一动。
-	// 不把自身混入旧 AV 排序，否则同 AV 的其他状态可能占用 rank 0。
-	if (!excludeSelf) {
+	// 昔涟自身回合的 Q 已完成本次行动，因此她应取得拉条后的第一动。
+	if (!excludeSelf && !sortSelfByOriginalActionOrder) {
 		const cyrene = states[cyreneIndex];
 		if (cyrene && !cyrene.blockNextAdvance) {
 			cyrene.nextActionValue = actionValue;
 		}
 	}
 
-	// 其余队友（角色+忆灵）按拉条前的相对 AV 排列。
+	// 外部插队 Q 将昔涟与其他我方角色、驻场忆灵一起按拉条前的相对 AV 排列。
 	const allyOrder = states
 		.map((s, i) => ({ index: i, value: s.nextActionValue }))
 		.filter(
 			({ index }) =>
 				isAllyTarget(states[index].character.kind) &&
-				index !== cyreneIndex &&
-				!(excludeSelf && index === cyreneIndex),
+				(!excludeSelf || index !== cyreneIndex) &&
+				(sortSelfByOriginalActionOrder || index !== cyreneIndex),
 		)
 		.sort((a, b) => {
 			if (a.value !== b.value) return a.value - b.value;
@@ -307,7 +302,7 @@ export function applyCyreneE6FirstUltimatePull(
 	for (let rank = 0; rank < allyOrder.length; rank++) {
 		const target = states[allyOrder[rank].index];
 		if (target.blockNextAdvance) continue;
-		const rankOffset = excludeSelf ? 0 : 1;
+		const rankOffset = excludeSelf || sortSelfByOriginalActionOrder ? 0 : 1;
 		target.nextActionValue = actionValue + (rank + rankOffset) * 0.0001;
 	}
 }
@@ -386,7 +381,10 @@ export function killMeme(states: ActionState[], actionValue: number) {
 	const owner = states.find((state) => state.character.id === ownerId);
 	if (!owner || owner.blockNextAdvance) return;
 	const advance = 2500 / owner.currentSpeed;
-	owner.nextActionValue = Math.max(actionValue, owner.nextActionValue - advance);
+	owner.nextActionValue = Math.max(
+		actionValue,
+		owner.nextActionValue - advance,
+	);
 }
 
 // --- Internal state ---
@@ -496,7 +494,12 @@ export function applyOdeSelection(
 	if (ode.effects?.includes("odeToRomance") && target) {
 		const stackLimit = getAglaeaStackLimit(target.character);
 		if (stackLimit > 0) {
-			syncGarmentmakerStacksToAglaea(states, target.character.id, stackLimit, actionValue);
+			syncGarmentmakerStacksToAglaea(
+				states,
+				target.character.id,
+				stackLimit,
+				actionValue,
+			);
 			const gm = findGarmentmakerState(states, target.character.id);
 			if (gm) {
 				gm.garmentmakerStacks = stackLimit;
@@ -551,13 +554,17 @@ export function emitCyreneMemospriteAction({
 		actionValue,
 	);
 	const selection = input.odeSelections[memospriteKey];
-	const selectedTarget = selection && selection.targetId !== cyrene.id
-		? findTargetStateById(states, selection.targetId)
-		: undefined;
+	const selectedTarget =
+		selection && selection.targetId !== cyrene.id
+			? findTargetStateById(states, selection.targetId)
+			: undefined;
 	const selectedOde =
 		selection && selectedTarget
 			? (cyreneRule.odes.find((ode) => ode.code === selection.odeCode) ??
-				getOdeRuleForTarget(cyreneRule, getCharacterCid(selectedTarget.character.name)))
+				getOdeRuleForTarget(
+					cyreneRule,
+					getCharacterCid(selectedTarget.character.name),
+				))
 			: undefined;
 	if (selection && selectedOde?.effects?.includes("immediateEnhancedSkill")) {
 		if (
@@ -636,6 +643,3 @@ export function emitMemeAdvanceAction({
 	meme.nextActionValue = actionValue + 10000 / meme.currentSpeed;
 	meme.blockNextAdvance = false;
 }
-
-
-

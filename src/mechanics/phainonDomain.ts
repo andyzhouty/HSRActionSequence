@@ -99,7 +99,8 @@ export function freezeAlliesForDomain(
 		if (state.blockNextAdvance) continue;
 
 		const remainingDistance =
-			Math.max(0, state.nextActionValue - startActionValue) * state.currentSpeed;
+			Math.max(0, state.nextActionValue - startActionValue) *
+			state.currentSpeed;
 		state.phainonDomainFrozenDistance = remainingDistance;
 		state.nextActionValue = startActionValue + 99999;
 	}
@@ -140,4 +141,3 @@ export function hasPhainonEnemyTriggerSkill(
 		rule.enemyTriggerSkills?.some((trigger) => skill.includes(trigger)) ?? false
 	);
 }
-

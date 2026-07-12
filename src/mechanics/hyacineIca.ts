@@ -26,9 +26,7 @@ export function hasHyacineIca(characterName: string): boolean {
 	return hasSkillEffect(characterName, "E", "summonIca");
 }
 
-export function isIcaOnField(state: {
-	icaOnField?: boolean;
-}): boolean {
+export function isIcaOnField(state: { icaOnField?: boolean }): boolean {
 	return state.icaOnField ?? false;
 }
 
@@ -41,20 +39,15 @@ export function findHyacineState(
 
 // ── 召唤 Ica ──
 
-export function summonIca(
-	state: HyacineActionState,
-) {
+export function summonIca(state: HyacineActionState) {
 	state.icaOnField = true;
 }
 
 // ── Ica 死亡 ──
 
-export function killIca(
-	states: HyacineActionState[],
-	actionValue: number,
-) {
+export function killIca(states: HyacineActionState[], actionValue: number) {
 	const hyacine = findHyacineState(states);
-	if (!hyacine || !hyacine.icaOnField) return;
+	if (!hyacine?.icaOnField) return;
 
 	hyacine.icaOnField = false;
 	hyacine.afterRain = 0;
@@ -121,9 +114,7 @@ export function triggerIcaExtraTurn(
 // ── E2 全队加速 ──
 
 /** 应用风堇 E2 全队速度加成（各自 baseSpeed × 30%，不可叠加） */
-export function applyHyacineE2SpeedBuff(
-	states: HyacineActionState[],
-) {
+export function applyHyacineE2SpeedBuff(states: HyacineActionState[]) {
 	const hyacine = findHyacineState(states);
 	if (!hyacine || hyacine.character.eidolon < 2) return;
 	if ((hyacine.hyacineE2SpeedBonus ?? 0) > 0) return; // 已应用，不可叠加
@@ -145,4 +136,3 @@ export function applyHyacineE2SpeedBuff(
 	}
 	hyacine.hyacineE2SpeedBonus = 1; // 标记已应用
 }
-

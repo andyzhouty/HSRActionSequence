@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ActionSequence from "../src/pages/ActionSequence";
@@ -59,7 +65,9 @@ describe("ActionSequence four-character front-end interaction", () => {
 	it("renders and edits a complex Castorice/Evernight/Hyacine/Cyrene sequence", async () => {
 		render(<ActionSequence />);
 
-		const importArea = await screen.findByPlaceholderText("JSON 导入 / 导出内容");
+		const importArea = await screen.findByPlaceholderText(
+			"JSON 导入 / 导出内容",
+		);
 		const importJson = {
 			// The interaction under test is complete by AV 100; avoid rendering
 			// unrelated long-tail summon actions.
@@ -132,11 +140,15 @@ describe("ActionSequence four-character front-end interaction", () => {
 
 		await waitFor(() => {
 			const json = (
-				screen.getByPlaceholderText("JSON 导入 / 导出内容") as HTMLTextAreaElement
+				screen.getByPlaceholderText(
+					"JSON 导入 / 导出内容",
+				) as HTMLTextAreaElement
 			).value;
 			expect(json).toContain('"evernight-1":"AQ"');
 		});
-		expect(within(firstEvernightRow).getByDisplayValue("AQ")).toBeInTheDocument();
+		expect(
+			within(firstEvernightRow).getByDisplayValue("AQ"),
+		).toBeInTheDocument();
 
 		const hyacineLabel = screen.getAllByText("风堇")[0];
 		const hyacineRow = hyacineLabel.closest("tr");

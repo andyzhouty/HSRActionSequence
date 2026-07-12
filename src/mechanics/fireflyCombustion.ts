@@ -1,12 +1,15 @@
 import { hasSkillEffect } from "../data/characters";
+import { findHimekoNovaAssistState } from "../simulate/effects";
+import type { ActionState, SimulateActionsInput } from "../simulate/types";
 import type {
 	CharacterConfig,
 	GeneratedAction,
 	SkillCode,
 } from "../utils/actionSequence";
-import { getFireflyCombustionRule, isCharacterTarget } from "../utils/actionSequence";
-import { findHimekoNovaAssistState } from "../simulate/effects";
-import type { ActionState, SimulateActionsInput } from "../simulate/types";
+import {
+	getFireflyCombustionRule,
+	isCharacterTarget,
+} from "../utils/actionSequence";
 
 // ── Firefly Complete Combustion ──
 // Character-specific numbers live in characters.json; this module keeps only
@@ -94,11 +97,12 @@ function handleSingleBreakTrigger(
 
 		// 若额外回合使用了 F，触发 sp 姬子助战
 		const extraHasF = extraSkill.includes("F");
-		const assistUseCount = extraHasF ? (extraSkill.match(/F/g)?.length ?? 0) : 0;
-		const himekoAssist =
-			extraHasF
-				? findHimekoNovaAssistState(states as ActionState[], character.id)
-				: undefined;
+		const assistUseCount = extraHasF
+			? (extraSkill.match(/F/g)?.length ?? 0)
+			: 0;
+		const himekoAssist = extraHasF
+			? findHimekoNovaAssistState(states as ActionState[], character.id)
+			: undefined;
 
 		const strippedSkill = extraSkill.replace(/F/g, "") as SkillCode;
 
@@ -127,8 +131,7 @@ function handleSingleBreakTrigger(
 		// E2 sp姬子 FF → 额外回合消失；单 F 保留额外回合
 		const himekoEidolon = himekoAssist?.character.eidolon ?? 0;
 		const skipBreakExtra =
-			himekoAssist !== undefined &&
-			(himekoEidolon < 2 || assistUseCount >= 2);
+			himekoAssist !== undefined && (himekoEidolon < 2 || assistUseCount >= 2);
 
 		if (!skipBreakExtra) {
 			actions.push({
@@ -284,7 +287,3 @@ export function checkBreakTrigger(
 		input,
 	);
 }
-
-
-
-

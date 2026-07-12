@@ -13,17 +13,23 @@ export function selectNextAction(
 	input: SimulateActionsInput,
 ): ActionCandidate | undefined {
 	const candidates = states.map((state, stateIndex) => {
-		const key = state.isGarmentmakerState && state.garmentmakerGeneration
-			? `${state.character.id}-g${state.garmentmakerGeneration}-${state.actionNo}`
-			: state.isEveyAction && state.eveyGeneration && state.eveyGeneration > 1
-				? `${state.character.id}-${state.actionNo}-g${state.eveyGeneration}`
-				: state.isPolluxAction && state.polluxGeneration && state.polluxGeneration > 1
-					? `${state.character.id}-${state.actionNo}-g${state.polluxGeneration}`
-					: `${state.character.id}-${state.actionNo}`;
+		const key =
+			state.isGarmentmakerState && state.garmentmakerGeneration
+				? `${state.character.id}-g${state.garmentmakerGeneration}-${state.actionNo}`
+				: state.isEveyAction && state.eveyGeneration && state.eveyGeneration > 1
+					? `${state.character.id}-${state.actionNo}-g${state.eveyGeneration}`
+					: state.isPolluxAction &&
+							state.polluxGeneration &&
+							state.polluxGeneration > 1
+						? `${state.character.id}-${state.actionNo}-g${state.polluxGeneration}`
+						: `${state.character.id}-${state.actionNo}`;
 		return {
 			stateIndex,
 			key,
-			actionValue: toNonNegativeNumber(input.overrides[key], state.nextActionValue),
+			actionValue: toNonNegativeNumber(
+				input.overrides[key],
+				state.nextActionValue,
+			),
 		};
 	});
 	candidates.sort((a, b) => {
@@ -35,11 +41,13 @@ export function selectNextAction(
 		const aPriority = aState.sameActionPriority ?? 0;
 		const bPriority = bState.sameActionPriority ?? 0;
 		if (aPriority !== bPriority) return aPriority - bPriority;
-		if (Boolean(aState.isImmediatePolluxSummon) !== Boolean(bState.isImmediatePolluxSummon)) {
+		if (
+			Boolean(aState.isImmediatePolluxSummon) !==
+			Boolean(bState.isImmediatePolluxSummon)
+		) {
 			return aState.isImmediatePolluxSummon ? -1 : 1;
 		}
 		return a.stateIndex - b.stateIndex;
 	});
 	return candidates[0];
 }
-

@@ -1,6 +1,8 @@
 import { Fragment, useMemo } from "react";
 import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
+import { hasHyacineIca } from "../../mechanics/hyacineIca";
+import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
 import { getDisplayOrderedActions } from "../../utils/actionDisplayOrder";
 import type { SpeedChangeMode } from "../../utils/actionSequence";
 import {
@@ -10,8 +12,8 @@ import {
 	getMemeAdvanceRule,
 	getTargetDefaultName,
 	hasSkillEffect,
-	isLockedResourceNameForCharacters,
 	isCharacterTarget,
+	isLockedResourceNameForCharacters,
 	limitPresets,
 	maxResources,
 	shouldRememberSkillTarget,
@@ -20,8 +22,6 @@ import {
 import { ActionLimitMarkerRow, ActionRow } from "./ActionTableRows";
 import { SelectInput, TextInput } from "./Controls";
 import ExportExcelButton from "./ExportExcelButton";
-import { hasHyacineIca } from "../../mechanics/hyacineIca";
-import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
 
 export default function ActionPanel() {
 	const ctx = useActionSequence();
@@ -34,7 +34,7 @@ export default function ActionPanel() {
 	// 白厄境界期间：只显示境界动作 + 非忆灵 + 敌人，隐藏我方角色和忆灵
 	// 昔涟自 Q：不显示昔涟Q行，仅显示德谬歌Q
 	const visibleActions = useMemo(() => {
-		let filtered = orderedActions.filter((action) => {
+		const filtered = orderedActions.filter((action) => {
 			// 隐藏昔涟自 Q 行（德谬歌 Q 已单独显示）
 			if (
 				action.skill === "Q" &&
@@ -716,7 +716,9 @@ function hasEveyOnFieldBeforeAction(
 	if (!owner) return false;
 	if (actionKey.startsWith(`${owner.id}-evey-`)) return true;
 	const orderedActions = getDisplayOrderedActions(ctx.actions);
-	const selectedIndex = orderedActions.findIndex((action) => action.key === actionKey);
+	const selectedIndex = orderedActions.findIndex(
+		(action) => action.key === actionKey,
+	);
 	if (selectedIndex === -1) return false;
 	let onField = true;
 	for (const action of orderedActions.slice(0, selectedIndex)) {
@@ -825,18 +827,13 @@ function MemeAdvanceSection() {
 	const firstKey = selectedKeys[0];
 	const firstAction = ctx.actions.find((action) => action.key === firstKey);
 	if (!firstAction) return null;
-	if (
-		firstAction.isDomainAction ||
-		firstAction.isOdeExtraAction
-	) {
+	if (firstAction.isDomainAction || firstAction.isOdeExtraAction) {
 		return null;
 	}
 
 	const actionTarget =
 		ctx.charactersById[firstAction.characterId] ??
-		ctx.memospriteTargets.find(
-			(m) => m.id === firstAction.characterId,
-		);
+		ctx.memospriteTargets.find((m) => m.id === firstAction.characterId);
 	if (!actionTarget) return null;
 	if (actionTarget.kind === "倒计时") return null;
 
@@ -894,10 +891,7 @@ function MemeAdvanceSection() {
 			{isEnabled && (
 				<SelectInput
 					value={currentTargetId}
-					options={[
-						{ value: "", label: "无目标" },
-						...targetOptions,
-					]}
+					options={[{ value: "", label: "无目标" }, ...targetOptions]}
 					onChange={(targetId) => {
 						ctx.setMemeSelections((prev) => {
 							const next = { ...prev };
@@ -1072,7 +1066,9 @@ function GodmodeExtraSection() {
 	// 仅队友/阿哈行动时显示
 	const charKind = ctx.characterKinds[firstAction.characterId];
 	const isEligible =
-		charKind === "角色" || charKind === "忆灵" || firstAction.characterId === "@aha";
+		charKind === "角色" ||
+		charKind === "忆灵" ||
+		firstAction.characterId === "@aha";
 	if (!isEligible) return null;
 
 	// 仅银狼在无敌玩家状态时显示
@@ -1118,9 +1114,7 @@ function GodmodeExtraSection() {
 				{isOn ? "已开启" : "已关闭"}
 			</button>
 			{isOn && (
-				<span className="text-xs text-gray-400">
-					行动后银狼插入额外 A
-				</span>
+				<span className="text-xs text-gray-400">行动后银狼插入额外 A</span>
 			)}
 		</div>
 	);
@@ -1168,7 +1162,8 @@ function IcaKillSection() {
 	const hasHyacine = ctx.characters.some((c) => hasHyacineIca(c.name));
 	if (!hasHyacine) return null;
 
-	if (hasHyacineIca(ctx.charactersById[firstAction.characterId]?.name ?? "")) return null;
+	if (hasHyacineIca(ctx.charactersById[firstAction.characterId]?.name ?? ""))
+		return null;
 	if (firstAction.isIcaAction) return null;
 	const charKind = ctx.characterKinds[firstAction.characterId];
 	if (charKind === "倒计时") return null;
@@ -1278,12 +1273,14 @@ function EvernightSelfDestructSection() {
 		hasSkillEffect(character.name, "E", "summonEvey"),
 	);
 	if (!owner) return null;
-	if (firstAction.characterId === "@av0" || firstAction.isDomainAction) return null;
+	if (firstAction.characterId === "@av0" || firstAction.isDomainAction)
+		return null;
 	if (!hasEveyOnFieldBeforeAction(ctx, firstKey)) return null;
 
-	const rawValue = ctx.resourceValues[firstKey]?.["忆质"] ?? "";
+	const rawValue = ctx.resourceValues[firstKey]?.忆质 ?? "";
 	const parsedValue = Number.parseFloat(rawValue);
-	const hasNumericValue = rawValue.trim() !== "" && Number.isFinite(parsedValue);
+	const hasNumericValue =
+		rawValue.trim() !== "" && Number.isFinite(parsedValue);
 	const isAutoSelfDestruct = hasNumericValue && parsedValue >= 16;
 	const isBlockedByInsufficient = hasNumericValue && parsedValue < 16;
 	const isManualSelfDestruct =
@@ -1336,4 +1333,3 @@ function EvernightSelfDestructSection() {
 		</div>
 	);
 }
-

@@ -1,25 +1,20 @@
+import { type Dispatch, type SetStateAction, useEffect, useMemo } from "react";
+import type { SimulateActionsInput } from "../../simulate/actions";
+import { simulateActions } from "../../simulate/actions";
 import {
-	useEffect,
-	useMemo,
-	type Dispatch,
-	type SetStateAction,
-} from "react";
-import {
+	type CharacterConfig,
+	type GeneratedAction,
 	getCyreneUltimateRule,
-	getEveyRule,
 	getErrorMessage,
+	getEveyRule,
 	getGarmentmakerRule,
 	getMemeAdvanceRule,
 	getPolluxRule,
 	getTargetDefaultName,
 	hasSkillEffect,
-	type CharacterConfig,
-	type GeneratedAction,
 } from "../../utils/actionSequence";
-import { simulateActions } from "../../simulate/actions";
-import type { SimulateActionsInput } from "../../simulate/actions";
-import { pruneRecord } from "./savedData";
 import type { NormalizedSavedData } from "./savedData";
+import { pruneRecord } from "./savedData";
 
 type UseGeneratedActionsParams = {
 	savedData: NormalizedSavedData;
@@ -55,8 +50,7 @@ function buildSimulationConfig(
 		icaKillToggles: savedData.icaKillToggles,
 		memeKillToggles: savedData.memeKillToggles,
 		evernightSelfDestructToggles: savedData.evernightSelfDestructToggles,
-		evernightThresholdBurstToggles:
-			savedData.evernightThresholdBurstToggles,
+		evernightThresholdBurstToggles: savedData.evernightThresholdBurstToggles,
 		hyacineE2Active: savedData.hyacineE2Active,
 		meritTarget: savedData.meritTarget,
 		dancePartner: savedData.dancePartner,
@@ -184,10 +178,7 @@ export function useGeneratedActions({
 		try {
 			return {
 				actions: simulateActions(
-					buildSimulationConfig(
-						savedData,
-						displayedActionLimit,
-					),
+					buildSimulationConfig(savedData, displayedActionLimit),
 				),
 				error: null,
 			};
@@ -206,7 +197,9 @@ export function useGeneratedActions({
 	}, [actionsResult.error, setMessage]);
 
 	useEffect(() => {
-		const actionKeys = new Set(actionsResult.actions.map((action) => action.key));
+		const actionKeys = new Set(
+			actionsResult.actions.map((action) => action.key),
+		);
 		const isStaleAglaeaCountdownKey = (key: string) =>
 			key.includes("-aglaea-countdown-") && !actionKeys.has(key);
 
@@ -295,8 +288,7 @@ export function useGeneratedActions({
 				icaKillToggles: nextIcaKillToggles,
 				memeKillToggles: nextMemeKillToggles,
 				evernightSelfDestructToggles: nextEvernightSelfDestructToggles,
-				evernightThresholdBurstToggles:
-					nextEvernightThresholdBurstToggles,
+				evernightThresholdBurstToggles: nextEvernightThresholdBurstToggles,
 				attackDisabled: nextAttackDisabled,
 			};
 		});
@@ -312,19 +304,15 @@ export function useGeneratedActions({
 			}
 			return changed ? next : prev;
 		});
-	}, [
-		actionsResult.actions,
-		setSelectedActionKeys,
-		updateSavedData,
-	]);
+	}, [actionsResult.actions, setSelectedActionKeys, updateSavedData]);
 
 	const characterNames = useMemo(() => {
 		const names = Object.fromEntries(
-				savedData.characters.map((character, index) => [
-					character.id,
-					character.name.trim() || getTargetDefaultName(character.kind, index),
-				]),
-			);
+			savedData.characters.map((character, index) => [
+				character.id,
+				character.name.trim() || getTargetDefaultName(character.kind, index),
+			]),
+		);
 		for (const action of actionsResult.actions) {
 			if (action.displayName) names[action.characterId] = action.displayName;
 		}
@@ -338,11 +326,13 @@ export function useGeneratedActions({
 
 	const characterKinds = useMemo(() => {
 		const kinds = Object.fromEntries([
-				...savedData.characters.map(
-					(character) => [character.id, character.kind] as const,
-				),
-				...memospriteTargets.map((memosprite) => [memosprite.id, memosprite.kind] as const),
-			]);
+			...savedData.characters.map(
+				(character) => [character.id, character.kind] as const,
+			),
+			...memospriteTargets.map(
+				(memosprite) => [memosprite.id, memosprite.kind] as const,
+			),
+		]);
 		for (const action of actionsResult.actions) {
 			if (action.targetKind) kinds[action.characterId] = action.targetKind;
 		}
@@ -370,6 +360,3 @@ export function useGeneratedActions({
 		charactersById,
 	};
 }
-
-
-

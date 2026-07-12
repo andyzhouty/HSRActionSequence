@@ -1,6 +1,6 @@
 import {
-	createTarget,
 	type CharacterConfig,
+	createTarget,
 	type OdeSelection,
 } from "../../utils/actionSequence";
 
@@ -15,7 +15,10 @@ export function updateCharacterList(
 }
 
 export function addCharacterTarget(characters: CharacterConfig[]) {
-	return [...characters, createTarget(`target-${Date.now()}`, characters.length)];
+	return [
+		...characters,
+		createTarget(`target-${Date.now()}`, characters.length),
+	];
 }
 
 export function removeCharacterTarget(
@@ -31,7 +34,9 @@ export function filterActionKeyedRecord<T>(
 	id: string,
 ) {
 	return Object.fromEntries(
-		Object.entries(record).filter(([actionKey]) => !actionKey.startsWith(`${id}-`)),
+		Object.entries(record).filter(
+			([actionKey]) => !actionKey.startsWith(`${id}-`),
+		),
 	);
 }
 
@@ -65,7 +70,8 @@ export function removeTargetFromMemeSelections(
 ) {
 	return Object.fromEntries(
 		Object.entries(record).filter(
-			([actionKey, targetId]) => !actionKey.startsWith(`${id}-`) && targetId !== id,
+			([actionKey, targetId]) =>
+				!actionKey.startsWith(`${id}-`) && targetId !== id,
 		),
 	);
 }
@@ -74,7 +80,9 @@ export function removeTargetFromSelectionKeys(
 	selectedKeys: Set<string>,
 	id: string,
 ) {
-	return new Set([...selectedKeys].filter((actionKey) => !actionKey.startsWith(`${id}-`)));
+	return new Set(
+		[...selectedKeys].filter((actionKey) => !actionKey.startsWith(`${id}-`)),
+	);
 }
 
 export function updateResourceValueRecord(
@@ -106,10 +114,7 @@ export function updateResourceNames(
 	);
 }
 
-export function removeResourceName(
-	resources: string[],
-	index: number,
-) {
+export function removeResourceName(resources: string[], index: number) {
 	return resources.filter((_, resourceIndex) => resourceIndex !== index);
 }
 

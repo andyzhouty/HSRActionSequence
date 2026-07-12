@@ -1,4 +1,16 @@
 import { hasPassive, hasSkillEffect } from "../data/characters";
+import { summonGarmentmakerState } from "../mechanics/aglaeaGarmentmaker";
+import {
+	applyCastoriceE2Pull,
+	hasCastoriceSummon,
+	summonPollux,
+} from "../mechanics/castoricePollux";
+import {
+	hasDanHengSouldragon,
+	summonSouldragonState,
+} from "../mechanics/danHengSouldragon";
+import { hasEvernightEvey, summonEveyState } from "../mechanics/evernightEvey";
+import { applyHyacineE2SpeedBuff } from "../mechanics/hyacineIca";
 import {
 	type CharacterConfig,
 	getCharacterCid,
@@ -6,22 +18,12 @@ import {
 	isCharacterTarget,
 	toPositiveNumber,
 } from "../utils/actionSequence";
-import {
-	applyCastoriceE2Pull,
-	hasCastoriceSummon,
-	summonPollux,
-} from "../mechanics/castoricePollux";
-import { hasDanHengSouldragon, summonSouldragonState } from "../mechanics/danHengSouldragon";
-import {
-	hasEvernightEvey,
-	summonEveyState,
-} from "../mechanics/evernightEvey";
-import { applyHyacineE2SpeedBuff } from "../mechanics/hyacineIca";
-import { summonGarmentmakerState } from "../mechanics/aglaeaGarmentmaker";
 import type { ActionState, SimulateActionsInput } from "./types";
 
 /** 根据角色配置构建初始行动状态。 */
-export function buildInitialStates(characters: CharacterConfig[]): ActionState[] {
+export function buildInitialStates(
+	characters: CharacterConfig[],
+): ActionState[] {
 	return characters
 		.filter((c) => toPositiveNumber(c.speed, 0) > 0)
 		.map((character) => {
@@ -78,16 +80,14 @@ export function setupSouldragonBondmate(
 		? (input.bondmateTarget ?? null)
 		: null;
 	if (souldragonOwner && currentBondmateTarget) {
-		summonSouldragonState(states, souldragonOwner.character, 0);
+		summonSouldragonState(states, souldragonOwner.character, 0, currentBondmateTarget);
 	}
 	return { souldragonOwner, currentBondmateTarget };
 }
 
 /** 根据欢愉角色的当前速度计算阿哈时刻速度。 */
 export function calcAhaSpeedFromStates(elationStates: ActionState[]): number {
-	const speeds = elationStates
-		.map((s) => s.currentSpeed)
-		.sort((a, b) => b - a);
+	const speeds = elationStates.map((s) => s.currentSpeed).sort((a, b) => b - a);
 	const [v1 = 0, v2 = 0, v3 = 0, v4 = 0] = speeds;
 	return v1 * 0.2 + v2 * 0.1 + v3 * 0.05 + v4 * 0.025 + 80;
 }
@@ -100,9 +100,7 @@ export type AhaState = {
 };
 
 /** 队伍含欢愉角色时初始化阿哈时刻状态。 */
-export function setupAhaMoment(
-	states: ActionState[],
-): AhaState {
+export function setupAhaMoment(states: ActionState[]): AhaState {
 	const elationStates = states.filter(
 		(s) => getCharacterPath(s.character.name) === "Elation",
 	);
@@ -218,7 +216,9 @@ export function applyTeamSpeedBuffs(
 				const v0 =
 					toPositiveNumber(s.character.baseSpeed, 0) > 0
 						? toPositiveNumber(s.character.baseSpeed, 100)
-						: (hasSkillEffect(s.character.name, "W", "counterW") ? s.baseSpeed : 100);
+						: hasSkillEffect(s.character.name, "W", "counterW")
+							? s.baseSpeed
+							: 100;
 				const oldSpeed = s.currentSpeed;
 				s.currentSpeed = s.currentSpeed + v0 * 0.12;
 				s.nextActionValue = s.nextActionValue * (oldSpeed / s.currentSpeed);
@@ -241,7 +241,9 @@ export function applyTeamSpeedBuffs(
 					const v0_merit =
 						toPositiveNumber(s.character.baseSpeed, 0) > 0
 							? toPositiveNumber(s.character.baseSpeed, 100)
-							: (hasSkillEffect(s.character.name, "W", "counterW") ? s.baseSpeed : 100);
+							: hasSkillEffect(s.character.name, "W", "counterW")
+								? s.baseSpeed
+								: 100;
 					const oldSpeed = s.currentSpeed;
 					s.currentSpeed = s.currentSpeed + v0_merit * 0.2;
 					s.nextActionValue = s.nextActionValue * (oldSpeed / s.currentSpeed);
@@ -258,21 +260,30 @@ export function applyTeamSpeedBuffs(
 		);
 		if (dahliaState) {
 			const dancePartnerCidWhitelist = new Set([
-				"1405", "1315", "1310", "1408",
+				"1405",
+				"1315",
+				"1310",
+				"1408",
 			]);
 			const partner = states.find((s) => s.character.id === input.dancePartner);
+			const partnerCid = partner
+				? getCharacterCid(partner.character.name)
+				: undefined;
 			if (
 				partner &&
-				getCharacterCid(partner.character.name) !== undefined &&
-				dancePartnerCidWhitelist.has(getCharacterCid(partner.character.name)!)
+				partnerCid !== undefined &&
+				dancePartnerCidWhitelist.has(partnerCid)
 			) {
 				const v0_dahlia =
 					toPositiveNumber(partner.character.baseSpeed, 0) > 0
 						? toPositiveNumber(partner.character.baseSpeed, 100)
-						: (hasSkillEffect(partner.character.name, "W", "counterW") ? partner.baseSpeed : 100);
+						: hasSkillEffect(partner.character.name, "W", "counterW")
+							? partner.baseSpeed
+							: 100;
 				const oldSpeed = partner.currentSpeed;
 				partner.currentSpeed = partner.currentSpeed + v0_dahlia * 0.3;
-				partner.nextActionValue = partner.nextActionValue * (oldSpeed / partner.currentSpeed);
+				partner.nextActionValue =
+					partner.nextActionValue * (oldSpeed / partner.currentSpeed);
 			}
 		}
 	}
@@ -309,4 +320,3 @@ export function createAv0State(): ActionState {
 		blockNextAdvance: true,
 	};
 }
-

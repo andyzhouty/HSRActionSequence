@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { invoke, open, save } from "../../utils/backend";
 import {
 	ensureFileExtension,
 	getErrorMessage,
 	getTimestampedFileName,
 	type SavedData,
 } from "../../utils/actionSequence";
+import { invoke, open, save } from "../../utils/backend";
 import { toNormalizedSavedData } from "./savedData";
 
 type ApplyImportedData = (
@@ -48,7 +48,10 @@ export function useActionSequencePersistence({
 				if (cancelled || !text.trim()) return;
 
 				const parsed = JSON.parse(text) as Partial<SavedData>;
-				if (!Array.isArray(parsed.characters) || parsed.characters.length === 0) {
+				if (
+					!Array.isArray(parsed.characters) ||
+					parsed.characters.length === 0
+				) {
 					return;
 				}
 				lastImportedJsonRef.current = JSON.stringify(
@@ -149,7 +152,9 @@ export function useActionSequencePersistence({
 			if (!Array.isArray(parsed.characters)) {
 				throw new Error("characters 缺失");
 			}
-			lastImportedJsonRef.current = JSON.stringify(toNormalizedSavedData(parsed));
+			lastImportedJsonRef.current = JSON.stringify(
+				toNormalizedSavedData(parsed),
+			);
 			setImportText(rawText);
 			applyImportedData(parsed, {
 				message: "导入成功",

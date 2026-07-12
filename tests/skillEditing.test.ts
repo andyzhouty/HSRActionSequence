@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { CharacterConfig, GeneratedAction } from "../src/utils/actionSequence";
 import { validateActionSkillInput } from "../src/pages/action-sequence/skillEditing";
+import type {
+	CharacterConfig,
+	GeneratedAction,
+} from "../src/utils/actionSequence";
 
 function character(
 	id: string,

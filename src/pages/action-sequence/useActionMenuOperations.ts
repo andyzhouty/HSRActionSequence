@@ -1,4 +1,4 @@
-import { useCallback, type Dispatch, type SetStateAction } from "react";
+import { type Dispatch, type SetStateAction, useCallback } from "react";
 import type {
 	CharacterConfig,
 	GeneratedAction,
@@ -7,16 +7,16 @@ import type {
 } from "../../utils/actionSequence";
 import { toSignedNumber } from "../../utils/actionSequence";
 import {
-	buildAdvanceOverrides,
-	buildSpeedAdjustments,
-	hasMissingRelativeBaseSpeed,
-} from "./actionOperations";
-import {
 	getAdvanceCeilingValue,
 	getOpenedActionSelection,
 	shouldToggleActionMenu,
 	toggleSelectedAction,
 } from "./actionMenuState";
+import {
+	buildAdvanceOverrides,
+	buildSpeedAdjustments,
+	hasMissingRelativeBaseSpeed,
+} from "./actionOperations";
 
 type UseActionMenuOperationsParams = {
 	actions: GeneratedAction[];
@@ -65,7 +65,7 @@ export function useActionMenuOperations({
 		setActionMenuOpen(false);
 		setActionMenuKey(null);
 		setAdvanceCeiling("");
-	}, []);
+	}, [setActionMenuOpen, setActionMenuKey, setAdvanceCeiling]);
 
 	const selectAction = (actionKey: string, additive: boolean) => {
 		setSelectedActionKeys((prev) =>
@@ -164,5 +164,3 @@ export function useActionMenuOperations({
 		applyActionOperation,
 	};
 }
-
-

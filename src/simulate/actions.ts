@@ -1,13 +1,12 @@
-import type { GeneratedAction } from "../utils/actionSequence";
-import { getCharacterPath } from "../utils/actionSequence";
 import {
 	advanceSouldragon,
 	emitImmediateSouldragonAction,
 } from "../mechanics/danHengSouldragon";
-import type { ActiveOdeState, SimulateActionsInput } from "./types";
+import type { GeneratedAction } from "../utils/actionSequence";
+import { getCharacterPath } from "../utils/actionSequence";
 import {
-	applyTechniqueSummons,
 	applyTeamSpeedBuffs,
+	applyTechniqueSummons,
 	buildInitialStates,
 	createAv0State,
 	setupAhaMoment,
@@ -21,6 +20,7 @@ import {
 	emitSpecialInterruptAction as emitSpecialInterrupt,
 } from "./interrupts";
 import { runSimulationLoop } from "./loop";
+import type { ActiveOdeState, SimulateActionsInput } from "./types";
 
 // Re-export for backward compatibility
 export type { SimulateActionsInput } from "./types";
@@ -33,7 +33,7 @@ export function simulateActions(
 	const states = buildInitialStates(input.characters);
 	const { souldragonOwner, currentBondmateTarget: initialBondmateTarget } =
 		setupSouldragonBondmate(states, input);
-	let currentBondmateTarget = initialBondmateTarget;
+	const currentBondmateTarget = { value: initialBondmateTarget };
 
 	const rawActions: GeneratedAction[] = [];
 	let actions: GeneratedAction[];
@@ -45,7 +45,12 @@ export function simulateActions(
 			action.characterId === souldragonOwner.character.id &&
 			action.skill === "Q"
 		) {
-			advanceSouldragon(states, souldragonOwner.character.id, action.actionValue, 1);
+			advanceSouldragon(
+				states,
+				souldragonOwner.character.id,
+				action.actionValue,
+				1,
+			);
 		}
 
 		const odeSelection = input.odeSelections[action.key];
@@ -66,10 +71,11 @@ export function simulateActions(
 			(character) => character.id === action.characterId,
 		);
 		const isForcedNonAttack =
-			action.characterId === souldragonOwner.character.id && action.skill === "E";
+			action.characterId === souldragonOwner.character.id &&
+			action.skill === "E";
 		if (
 			attacker?.kind === "角色" &&
-			action.characterId === currentBondmateTarget &&
+			action.characterId === currentBondmateTarget.value &&
 			!isForcedNonAttack &&
 			input.attackDisabled?.[action.key] !== true
 		) {
@@ -87,11 +93,11 @@ export function simulateActions(
 		// 阿哈时刻：若同袍为欢愉角色，阿哈行动也推进龙灵
 		if (
 			action.characterId === "@aha" &&
-			currentBondmateTarget &&
+			currentBondmateTarget.value &&
 			!isForcedNonAttack
 		) {
 			const bondmateChar = input.characters.find(
-				(c) => c.id === currentBondmateTarget,
+				(c) => c.id === currentBondmateTarget.value,
 			);
 			if (bondmateChar) {
 				const isElation = getCharacterPath(bondmateChar.name) === "Elation";
@@ -213,7 +219,3 @@ export function simulateActions(
 		},
 	});
 }
-
-
-
-

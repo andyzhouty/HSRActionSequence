@@ -303,12 +303,9 @@ export function getPolluxRule(characterName: string): PolluxRule {
 			effectRule?.memospriteName ?? defaultPolluxRule.memospriteName,
 		memospriteSpeed:
 			effectRule?.memospriteSpeed ?? defaultPolluxRule.memospriteSpeed,
-		maxActions:
-			effectRule?.maxActions ?? defaultPolluxRule.maxActions,
-		keepSkill:
-			effectRule?.keepSkill ?? defaultPolluxRule.keepSkill,
-		dismissSkill:
-			effectRule?.dismissSkill ?? defaultPolluxRule.dismissSkill,
+		maxActions: effectRule?.maxActions ?? defaultPolluxRule.maxActions,
+		keepSkill: effectRule?.keepSkill ?? defaultPolluxRule.keepSkill,
+		dismissSkill: effectRule?.dismissSkill ?? defaultPolluxRule.dismissSkill,
 	};
 }
 
@@ -474,9 +471,10 @@ export function isCharacterTarget(character: CharacterConfig) {
 }
 
 export function hasEvernightCharacter(characters: CharacterConfig[]) {
-	return characters.some((character) =>
-		isCharacterTarget(character) &&
-		hasSkillEffect(character.name, "E", "summonEvey"),
+	return characters.some(
+		(character) =>
+			isCharacterTarget(character) &&
+			hasSkillEffect(character.name, "E", "summonEvey"),
 	);
 }
 
@@ -504,7 +502,9 @@ export function isLockedResourceNameForCharacters(
 	resourceName: string,
 	characters: CharacterConfig[],
 ) {
-	return hasEvernightCharacter(characters) && resourceName === evernightResourceName;
+	return (
+		hasEvernightCharacter(characters) && resourceName === evernightResourceName
+	);
 }
 
 export function isAllyTarget(kind: TargetKind | undefined) {

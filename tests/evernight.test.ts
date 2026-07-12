@@ -11,7 +11,9 @@ describe("Evernight (长夜月)", () => {
 			}),
 		);
 
-		expect(actions.find((action) => action.key === "evernight-evey-1")).toMatchObject({
+		expect(
+			actions.find((action) => action.key === "evernight-evey-1"),
+		).toMatchObject({
 			characterId: "evernight-evey",
 			actionValue: 0,
 			skill: "",
@@ -33,8 +35,12 @@ describe("Evernight (长夜月)", () => {
 		);
 
 		const av0 = actions.findIndex((action) => action.characterId === "@av0");
-		const evey = actions.findIndex((action) => action.key === "evernight-evey-1");
-		const pollux = actions.findIndex((action) => action.key === "castorice-pollux-1");
+		const evey = actions.findIndex(
+			(action) => action.key === "evernight-evey-1",
+		);
+		const pollux = actions.findIndex(
+			(action) => action.key === "castorice-pollux-1",
+		);
 
 		expect(av0).toBeGreaterThan(-1);
 		expect(evey).toBeGreaterThan(av0);
@@ -55,7 +61,9 @@ describe("Evernight (长夜月)", () => {
 			}),
 		);
 
-		const dismissed = actions.find((action) => action.key === "evernight-evey-1");
+		const dismissed = actions.find(
+			(action) => action.key === "evernight-evey-1",
+		);
 		const ownerE = actions.find((action) => action.key === "evernight-1");
 		const resummoned = actions.find(
 			(action) => action.key === "evernight-evey-1-g2",
@@ -92,7 +100,9 @@ describe("Evernight (长夜月)", () => {
 		});
 
 		const sunday = withOwnerTarget.find((action) => action.key === "sunday-1");
-		const ownerPulled = withOwnerTarget.find((action) => action.key === "evernight-1");
+		const ownerPulled = withOwnerTarget.find(
+			(action) => action.key === "evernight-1",
+		);
 		const eveyPulled = withOwnerTarget.find(
 			(action) => action.key === "evernight-evey-2",
 		);
@@ -129,7 +139,9 @@ describe("Evernight (长夜月)", () => {
 		);
 
 		const enemy = actions.find((action) => action.key === "enemy-1");
-		const selfDestruct = actions.find((action) => action.key === "evernight-evey-2");
+		const selfDestruct = actions.find(
+			(action) => action.key === "evernight-evey-2",
+		);
 		const interruptQ = actions.find(
 			(action) => action.key === "evernight-evey-2-interrupt-0",
 		);
@@ -168,8 +180,12 @@ describe("Evernight (长夜月)", () => {
 			}),
 		);
 
-		const dismissed = actions.find((action) => action.key === "evernight-evey-1");
-		const interruptQ = actions.find((action) => action.key === "ally-1-interrupt-0");
+		const dismissed = actions.find(
+			(action) => action.key === "evernight-evey-1",
+		);
+		const interruptQ = actions.find(
+			(action) => action.key === "ally-1-interrupt-0",
+		);
 		const resummoned = actions.find(
 			(action) => action.key === "evernight-evey-1-g2",
 		);
@@ -199,13 +215,18 @@ describe("Evernight (长夜月)", () => {
 			}),
 		);
 
-		const ownerFirstAction = actions.find((action) => action.key === "evernight-1");
-		const ownerSecondAction = actions.find((action) => action.key === "evernight-2");
+		const ownerFirstAction = actions.find(
+			(action) => action.key === "evernight-1",
+		);
+		const ownerSecondAction = actions.find(
+			(action) => action.key === "evernight-2",
+		);
 
 		expect(ownerFirstAction?.actionValue).toBeCloseTo(82.1153, 4);
 		expect(ownerFirstAction?.speed).toBeCloseTo(121.78, 4);
 		expect(
-			(ownerSecondAction?.actionValue ?? 0) - (ownerFirstAction?.actionValue ?? 0),
+			(ownerSecondAction?.actionValue ?? 0) -
+				(ownerFirstAction?.actionValue ?? 0),
 		).toBeCloseTo(100, 4);
 	});
 
@@ -224,7 +245,9 @@ describe("Evernight (长夜月)", () => {
 		);
 
 		const enemy = actions.find((action) => action.key === "enemy-1");
-		const selfDestruct = actions.find((action) => action.key === "evernight-evey-2");
+		const selfDestruct = actions.find(
+			(action) => action.key === "evernight-evey-2",
+		);
 		const owner = actions.find((action) => action.key === "evernight-1");
 
 		expect(selfDestruct?.actionValue).toBeCloseTo(enemy?.actionValue ?? 0, 4);
@@ -252,7 +275,9 @@ describe("Evernight (长夜月)", () => {
 			}),
 		);
 
-		const eveyNextAction = actions.find((action) => action.key === "evernight-evey-2");
+		const eveyNextAction = actions.find(
+			(action) => action.key === "evernight-evey-2",
+		);
 		expect(eveyNextAction?.skill).toBe("");
 		expect(eveyNextAction?.isEveySelfDestructAction).not.toBe(true);
 	});
@@ -282,6 +307,3 @@ describe("Evernight (长夜月)", () => {
 		expect(owner?.speed).toBeCloseTo(132.67, 4);
 	});
 });
-
-
-

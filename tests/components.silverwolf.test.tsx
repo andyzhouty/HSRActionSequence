@@ -25,8 +25,32 @@ describe("ActionPanel Silver Wolf", () => {
 			speed: 80,
 		};
 		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-			{ id: "ally", name: "队友", kind: "角色" as const, speed: "80", baseSpeed: "80", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
+			{
+				id: "sw",
+				name: "银狼LV.999",
+				kind: "角色" as const,
+				speed: "100",
+				baseSpeed: "100",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 2,
+				superimpose: 1,
+				lc_id: 0,
+			},
+			{
+				id: "ally",
+				name: "队友",
+				kind: "角色" as const,
+				speed: "80",
+				baseSpeed: "80",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 0,
+				superimpose: 1,
+				lc_id: 0,
+			},
 		];
 		renderWithContext(<ActionPanel />, {
 			characters: chars,
@@ -61,8 +85,32 @@ describe("ActionPanel Silver Wolf", () => {
 			speed: 80,
 		};
 		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-			{ id: "ally", name: "队友", kind: "角色" as const, speed: "80", baseSpeed: "80", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
+			{
+				id: "sw",
+				name: "银狼LV.999",
+				kind: "角色" as const,
+				speed: "100",
+				baseSpeed: "100",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 2,
+				superimpose: 1,
+				lc_id: 0,
+			},
+			{
+				id: "ally",
+				name: "队友",
+				kind: "角色" as const,
+				speed: "80",
+				baseSpeed: "80",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 0,
+				superimpose: 1,
+				lc_id: 0,
+			},
 		];
 		const setGodmodeExtraActions = vi.fn();
 		renderWithContext(<ActionPanel />, {
@@ -101,7 +149,19 @@ describe("ActionPanel Silver Wolf", () => {
 			isAhaInstant: true,
 		};
 		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
+			{
+				id: "sw",
+				name: "银狼LV.999",
+				kind: "角色" as const,
+				speed: "100",
+				baseSpeed: "100",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 2,
+				superimpose: 1,
+				lc_id: 0,
+			},
 		];
 		renderWithContext(<ActionPanel />, {
 			characters: chars,
@@ -137,7 +197,19 @@ describe("ActionPanel Silver Wolf", () => {
 			isAhaInstant: true,
 		};
 		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
+			{
+				id: "sw",
+				name: "银狼LV.999",
+				kind: "角色" as const,
+				speed: "100",
+				baseSpeed: "100",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 2,
+				superimpose: 1,
+				lc_id: 0,
+			},
 		];
 		renderWithContext(<ActionPanel />, {
 			characters: chars,
@@ -171,8 +243,32 @@ describe("ActionPanel Silver Wolf", () => {
 			speed: 160,
 		};
 		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "200", baseSpeed: "200", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
-			{ id: "sparxie", name: "火花", kind: "角色" as const, speed: "160", baseSpeed: "160", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
+			{
+				id: "sw",
+				name: "银狼LV.999",
+				kind: "角色" as const,
+				speed: "200",
+				baseSpeed: "200",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 2,
+				superimpose: 1,
+				lc_id: 0,
+			},
+			{
+				id: "sparxie",
+				name: "火花",
+				kind: "角色" as const,
+				speed: "160",
+				baseSpeed: "160",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 2,
+				superimpose: 1,
+				lc_id: 0,
+			},
 		];
 		const setGodmodeExtraActions = vi.fn();
 		renderWithContext(<ActionPanel />, {
@@ -213,7 +309,19 @@ describe("ActionPanel Silver Wolf", () => {
 			isAhaInstant: true,
 		};
 		const chars = [
-			{ id: "sw", name: "银狼LV.999", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
+			{
+				id: "sw",
+				name: "银狼LV.999",
+				kind: "角色" as const,
+				speed: "100",
+				baseSpeed: "100",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 2,
+				superimpose: 1,
+				lc_id: 0,
+			},
 		];
 		renderWithContext(<ActionPanel />, {
 			characters: chars,

@@ -1,4 +1,20 @@
 import { hasPassive, hasSkillEffect } from "../data/characters";
+import { handleEveyAction } from "../mechanics/evernightEvey";
+import {
+	createIcaAction,
+	handleHyacineQ,
+	hasHyacineIca,
+} from "../mechanics/hyacineIca";
+import {
+	expirePhainonDomainSpeedBonus,
+	freezeAlliesForDomain,
+	getPhainonDomainEndIndex,
+	getPhainonDomainInterval,
+} from "../mechanics/phainonDomain";
+import {
+	hasSilverWolfGodmode,
+	isInGodmode,
+} from "../mechanics/silverWolfGodmode";
 import {
 	type GeneratedAction,
 	getCharacterCid,
@@ -7,42 +23,24 @@ import {
 	type SkillCode,
 } from "../utils/actionSequence";
 import {
-	hasSilverWolfGodmode,
-	isInGodmode,
-} from "../mechanics/silverWolfGodmode";
-import {
-	hasHyacineIca,
-	createIcaAction,
-	handleHyacineQ,
-} from "../mechanics/hyacineIca";
-import {
 	canBeAdvancedByDance,
 	consumeActionOdes,
 	emitCyreneMemospriteAction,
 	emitMemeAdvanceAction,
 	findHimekoNovaAssistState,
 	getActiveOdeLabels,
-	hasActiveOdeEffect,
 	getTeamAdvanceOnUltimate,
+	handleCyrenePostUltimate,
+	hasActiveOdeEffect,
 	isAllyTarget,
 	toNonNegativeNumber,
-	handleCyrenePostUltimate,
 } from "./effects";
-import {
-	handleEveyAction,
-} from "../mechanics/evernightEvey";
-import {
-	expirePhainonDomainSpeedBonus,
-	freezeAlliesForDomain,
-	getPhainonDomainEndIndex,
-	getPhainonDomainInterval,
-} from "../mechanics/phainonDomain";
-import { handlePostUltimateEffects } from "./ultimateEffects";
 import type {
 	ActionState,
 	ActiveOdeState,
 	SimulateActionsInput,
 } from "./types";
+import { handlePostUltimateEffects } from "./ultimateEffects";
 
 export function emitGodmodeExtraAction(
 	sourceKey: string,
@@ -80,10 +78,7 @@ export function emitExtraAhaAction(
 	input: SimulateActionsInput,
 	activeOdes: Map<string, ActiveOdeState[]>,
 	calcAhaSpeed: () => number,
-	emitSparxieExtraActionFn: (
-		sourceKey: string,
-		actionValue: number,
-	) => void,
+	emitSparxieExtraActionFn: (sourceKey: string, actionValue: number) => void,
 ): void {
 	const extraAhaKey = `${sourceKey}-extra-aha`;
 	const extraAhaInterrupts = input.ultInterrupts[extraAhaKey] ?? [];
@@ -91,7 +86,16 @@ export function emitExtraAhaAction(
 
 	// 递归调用时保持简洁的回调签名。
 	const emitExtraAhaSimple: (sk: string, av: number) => void = (sk, av) => {
-		emitExtraAhaAction(sk, av, states, actions, input, activeOdes, calcAhaSpeed, emitSparxieExtraActionFn);
+		emitExtraAhaAction(
+			sk,
+			av,
+			states,
+			actions,
+			input,
+			activeOdes,
+			calcAhaSpeed,
+			emitSparxieExtraActionFn,
+		);
 	};
 
 	for (let ai = 0; ai < extraAhaInterrupts.length; ai++) {
@@ -141,7 +145,14 @@ export function emitExtraAhaAction(
 	}
 
 	emitGodmodeExtraAction(extraAhaKey, actionValue, states, actions, input);
-	emitMemeAdvanceAction({ input, actions, states, sourceKey: extraAhaKey, actionValue, activeOdes });
+	emitMemeAdvanceAction({
+		input,
+		actions,
+		states,
+		sourceKey: extraAhaKey,
+		actionValue,
+		activeOdes,
+	});
 	emitSparxieExtraActionFn(extraAhaKey, actionValue);
 }
 
@@ -154,22 +165,14 @@ export function emitSpecialInterruptAction(
 	input: SimulateActionsInput,
 	activeOdes: Map<string, ActiveOdeState[]>,
 	calcAhaSpeed: () => number,
-	emitExtraAhaActionFn: (
-		sourceKey: string,
-		actionValue: number,
-	) => void,
-	emitSparxieExtraActionFn: (
-		sourceKey: string,
-		actionValue: number,
-	) => void,
+	emitExtraAhaActionFn: (sourceKey: string, actionValue: number) => void,
+	emitSparxieExtraActionFn: (sourceKey: string, actionValue: number) => void,
 	qIsFront?: boolean,
 	effectSourceKey = interruptKey,
 ): void {
 	void calcAhaSpeed;
 	void emitSparxieExtraActionFn;
-	const casterIndex = states.findIndex(
-		(s) => s.character.id === int.casterId,
-	);
+	const casterIndex = states.findIndex((s) => s.character.id === int.casterId);
 	if (casterIndex === -1) return;
 	const caster = states[casterIndex];
 	const casterSpeed = caster.currentSpeed;
@@ -183,18 +186,34 @@ export function emitSpecialInterruptAction(
 		speed: casterSpeed,
 		activeOdeLabels: getActiveOdeLabels(activeOdes, caster.character.id),
 	});
-	emitMemeAdvanceAction({ input, actions, states, sourceKey: interruptKey, actionValue, activeOdes });
+	emitMemeAdvanceAction({
+		input,
+		actions,
+		states,
+		sourceKey: interruptKey,
+		actionValue,
+		activeOdes,
+	});
 	consumeActionOdes(activeOdes, caster.character.id, "Q", false);
 	if (hasSkillEffect(caster.character.name, "Q", "cyreneUltimate")) {
 		emitCyreneMemospriteAction({
-			input, actions, states, activeOdes, cyrene: caster.character,
-			sourceKey: effectSourceKey, actionValue,
+			input,
+			actions,
+			states,
+			activeOdes,
+			cyrene: caster.character,
+			sourceKey: effectSourceKey,
+			actionValue,
 		});
 		handleCyrenePostUltimate({
-			states, casterIndex, character: caster.character, actions,
+			states,
+			casterIndex,
+			character: caster.character,
+			actions,
 			actionValue,
 			activeOdes,
 			excludeSelf: qIsFront,
+			sortSelfByOriginalActionOrder: effectSourceKey === interruptKey,
 		});
 	}
 	if (hasSkillEffect(caster.character.name, "Q", "extraAhaAfterUltimate")) {
@@ -203,25 +222,41 @@ export function emitSpecialInterruptAction(
 
 	// ── 统一 Q 后效处理（与 normalAction 共享同一逻辑） ──
 	handlePostUltimateEffects({
-		states, casterIndex, actions, actionValue, input, activeOdes,
-		sourceKey: effectSourceKey, qIsFront,
+		states,
+		casterIndex,
+		actions,
+		actionValue,
+		input,
+		activeOdes,
+		sourceKey: effectSourceKey,
+		qIsFront,
 	});
 
 	// 舞舞舞 / 忘归人 全队拉条 + 风套（独立处理，因 qIsFront 语义不同）
 	const teamAdvance = getTeamAdvanceOnUltimate(caster.character);
 	if (teamAdvance > 0) {
-		for (let teammateIndex = 0; teammateIndex < states.length; teammateIndex++) {
+		for (
+			let teammateIndex = 0;
+			teammateIndex < states.length;
+			teammateIndex++
+		) {
 			const teammate = states[teammateIndex];
 			if (!canBeAdvancedByDance(teammate.character.kind)) continue;
 			if (teammate.blockNextAdvance) continue;
 			const adv = teamAdvance / teammate.currentSpeed;
-			teammate.nextActionValue = Math.max(actionValue, teammate.nextActionValue - adv);
+			teammate.nextActionValue = Math.max(
+				actionValue,
+				teammate.nextActionValue - adv,
+			);
 		}
 	}
 	if (isCharacterTarget(caster.character) && caster.character.hasWindSet) {
 		const windAdvance = 2500 / casterSpeed;
 		if (!caster.blockNextAdvance) {
-			caster.nextActionValue = Math.max(actionValue, caster.nextActionValue - windAdvance);
+			caster.nextActionValue = Math.max(
+				actionValue,
+				caster.nextActionValue - windAdvance,
+			);
 		}
 	}
 	if (isAllyTarget(caster.character.kind)) {
@@ -229,7 +264,10 @@ export function emitSpecialInterruptAction(
 	}
 
 	// 风堇 interrupt Q
-	if (isCharacterTarget(caster.character) && hasHyacineIca(caster.character.name)) {
+	if (
+		isCharacterTarget(caster.character) &&
+		hasHyacineIca(caster.character.name)
+	) {
 		handleHyacineQ(states, caster.character.id);
 		const icaKey = `${interruptKey}-ica`;
 		const icaInterrupts = input.ultInterrupts[icaKey] ?? [];
@@ -249,7 +287,9 @@ export function emitSpecialInterruptAction(
 				emitSparxieExtraActionFn,
 			);
 		}
-		actions.push(createIcaAction(caster.character.id, interruptKey, actionValue));
+		actions.push(
+			createIcaAction(caster.character.id, interruptKey, actionValue),
+		);
 		for (let index = 0; index < icaInterrupts.length; index++) {
 			const icaInterrupt = icaInterrupts[index];
 			if (icaInterrupt.timing !== "after") continue;
@@ -270,16 +310,31 @@ export function emitSpecialInterruptAction(
 
 	if (hasSkillEffect(caster.character.name, "W", "counterW")) {
 		const domainRule = getCounterWDomainRule(caster.character.name);
-		const domainInterval = getPhainonDomainInterval(caster.character, casterSpeed);
-		const isEndlessDomain = hasActiveOdeEffect(activeOdes, caster.character.id, "endlessCounterWDomain");
+		const domainInterval = getPhainonDomainInterval(
+			caster.character,
+			casterSpeed,
+		);
+		const isEndlessDomain = hasActiveOdeEffect(
+			activeOdes,
+			caster.character.id,
+			"endlessCounterWDomain",
+		);
 		const maxDomainActionIndex = isEndlessDomain
 			? Math.max(0, Math.ceil((input.limit - actionValue) / domainInterval))
 			: Math.max(0, domainRule.extraActionCount - 1);
-		const domainEndIndex = getPhainonDomainEndIndex(effectSourceKey, input.domainEndOverrides, maxDomainActionIndex);
+		const domainEndIndex = getPhainonDomainEndIndex(
+			effectSourceKey,
+			input.domainEndOverrides,
+			maxDomainActionIndex,
+		);
 		if (domainEndIndex >= 0) {
 			caster.domainState = {
-				keyPrefix: effectSourceKey, startAV: actionValue, interval: domainInterval,
-				currentIndex: 0, maxIndex: domainEndIndex, rule: domainRule,
+				keyPrefix: effectSourceKey,
+				startAV: actionValue,
+				interval: domainInterval,
+				currentIndex: 0,
+				maxIndex: domainEndIndex,
+				rule: domainRule,
 			};
 			freezeAlliesForDomain(states, casterIndex, actionValue);
 			caster.nextActionValue = actionValue;
@@ -299,7 +354,10 @@ export function emitSparxieExtraAction(
 	emitExtraAhaActionFn: (sourceKey: string, actionValue: number) => void,
 ): void {
 	const sparxieState = states.find(
-		(s) => isCharacterTarget(s.character) && hasPassive(s.character.name, "ahaExtraTurnAtE2") && s.character.eidolon >= 2,
+		(s) =>
+			isCharacterTarget(s.character) &&
+			hasPassive(s.character.name, "ahaExtraTurnAtE2") &&
+			s.character.eidolon >= 2,
 	);
 	if (!sparxieState) return;
 
@@ -307,66 +365,175 @@ export function emitSparxieExtraAction(
 	const sparxieInterrupts = input.ultInterrupts[sparxieKey] ?? [];
 	const rawSkill = (input.skillOverrides[sparxieKey] ?? "") as SkillCode;
 	const himekoNovaAssist =
-		rawSkill.includes("F") && !hasSkillEffect(sparxieState.character.name, "F", "himekoNovaAssist")
+		rawSkill.includes("F") &&
+		!hasSkillEffect(sparxieState.character.name, "F", "himekoNovaAssist")
 			? findHimekoNovaAssistState(states, sparxieState.character.id)
 			: undefined;
 	const assistUseCount = rawSkill.match(/F/g)?.length ?? 0;
-	const himekoNovaLowEidolon = himekoNovaAssist !== undefined && himekoNovaAssist.character.eidolon < 2;
-	const novaFFCidWhitelist = new Set(["1002", "1414", "1001", "1224", "1413", "1004", "8002", "8004", "8006", "8008", "8010", "1313", "1003"]);
+	const himekoNovaLowEidolon =
+		himekoNovaAssist !== undefined && himekoNovaAssist.character.eidolon < 2;
+	const novaFFCidWhitelist = new Set([
+		"1002",
+		"1414",
+		"1001",
+		"1224",
+		"1413",
+		"1004",
+		"8002",
+		"8004",
+		"8006",
+		"8008",
+		"8010",
+		"1313",
+		"1003",
+	]);
 	const sparxieCid = getCharacterCid(sparxieState.character.name);
-	const isNovaFFWhitelisted = sparxieCid !== undefined && novaFFCidWhitelist.has(sparxieCid);
-	const skipAssistFollowUp = himekoNovaAssist !== undefined && (assistUseCount >= 2 || (himekoNovaLowEidolon && !isNovaFFWhitelisted));
+	const isNovaFFWhitelisted =
+		sparxieCid !== undefined && novaFFCidWhitelist.has(sparxieCid);
+	const skipAssistFollowUp =
+		himekoNovaAssist !== undefined &&
+		(assistUseCount >= 2 || (himekoNovaLowEidolon && !isNovaFFWhitelisted));
 	const hasSelfQ = rawSkill.includes("Q") && rawSkill.length > 1;
 	const qIsFront = hasSelfQ && rawSkill.startsWith("Q");
-	const resolvedSkill = (hasSelfQ ? rawSkill.replace(/Q/g, "") || "" : rawSkill) as SkillCode;
+	const resolvedSkill = (
+		hasSelfQ ? rawSkill.replace(/Q/g, "") || "" : rawSkill
+	) as SkillCode;
 	const strippedSkill = resolvedSkill.replace(/F/g, "") as SkillCode;
 
 	for (let ai = 0; ai < sparxieInterrupts.length; ai++) {
 		const int = sparxieInterrupts[ai];
 		if (int.timing !== "before") continue;
-		emitSpecialInterruptAction(`${sparxieKey}-interrupt-${ai}`, int, actionValue, states, actions, input, activeOdes, calcAhaSpeed, emitExtraAhaActionFn, (sk: string, av: number) => emitSparxieExtraAction(sk, av, states, actions, input, activeOdes, calcAhaSpeed, emitExtraAhaActionFn));
+		emitSpecialInterruptAction(
+			`${sparxieKey}-interrupt-${ai}`,
+			int,
+			actionValue,
+			states,
+			actions,
+			input,
+			activeOdes,
+			calcAhaSpeed,
+			emitExtraAhaActionFn,
+			(sk: string, av: number) =>
+				emitSparxieExtraAction(
+					sk,
+					av,
+					states,
+					actions,
+					input,
+					activeOdes,
+					calcAhaSpeed,
+					emitExtraAhaActionFn,
+				),
+		);
 	}
 
 	if (himekoNovaAssist) {
 		for (let ai = 1; ai <= Math.min(assistUseCount, 2); ai++) {
-			const assistKey = ai === 1 ? `${sparxieKey}-assist-F` : `${sparxieKey}-assist-F-${ai}`;
+			const assistKey =
+				ai === 1 ? `${sparxieKey}-assist-F` : `${sparxieKey}-assist-F-${ai}`;
 			actions.push({
-				key: assistKey, characterId: himekoNovaAssist.character.id, actionNo: 0, actionValue,
-				skill: "F" as SkillCode, speed: himekoNovaAssist.currentSpeed, isAssistAction: true,
-				assistSourceKey: sparxieKey, assistIndex: ai,
-				activeOdeLabels: getActiveOdeLabels(activeOdes, himekoNovaAssist.character.id),
+				key: assistKey,
+				characterId: himekoNovaAssist.character.id,
+				actionNo: 0,
+				actionValue,
+				skill: "F" as SkillCode,
+				speed: himekoNovaAssist.currentSpeed,
+				isAssistAction: true,
+				assistSourceKey: sparxieKey,
+				assistIndex: ai,
+				activeOdeLabels: getActiveOdeLabels(
+					activeOdes,
+					himekoNovaAssist.character.id,
+				),
 			});
 		}
 	}
 
 	if (hasSelfQ && qIsFront) {
-		actions.push({ key: `${sparxieKey}-q`, characterId: sparxieState.character.id, actionNo: 0, actionValue, skill: "Q" as SkillCode, speed: sparxieState.currentSpeed });
+		actions.push({
+			key: `${sparxieKey}-q`,
+			characterId: sparxieState.character.id,
+			actionNo: 0,
+			actionValue,
+			skill: "Q" as SkillCode,
+			speed: sparxieState.currentSpeed,
+		});
 	}
 
 	if (!skipAssistFollowUp) {
 		actions.push({
-			key: sparxieKey, characterId: sparxieState.character.id, actionNo: 0, actionValue,
-			skill: strippedSkill, speed: sparxieState.currentSpeed, isSparxieExtraAction: true,
+			key: sparxieKey,
+			characterId: sparxieState.character.id,
+			actionNo: 0,
+			actionValue,
+			skill: strippedSkill,
+			speed: sparxieState.currentSpeed,
+			isSparxieExtraAction: true,
 			isAssistFollowUp: himekoNovaAssist !== undefined,
-			activeOdeLabels: getActiveOdeLabels(activeOdes, sparxieState.character.id),
+			activeOdeLabels: getActiveOdeLabels(
+				activeOdes,
+				sparxieState.character.id,
+			),
 		});
 	}
 
 	if (hasSelfQ && !qIsFront) {
-		actions.push({ key: `${sparxieKey}-q`, characterId: sparxieState.character.id, actionNo: 0, actionValue, skill: "Q" as SkillCode, speed: sparxieState.currentSpeed });
+		actions.push({
+			key: `${sparxieKey}-q`,
+			characterId: sparxieState.character.id,
+			actionNo: 0,
+			actionValue,
+			skill: "Q" as SkillCode,
+			speed: sparxieState.currentSpeed,
+		});
 	}
 
 	for (let ai = 0; ai < sparxieInterrupts.length; ai++) {
 		const int = sparxieInterrupts[ai];
 		if (int.timing !== "after") continue;
-		emitSpecialInterruptAction(`${sparxieKey}-interrupt-${ai}`, int, actionValue, states, actions, input, activeOdes, calcAhaSpeed, emitExtraAhaActionFn, (sk: string, av: number) => emitSparxieExtraAction(sk, av, states, actions, input, activeOdes, calcAhaSpeed, emitExtraAhaActionFn));
+		emitSpecialInterruptAction(
+			`${sparxieKey}-interrupt-${ai}`,
+			int,
+			actionValue,
+			states,
+			actions,
+			input,
+			activeOdes,
+			calcAhaSpeed,
+			emitExtraAhaActionFn,
+			(sk: string, av: number) =>
+				emitSparxieExtraAction(
+					sk,
+					av,
+					states,
+					actions,
+					input,
+					activeOdes,
+					calcAhaSpeed,
+					emitExtraAhaActionFn,
+				),
+		);
 	}
 
-	if ((input.godmodeExtraActions ?? {})[`${sparxieKey}-q`] && !(input.godmodeExtraActions ?? {})[sparxieKey]) {
-		const swIndex = states.findIndex((s) => hasSilverWolfGodmode(s.character.name) && isInGodmode(s));
+	if (
+		input.godmodeExtraActions?.[`${sparxieKey}-q`] &&
+		!input.godmodeExtraActions?.[sparxieKey]
+	) {
+		const swIndex = states.findIndex(
+			(s) => hasSilverWolfGodmode(s.character.name) && isInGodmode(s),
+		);
 		if (swIndex !== -1) {
 			const sw = states[swIndex];
-			actions.push({ key: `${sparxieKey}-godmode-A`, characterId: sw.character.id, displayName: "银狼E2", actionNo: 0, actionValue, skill: "A" as SkillCode, speed: sw.currentSpeed, lockedSkill: true });
+			actions.push({
+				key: `${sparxieKey}-godmode-A`,
+				characterId: sw.character.id,
+				displayName: "银狼E2",
+				actionNo: 0,
+				actionValue,
+				skill: "A" as SkillCode,
+				speed: sw.currentSpeed,
+				lockedSkill: true,
+			});
 		}
 	} else {
 		emitGodmodeExtraAction(sparxieKey, actionValue, states, actions, input);
@@ -390,38 +557,72 @@ export function emitEvernightSelfDestructAction(
 	const ownerId = eveyState.character.id.replace("-evey", "");
 	const ownerState = states.find((state) => state.character.id === ownerId);
 	if (!ownerState?.eveyOnField) return;
-	const sourceResourceValue = input.resourceValues?.[sourceKey]?.["忆质"];
+	const sourceResourceValue = input.resourceValues?.[sourceKey]?.忆质;
 	const parsed = Number.parseFloat(sourceResourceValue ?? "");
-	const hasNumericValue = (sourceResourceValue ?? "").trim() !== "" && Number.isFinite(parsed);
+	const hasNumericValue =
+		(sourceResourceValue ?? "").trim() !== "" && Number.isFinite(parsed);
 	const isAutoThresholdBurst = hasNumericValue && parsed >= 16;
 	const isBlockedByInsufficient = hasNumericValue && parsed < 16;
-	const isManualSelfDestruct = !hasNumericValue && input.evernightSelfDestructToggles?.[sourceKey] === true;
+	const isManualSelfDestruct =
+		!hasNumericValue &&
+		input.evernightSelfDestructToggles?.[sourceKey] === true;
 	if (isBlockedByInsufficient) return;
 	if (!isAutoThresholdBurst && !isManualSelfDestruct) return;
 
-	const key = eveyState.eveyGeneration && eveyState.eveyGeneration > 1
-		? `${eveyState.character.id}-${eveyState.actionNo}-g${eveyState.eveyGeneration}`
-		: `${eveyState.character.id}-${eveyState.actionNo}`;
-	const resolvedActionValue = toNonNegativeNumber(input.overrides[key], actionValue);
+	const key =
+		eveyState.eveyGeneration && eveyState.eveyGeneration > 1
+			? `${eveyState.character.id}-${eveyState.actionNo}-g${eveyState.eveyGeneration}`
+			: `${eveyState.character.id}-${eveyState.actionNo}`;
+	const resolvedActionValue = toNonNegativeNumber(
+		input.overrides[key],
+		actionValue,
+	);
 	const interrupts = input.ultInterrupts[key] ?? [];
 	for (let ai = 0; ai < interrupts.length; ai++) {
 		const int = interrupts[ai];
 		if (int.timing !== "before") continue;
-		emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, resolvedActionValue, states, actions, input, activeOdes, calcAhaSpeed, emitExtraAhaActionFn, emitSparxieExtraActionFn);
+		emitSpecialInterruptAction(
+			`${key}-interrupt-${ai}`,
+			int,
+			resolvedActionValue,
+			states,
+			actions,
+			input,
+			activeOdes,
+			calcAhaSpeed,
+			emitExtraAhaActionFn,
+			emitSparxieExtraActionFn,
+		);
 	}
 	eveyState.nextActionValue = resolvedActionValue;
-	handleEveyAction(states, eveyIndex, actions, key, resolvedActionValue, "E" as SkillCode, {
-		lockedSkill: true,
-		selfDestruct: !isAutoThresholdBurst,
-		thresholdBurst: isAutoThresholdBurst,
-		resourceValue: sourceResourceValue,
-	});
+	handleEveyAction(
+		states,
+		eveyIndex,
+		actions,
+		key,
+		resolvedActionValue,
+		"E" as SkillCode,
+		{
+			lockedSkill: true,
+			selfDestruct: !isAutoThresholdBurst,
+			thresholdBurst: isAutoThresholdBurst,
+			resourceValue: sourceResourceValue,
+		},
+	);
 	for (let ai = 0; ai < interrupts.length; ai++) {
 		const int = interrupts[ai];
 		if (int.timing !== "after") continue;
-		emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, resolvedActionValue, states, actions, input, activeOdes, calcAhaSpeed, emitExtraAhaActionFn, emitSparxieExtraActionFn);
+		emitSpecialInterruptAction(
+			`${key}-interrupt-${ai}`,
+			int,
+			resolvedActionValue,
+			states,
+			actions,
+			input,
+			activeOdes,
+			calcAhaSpeed,
+			emitExtraAhaActionFn,
+			emitSparxieExtraActionFn,
+		);
 	}
 }
-
-
-

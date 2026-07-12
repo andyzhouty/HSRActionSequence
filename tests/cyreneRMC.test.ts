@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import type {
-	CharacterConfig,
-	SkillCode,
-	UltInterrupt,
-	OdeSelection,
-} from "../src/utils/actionSequence";
 import {
 	type SimulateActionsInput,
 	simulateActions,
 } from "../src/simulate/actions";
+import type {
+	CharacterConfig,
+	OdeSelection,
+	SkillCode,
+	UltInterrupt,
+} from "../src/utils/actionSequence";
 
 function character(
 	id: string,
@@ -75,9 +75,7 @@ describe("Memory Trailblazer Epic System", () => {
 	it("记忆主 Q 后史诗 +1，下一次纯 A 后消耗", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("rmc", "开拓者·记忆", 100),
-				],
+				characters: [character("rmc", "开拓者·记忆", 100)],
 				skillOverrides: skills({
 					"rmc-1": "AQ",
 					"rmc-2": "",
@@ -102,9 +100,7 @@ describe("Memory Trailblazer Epic System", () => {
 	it("记忆主 Q 后史诗最多 2 层，连续 Q 不溢出", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("rmc", "开拓者·记忆", 100),
-				],
+				characters: [character("rmc", "开拓者·记忆", 100)],
 				skillOverrides: skills({
 					"rmc-1": "AQ",
 					"rmc-2": "AQ",
@@ -162,9 +158,7 @@ describe("Cyrene Q_counter System", () => {
 	it("昔涟每次 Q 后 Q_counter +1，第三动（Q_counter=2）触发强化 Q", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("cyrene", "昔涟", 100),
-				],
+				characters: [character("cyrene", "昔涟", 100)],
 				skillOverrides: skills({
 					"cyrene-1": "AQ",
 					"cyrene-2": "AQ",
@@ -186,9 +180,7 @@ describe("Cyrene Q_counter System", () => {
 	it("Q_counter = 5 时（第 6 次大）再次触发强化 Q", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("cyrene", "昔涟", 100),
-				],
+				characters: [character("cyrene", "昔涟", 100)],
 				skillOverrides: skills({
 					"cyrene-1": "AQ",
 					"cyrene-2": "AQ",
@@ -386,7 +378,3 @@ describe("Cyrene + Memory Trailblazer Full Integration", () => {
 		expect(enhancedQs.length).toBe(1);
 	});
 });
-
-
-
-

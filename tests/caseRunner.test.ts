@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { simulateActions } from "../src/simulate/actions";
 import type {
 	CharacterConfig,
 	SkillCode,
 	UltInterrupt,
 } from "../src/utils/actionSequence";
-import { simulateActions } from "../src/simulate/actions";
 
 /** Helper: 创建角色配置 */
 function char(
@@ -208,6 +208,3 @@ describe("流萤E2击破", () => {
 		assertSpeed: { 流萤: 220 },
 	});
 });
-
-
-

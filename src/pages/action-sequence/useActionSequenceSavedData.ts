@@ -1,14 +1,15 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CharacterConfig } from "../../utils/actionSequence";
 import {
 	defaultResources,
 	formatEditableNumber,
-	getCounterWDomainRule,
 	getCharacterCid,
+	getCounterWDomainRule,
 	getCyreneUltimateRule,
 	hasSkillEffect,
-	normalizeResourcesForCharacters,
 	maxResources,
+	normalizeResourcesForCharacters,
 	type OdeSelection,
 	type SavedData,
 	type SkillCode,
@@ -16,7 +17,6 @@ import {
 	toPositiveNumber,
 	type UltInterrupt,
 } from "../../utils/actionSequence";
-import type { CharacterConfig } from "../../utils/actionSequence";
 import {
 	createDefaultSavedData,
 	type NormalizedSavedData,
@@ -41,21 +41,13 @@ type SavedDataFieldSetters = {
 	setDefaultSkillTargets: Dispatch<SetStateAction<Record<string, string>>>;
 	setOdeSelections: Dispatch<SetStateAction<Record<string, OdeSelection>>>;
 	setMemeSelections: Dispatch<SetStateAction<Record<string, string>>>;
-	setUltInterrupts: Dispatch<
-		SetStateAction<Record<string, UltInterrupt[]>>
-	>;
+	setUltInterrupts: Dispatch<SetStateAction<Record<string, UltInterrupt[]>>>;
 	setResourceValues: Dispatch<
 		SetStateAction<Record<string, Record<string, string>>>
 	>;
-	setFireflyBreakCounters: Dispatch<
-		SetStateAction<Record<string, boolean>>
-	>;
-	setGodmodeExtraActions: Dispatch<
-		SetStateAction<Record<string, boolean>>
-	>;
-	setCastoriceKillToggles: Dispatch<
-		SetStateAction<Record<string, boolean>>
-	>;
+	setFireflyBreakCounters: Dispatch<SetStateAction<Record<string, boolean>>>;
+	setGodmodeExtraActions: Dispatch<SetStateAction<Record<string, boolean>>>;
+	setCastoriceKillToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 	setIcaKillToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 	setMemeKillToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 	setEvernightSelfDestructToggles: Dispatch<
@@ -76,7 +68,7 @@ export function useActionSequenceSavedData() {
 		createDefaultSavedData,
 	);
 
-	const { characters, limitPreset, customLimit, displayedLimit } = savedData;
+	const { limitPreset, customLimit, displayedLimit } = savedData;
 
 	const actionLimit = useMemo(() => {
 		if (limitPreset === "自定义") {
@@ -106,9 +98,11 @@ export function useActionSequenceSavedData() {
 			updateSavedData((prev) => {
 				const nextValue =
 					typeof updater === "function"
-						? (updater as (
-								value: NormalizedSavedData[K],
-							) => NormalizedSavedData[K])(prev[key])
+						? (
+								updater as (
+									value: NormalizedSavedData[K],
+								) => NormalizedSavedData[K]
+							)(prev[key])
 						: updater;
 				return Object.is(nextValue, prev[key])
 					? prev
@@ -118,47 +112,49 @@ export function useActionSequenceSavedData() {
 		[updateSavedData],
 	);
 
-	const setters = useMemo<SavedDataFieldSetters>(() => ({
-		setCharacters: (updater) => setSavedField("characters", updater),
-		setLimitPreset: (updater) => setSavedField("limitPreset", updater),
-		setCustomLimit: (updater) => setSavedField("customLimit", updater),
-		setDisplayedLimit: (updater) => setSavedField("displayedLimit", updater),
-		setResources: (updater) => setSavedField("resources", updater),
-		setOverrides: (updater) => setSavedField("overrides", updater),
-		setUltOverrides: (updater) => setSavedField("ultOverrides", updater),
-		setSkillOverrides: (updater) => setSavedField("skillOverrides", updater),
-		setDomainEndOverrides: (updater) =>
-			setSavedField("domainEndOverrides", updater),
-		setSpeedAdjustments: (updater) =>
-			setSavedField("speedAdjustments", updater),
-		setSkillTargets: (updater) => setSavedField("skillTargets", updater),
-		setDefaultSkillTargets: (updater) =>
-			setSavedField("defaultSkillTargets", updater),
-		setOdeSelections: (updater) => setSavedField("odeSelections", updater),
-		setMemeSelections: (updater) => setSavedField("memeSelections", updater),
-		setUltInterrupts: (updater) => setSavedField("ultInterrupts", updater),
-		setResourceValues: (updater) => setSavedField("resourceValues", updater),
-		setFireflyBreakCounters: (updater) =>
-			setSavedField("fireflyBreakCounters", updater),
-		setGodmodeExtraActions: (updater) =>
-			setSavedField("godmodeExtraActions", updater),
-		setCastoriceKillToggles: (updater) =>
-			setSavedField("castoriceKillToggles", updater),
-		setIcaKillToggles: (updater) =>
-			setSavedField("icaKillToggles", updater),
-		setMemeKillToggles: (updater) =>
-			setSavedField("memeKillToggles", updater),
-		setEvernightSelfDestructToggles: (updater) =>
-			setSavedField("evernightSelfDestructToggles", updater),
-		setEvernightThresholdBurstToggles: (updater) =>
-			setSavedField("evernightThresholdBurstToggles", updater),
-		setHyacineE2Active: (updater) =>
-			setSavedField("hyacineE2Active", updater),
-		setMeritTarget: (updater) => setSavedField("meritTarget", updater),
-		setDancePartner: (updater) => setSavedField("dancePartner", updater),
-		setBondmateTarget: (updater) => setSavedField("bondmateTarget", updater),
-		setAttackDisabled: (updater) => setSavedField("attackDisabled", updater),
-	}), [setSavedField]);
+	const setters = useMemo<SavedDataFieldSetters>(
+		() => ({
+			setCharacters: (updater) => setSavedField("characters", updater),
+			setLimitPreset: (updater) => setSavedField("limitPreset", updater),
+			setCustomLimit: (updater) => setSavedField("customLimit", updater),
+			setDisplayedLimit: (updater) => setSavedField("displayedLimit", updater),
+			setResources: (updater) => setSavedField("resources", updater),
+			setOverrides: (updater) => setSavedField("overrides", updater),
+			setUltOverrides: (updater) => setSavedField("ultOverrides", updater),
+			setSkillOverrides: (updater) => setSavedField("skillOverrides", updater),
+			setDomainEndOverrides: (updater) =>
+				setSavedField("domainEndOverrides", updater),
+			setSpeedAdjustments: (updater) =>
+				setSavedField("speedAdjustments", updater),
+			setSkillTargets: (updater) => setSavedField("skillTargets", updater),
+			setDefaultSkillTargets: (updater) =>
+				setSavedField("defaultSkillTargets", updater),
+			setOdeSelections: (updater) => setSavedField("odeSelections", updater),
+			setMemeSelections: (updater) => setSavedField("memeSelections", updater),
+			setUltInterrupts: (updater) => setSavedField("ultInterrupts", updater),
+			setResourceValues: (updater) => setSavedField("resourceValues", updater),
+			setFireflyBreakCounters: (updater) =>
+				setSavedField("fireflyBreakCounters", updater),
+			setGodmodeExtraActions: (updater) =>
+				setSavedField("godmodeExtraActions", updater),
+			setCastoriceKillToggles: (updater) =>
+				setSavedField("castoriceKillToggles", updater),
+			setIcaKillToggles: (updater) => setSavedField("icaKillToggles", updater),
+			setMemeKillToggles: (updater) =>
+				setSavedField("memeKillToggles", updater),
+			setEvernightSelfDestructToggles: (updater) =>
+				setSavedField("evernightSelfDestructToggles", updater),
+			setEvernightThresholdBurstToggles: (updater) =>
+				setSavedField("evernightThresholdBurstToggles", updater),
+			setHyacineE2Active: (updater) =>
+				setSavedField("hyacineE2Active", updater),
+			setMeritTarget: (updater) => setSavedField("meritTarget", updater),
+			setDancePartner: (updater) => setSavedField("dancePartner", updater),
+			setBondmateTarget: (updater) => setSavedField("bondmateTarget", updater),
+			setAttackDisabled: (updater) => setSavedField("attackDisabled", updater),
+		}),
+		[setSavedField],
+	);
 
 	useEffect(() => {
 		const previousDefault = previousActionLimitRef.current + 100;
@@ -170,7 +166,7 @@ export function useActionSequenceSavedData() {
 			}
 			return prev;
 		});
-	}, [actionLimit, displayedLimitDefault]);
+	}, [actionLimit, displayedLimitDefault, setters.setDisplayedLimit]);
 
 	useEffect(() => {
 		setters.setOverrides((prev) => {
@@ -187,7 +183,7 @@ export function useActionSequenceSavedData() {
 			);
 			return changed ? next : prev;
 		});
-	}, [displayedActionLimit]);
+	}, [displayedActionLimit, setters.setOverrides]);
 
 	useEffect(() => {
 		updateSavedData((prev) => {
@@ -277,7 +273,7 @@ export function useActionSequenceSavedData() {
 				resourceValues: nextResourceValues,
 			};
 		});
-	}, [characters, updateSavedData]);
+	}, [updateSavedData]);
 
 	const normalizeAndSetSavedData = useCallback((parsed: Partial<SavedData>) => {
 		const normalized = toNormalizedSavedData(parsed);

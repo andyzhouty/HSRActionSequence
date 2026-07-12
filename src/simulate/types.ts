@@ -1,3 +1,5 @@
+import type { AglaeaActionState } from "../mechanics/aglaeaGarmentmaker";
+import type { PhainonDomainState } from "../mechanics/phainonDomain";
 import type {
 	CharacterConfig,
 	OdeRule,
@@ -6,8 +8,6 @@ import type {
 	SpeedAdjustment,
 	UltInterrupt,
 } from "../utils/actionSequence";
-import type { AglaeaActionState } from "../mechanics/aglaeaGarmentmaker";
-import type { PhainonDomainState } from "../mechanics/phainonDomain";
 
 // ── 输入类型 ──
 
@@ -70,9 +70,6 @@ export interface ActionState extends AglaeaActionState {
 
 	// 昔涟 Q_counter
 	Q_counter?: number;
-
-	// E6 首次大已被拉条标记（防止后续正常 nextAV 覆盖）
-	e6FirstUltimatePulled?: boolean;
 
 	// 遐蝶死龙
 	polluxOnField?: boolean;

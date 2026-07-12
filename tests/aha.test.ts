@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { CharacterConfig, SkillCode } from "../src/utils/actionSequence";
 import {
 	type SimulateActionsInput,
 	simulateActions,
 } from "../src/simulate/actions";
+import type { CharacterConfig, SkillCode } from "../src/utils/actionSequence";
 
 function character(
 	id: string,
@@ -85,7 +85,7 @@ describe("Aha Instant (阿哈时刻)", () => {
 		expect(aha).toBeDefined();
 		// 火花 160 速 → 阿哈速度 = 160 * 0.2 + 80 = 112
 		// 第一动 AV ≈ 10000/112 ≈ 89.29
-		expect(aha!.actionValue).toBeCloseTo(89.29, 1);
+		expect(aha?.actionValue).toBeCloseTo(89.29, 1);
 	});
 
 	it("多个欢愉角色时速度 = v1*0.2 + v2*0.1 + v3*0.05 + v4*0.025 + 80", () => {
@@ -104,7 +104,7 @@ describe("Aha Instant (阿哈时刻)", () => {
 		expect(aha).toBeDefined();
 		// 160*0.2 + 120*0.1 + 80*0.05 + 80 = 32 + 12 + 4 + 80 = 128
 		// 第一动 AV ≈ 10000/128 ≈ 78.13
-		expect(aha!.actionValue).toBeCloseTo(78.13, 1);
+		expect(aha?.actionValue).toBeCloseTo(78.13, 1);
 	});
 
 	it("加减速动态影响阿哈行动轴", () => {
@@ -124,7 +124,7 @@ describe("Aha Instant (阿哈时刻)", () => {
 		// 火花先行动并在自身回合后减速，阿哈第一动也会同步重新计算
 		const firstAha = actions.find((a) => a.isAhaInstant && a.actionNo === 1);
 		expect(firstAha).toBeDefined();
-		expect(firstAha!.actionValue).toBeCloseTo(81.9, 1);
+		expect(firstAha?.actionValue).toBeCloseTo(81.9, 1);
 
 		// 火花减速后（160→120）：120*0.2 + 120*0.1 + 80 = 24 + 12 + 80 = 116 → 后续间隔 ≈ 86.21
 		if (actions.length >= 2) {
@@ -132,7 +132,7 @@ describe("Aha Instant (阿哈时刻)", () => {
 				.filter((a) => a.isAhaInstant)
 				.find((a) => a.actionNo === 2);
 			if (secondAha) {
-				const gap = secondAha.actionValue - firstAha!.actionValue;
+				const gap = secondAha.actionValue - firstAha?.actionValue;
 				expect(gap).toBeCloseTo(86.21, 0);
 			}
 		}
@@ -155,7 +155,7 @@ describe("Aha Instant (阿哈时刻)", () => {
 		expect(yaoguangQ).toBeDefined();
 		expect(extraAha?.isAhaInstant).toBe(true);
 		expect(extraAha?.isExtraAha).toBe(true);
-		expect(extraAha?.actionValue).toBeCloseTo(yaoguangQ!.actionValue, 2);
+		expect(extraAha?.actionValue).toBeCloseTo(yaoguangQ?.actionValue, 2);
 	});
 
 	it("爻光额外阿哈支持前后插入 Q", () => {
@@ -193,6 +193,28 @@ describe("Aha Instant (阿哈时刻)", () => {
 		expect(actions.indexOf(extraAha!)).toBeLessThan(actions.indexOf(afterQ!));
 	});
 
+	it("阿哈时刻 after 插入昔涟 Q 会结算 6 魂全队拉条", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("sparxie", "火花", 160),
+					character("cyrene", "昔涟", 80, { eidolon: 6 }),
+				],
+				ultInterrupts: interrupts({
+					"@aha-1": [{ casterId: "cyrene", timing: "after" }],
+				}),
+				limit: 150,
+			}),
+		);
+
+		const cyreneQ = actions.find(
+			(action) => action.key === "@aha-1-interrupt-0",
+		);
+		const cyreneFirst = actions.find((action) => action.key === "cyrene-1");
+		expect(cyreneQ?.skill).toBe("Q");
+		expect(cyreneFirst?.actionValue).toBeCloseTo(89.2858, 4);
+	});
+
 	it("火花 2 魂后，任意阿哈时刻后都会跟一个火花额外回合", () => {
 		const actions = simulateActions(
 			input({
@@ -206,7 +228,7 @@ describe("Aha Instant (阿哈时刻)", () => {
 		expect(aha).toBeDefined();
 		expect(sparxieExtra).toBeDefined();
 		expect(sparxieExtra?.isSparxieExtraAction).toBe(true);
-		expect(sparxieExtra?.actionValue).toBeCloseTo(aha!.actionValue, 2);
+		expect(sparxieExtra?.actionValue).toBeCloseTo(aha?.actionValue, 2);
 		expect(actions.indexOf(aha!)).toBeLessThan(actions.indexOf(sparxieExtra!));
 	});
 
@@ -238,8 +260,12 @@ describe("Aha Instant (阿哈时刻)", () => {
 		expect(beforeQ).toBeDefined();
 		expect(sparxieExtra).toBeDefined();
 		expect(afterQ).toBeDefined();
-		expect(actions.indexOf(beforeQ!)).toBeLessThan(actions.indexOf(sparxieExtra!));
-		expect(actions.indexOf(sparxieExtra!)).toBeLessThan(actions.indexOf(afterQ!));
+		expect(actions.indexOf(beforeQ!)).toBeLessThan(
+			actions.indexOf(sparxieExtra!),
+		);
+		expect(actions.indexOf(sparxieExtra!)).toBeLessThan(
+			actions.indexOf(afterQ!),
+		);
 	});
 
 	it("爻光的额外阿哈后也会继续跟火花额外回合", () => {
@@ -262,7 +288,9 @@ describe("Aha Instant (阿哈时刻)", () => {
 		);
 		expect(extraAha).toBeDefined();
 		expect(sparxieExtra).toBeDefined();
-		expect(actions.indexOf(extraAha!)).toBeLessThan(actions.indexOf(sparxieExtra!));
+		expect(actions.indexOf(extraAha!)).toBeLessThan(
+			actions.indexOf(sparxieExtra!),
+		);
 	});
 
 	it("欢愉角色加速后，尚未行动的阿哈行动值会同步提前", () => {
@@ -292,7 +320,9 @@ describe("Aha Instant (阿哈时刻)", () => {
 			}),
 		);
 
-		expect(actions.find((a) => a.key === "@av0-1-interrupt-0")?.skill).toBe("Q");
+		expect(actions.find((a) => a.key === "@av0-1-interrupt-0")?.skill).toBe(
+			"Q",
+		);
 		expect(actions.find((a) => a.key === "@av0-1")).toBeDefined();
 	});
 });
@@ -507,9 +537,7 @@ describe("Silver Wolf LV.999", () => {
 			}),
 		);
 
-		const extraA = actions.find(
-			(a) => a.key === "sw-2-interrupt-0-godmode-A",
-		);
+		const extraA = actions.find((a) => a.key === "sw-2-interrupt-0-godmode-A");
 		expect(extraA).toBeDefined();
 		expect(extraA?.skill).toBe("A");
 		expect(extraA?.displayName).toBe("银狼E2");
@@ -585,7 +613,9 @@ describe("Silver Wolf LV.999", () => {
 		);
 
 		expect(actions.find((a) => a.key === "@aha-1-godmode-A")).toBeDefined();
-		expect(actions.find((a) => a.key === "@aha-1-godmode-A-godmode-A")).toBeDefined();
+		expect(
+			actions.find((a) => a.key === "@aha-1-godmode-A-godmode-A"),
+		).toBeDefined();
 	});
 
 	it("火花额外回合输入 F 时会触发姬子·启行助战，且 2 魂单 F 保留额外回合", () => {
@@ -602,7 +632,9 @@ describe("Silver Wolf LV.999", () => {
 			}),
 		);
 
-		expect(actions.find((a) => a.key === "@aha-1-sparxie-extra-assist-F")).toBeDefined();
+		expect(
+			actions.find((a) => a.key === "@aha-1-sparxie-extra-assist-F"),
+		).toBeDefined();
 		expect(actions.find((a) => a.key === "@aha-1-sparxie-extra")).toBeDefined();
 	});
 
@@ -619,9 +651,7 @@ describe("Silver Wolf LV.999", () => {
 					"c2-1": "EQ",
 				}),
 				ultInterrupts: interrupts({
-					"@aha-1-sparxie-extra": [
-						{ casterId: "c1", timing: "before" },
-					],
+					"@aha-1-sparxie-extra": [{ casterId: "c1", timing: "before" }],
 				}),
 				limit: 250,
 			}),
@@ -634,11 +664,6 @@ describe("Silver Wolf LV.999", () => {
 		expect(swInterruptQ).toBeDefined();
 		expect(swInterruptQ?.actionValue).toBeCloseTo(69.2041, 3);
 		expect(swNextAction).toBeDefined();
-		expect(swNextAction?.actionValue).toBeCloseTo(swInterruptQ!.actionValue, 3);
+		expect(swNextAction?.actionValue).toBeCloseTo(swInterruptQ?.actionValue, 3);
 	});
-
 });
-
-
-
-

@@ -1,12 +1,12 @@
+import type { CharacterConfig } from "../../utils/actionSequence";
 import {
 	formatEditableNumber,
-	getCounterWDomainRule,
 	type GeneratedAction,
+	getCounterWDomainRule,
 	type SpeedAdjustment,
 	type SpeedChangeMode,
 	toPositiveNumber,
 } from "../../utils/actionSequence";
-import type { CharacterConfig } from "../../utils/actionSequence";
 
 type CharacterLookup = Record<string, CharacterConfig>;
 
@@ -53,8 +53,7 @@ function getAdvancedActionValue(
 		const lowerBound = getPreviousDomainActionValue(action, actions);
 		const remainingActionValue = Math.max(0, action.actionValue - lowerBound);
 		const shifted =
-			action.actionValue -
-			(remainingActionValue * Math.min(value, 100)) / 100;
+			action.actionValue - (remainingActionValue * Math.min(value, 100)) / 100;
 		return Math.max(lowerBound, shifted);
 	}
 	if (value > 0) {
@@ -140,5 +139,3 @@ export function buildSpeedAdjustments(params: {
 	}
 	return next;
 }
-
-

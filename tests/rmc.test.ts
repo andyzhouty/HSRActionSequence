@@ -17,7 +17,7 @@ describe("Memory Trailblazer (开拓者·记忆)", () => {
 		const memeAction = actions.find((a) => a.characterId === "rmc-meme");
 		expect(actions.find((a) => a.key === "rmc-1-q")).toBeDefined();
 		expect(memeAction).toBeDefined();
-		expect(memeAction!.actionValue).toBeGreaterThan(100);
+		expect(memeAction?.actionValue).toBeGreaterThan(100);
 	});
 
 	it("迷迷将目标拉到当前 AV", () => {
@@ -91,7 +91,7 @@ describe("Memory Trailblazer (开拓者·记忆)", () => {
 		expect(
 			(baselineRmcSecond?.actionValue ?? 0) - (rmcSecond?.actionValue ?? 0),
 		).toBeCloseTo(12.5, 3);
-		expect(rmcSecond!.actionValue).toBeGreaterThan(memeAction!.actionValue);
+		expect(rmcSecond?.actionValue).toBeGreaterThan(memeAction?.actionValue);
 	});
 
 	it("星期日不能单独拉条迷迷，但拉记忆主时会顺带拉迷迷", () => {
@@ -131,9 +131,6 @@ describe("Memory Trailblazer (开拓者·记忆)", () => {
 		);
 		expect(directMeme).toBeDefined();
 		expect(ownerMeme).toBeDefined();
-		expect(ownerMeme!.actionValue).toBeLessThan(directMeme!.actionValue);
+		expect(ownerMeme?.actionValue).toBeLessThan(directMeme?.actionValue);
 	});
 });
-
-
-

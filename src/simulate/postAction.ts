@@ -1,11 +1,15 @@
-import { emitMemeAdvanceAction, isAllyTarget } from "./effects";
 import type { ActionContext } from "./context";
+import { emitMemeAdvanceAction, isAllyTarget } from "./effects";
 import type { SimulationRuntime } from "./runtime";
 
 export type PostActionCleanupOptions = {
 	skipAssistFollowUp: boolean;
+	clearAdvanceBlockAfterAction: boolean;
 	afterInterrupts: Array<{ casterId: string; timing: "before" | "after" }>;
-	emitInterrupt: (interrupt: { casterId: string; timing: "before" | "after" }) => void;
+	emitInterrupt: (interrupt: {
+		casterId: string;
+		timing: "before" | "after";
+	}) => void;
 };
 
 /** 执行普通行动后的统一收尾，顺序与主循环历史实现保持一致。 */
@@ -15,14 +19,23 @@ export function runPostActionCleanup(
 	options: PostActionCleanupOptions,
 ): void {
 	const { states, activeOdes, callbacks } = runtime;
-	const { stateIndex, key, actionValue, character, shouldClearAdvanceBlock } = context;
-	const { skipAssistFollowUp, afterInterrupts, emitInterrupt } = options;
+	const { stateIndex, key, actionValue, character, shouldClearAdvanceBlock } =
+		context;
+	const {
+		skipAssistFollowUp,
+		clearAdvanceBlockAfterAction,
+		afterInterrupts,
+		emitInterrupt,
+	} = options;
 
 	if (shouldClearAdvanceBlock) states[stateIndex].blockNextAdvance = false;
 	if (!skipAssistFollowUp) {
 		for (const interrupt of afterInterrupts) emitInterrupt(interrupt);
 	}
-	if (!skipAssistFollowUp && (isAllyTarget(character.kind) || character.id === "@aha")) {
+	if (
+		!skipAssistFollowUp &&
+		(isAllyTarget(character.kind) || character.id === "@aha")
+	) {
 		callbacks.emitGodmodeExtraAction(key, actionValue);
 	}
 	// 迷迷拉条必须发生在银狼额外行动之后。
@@ -35,4 +48,5 @@ export function runPostActionCleanup(
 		activeOdes,
 	});
 	callbacks.emitEvernightSelfDestructAction(key, actionValue);
+	if (clearAdvanceBlockAfterAction) states[stateIndex].blockNextAdvance = false;
 }

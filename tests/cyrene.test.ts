@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
+import {
+	type SimulateActionsInput,
+	simulateActions,
+} from "../src/simulate/actions";
 import type {
 	CharacterConfig,
 	SkillCode,
 	UltInterrupt,
 } from "../src/utils/actionSequence";
-import {
-	type SimulateActionsInput,
-	simulateActions,
-} from "../src/simulate/actions";
 
 /** Filter out the utility @av0 target from action arrays */
 const stripAv0 = (actions: { key: string; characterId: string }[]) =>
@@ -80,12 +80,11 @@ describe("Cyrene (昔涟)", () => {
 			}),
 		);
 
-		expect(stripAv0(actions).map((a) => a.key).slice(0, 4)).toEqual([
-			"cyrene-1",
-			"cyrene-1-q",
-			"cyrene-1-memosprite-Q",
-			"cyrene-2",
-		]);
+		expect(
+			stripAv0(actions)
+				.map((a) => a.key)
+				.slice(0, 4),
+		).toEqual(["cyrene-1", "cyrene-1-q", "cyrene-1-memosprite-Q", "cyrene-2"]);
 		const memosprite = actions.find((a) => a.key === "cyrene-1-memosprite-Q");
 		expect(memosprite).toBeDefined();
 		expect(memosprite?.displayName).toBe("德谬歌");
@@ -118,12 +117,11 @@ describe("Cyrene (昔涟)", () => {
 		const memosprite = actions.find((a) => a.key === "cyrene-1-memosprite-Q");
 		expect(memosprite).toBeDefined();
 		// ally (80 spd) acts at AV=125, after memosprite and Q (AV=100)
-		expect(stripAv0(actions).map((a) => a.key).slice(0, 4)).toEqual([
-			"cyrene-1",
-			"cyrene-1-q",
-			"cyrene-1-memosprite-Q",
-			"ally-1",
-		]);
+		expect(
+			stripAv0(actions)
+				.map((a) => a.key)
+				.slice(0, 4),
+		).toEqual(["cyrene-1", "cyrene-1-q", "cyrene-1-memosprite-Q", "ally-1"]);
 	});
 
 	it("applies immediateTurn ode effect (reason - Anaxa)", () => {
@@ -272,10 +270,12 @@ describe("Cyrene (昔涟)", () => {
 			}),
 		);
 
-		expect(actions.find((action) => action.key === "cyrene-1")?.actionValue)
-			.toBeCloseTo(100, 4);
-		expect(actions.find((action) => action.key === "ally-1")?.actionValue)
-			.toBeCloseTo(100.0002, 4);
+		expect(
+			actions.find((action) => action.key === "cyrene-1")?.actionValue,
+		).toBeCloseTo(100.0001, 4);
+		expect(
+			actions.find((action) => action.key === "ally-1")?.actionValue,
+		).toBeCloseTo(100.0002, 4);
 	});
 
 	it("6魂昔涟 QE 时自身不吃首次 100% 拉条", () => {
@@ -289,9 +289,7 @@ describe("Cyrene (昔涟)", () => {
 			}),
 		);
 
-		const cyreneSecond = actions.find(
-			(action) => action.key === "cyrene-2",
-		);
+		const cyreneSecond = actions.find((action) => action.key === "cyrene-2");
 		expect(cyreneSecond?.actionValue).toBeCloseTo(100, 4);
 	});
 
@@ -316,9 +314,7 @@ describe("Cyrene (昔涟)", () => {
 			(action) => action.key === "cyrene-1-memosprite-Q",
 		);
 		expect(memosprite).toBeDefined();
-		expect(
-			actions.some((action) => action.isOdeExtraAction),
-		).toBe(false);
+		expect(actions.some((action) => action.isOdeExtraAction)).toBe(false);
 	});
 
 	it("romance ode: heart shows battle-long, battery on first non-Q action", () => {
@@ -407,7 +403,3 @@ describe("Cyrene (昔涟)", () => {
 		expect(recharged?.activeOdeLabels).toContain("浪漫");
 	});
 });
-
-
-
-

@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type {
-	CharacterConfig,
-	SkillCode,
-} from "../src/utils/actionSequence";
 import {
 	type SimulateActionsInput,
 	simulateActions,
 } from "../src/simulate/actions";
+import type { CharacterConfig, SkillCode } from "../src/utils/actionSequence";
 
 function character(
 	id: string,
@@ -76,9 +73,9 @@ describe("Hyacine (风堇) Ica System", () => {
 			input({
 				characters: [character("hyacine", "风堇", 100)],
 				skillOverrides: skills({
-					"hyacine-1": "E",   // summon Ica first
-					"hyacine-2": "AQ",  // A → trigger Ica, Q → afterRain=3
-					"hyacine-3": "A",   // should trigger Ica again
+					"hyacine-1": "E", // summon Ica first
+					"hyacine-2": "AQ", // A → trigger Ica, Q → afterRain=3
+					"hyacine-3": "A", // should trigger Ica again
 				}),
 				limit: 500,
 			}),
@@ -97,8 +94,8 @@ describe("Hyacine (风堇) Ica System", () => {
 			input({
 				characters: [character("hyacine", "风堇", 100)],
 				skillOverrides: skills({
-					"hyacine-1": "E",   // summon
-					"hyacine-2": "QA",  // Q→afterRain=3, A→trigger Ica
+					"hyacine-1": "E", // summon
+					"hyacine-2": "QA", // Q→afterRain=3, A→trigger Ica
 				}),
 				limit: 400,
 			}),
@@ -108,7 +105,8 @@ describe("Hyacine (风堇) Ica System", () => {
 		expect(icaAction).toBeDefined();
 		// Ica should be at same AV as hyacine's A action
 		const hyacineA = actions.find(
-			(a) => a.characterId === "hyacine" && a.key === "hyacine-2" && a.skill === "A",
+			(a) =>
+				a.characterId === "hyacine" && a.key === "hyacine-2" && a.skill === "A",
 		);
 		expect(hyacineA).toBeDefined();
 		if (icaAction && hyacineA) {
@@ -121,11 +119,11 @@ describe("Hyacine (风堇) Ica System", () => {
 			input({
 				characters: [character("hyacine", "风堇", 100)],
 				skillOverrides: skills({
-					"hyacine-1": "E",   // summon
-					"hyacine-2": "QA",  // Q→3, A→trigger (-1=2)
-					"hyacine-3": "A",   // trigger (-1=1)
-					"hyacine-4": "A",   // trigger (-1=0)
-					"hyacine-5": "A",   // NO trigger (afterRain=0)
+					"hyacine-1": "E", // summon
+					"hyacine-2": "QA", // Q→3, A→trigger (-1=2)
+					"hyacine-3": "A", // trigger (-1=1)
+					"hyacine-4": "A", // trigger (-1=0)
+					"hyacine-5": "A", // NO trigger (afterRain=0)
 				}),
 				limit: 700,
 			}),
@@ -141,11 +139,11 @@ describe("Hyacine (风堇) Ica System", () => {
 			input({
 				characters: [character("hyacine", "风堇", 100)],
 				skillOverrides: skills({
-					"hyacine-1": "E",   // summon
-					"hyacine-2": "QA",  // Q→3, A→trigger
+					"hyacine-1": "E", // summon
+					"hyacine-2": "QA", // Q→3, A→trigger
 				}),
 				icaKillToggles: {
-					"hyacine-3": true,    // kill Ica (hyacine-3 happens after Ica)
+					"hyacine-3": true, // kill Ica (hyacine-3 happens after Ica)
 				},
 				limit: 500,
 			}),
@@ -188,7 +186,7 @@ describe("Hyacine (风堇) Ica System", () => {
 			input({
 				characters: [character("hyacine", "风堇", 100)],
 				skillOverrides: skills({
-					"hyacine-1": "QA",  // Q: summon Ica + afterRain=3 + Ica turn; A: no trigger (after Q already triggered)
+					"hyacine-1": "QA", // Q: summon Ica + afterRain=3 + Ica turn; A: no trigger (after Q already triggered)
 				}),
 				limit: 300,
 			}),
@@ -277,11 +275,11 @@ describe("Hyacine (风堇) Ica System", () => {
 			}),
 		);
 
-		expect(actions.find((a) => a.key === "ally-1-interrupt-0")?.skill).toBe("Q");
-		expect(actions.find((a) => a.key === "ally-1-interrupt-0-ica")).toBeDefined();
+		expect(actions.find((a) => a.key === "ally-1-interrupt-0")?.skill).toBe(
+			"Q",
+		);
+		expect(
+			actions.find((a) => a.key === "ally-1-interrupt-0-ica"),
+		).toBeDefined();
 	});
 });
-
-
-
-

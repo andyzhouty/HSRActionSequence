@@ -104,6 +104,3 @@ describe("Himeko Nova Assist (姬子·启行 F)", () => {
 		expect(actions.find((a) => a.key === "other-2")).toBeDefined();
 	});
 });
-
-
-

@@ -1,6 +1,6 @@
 import { hasHyacineIca, killIca } from "../mechanics/hyacineIca";
-import { killMeme } from "./effects";
 import type { ActionContext } from "./context";
+import { killMeme } from "./effects";
 import type { SimulationRuntime } from "./runtime";
 
 /** 执行所有行动开始前的全局死亡与清理检查。 */

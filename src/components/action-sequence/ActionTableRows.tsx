@@ -1,20 +1,21 @@
 import { useState } from "react";
 import ahaIcon from "../../assets/aha/aha.webp";
 import fireflyUltIcon from "../../assets/skillIcons/SkillIcon_1310_Ultra.webp";
+import souldragonIcon from "../../assets/skillIcons/SkillIcon_1414_BP.webp";
 import swPassiveIcon from "../../assets/skillIcons/SkillIcon_1506_Passive.webp";
 import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
-import souldragonIcon from "../../assets/skillIcons/SkillIcon_1414_BP.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
+import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
 import { getDisplayOrderedActions } from "../../utils/actionDisplayOrder";
 import type { GeneratedAction } from "../../utils/actionSequence";
 import {
 	canSelectSkillTargetForAction,
 	formatActionValue,
 	formatEditableNumber,
+	getCharacterCid,
 	getCounterWDomainRule,
 	getCyreneUltimateRule,
 	getFireflyCombustionRule,
-	getCharacterCid,
 	getOdeRuleForTarget,
 	getTargetDefaultName,
 	hasSemanticFlag,
@@ -26,7 +27,6 @@ import {
 	shouldRememberSkillTarget,
 	toPositiveNumber,
 } from "../../utils/actionSequence";
-import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
 import { SelectInput } from "./Controls";
 
 function getMemeTargetOptions(ctx: ReturnType<typeof useActionSequence>) {
@@ -340,7 +340,7 @@ export function ActionRow({
 						/>
 					</div>
 				) : action.skill === "Q" &&
-				  hasSilverWolfGodmode(
+					hasSilverWolfGodmode(
 						ctx.charactersById[action.characterId]?.name ?? "",
 					) ? (
 					<div className="flex h-full items-center justify-center">
@@ -352,11 +352,7 @@ export function ActionRow({
 					</div>
 				) : action.key.includes("-godmode-A") ? (
 					<div className="flex h-full items-center justify-center">
-						<img
-							src={swRank2Icon}
-							alt="E2"
-							className="inline-block h-6 w-6"
-						/>
+						<img src={swRank2Icon} alt="E2" className="inline-block h-6 w-6" />
 					</div>
 				) : (
 					index + 1
@@ -386,40 +382,40 @@ export function ActionRow({
 					!isCombustionCountdown &&
 					!action.isSouldragonAction &&
 					action.characterId !== "@av0" && (
-					<div
-						className={`truncate text-xs leading-5 ${isEnemyAction ? "text-[#fecacacc]" : "text-gray-400"}`}
-					>
-						{action.isAhaInstant
-							? action.isExtraAha
-								? "额外"
-								: "阿哈"
-							: action.isSparxieExtraAction
-								? "额外"
-							: isDomain
-								? `境界 ${action.actionNo}`
-						: isAssist
-							? "助战"
-							: action.isEveySelfDestructAction
-								? "额外"
-							: action.isMemeAction
-								? "额外"
-										: action.isMemospriteAction && action.actionNo > 0
-											? `第 ${action.actionNo} 动`
-											: action.isMemospriteAction
+						<div
+							className={`truncate text-xs leading-5 ${isEnemyAction ? "text-[#fecacacc]" : "text-gray-400"}`}
+						>
+							{action.isAhaInstant
+								? action.isExtraAha
+									? "额外"
+									: "阿哈"
+								: action.isSparxieExtraAction
+									? "额外"
+									: isDomain
+										? `境界 ${action.actionNo}`
+										: isAssist
+											? "助战"
+											: action.isEveySelfDestructAction
 												? "额外"
-												: action.isOdeExtraAction
-													? "诗篇"
-													: isInterrupt
-														? "插队"
-														: action.isAssistFollowUp
-															? `额外 ${action.actionNo}`
-															: action.key.includes("-break-extra-")
-																? "额外"
-																: action.isAglaeaSupremeAction
-																	? `至高 ${action.actionNo}`
-																	: `第 ${action.actionNo} 动`}
-					</div>
-				)}
+												: action.isMemeAction
+													? "额外"
+													: action.isMemospriteAction && action.actionNo > 0
+														? `第 ${action.actionNo} 动`
+														: action.isMemospriteAction
+															? "额外"
+															: action.isOdeExtraAction
+																? "诗篇"
+																: isInterrupt
+																	? "插队"
+																	: action.isAssistFollowUp
+																		? `额外 ${action.actionNo}`
+																		: action.key.includes("-break-extra-")
+																			? "额外"
+																			: action.isAglaeaSupremeAction
+																				? `至高 ${action.actionNo}`
+																				: `第 ${action.actionNo} 动`}
+						</div>
+					)}
 			</td>
 
 			<td className="px-2 py-3">
@@ -485,9 +481,7 @@ export function ActionRow({
 				<div className="flex items-center gap-1">
 					{!action.isAglaeaCountdownAction &&
 						!isCombustionCountdown &&
-						!action.isSouldragonAction && (
-						<SkillInput action={action} />
-					)}
+						!action.isSouldragonAction && <SkillInput action={action} />}
 					<OdeInline action={action} />
 					{!action.isAglaeaCountdownAction && !isCombustionCountdown && (
 						<CombustionBreakInline action={action} />
@@ -662,41 +656,39 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 	const resolvedValue = draft ?? displaySkill;
 
 	return (
-		<>
-			<input
-				type="text"
-				value={resolvedValue}
-				onChange={(event) => setDraft(event.currentTarget.value.toUpperCase())}
-				onKeyDown={(event) => {
-					if (event.key === "Enter") {
-						commitDraftSkill(draft ?? displaySkill);
-						setDraft(null);
-					}
-				}}
-				maxLength={6}
-				disabled={disabled}
-				data-export-kind={isDomain ? "domain-skill" : undefined}
-				title={skillTitle}
-				onFocus={(event) => event.currentTarget.select()}
-				onMouseDown={(event) => event.stopPropagation()}
-				onPointerDown={(event) => event.stopPropagation()}
-				onClick={(event) => event.stopPropagation()}
-				onContextMenu={(event) => event.stopPropagation()}
-				onBlur={() => {
+		<input
+			type="text"
+			value={resolvedValue}
+			onChange={(event) => setDraft(event.currentTarget.value.toUpperCase())}
+			onKeyDown={(event) => {
+				if (event.key === "Enter") {
 					commitDraftSkill(draft ?? displaySkill);
 					setDraft(null);
-				}}
-				className={`h-10 shrink-0 select-text rounded-lg border px-1 text-center font-mono text-sm font-bold uppercase focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-45 ${
-					isDomain
-						? "w-10 border-[#fbbf2499] bg-[#f59e0b33] text-amber-100"
-						: action.isAglaeaSupremeAction
-							? "w-12 border-[#facc1599] bg-[#ca8a0433] text-yellow-100"
-							: resolvedValue === "Q" && !isInterrupt
-								? "w-12 border-[#fbbf2499] bg-[#f59e0b33] text-amber-100"
-								: "w-12 border-gray-600 bg-gray-700 text-gray-300"
-				}`}
-			/>
-		</>
+				}
+			}}
+			maxLength={6}
+			disabled={disabled}
+			data-export-kind={isDomain ? "domain-skill" : undefined}
+			title={skillTitle}
+			onFocus={(event) => event.currentTarget.select()}
+			onMouseDown={(event) => event.stopPropagation()}
+			onPointerDown={(event) => event.stopPropagation()}
+			onClick={(event) => event.stopPropagation()}
+			onContextMenu={(event) => event.stopPropagation()}
+			onBlur={() => {
+				commitDraftSkill(draft ?? displaySkill);
+				setDraft(null);
+			}}
+			className={`h-10 shrink-0 select-text rounded-lg border px-1 text-center font-mono text-sm font-bold uppercase focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-45 ${
+				isDomain
+					? "w-10 border-[#fbbf2499] bg-[#f59e0b33] text-amber-100"
+					: action.isAglaeaSupremeAction
+						? "w-12 border-[#facc1599] bg-[#ca8a0433] text-yellow-100"
+						: resolvedValue === "Q" && !isInterrupt
+							? "w-12 border-[#fbbf2499] bg-[#f59e0b33] text-amber-100"
+							: "w-12 border-gray-600 bg-gray-700 text-gray-300"
+			}`}
+		/>
 	);
 }
 
@@ -931,4 +923,3 @@ function SkillTargetInline({ action }: { action: GeneratedAction }) {
 
 	return null;
 }
-

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
+import {
+	type SimulateActionsInput,
+	simulateActions,
+} from "../src/simulate/actions";
 import type {
 	CharacterConfig,
 	SkillCode,
 	UltInterrupt,
 } from "../src/utils/actionSequence";
-import {
-	type SimulateActionsInput,
-	simulateActions,
-} from "../src/simulate/actions";
 
 const stripAv0 = (axs: { characterId: string }[]) =>
 	axs.filter((a) => a.characterId !== "@av0");
@@ -291,7 +291,3 @@ describe("刻律军功目标中途切换", () => {
 		expect(nakexiaFirst?.speed).toBeCloseTo(133.2, 1);
 	});
 });
-
-
-
-

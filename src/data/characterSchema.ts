@@ -8,8 +8,8 @@
  * - 诗篇 targetCid 存在于角色数据
  */
 
-import characterData from "./characters.json";
 import { getCyreneUltimateRule } from "../utils/actionSequence";
+import characterData from "./characters.json";
 
 export class CharacterValidationError extends Error {
 	constructor(message: string) {
@@ -36,8 +36,15 @@ type CharacterDataFile = {
 const allCids = new Set<string>();
 
 const validPaths = new Set([
-	"Harmony", "Destruction", "Hunt", "Erudition", "Nihility",
-	"Preservation", "Abundance", "Remembrance", "Elation",
+	"Harmony",
+	"Destruction",
+	"Hunt",
+	"Erudition",
+	"Nihility",
+	"Preservation",
+	"Abundance",
+	"Remembrance",
+	"Elation",
 ]);
 
 /** 运行全部校验，抛出第一个错误。 */
@@ -75,9 +82,7 @@ export function validateCharacterSchema(): void {
 	if (data._defaults) {
 		for (const [effect, rule] of Object.entries(data._defaults)) {
 			if (rule === null || rule === undefined) {
-				throw new CharacterValidationError(
-					`_defaults.${effect} 的值为空`,
-				);
+				throw new CharacterValidationError(`_defaults.${effect} 的值为空`);
 			}
 		}
 	}
@@ -89,9 +94,7 @@ function validateCharacterEntry(
 ): void {
 	// names 非空
 	if (!character.names || character.names.length === 0) {
-		throw new CharacterValidationError(
-			`CID ${character.cid} 的 names 为空`,
-		);
+		throw new CharacterValidationError(`CID ${character.cid} 的 names 为空`);
 	}
 
 	// names 中的值非空字符串

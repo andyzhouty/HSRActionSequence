@@ -1,7 +1,7 @@
 import {
+	type CharacterConfig,
 	canSelectSkillTargetForAction,
 	canUseSkillCode,
-	type CharacterConfig,
 	type GeneratedAction,
 	getCharacterCid,
 	getCounterWDomainRule,
@@ -12,8 +12,8 @@ import {
 	hasSkillEffect,
 	isAllyTarget,
 	isCharacterTarget,
-	shouldRememberSkillTarget,
 	type SkillCode,
+	shouldRememberSkillTarget,
 } from "../../utils/actionSequence";
 
 export function getCanceledNovaAssistSkill(
@@ -162,10 +162,7 @@ export function validateActionSkillInput(params: {
 			const characterCid = getCharacterCid(character.name);
 			const isNovaFFWhitelisted =
 				characterCid !== undefined && novaFFCidWhitelist.has(characterCid);
-			if (
-				!isNovaFFWhitelisted &&
-				(nextSkill.match(/F/g)?.length ?? 0) >= 2
-			) {
+			if (!isNovaFFWhitelisted && (nextSkill.match(/F/g)?.length ?? 0) >= 2) {
 				return "当前 sp 姬子未达 2 魂，此角色不可使用 FF 连招";
 			}
 		}

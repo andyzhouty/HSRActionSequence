@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ActionSequence from "../src/pages/ActionSequence";
@@ -59,7 +65,9 @@ describe("ActionSequence front-end interaction", () => {
 	it("clearing Sunday's E target updates JSON and removes stale 36.59 Castorice/Pollux actions", async () => {
 		render(<ActionSequence />);
 
-		const importArea = await screen.findByPlaceholderText("JSON 导入 / 导出内容");
+		const importArea = await screen.findByPlaceholderText(
+			"JSON 导入 / 导出内容",
+		);
 		const importJson = {
 			// Assertions only inspect the sequence through AV 212.77.
 			limitPreset: "250",
@@ -114,7 +122,11 @@ describe("ActionSequence front-end interaction", () => {
 		await userEvent.click(screen.getAllByText("无目标").at(-1)!);
 
 		await waitFor(() => {
-			const json = (screen.getByPlaceholderText("JSON 导入 / 导出内容") as HTMLTextAreaElement).value;
+			const json = (
+				screen.getByPlaceholderText(
+					"JSON 导入 / 导出内容",
+				) as HTMLTextAreaElement
+			).value;
 			expect(json).not.toContain('"sunday-1": "castorice"');
 			expect(json).not.toContain('"sunday": "castorice"');
 		});
@@ -133,14 +145,14 @@ describe("ActionSequence front-end interaction", () => {
 	it("editing Evey skill updates JSON and keeps the table cell in sync", async () => {
 		render(<ActionSequence />);
 
-		const importArea = await screen.findByPlaceholderText("JSON 导入 / 导出内容");
+		const importArea = await screen.findByPlaceholderText(
+			"JSON 导入 / 导出内容",
+		);
 		const importJson = {
 			limitPreset: "150",
 			customLimit: "",
 			displayedLimit: "150",
-			characters: [
-				character("evernight", "长夜月", 100),
-			],
+			characters: [character("evernight", "长夜月", 100)],
 			resources: ["战技点"],
 			overrides: {},
 			resourceValues: {},
@@ -181,7 +193,9 @@ describe("ActionSequence front-end interaction", () => {
 
 		await waitFor(() => {
 			const json = (
-				screen.getByPlaceholderText("JSON 导入 / 导出内容") as HTMLTextAreaElement
+				screen.getByPlaceholderText(
+					"JSON 导入 / 导出内容",
+				) as HTMLTextAreaElement
 			).value;
 			expect(json).toContain('"evernight-evey-1":"E"');
 		});

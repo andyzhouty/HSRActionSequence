@@ -25,14 +25,16 @@ const migrations: SavedDataMigration[] = [
 /**
  * 将任意版本的 SavedData 迁移到最新版本。
  */
-export function migrateSavedData(parsed: Partial<SavedData>): Partial<SavedData> {
+export function migrateSavedData(
+	parsed: Partial<SavedData>,
+): Partial<SavedData> {
 	let data = parsed;
 	const startVersion = data.schemaVersion ?? 0;
 
 	if (startVersion > CURRENT_SAVEDATA_VERSION) {
 		console.warn(
 			`SavedData version ${startVersion} is newer than current ${CURRENT_SAVEDATA_VERSION}. ` +
-			"Some fields may not be recognized.",
+				"Some fields may not be recognized.",
 		);
 		return data;
 	}

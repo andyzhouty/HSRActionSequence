@@ -3,19 +3,13 @@
  */
 
 import { hasPassive, hasSkillEffect } from "../data/characters";
-import {
-	isCharacterTarget,
-} from "../utils/actionSequence";
 import { handleAglaeaSkillEffects } from "../mechanics/aglaeaGarmentmaker";
 import {
+	applyCastoriceE2Pull,
 	hasCastoriceSummon,
 	summonPollux,
-	applyCastoriceE2Pull,
 } from "../mechanics/castoricePollux";
-import {
-	hasEvernightEvey,
-	summonEveyState,
-} from "../mechanics/evernightEvey";
+import { hasEvernightEvey, summonEveyState } from "../mechanics/evernightEvey";
 import {
 	activateCombustion,
 	shouldActivateCombustion,
@@ -24,13 +18,18 @@ import {
 	activateGodmode,
 	hasSilverWolfGodmode,
 } from "../mechanics/silverWolfGodmode";
+import type { GeneratedAction } from "../utils/actionSequence";
+import { isCharacterTarget } from "../utils/actionSequence";
 import {
 	handleMemoryTrailblazerQ,
-	summonMemeState,
 	isAllyTarget,
+	summonMemeState,
 } from "./effects";
-import type { GeneratedAction } from "../utils/actionSequence";
-import type { ActionState, ActiveOdeState, SimulateActionsInput } from "./types";
+import type {
+	ActionState,
+	ActiveOdeState,
+	SimulateActionsInput,
+} from "./types";
 
 interface PostUltimateParams {
 	states: ActionState[];
@@ -50,7 +49,14 @@ interface PostUltimateParams {
  * normalAction 和 interrupts 都应该调用此函数。
  */
 export function handlePostUltimateEffects(params: PostUltimateParams): void {
-	const { states, casterIndex, actionValue, input, sourceKey, qIsFront = false } = params;
+	const {
+		states,
+		casterIndex,
+		actionValue,
+		input,
+		sourceKey,
+		qIsFront = false,
+	} = params;
 	const caster = states[casterIndex];
 	const character = caster.character;
 
@@ -58,7 +64,13 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 	handleAglaeaSkillEffects(states, casterIndex, "Q", actionValue);
 
 	// 2. 流萤完全燃烧
-	if (shouldActivateCombustion(character, true, Boolean(caster.isInCompleteCombustion))) {
+	if (
+		shouldActivateCombustion(
+			character,
+			true,
+			Boolean(caster.isInCompleteCombustion),
+		)
+	) {
 		activateCombustion(states, casterIndex, character, actionValue);
 	}
 
@@ -69,15 +81,24 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 		caster.blockNextAdvance = true;
 		const allyOrder = states
 			.map((s, i) => ({ index: i, value: s.nextActionValue }))
-			.filter(({ index }) => index !== casterIndex && isAllyTarget(states[index].character.kind))
-			.sort((a, b) => (a.value !== b.value ? a.value - b.value : a.index - b.index));
+			.filter(
+				({ index }) =>
+					index !== casterIndex && isAllyTarget(states[index].character.kind),
+			)
+			.sort((a, b) =>
+				a.value !== b.value ? a.value - b.value : a.index - b.index,
+			);
 		for (let rank = 0; rank < allyOrder.length; rank++) {
-			states[allyOrder[rank].index].nextActionValue = actionValue + rank * 0.0001;
+			states[allyOrder[rank].index].nextActionValue =
+				actionValue + rank * 0.0001;
 		}
 	}
 
-	// 4. 银狼 LV.999 自拉条 + 无敌玩家（Q 在前时不适用）" 
-	if (isCharacterTarget(character) && hasSkillEffect(character.name, "Q", "selfAdvance100")) {
+	// 4. 银狼 LV.999 自拉条 + 无敌玩家（Q 在前时不适用）"
+	if (
+		isCharacterTarget(character) &&
+		hasSkillEffect(character.name, "Q", "selfAdvance100")
+	) {
 		if (hasSilverWolfGodmode(character.name)) {
 			activateGodmode(states, casterIndex);
 		}
@@ -85,7 +106,10 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 	}
 
 	// 5. 记忆主 E/Q: 召唤迷迷
-	if (isCharacterTarget(character) && hasSkillEffect(character.name, "E", "summonMeme")) {
+	if (
+		isCharacterTarget(character) &&
+		hasSkillEffect(character.name, "E", "summonMeme")
+	) {
 		summonMemeState(states, character, actionValue);
 		handleMemoryTrailblazerQ(states[casterIndex]);
 	}

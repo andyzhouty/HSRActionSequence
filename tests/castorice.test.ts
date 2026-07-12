@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type {
-	CharacterConfig,
-	SkillCode,
-} from "../src/utils/actionSequence";
 import {
 	type SimulateActionsInput,
 	simulateActions,
 } from "../src/simulate/actions";
+import type { CharacterConfig, SkillCode } from "../src/utils/actionSequence";
 
 function character(
 	id: string,
@@ -61,9 +58,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("遐蝶 Q 召唤死龙，死龙立即行动", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 				}),
@@ -82,9 +77,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("死龙 EA 行动后驻场（polluxCount < 3）", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "EA",
@@ -105,9 +98,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("死龙 E 行动后离场", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "E",
@@ -124,9 +115,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("死龙 3 回合后自动离场", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "A",
@@ -145,9 +134,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("死龙离场后遐蝶可再次 Q", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "E",
@@ -167,9 +154,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("E2 遐蝶自拉条 100%，排在死龙之前", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100, { eidolon: 2 }),
-				],
+				characters: [character("castorice", "遐蝶", 100, { eidolon: 2 })],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 				}),
@@ -193,9 +178,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("E2 QE 不产生独立 main action，自拉条后下一动继承 E", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100, { eidolon: 2 }),
-				],
+				characters: [character("castorice", "遐蝶", 100, { eidolon: 2 })],
 				skillOverrides: skills({
 					"castorice-1": "QE",
 				}),
@@ -216,9 +199,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		expect(mainE).toBeUndefined();
 
 		// The pulled action should have skill E
-		const pulledAction = castoriceActions.find(
-			(a) => a.actionNo === 2,
-		);
+		const pulledAction = castoriceActions.find((a) => a.actionNo === 2);
 		expect(pulledAction).toBeDefined();
 		expect(pulledAction?.skill).toBe("E");
 	});
@@ -226,9 +207,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("E2 QA 跳过 A，自拉条后下一动继承 A", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100, { eidolon: 2 }),
-				],
+				characters: [character("castorice", "遐蝶", 100, { eidolon: 2 })],
 				skillOverrides: skills({
 					"castorice-1": "QA",
 				}),
@@ -255,9 +234,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("E0 遐蝶 QE 不跳过，正常产生 E 主行动", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100, { eidolon: 0 }),
-				],
+				characters: [character("castorice", "遐蝶", 100, { eidolon: 0 })],
 				skillOverrides: skills({
 					"castorice-1": "QE",
 				}),
@@ -291,7 +268,9 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			}),
 		);
 
-		const qIndex = actions.findIndex((action) => action.key === "castorice-1-q");
+		const qIndex = actions.findIndex(
+			(action) => action.key === "castorice-1-q",
+		);
 		const polluxIndex = actions.findIndex(
 			(action) => action.key === "castorice-pollux-1",
 		);
@@ -309,9 +288,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("死龙 AV 间距正确（165 速 = 10000/165 ≈ 60.6 AV）", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "EA",
@@ -326,18 +303,13 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 
 		// First pollux at AV 100, second at ~160.6
 		expect(polluxActions[0].actionValue).toBeCloseTo(100, 1);
-		expect(polluxActions[1].actionValue).toBeCloseTo(
-			100 + 10000 / 165,
-			1,
-		);
+		expect(polluxActions[1].actionValue).toBeCloseTo(100 + 10000 / 165, 1);
 	});
 
 	it("死龙 3 动后自动离场，可重新召唤", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "EA",
@@ -367,9 +339,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("死龙 isMemospriteAction 且 memospriteOwnerId 正确", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "EA",
@@ -389,9 +359,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("死龙 actionNo 从 1 开始递增", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "EA",
@@ -410,9 +378,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		// polluxOnField prevents duplicate summon
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "EA", // pollux stays
@@ -435,9 +401,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("死龙支持 EA 以外的驻场技能（通过 skill override）", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "A", // plain A also keeps it
@@ -455,9 +419,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("E2 QE 死龙排在遐蝶自拉条之后", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100, { eidolon: 2 }),
-				],
+				characters: [character("castorice", "遐蝶", 100, { eidolon: 2 })],
 				skillOverrides: skills({
 					"castorice-1": "QE",
 				}),
@@ -481,9 +443,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("死龙离场后 polluxOnField 为 false", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "E", // dismiss
@@ -510,7 +470,9 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 				limit: 300,
 			}),
 		);
-		expect(keepActions.filter((a) => a.isPolluxAction).length).toBeGreaterThanOrEqual(1);
+		expect(
+			keepActions.filter((a) => a.isPolluxAction).length,
+		).toBeGreaterThanOrEqual(1);
 
 		const dismissActions = simulateActions(
 			input({
@@ -528,9 +490,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("死龙 165 速独立于遐蝶 100 速运行", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "EA",
@@ -545,9 +505,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		const castorice2 = actions.find(
 			(a) => a.characterId === "castorice" && a.actionNo === 2,
 		);
-		const pollux2 = actions.find(
-			(a) => a.isPolluxAction && a.actionNo === 2,
-		);
+		const pollux2 = actions.find((a) => a.isPolluxAction && a.actionNo === 2);
 
 		if (castorice2 && pollux2) {
 			// pollux is faster, should act before castorice
@@ -559,9 +517,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		// No skill override for pollux → default behavior should work
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					// pollux actions without explicit override
@@ -579,9 +535,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("击杀：E 后死龙不消失且速度翻倍（165→330）", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "E",
@@ -609,9 +563,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("击杀对 EA 不生效（仅纯 E 触发）", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "EA",
@@ -637,9 +589,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	it("加速后死龙离场，重新召唤时速度恢复 165", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("castorice", "遐蝶", 100),
-				],
+				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "E", // kill → stays at 330 speed
@@ -799,7 +749,9 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			}),
 		);
 
-		expect(actions.find((a) => a.key === "ally-1-interrupt-0")?.skill).toBe("Q");
+		expect(actions.find((a) => a.key === "ally-1-interrupt-0")?.skill).toBe(
+			"Q",
+		);
 		expect(actions.find((a) => a.isPolluxAction)).toBeDefined();
 	});
 
@@ -824,14 +776,18 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		const garmentmakerSecond = actions.find(
 			(action) => action.key === "aglaea-garmentmaker-g1-2",
 		);
-		const pollux = actions.find((action) => action.key === "castorice-pollux-1");
+		const pollux = actions.find(
+			(action) => action.key === "castorice-pollux-1",
+		);
 		expect(garmentmakerSecond).toBeDefined();
 		expect(pollux).toBeDefined();
 		expect(pollux?.actionValue).toBeCloseTo(
 			garmentmakerSecond?.actionValue ?? 0,
 			4,
 		);
-		expect(actions.indexOf(pollux!)).toBeLessThan(actions.indexOf(garmentmakerSecond!));
+		expect(actions.indexOf(pollux!)).toBeLessThan(
+			actions.indexOf(garmentmakerSecond!),
+		);
 	});
 
 	it("星期日拉条遐蝶时会同步拉条死龙", () => {
@@ -858,8 +814,8 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			(a) => a.isPolluxAction && a.actionNo === 2,
 		);
 		expect(sunday).toBeDefined();
-		expect(castoricePulled?.actionValue).toBeCloseTo(sunday!.actionValue, 4);
-		expect(polluxPulled?.actionValue).toBeCloseTo(sunday!.actionValue, 4);
+		expect(castoricePulled?.actionValue).toBeCloseTo(sunday?.actionValue, 4);
+		expect(polluxPulled?.actionValue).toBeCloseTo(sunday?.actionValue, 4);
 	});
 
 	it("星期日不能单独拉条死龙", () => {
@@ -934,15 +890,9 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		const castorice3 = actions.find((a) => a.key === "castorice-3");
 		const castorice4 = actions.find((a) => a.key === "castorice-4");
 		const castorice5 = actions.find((a) => a.key === "castorice-5");
-		const pollux2 = actions.find(
-			(a) => a.isPolluxAction && a.actionNo === 2,
-		);
-		const pollux3 = actions.find(
-			(a) => a.isPolluxAction && a.actionNo === 3,
-		);
-		const pollux4 = actions.find(
-			(a) => a.isPolluxAction && a.actionNo === 4,
-		);
+		const pollux2 = actions.find((a) => a.isPolluxAction && a.actionNo === 2);
+		const pollux3 = actions.find((a) => a.isPolluxAction && a.actionNo === 3);
+		const pollux4 = actions.find((a) => a.isPolluxAction && a.actionNo === 4);
 
 		expect(actions.find((a) => a.key === "castorice-1")?.actionValue).toBe(0);
 		expect(
@@ -1098,7 +1048,9 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		// With target: Sunday pulls Castorice to current AV
 
 		const sunday1WithTarget = withTarget.find((a) => a.key === "sunday-1");
-		const castorice3WithTarget = withTarget.find((a) => a.key === "castorice-3");
+		const castorice3WithTarget = withTarget.find(
+			(a) => a.key === "castorice-3",
+		);
 		expect(sunday1WithTarget?.actionValue).toBeCloseTo(36.59, 2);
 		expect(castorice3WithTarget?.actionValue).toBeCloseTo(142.97, 2);
 
@@ -1122,9 +1074,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		const castoricePulledActionIndex = withoutTarget.findIndex(
 			(action) => action.key === "castorice-4",
 		);
-		expect(castoricePulledActionIndex).toBe(
-			castorice3QNoTargetIndex + 1,
-		);
+		expect(castoricePulledActionIndex).toBe(castorice3QNoTargetIndex + 1);
 		expect(withoutTarget.indexOf(repolluxNoTarget!)).toBe(
 			castoricePulledActionIndex + 1,
 		);
@@ -1134,7 +1084,3 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		);
 	});
 });
-
-
-
-

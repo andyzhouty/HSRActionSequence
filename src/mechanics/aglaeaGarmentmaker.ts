@@ -92,8 +92,14 @@ export function getGarmentmakerStacks(
 	return findAglaeaState(states, ownerId)?.garmentmakerStacks ?? 0;
 }
 
-function getGarmentmakerSpeed(rule: GarmentmakerRule, stacks: number, aglaeaSpeed: number) {
-	return aglaeaSpeed * (rule.memospriteSpeed / 100) + rule.stackSpeedBonus * stacks;
+function getGarmentmakerSpeed(
+	rule: GarmentmakerRule,
+	stacks: number,
+	aglaeaSpeed: number,
+) {
+	return (
+		aglaeaSpeed * (rule.memospriteSpeed / 100) + rule.stackSpeedBonus * stacks
+	);
 }
 
 function setSpeedPreservingActionDistance(
@@ -157,7 +163,11 @@ export function increaseGarmentmakerStacks(
 		(garmentmaker.garmentmakerStacks ?? 0) + 1,
 	);
 	garmentmaker.garmentmakerStacks = nextStacks;
-	garmentmaker.currentSpeed = getGarmentmakerSpeed(rule, nextStacks, aglaea.currentSpeed);
+	garmentmaker.currentSpeed = getGarmentmakerSpeed(
+		rule,
+		nextStacks,
+		aglaea.currentSpeed,
+	);
 	syncGarmentmakerStacksToAglaea(states, ownerId, nextStacks, actionValue);
 }
 
@@ -171,7 +181,7 @@ export function summonGarmentmakerState(
 	const ownerState = findAglaeaState(states, owner.id);
 	const retainedStacks = ownerState?.garmentmakerStacks ?? 0;
 	const initialStacks = Math.min(getAglaeaStackLimit(owner), retainedStacks);
-	const aglaeaSpeed = ownerState?.currentSpeed || (Number(owner.speed) || 100);
+	const aglaeaSpeed = ownerState?.currentSpeed || Number(owner.speed) || 100;
 	const currentSpeed = getGarmentmakerSpeed(rule, initialStacks, aglaeaSpeed);
 	const baseGarmentmakerSpeed = aglaeaSpeed * (rule.memospriteSpeed / 100);
 
@@ -391,4 +401,3 @@ export function handleAglaeaSkillEffects(
 		increaseGarmentmakerStacks(states, state.character.id, actionValue);
 	}
 }
-

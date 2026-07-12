@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
+import {
+	type SimulateActionsInput,
+	simulateActions,
+} from "../src/simulate/actions";
 import type {
 	CharacterConfig,
 	SkillCode,
 	UltInterrupt,
 } from "../src/utils/actionSequence";
-import {
-	type SimulateActionsInput,
-	simulateActions,
-} from "../src/simulate/actions";
 
 const stripAv0 = (axs: { characterId: string }[]) =>
 	axs.filter((a) => a.characterId !== "@av0");
@@ -84,7 +84,11 @@ describe("Firefly Complete Combustion activation", () => {
 			}),
 		);
 
-		expect(stripAv0(actions).map((action) => action.key).slice(0, 5)).toEqual([
+		expect(
+			stripAv0(actions)
+				.map((action) => action.key)
+				.slice(0, 5),
+		).toEqual([
 			"firefly-1",
 			"firefly-1-q",
 			"firefly-2",
@@ -114,12 +118,11 @@ describe("Firefly Complete Combustion activation", () => {
 			}),
 		);
 
-		expect(stripAv0(actions).map((action) => action.key).slice(0, 4)).toEqual([
-			"a-1-interrupt-0",
-			"a-1",
-			"firefly-1",
-			"firefly-2",
-		]);
+		expect(
+			stripAv0(actions)
+				.map((action) => action.key)
+				.slice(0, 4),
+		).toEqual(["a-1-interrupt-0", "a-1", "firefly-1", "firefly-2"]);
 		expect(
 			actions.find((action) => action.key === "firefly-2")?.actionValue,
 		).toBeCloseTo(162.5, 4);
@@ -339,16 +342,18 @@ describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 
 		// Firefly should be pulled to Sunday's AV=50
 		// So Firefly acts next at AV=50, then Sunday again at AV=100
-		const fireflyAction = stripAv0(actions).find((a) => a.characterId === "firefly");
+		const fireflyAction = stripAv0(actions).find(
+			(a) => a.characterId === "firefly",
+		);
 		expect(fireflyAction).toBeDefined();
 		expect(fireflyAction?.actionValue).toBeCloseTo(50, 4);
 
 		// Action order: Sunday E → Firefly (pulled) → Sunday 2 → ...
-		expect(stripAv0(actions).map((a) => a.characterId).slice(0, 3)).toEqual([
-			"sunday",
-			"firefly",
-			"sunday",
-		]);
+		expect(
+			stripAv0(actions)
+				.map((a) => a.characterId)
+				.slice(0, 3),
+		).toEqual(["sunday", "firefly", "sunday"]);
 	});
 
 	it("Sunday E pulls Firefly during Complete Combustion", () => {
@@ -499,9 +504,7 @@ describe("E2 Firefly break-extra with SP Himeko assist", () => {
 
 		// 只有一层 break-extra，不会递归生成更多（排除 himeko assist key 中的 -break-extra-）
 		const breakExtras = actions.filter(
-			(a) =>
-				a.key.includes("-break-extra-") &&
-				a.characterId === "firefly",
+			(a) => a.key.includes("-break-extra-") && a.characterId === "firefly",
 		);
 		expect(breakExtras.length).toBe(1);
 	});
@@ -587,7 +590,3 @@ describe("E2 Firefly break-extra with SP Himeko assist", () => {
 		expect(breakExtra).toBeDefined();
 	});
 });
-
-
-
-

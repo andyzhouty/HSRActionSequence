@@ -15,6 +15,9 @@ export interface SouldragonActionState {
 	actionNo: number;
 	blockNextAdvance: boolean;
 	isSouldragonAction?: boolean;
+	/** 盾丹 ID，用于内部查找龙灵状态。 */
+	dhptOwnerId?: string;
+	/** 当前同袍 ID，用于拉条/归属判断。 */
 	souldragonOwnerId?: string;
 }
 
@@ -24,10 +27,10 @@ export function hasDanHengSouldragon(characterName: string) {
 
 export function findSouldragonState(
 	states: SouldragonActionState[],
-	ownerId: string,
+	dhptOwnerId: string,
 ) {
 	return states.find(
-		(state) => state.isSouldragonAction && state.souldragonOwnerId === ownerId,
+		(state) => state.isSouldragonAction && state.dhptOwnerId === dhptOwnerId,
 	);
 }
 
@@ -35,9 +38,12 @@ export function summonSouldragonState(
 	states: SouldragonActionState[],
 	owner: CharacterConfig,
 	summonActionValue: number,
+	bondmateId?: string,
 ) {
 	const existing = findSouldragonState(states, owner.id);
 	if (existing) return existing;
+
+	const actualBondmateId = bondmateId ?? owner.id;
 
 	const state: SouldragonActionState = {
 		character: {
@@ -59,10 +65,22 @@ export function summonSouldragonState(
 		actionNo: 1,
 		blockNextAdvance: false,
 		isSouldragonAction: true,
-		souldragonOwnerId: owner.id,
+		dhptOwnerId: owner.id,
+		souldragonOwnerId: actualBondmateId,
 	};
 	states.push(state);
 	return state;
+}
+
+/** 盾丹 E 切换同袍时，更新龙灵的归属。 */
+export function updateSouldragonBondmate(
+	states: SouldragonActionState[],
+	dhptOwnerId: string,
+	newBondmateId: string,
+): void {
+	const souldragon = findSouldragonState(states, dhptOwnerId);
+	if (!souldragon) return;
+	souldragon.souldragonOwnerId = newBondmateId;
 }
 
 export function advanceSouldragon(
@@ -114,4 +132,3 @@ export function emitImmediateSouldragonAction(
 	if (!state) return;
 	emitSouldragonAction(state, actions, actionValue, `${sourceKey}-souldragon`);
 }
-

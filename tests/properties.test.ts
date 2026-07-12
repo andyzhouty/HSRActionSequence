@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 import { simulateActions } from "../src/simulate/actions";
-import { stripAv0, character, input } from "./helpers/simulateActionTestUtils";
+import { character, input } from "./helpers/simulateActionTestUtils";
 
 // ─── 不变量 1: 行动 AV 非递减 ───────────────────────────────────────
 
@@ -136,10 +136,7 @@ describe("Property: actions within limit", () => {
 		for (const limit of [100, 200, 500]) {
 			const actions = simulateActions(
 				input({
-					characters: [
-						character("c1", "A", 100),
-						character("c2", "B", 200),
-					],
+					characters: [character("c1", "A", 100), character("c2", "B", 200)],
 					limit,
 				}),
 			);
@@ -204,10 +201,7 @@ describe("Property: unique action keys", () => {
 	it("no duplicate keys in any simulation", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("c1", "A", 100),
-					character("c2", "B", 150),
-				],
+				characters: [character("c1", "A", 100), character("c2", "B", 150)],
 				skillOverrides: {
 					"c1-1": "AQ",
 					"c2-1": "EQ",
@@ -227,10 +221,7 @@ describe("Property: iteration safety", () => {
 	it("no more than 2000 actions generated", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("c1", "A", 200),
-					character("c2", "B", 200),
-				],
+				characters: [character("c1", "A", 200), character("c2", "B", 200)],
 				limit: 99999,
 			}),
 		);
@@ -244,10 +235,7 @@ describe("Property: positive speed values", () => {
 	it("every action has speed > 0", () => {
 		const actions = simulateActions(
 			input({
-				characters: [
-					character("c1", "A", 100),
-					character("c2", "B", 150),
-				],
+				characters: [character("c1", "A", 100), character("c2", "B", 150)],
 				limit: 500,
 			}),
 		);

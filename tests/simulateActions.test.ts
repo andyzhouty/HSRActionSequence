@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { simulateActions } from "../src/simulate/actions";
 import {
 	type CharacterConfig,
 	canUseSkillCode,
 } from "../src/utils/actionSequence";
-import { simulateActions } from "../src/simulate/actions";
 import {
 	character,
 	input,
@@ -28,11 +28,11 @@ describe("actions", () => {
 			}),
 		);
 
-		expect(stripAv0(actions).map((action) => action.key).slice(0, 3)).toEqual([
-			"slow-1",
-			"fast-1",
-			"fast-2",
-		]);
+		expect(
+			stripAv0(actions)
+				.map((action) => action.key)
+				.slice(0, 3),
+		).toEqual(["slow-1", "fast-1", "fast-2"]);
 		expect(stripAv0(actions)[0].actionValue).toBe(30);
 	});
 
@@ -75,11 +75,11 @@ describe("actions", () => {
 			}),
 		);
 
-		expect(stripAv0(actions).map((action) => action.key).slice(0, 3)).toEqual([
-			"a-1",
-			"a-1-q",
-			"b-1",
-		]);
+		expect(
+			stripAv0(actions)
+				.map((action) => action.key)
+				.slice(0, 3),
+		).toEqual(["a-1", "a-1-q", "b-1"]);
 		// 叠 1: (14+2*1)% = 16%, advance = 1600/80 = 20
 		// b-1 AV = max(100, 125-20) = 105
 		expect(
@@ -140,7 +140,11 @@ describe("actions", () => {
 			}),
 		);
 
-		expect(stripAv0(actions).map((action) => action.key).slice(0, 4)).toEqual([
+		expect(
+			stripAv0(actions)
+				.map((action) => action.key)
+				.slice(0, 4),
+		).toEqual([
 			"aglaea-1",
 			"aglaea-1-q",
 			"aglaea-2",
@@ -210,7 +214,11 @@ describe("actions", () => {
 			}),
 		);
 
-		expect(stripAv0(actions).map((action) => action.key).slice(0, 4)).toEqual([
+		expect(
+			stripAv0(actions)
+				.map((action) => action.key)
+				.slice(0, 4),
+		).toEqual([
 			"a-1-interrupt-0",
 			"a-1",
 			"aglaea-1",
@@ -494,6 +502,3 @@ describe("The Herta", () => {
 		);
 	});
 });
-
-
-

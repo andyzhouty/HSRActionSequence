@@ -1,4 +1,3 @@
-import { invoke, save } from "../../utils/backend";
 import { useCallback, useState } from "react";
 import * as XLSX from "xlsx";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
@@ -10,6 +9,7 @@ import {
 	getErrorMessage,
 	isAllyTarget,
 } from "../../utils/actionSequence";
+import { invoke, save } from "../../utils/backend";
 
 export default function ExportExcelButton() {
 	const ctx = useActionSequence();
@@ -60,8 +60,7 @@ export default function ExportExcelButton() {
 			): boolean => {
 				if (action.isDomainAction) return false; // 域内行动保留
 				if (action.isAhaInstant) return false; // 阿哈时刻保留
-				const charKind =
-					ctx.characterKinds[action.characterId] ?? "角色";
+				const charKind = ctx.characterKinds[action.characterId] ?? "角色";
 				if (!isAllyTarget(charKind)) return false; // 敌方可以穿插
 				return domainRanges.some(
 					(r) =>
@@ -284,6 +283,7 @@ export default function ExportExcelButton() {
 		ctx.memeSelections,
 		ctx.ultInterrupts,
 		ctx.setMessage,
+		ctx.characterKinds,
 	]);
 
 	return (

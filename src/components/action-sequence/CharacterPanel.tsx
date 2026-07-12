@@ -1,8 +1,8 @@
 import { useState } from "react";
-import lightConeData from "../../data/lightcones.json";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
+import lightConeData from "../../data/lightcones.json";
 import {
-	defaultCharacters,
+	type defaultCharacters,
 	getCharacterPath,
 	getTargetDefaultName,
 	hasPassive,
@@ -243,8 +243,7 @@ function CharacterCard({
 								return {
 									...prev,
 									name: value,
-									lc_id:
-										oldPath !== newPath && !lcStillValid ? 0 : prev.lc_id,
+									lc_id: oldPath !== newPath && !lcStillValid ? 0 : prev.lc_id,
 								};
 							})
 						}
@@ -402,7 +401,7 @@ function CharacterCard({
 											}[];
 										}
 									).lightcones ?? [];
-								let matching = allLcs.filter((lc) => lc.path === charPath);
+								const matching = allLcs.filter((lc) => lc.path === charPath);
 								matching.sort((a, b) => b.rarity - a.rarity || b.id - a.id);
 								const dddIndex = matching.findIndex((lc) => lc.id === 21018);
 								if (
@@ -456,7 +455,6 @@ function CharacterCard({
 									...(hasSkillEffect(prev.name, "W", "counterW")
 										? {
 												baseSpeed: String(
-													// biome-ignore lint/complexity/noExcessiveNestedConditionals: computed
 													prev.lc_id === 23044
 														? Number(value) > 0
 															? 104 + 2 * Number(value)
@@ -477,11 +475,7 @@ function CharacterCard({
 								options={[
 									{ value: "", label: "无军功" },
 									...ctx.characters
-										.filter(
-											(c) =>
-												c.id !== character.id &&
-												c.kind === "角色",
-										)
+										.filter((c) => c.id !== character.id && c.kind === "角色")
 										.map((c) => ({
 											value: String(c.id),
 											label: c.name.trim() || c.id,
@@ -499,11 +493,7 @@ function CharacterCard({
 								options={[
 									{ value: "", label: "无共舞者" },
 									...ctx.characters
-										.filter(
-											(c) =>
-												c.id !== character.id &&
-												c.kind === "角色",
-										)
+										.filter((c) => c.id !== character.id && c.kind === "角色")
 										.map((c) => ({
 											value: String(c.id),
 											label: c.name.trim() || c.id,
@@ -528,9 +518,7 @@ function CharacterCard({
 											label: candidate.name.trim() || candidate.id,
 										})),
 								]}
-								onChange={(value) =>
-									ctx.setBondmateTarget(value)
-								}
+								onChange={(value) => ctx.setBondmateTarget(value)}
 								className="flex-1"
 							/>
 						</div>

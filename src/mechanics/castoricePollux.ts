@@ -29,9 +29,7 @@ export function hasCastoriceSummon(characterName: string): boolean {
 	return hasSkillEffect(characterName, "Q", "summonPollux");
 }
 
-export function isPolluxState(state: {
-	isPolluxAction?: boolean;
-}): boolean {
+export function isPolluxState(state: { isPolluxAction?: boolean }): boolean {
 	return state.isPolluxAction ?? false;
 }
 
@@ -46,9 +44,7 @@ export function findPolluxState(
 }
 
 /** 在 states 中找遐蝶 */
-export function findCastoriceState(
-	states: CastoriceActionState[],
-) {
+export function findCastoriceState(states: CastoriceActionState[]) {
 	return states.find((s) => hasCastoriceSummon(s.character.name));
 }
 
@@ -219,4 +215,3 @@ export function applyCastoriceE2Pull(
 		}
 	}
 }
-

@@ -26,7 +26,19 @@ describe("ActionPanel Firefly", () => {
 		const setFireflyBreakCounters = vi.fn();
 		const action = mockCombustionAction();
 		const chars = [
-			{ id: "firefly", name: "流萤", kind: "角色" as const, speed: "160", baseSpeed: "104", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
+			{
+				id: "firefly",
+				name: "流萤",
+				kind: "角色" as const,
+				speed: "160",
+				baseSpeed: "104",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 2,
+				superimpose: 1,
+				lc_id: 0,
+			},
 		];
 		renderWithContext(<ActionPanel />, {
 			characters: chars,
@@ -47,7 +59,19 @@ describe("ActionPanel Firefly", () => {
 	it("完全燃烧行动会显示击破开关", () => {
 		const action = mockCombustionAction();
 		const chars = [
-			{ id: "firefly", name: "流萤", kind: "角色" as const, speed: "160", baseSpeed: "104", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 2, superimpose: 1, lc_id: 0 },
+			{
+				id: "firefly",
+				name: "流萤",
+				kind: "角色" as const,
+				speed: "160",
+				baseSpeed: "104",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 2,
+				superimpose: 1,
+				lc_id: 0,
+			},
 		];
 		renderWithContext(<ActionPanel />, {
 			characters: chars,
@@ -69,7 +93,19 @@ describe("ActionPanel Firefly", () => {
 			speed: 100,
 		};
 		const chars = [
-			{ id: "ally", name: "队友", kind: "角色" as const, speed: "100", baseSpeed: "100", hasVonwacq: false, hasWindSet: false, hasDance: false, eidolon: 0, superimpose: 1, lc_id: 0 },
+			{
+				id: "ally",
+				name: "队友",
+				kind: "角色" as const,
+				speed: "100",
+				baseSpeed: "100",
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 0,
+				superimpose: 1,
+				lc_id: 0,
+			},
 		];
 		renderWithContext(<ActionPanel />, {
 			characters: chars,

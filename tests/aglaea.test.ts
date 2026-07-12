@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
+import {
+	type SimulateActionsInput,
+	simulateActions,
+} from "../src/simulate/actions";
 import type {
 	CharacterConfig,
 	SkillCode,
 	UltInterrupt,
 } from "../src/utils/actionSequence";
-import {
-	type SimulateActionsInput,
-	simulateActions,
-} from "../src/simulate/actions";
 
 const stripAv0 = (axs: { characterId: string }[]) =>
 	axs.filter((a) => a.characterId !== "@av0");
@@ -131,7 +131,11 @@ describe("Aglaea Supreme Stance activation", () => {
 			}),
 		);
 
-		expect(stripAv0(actions).map((action) => action.key).slice(0, 4)).toEqual([
+		expect(
+			stripAv0(actions)
+				.map((action) => action.key)
+				.slice(0, 4),
+		).toEqual([
 			"aglaea-1",
 			"aglaea-1-q",
 			"aglaea-2",
@@ -196,11 +200,11 @@ describe("Aglaea Supreme Stance activation", () => {
 			}),
 		);
 
-		expect(stripAv0(actions).map((action) => action.key).slice(0, 3)).toEqual([
-			"a-1-interrupt-0",
-			"a-1",
-			"aglaea-1",
-		]);
+		expect(
+			stripAv0(actions)
+				.map((action) => action.key)
+				.slice(0, 3),
+		).toEqual(["a-1-interrupt-0", "a-1", "aglaea-1"]);
 	});
 
 	it("阿格莱雅插队 Q 后，立即行动归属阿格莱雅而非衣匠", () => {
@@ -285,8 +289,8 @@ describe("Aglaea Supreme Stance activation", () => {
 		);
 		expect(directGarmentmaker).toBeDefined();
 		expect(ownerGarmentmaker).toBeDefined();
-		expect(ownerGarmentmaker!.actionValue).toBeLessThan(
-			directGarmentmaker!.actionValue,
+		expect(ownerGarmentmaker?.actionValue).toBeLessThan(
+			directGarmentmaker?.actionValue,
 		);
 	});
 
@@ -319,8 +323,8 @@ describe("Aglaea Supreme Stance activation", () => {
 		);
 		expect(baselineGarmentmaker).toBeDefined();
 		expect(interruptGarmentmaker).toBeDefined();
-		expect(interruptGarmentmaker!.actionValue).toBeCloseTo(
-			baselineGarmentmaker!.actionValue,
+		expect(interruptGarmentmaker?.actionValue).toBeCloseTo(
+			baselineGarmentmaker?.actionValue,
 			4,
 		);
 	});
@@ -573,7 +577,3 @@ describe("Aglaea team integration", () => {
 		expect(qExtra?.actionValue).toBeCloseTo(aAction2?.actionValue ?? 0, 4);
 	});
 });
-
-
-
-
