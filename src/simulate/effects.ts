@@ -213,9 +213,8 @@ export function shouldTriggerE6TeamAdvance24(Q_counter: number): boolean {
 
 // ── 昔涟 E6 拉条 ──
 
-/** 昔涟/德谬歌 Q 后的完整处理：Q_counter + 强化 Q + E6
- *  @param isInterrupt - 插队 Q 不拉昔涟自身
- *  @param excludeSelf - Q 在前（QE/QA）时，昔涟自身的拉条无效 */
+/** 昔涟/德谬歌 Q 后的完整处理：Q_counter + 强化 Q + E6。
+ * QE/QA 的 Q 已发生在自身正常行动之前，因此不能再拉自身；其他 Q 均参与全队排序。 */
 export function handleCyrenePostUltimate({
 	states,
 	casterIndex,
@@ -223,7 +222,6 @@ export function handleCyrenePostUltimate({
 	actions,
 	actionValue,
 	activeOdes,
-	isInterrupt = false,
 	excludeSelf = false,
 }: {
 	states: ActionState[];
@@ -232,7 +230,6 @@ export function handleCyrenePostUltimate({
 	actions: GeneratedAction[];
 	actionValue: number;
 	activeOdes: Map<string, ActiveOdeState[]>;
-	isInterrupt?: boolean;
 	excludeSelf?: boolean;
 }) {
 	void activeOdes;
@@ -266,15 +263,13 @@ export function handleCyrenePostUltimate({
 	}
 	// E6 首次大：全队 100% 拉条（Q_counter = 1 时）
 	if (character.eidolon >= 6 && qCounter === 1) {
-		const shouldExcludeSelf = isInterrupt || excludeSelf;
+		const shouldExcludeSelf = excludeSelf;
 		applyCyreneE6FirstUltimatePull(
 			states,
 			casterIndex,
 			actionValue,
 			shouldExcludeSelf,
 		);
-		// 只有自身确实被拉到当前 AV 时，才跳过后续正常间隔计算。
-		states[casterIndex].e6FirstUltimatePulled = !shouldExcludeSelf;
 	}
 }
 

@@ -44,13 +44,23 @@ export function useActionImageExport({
 				style: {
 					boxSizing: "border-box",
 					paddingBottom: `${exportPadding}px`,
-					overflowX: "visible",
+					overflow: "visible",
 					width: `${exportWidth}px`,
 				},
 				onCloneNode: (cloned) => {
 					if (!(cloned instanceof HTMLElement)) return;
-					cloned.style.overflowX = "visible";
+					// 导出宽度已扩展到完整表格，不能保留页面用的横向滚动容器。
+					cloned.classList.remove("overflow-x-auto");
+					cloned.style.setProperty("overflow", "visible", "important");
+					cloned.style.setProperty("overflow-x", "visible", "important");
+					cloned.style.setProperty("overflow-y", "visible", "important");
+					cloned.style.setProperty("scrollbar-width", "none", "important");
+					cloned.style.setProperty("-ms-overflow-style", "none", "important");
 					cloned.style.width = `${exportWidth}px`;
+					const hideScrollbarStyle = document.createElement("style");
+					hideScrollbarStyle.textContent =
+						"* { scrollbar-width: none !important; } *::-webkit-scrollbar { display: none !important; }";
+					cloned.prepend(hideScrollbarStyle);
 					cloned.querySelectorAll("style").forEach((style) => {
 						style.textContent = cleanColor(style.textContent);
 					});
@@ -93,7 +103,8 @@ export function useActionImageExport({
 							isActionValue || isSkillInput
 								? '"Inconsolata Nerd Font", monospace'
 								: "inherit";
-						replacement.style.height = "32px";
+						// 与技能栏的 h-10 按钮、选择器保持一致。
+						replacement.style.height = "40px";
 						replacement.style.lineHeight = "1";
 						replacement.style.padding = isDomainSkill
 							? "0 4px"
@@ -124,10 +135,23 @@ export function useActionImageExport({
 					});
 				},
 			});
+			const fileName = getTimestampedFileName("action-sequence", ".png");
+			const isWailsRuntime = Boolean(window.go?.main?.App?.SaveFileDialog);
+			if (!isWailsRuntime) {
+				const download = document.createElement("a");
+				download.href = dataUrl;
+				download.download = fileName;
+				download.style.display = "none";
+				document.body.append(download);
+				download.click();
+				download.remove();
+				setMessage(`已下载行动序列图片：${fileName}`);
+				return;
+			}
 
 			const selectedPath = await save({
 				title: "导出行动序列图片",
-				defaultPath: getTimestampedFileName("action-sequence", ".png"),
+				defaultPath: fileName,
 				filters: [
 					{
 						name: "PNG 图片",

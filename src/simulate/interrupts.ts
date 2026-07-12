@@ -7,23 +7,14 @@ import {
 	type SkillCode,
 } from "../utils/actionSequence";
 import {
-	activateCombustion,
-	shouldActivateCombustion,
-} from "../mechanics/fireflyCombustion";
-import {
-	handleAglaeaSkillEffects,
-} from "../mechanics/aglaeaGarmentmaker";
-import {
-	hasCastoriceSummon,
-	summonPollux,
-	applyCastoriceE2Pull,
-} from "../mechanics/castoricePollux";
-import {
-	type GodmodeState,
-	activateGodmode,
 	hasSilverWolfGodmode,
 	isInGodmode,
 } from "../mechanics/silverWolfGodmode";
+import {
+	hasHyacineIca,
+	createIcaAction,
+	handleHyacineQ,
+} from "../mechanics/hyacineIca";
 import {
 	canBeAdvancedByDance,
 	consumeActionOdes,
@@ -34,20 +25,11 @@ import {
 	hasActiveOdeEffect,
 	getTeamAdvanceOnUltimate,
 	isAllyTarget,
-	summonMemeState,
 	toNonNegativeNumber,
-	handleMemoryTrailblazerQ,
 	handleCyrenePostUltimate,
 } from "./effects";
 import {
-	hasHyacineIca,
-	createIcaAction,
-	handleHyacineQ,
-} from "../mechanics/hyacineIca";
-import {
-	hasEvernightEvey,
 	handleEveyAction,
-	summonEveyState,
 } from "../mechanics/evernightEvey";
 import {
 	expirePhainonDomainSpeedBonus,
@@ -55,6 +37,7 @@ import {
 	getPhainonDomainEndIndex,
 	getPhainonDomainInterval,
 } from "../mechanics/phainonDomain";
+import { handlePostUltimateEffects } from "./ultimateEffects";
 import type {
 	ActionState,
 	ActiveOdeState,
@@ -179,6 +162,8 @@ export function emitSpecialInterruptAction(
 		sourceKey: string,
 		actionValue: number,
 	) => void,
+	qIsFront?: boolean,
+	effectSourceKey = interruptKey,
 ): void {
 	void calcAhaSpeed;
 	void emitSparxieExtraActionFn;
@@ -203,33 +188,26 @@ export function emitSpecialInterruptAction(
 	if (hasSkillEffect(caster.character.name, "Q", "cyreneUltimate")) {
 		emitCyreneMemospriteAction({
 			input, actions, states, activeOdes, cyrene: caster.character,
-			sourceKey: interruptKey, actionValue,
+			sourceKey: effectSourceKey, actionValue,
 		});
 		handleCyrenePostUltimate({
 			states, casterIndex, character: caster.character, actions,
-			actionValue, activeOdes, isInterrupt: true,
+			actionValue,
+			activeOdes,
+			excludeSelf: qIsFront,
 		});
 	}
 	if (hasSkillEffect(caster.character.name, "Q", "extraAhaAfterUltimate")) {
 		emitExtraAhaActionFn(interruptKey, actionValue);
 	}
-	if (
-		isCharacterTarget(caster.character) &&
-		hasSkillEffect(caster.character.name, "E", "summonMeme")
-	) {
-		summonMemeState(states, caster.character, actionValue);
-		handleMemoryTrailblazerQ(states[casterIndex]);
-	}
-	if (
-		isCharacterTarget(caster.character) &&
-		hasEvernightEvey(caster.character.name) &&
-		!caster.eveyOnField
-	) {
-		summonEveyState(states, caster.character, actionValue, {
-			immediate: true,
-			sameActionPriority: -2,
-		});
-	}
+
+	// ── 统一 Q 后效处理（与 normalAction 共享同一逻辑） ──
+	handlePostUltimateEffects({
+		states, casterIndex, actions, actionValue, input, activeOdes,
+		sourceKey: effectSourceKey, qIsFront,
+	});
+
+	// 舞舞舞 / 忘归人 全队拉条 + 风套（独立处理，因 qIsFront 语义不同）
 	const teamAdvance = getTeamAdvanceOnUltimate(caster.character);
 	if (teamAdvance > 0) {
 		for (let teammateIndex = 0; teammateIndex < states.length; teammateIndex++) {
@@ -243,37 +221,53 @@ export function emitSpecialInterruptAction(
 	if (isCharacterTarget(caster.character) && caster.character.hasWindSet) {
 		const windAdvance = 2500 / casterSpeed;
 		if (!caster.blockNextAdvance) {
-			caster.nextActionValue = Math.max(
-				actionValue,
-				caster.nextActionValue - windAdvance,
-			);
+			caster.nextActionValue = Math.max(actionValue, caster.nextActionValue - windAdvance);
 		}
 	}
 	if (isAllyTarget(caster.character.kind)) {
 		expirePhainonDomainSpeedBonus(states, actionValue);
 	}
-	if (hasSkillEffect(caster.character.name, "Q", "robinUltimate")) {
-		caster.currentSpeed = 90;
-		caster.nextActionValue = actionValue + 10000 / caster.currentSpeed;
-		caster.blockNextAdvance = true;
-		const allyOrder = states
-			.map((s, i) => ({ index: i, value: s.nextActionValue }))
-			.filter(({ index }) => index !== casterIndex && isAllyTarget(states[index].character.kind))
-			.sort((a, b) => (a.value !== b.value ? a.value - b.value : a.index - b.index));
-		for (let rank = 0; rank < allyOrder.length; rank++) {
-			states[allyOrder[rank].index].nextActionValue = actionValue + rank * 0.0001;
+
+	// 风堇 interrupt Q
+	if (isCharacterTarget(caster.character) && hasHyacineIca(caster.character.name)) {
+		handleHyacineQ(states, caster.character.id);
+		const icaKey = `${interruptKey}-ica`;
+		const icaInterrupts = input.ultInterrupts[icaKey] ?? [];
+		for (let index = 0; index < icaInterrupts.length; index++) {
+			const icaInterrupt = icaInterrupts[index];
+			if (icaInterrupt.timing !== "before") continue;
+			emitSpecialInterruptAction(
+				`${icaKey}-interrupt-${index}`,
+				icaInterrupt,
+				actionValue,
+				states,
+				actions,
+				input,
+				activeOdes,
+				calcAhaSpeed,
+				emitExtraAhaActionFn,
+				emitSparxieExtraActionFn,
+			);
+		}
+		actions.push(createIcaAction(caster.character.id, interruptKey, actionValue));
+		for (let index = 0; index < icaInterrupts.length; index++) {
+			const icaInterrupt = icaInterrupts[index];
+			if (icaInterrupt.timing !== "after") continue;
+			emitSpecialInterruptAction(
+				`${icaKey}-interrupt-${index}`,
+				icaInterrupt,
+				actionValue,
+				states,
+				actions,
+				input,
+				activeOdes,
+				calcAhaSpeed,
+				emitExtraAhaActionFn,
+				emitSparxieExtraActionFn,
+			);
 		}
 	}
-	if (isCharacterTarget(caster.character) && hasSkillEffect(caster.character.name, "Q", "selfAdvance100")) {
-		if (hasSilverWolfGodmode(caster.character.name)) {
-			activateGodmode(states as GodmodeState[], casterIndex);
-		}
-		caster.nextActionValue = actionValue;
-	}
-	if (shouldActivateCombustion(caster.character, true, Boolean(caster.isInCompleteCombustion))) {
-		activateCombustion(states, casterIndex, caster.character, actionValue);
-	}
-	handleAglaeaSkillEffects(states, casterIndex, "Q", actionValue);
+
 	if (hasSkillEffect(caster.character.name, "W", "counterW")) {
 		const domainRule = getCounterWDomainRule(caster.character.name);
 		const domainInterval = getPhainonDomainInterval(caster.character, casterSpeed);
@@ -281,28 +275,14 @@ export function emitSpecialInterruptAction(
 		const maxDomainActionIndex = isEndlessDomain
 			? Math.max(0, Math.ceil((input.limit - actionValue) / domainInterval))
 			: Math.max(0, domainRule.extraActionCount - 1);
-		const domainEndIndex = getPhainonDomainEndIndex(interruptKey, input.domainEndOverrides, maxDomainActionIndex);
+		const domainEndIndex = getPhainonDomainEndIndex(effectSourceKey, input.domainEndOverrides, maxDomainActionIndex);
 		if (domainEndIndex >= 0) {
 			caster.domainState = {
-				keyPrefix: interruptKey, startAV: actionValue, interval: domainInterval,
+				keyPrefix: effectSourceKey, startAV: actionValue, interval: domainInterval,
 				currentIndex: 0, maxIndex: domainEndIndex, rule: domainRule,
 			};
 			freezeAlliesForDomain(states, casterIndex, actionValue);
 			caster.nextActionValue = actionValue;
-		}
-	}
-	if (isCharacterTarget(caster.character) && hasHyacineIca(caster.character.name)) {
-		handleHyacineQ(states, caster.character.id);
-		actions.push(createIcaAction(caster.character.id, interruptKey, actionValue));
-	}
-	if (
-		isCharacterTarget(caster.character) &&
-		hasCastoriceSummon(caster.character.name) &&
-		!caster.polluxOnField
-	) {
-		summonPollux(states, caster.character, actionValue, { sameActionPriority: -1 });
-		if (caster.character.eidolon >= 2) {
-			applyCastoriceE2Pull(states, casterIndex, actionValue);
 		}
 	}
 	emitGodmodeExtraAction(interruptKey, actionValue, states, actions, input);

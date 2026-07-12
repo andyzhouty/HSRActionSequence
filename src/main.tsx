@@ -2,6 +2,12 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import ActionSequence from "./pages/ActionSequence";
 import "./index.css";
+import { validateCharacterSchema } from "./data/characterSchema";
+
+// Validate character data at startup in dev mode
+if (import.meta.env.DEV) {
+	validateCharacterSchema();
+}
 
 // 根据屏幕分辨率自适应根字体大小，解决 Wayland scale=1 下字体过小的问题
 (function adjustFontSize() {

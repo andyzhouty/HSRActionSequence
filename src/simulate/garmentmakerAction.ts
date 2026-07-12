@@ -66,7 +66,6 @@ if (states[stateIndex].isGarmentmakerState) {
 				actions,
 				actionValue,
 				activeOdes,
-				isInterrupt: true,
 			});
 		}
 		// 插队大招触发全队拉条（舞舞舞 = (14+2s)%, 忘归人 2魂 = 24%）。

@@ -529,7 +529,7 @@ function CharacterCard({
 										})),
 								]}
 								onChange={(value) =>
-									ctx.setBondmateTarget(value || undefined)
+									ctx.setBondmateTarget(value)
 								}
 								className="flex-1"
 							/>

@@ -8,6 +8,8 @@ export type SimulationCallbacks = {
 		interruptKey: string,
 		interrupt: { casterId: string; timing: "before" | "after" },
 		actionValue: number,
+		qIsFront?: boolean,
+		effectSourceKey?: string,
 	) => void;
 	emitSparxieExtraAction: (sourceKey: string, actionValue: number) => void;
 	emitEvernightSelfDestructAction: (sourceKey: string, actionValue: number) => void;

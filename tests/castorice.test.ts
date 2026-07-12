@@ -208,7 +208,6 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		const castoriceActions = actions.filter(
 			(a) => a.characterId === "castorice",
 		);
-		console.log("Castorice actions:", castoriceActions.map(a => a.key + " skill=" + a.skill + " AV=" + a.actionValue).join(", "));
 
 		// Should NOT have a separate E action at the same AV as the Q
 		const mainE = castoriceActions.find(
@@ -1095,18 +1094,8 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			},
 		});
 		const withoutTarget = simulateActions(baseInput);
-		console.log(
-			"withTarget:",
-			withTarget
-				.map((a) => `${a.key}:${a.skill}@${a.actionValue.toFixed(4)}`)
-				.join(", "),
-		);
-		console.log(
-			"withoutTarget:",
-			withoutTarget
-				.map((a) => `${a.key}:${a.skill}@${a.actionValue.toFixed(4)}`)
-				.join(", "),
-		);
+
+		// With target: Sunday pulls Castorice to current AV
 
 		const sunday1WithTarget = withTarget.find((a) => a.key === "sunday-1");
 		const castorice3WithTarget = withTarget.find((a) => a.key === "castorice-3");

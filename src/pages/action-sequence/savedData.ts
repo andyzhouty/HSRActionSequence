@@ -16,6 +16,7 @@ import {
 	type UltInterrupt,
 	withoutCharacterOnlyEffects,
 } from "../../utils/actionSequence";
+import { migrateSavedData } from "../../utils/savedDataMigration";
 
 export function getSavedDisplayedLimitFallback(parsed: Partial<SavedData>) {
 	const savedPreset =
@@ -120,51 +121,52 @@ export type NormalizedSavedData = SavedData & {
 export function toNormalizedSavedData(
 	parsed: Partial<SavedData>,
 ): NormalizedSavedData {
-	const savedDisplayedActionLimit = getSavedDisplayedActionLimit(parsed);
-	const normalizedCharacters = toNormalizedCharacters(parsed);
+	const migrated = migrateSavedData(parsed) as Partial<SavedData>;
+	const savedDisplayedActionLimit = getSavedDisplayedActionLimit(migrated);
+	const normalizedCharacters = toNormalizedCharacters(migrated);
 	return {
 		limitPreset:
-			parsed.limitPreset && limitPresets.includes(parsed.limitPreset)
-				? parsed.limitPreset
+			migrated.limitPreset && limitPresets.includes(migrated.limitPreset)
+				? migrated.limitPreset
 				: "150",
-		customLimit: String(parsed.customLimit ?? ""),
+		customLimit: String(migrated.customLimit ?? ""),
 		displayedLimit: String(
-			parsed.displayedLimit ?? getSavedDisplayedLimitFallback(parsed),
+			migrated.displayedLimit ?? getSavedDisplayedLimitFallback(migrated),
 		),
 		characters: normalizedCharacters,
 		resources: normalizeResourcesForCharacters(
-			Array.isArray(parsed.resources)
-				? parsed.resources.slice(0, maxResources).map(String)
+			Array.isArray(migrated.resources)
+				? migrated.resources.slice(0, maxResources).map(String)
 				: [],
 			normalizedCharacters,
 		),
 		overrides: clampOverridesToDisplayedLimit(
-			parsed.overrides,
+			migrated.overrides,
 			savedDisplayedActionLimit,
 		),
-		ultOverrides: parsed.ultOverrides ?? {},
-		skillOverrides: parsed.skillOverrides ?? {},
-		domainEndOverrides: parsed.domainEndOverrides ?? {},
-		speedAdjustments: parsed.speedAdjustments ?? {},
-		skillTargets: parsed.skillTargets ?? {},
-		defaultSkillTargets: parsed.defaultSkillTargets ?? {},
-		odeSelections: parsed.odeSelections ?? {},
-		memeSelections: parsed.memeSelections ?? {},
-		ultInterrupts: parsed.ultInterrupts ?? {},
-		resourceValues: parsed.resourceValues ?? {},
-		fireflyBreakCounters: parsed.fireflyBreakCounters ?? {},
-		godmodeExtraActions: parsed.godmodeExtraActions ?? {},
-		castoriceKillToggles: parsed.castoriceKillToggles ?? {},
-		icaKillToggles: parsed.icaKillToggles ?? {},
-		memeKillToggles: parsed.memeKillToggles ?? {},
-		evernightSelfDestructToggles: parsed.evernightSelfDestructToggles ?? {},
+		ultOverrides: migrated.ultOverrides ?? {},
+		skillOverrides: migrated.skillOverrides ?? {},
+		domainEndOverrides: migrated.domainEndOverrides ?? {},
+		speedAdjustments: migrated.speedAdjustments ?? {},
+		skillTargets: migrated.skillTargets ?? {},
+		defaultSkillTargets: migrated.defaultSkillTargets ?? {},
+		odeSelections: migrated.odeSelections ?? {},
+		memeSelections: migrated.memeSelections ?? {},
+		ultInterrupts: migrated.ultInterrupts ?? {},
+		resourceValues: migrated.resourceValues ?? {},
+		fireflyBreakCounters: migrated.fireflyBreakCounters ?? {},
+		godmodeExtraActions: migrated.godmodeExtraActions ?? {},
+		castoriceKillToggles: migrated.castoriceKillToggles ?? {},
+		icaKillToggles: migrated.icaKillToggles ?? {},
+		memeKillToggles: migrated.memeKillToggles ?? {},
+		evernightSelfDestructToggles: migrated.evernightSelfDestructToggles ?? {},
 		evernightThresholdBurstToggles:
-			parsed.evernightThresholdBurstToggles ?? {},
-		hyacineE2Active: parsed.hyacineE2Active ?? true,
-		meritTarget: parsed.meritTarget || undefined,
-		dancePartner: parsed.dancePartner || undefined,
-		bondmateTarget: parsed.bondmateTarget || undefined,
-		attackDisabled: parsed.attackDisabled ?? {},
+			migrated.evernightThresholdBurstToggles ?? {},
+		hyacineE2Active: migrated.hyacineE2Active ?? true,
+		meritTarget: migrated.meritTarget || undefined,
+		dancePartner: migrated.dancePartner || undefined,
+		bondmateTarget: migrated.bondmateTarget || undefined,
+		attackDisabled: migrated.attackDisabled ?? {},
 	};
 }
 

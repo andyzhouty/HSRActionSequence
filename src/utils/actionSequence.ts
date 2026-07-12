@@ -424,6 +424,7 @@ export function characterNameMatchesAliases(
 }
 
 export type SavedData = {
+	schemaVersion?: number;
 	limitPreset: string;
 	customLimit: string;
 	displayedLimit?: string;
@@ -466,6 +467,7 @@ export const limitPresets = ["150", "300", "500", "自定义"];
 export const maxResources = 6;
 export const defaultResources = ["战技点"];
 export const evernightResourceName = "忆质";
+export const CURRENT_SAVEDATA_VERSION = 1;
 
 export function isCharacterTarget(character: CharacterConfig) {
 	return character.kind === "角色";

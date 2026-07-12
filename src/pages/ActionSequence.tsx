@@ -138,6 +138,7 @@ export default function ActionSequence() {
 	}, [characters, setResources]);
 
 	// 盾丹自动默认同袍：有盾丹且用户未手动设置时，自动选第一个非盾丹角色（或盾丹自身）
+	// undefined = 未初始化（触发自动选择）；"" = 用户显式选择"无初始同袍"
 	useEffect(() => {
 		const dhpt = characters.find(
 			(c) => c.kind === "角色" && hasDanHengSouldragon(c.name),

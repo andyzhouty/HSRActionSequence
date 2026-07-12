@@ -500,14 +500,6 @@ describe("Aglaea team integration", () => {
 			}),
 		);
 
-		const lines = actions.map(
-			(a) =>
-				`${a.key.padEnd(32)} ${(a.displayName ?? a.characterId).padEnd(
-					8,
-				)} ${a.skill.padEnd(4)} AV=${a.actionValue.toFixed(2)}`,
-		);
-		console.log("\n📋 Aglaea 全队轴:\n" + lines.join("\n"));
-
 		// 基本验证
 		expect(actions.length).toBeGreaterThan(0);
 
@@ -560,14 +552,6 @@ describe("Aglaea team integration", () => {
 				limit: 300,
 			}),
 		);
-
-		const lines = actions.map(
-			(a) =>
-				`${a.key.padEnd(32)} ${(a.displayName ?? a.characterId).padEnd(
-					8,
-				)} ${a.skill.padEnd(4)} AV=${a.actionValue.toFixed(2)}`,
-		);
-		console.log("\n📋 Aglaea AQ 轴:\n" + lines.join("\n"));
 
 		// aglaea-1 的 AQ：A 为主行动，Q 为插队
 		const aAction1 = actions.find((a) => a.key === "aglaea-1");

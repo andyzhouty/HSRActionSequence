@@ -10,7 +10,7 @@ import { isAglaeaCountdownAction } from "../mechanics/aglaeaGarmentmaker";
 
 export type SpecialActionCallbacks = {
 	emitGodmodeExtraAction: (sourceKey: string, actionValue: number) => void;
-	emitSpecialInterruptAction: (interruptKey: string, interrupt: { casterId: string; timing: "before" | "after" }, actionValue: number) => void;
+	emitSpecialInterruptAction: (interruptKey: string, interrupt: { casterId: string; timing: "before" | "after" }, actionValue: number, qIsFront?: boolean) => void;
 	emitSparxieExtraAction: (sourceKey: string, actionValue: number) => void;
 	emitEvernightSelfDestructAction: (sourceKey: string, actionValue: number) => void;
 };
@@ -107,12 +107,31 @@ if (character.id === "@aha") {
 }
 
 if (states[stateIndex].isSouldragonAction) {
+	const souldragonInterrupts = input.ultInterrupts[key] ?? [];
+	for (let ai = 0; ai < souldragonInterrupts.length; ai++) {
+		const int = souldragonInterrupts[ai];
+		if (int.timing !== "before") continue;
+		emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, actionValue);
+	}
 	emitSouldragonAction(
 		states[stateIndex],
 		actions,
 		actionValue,
 		key,
 	);
+	emitMemeAdvanceAction({
+		input,
+		actions,
+		states,
+		sourceKey: key,
+		actionValue,
+		activeOdes,
+	});
+	for (let ai = 0; ai < souldragonInterrupts.length; ai++) {
+		const int = souldragonInterrupts[ai];
+		if (int.timing !== "after") continue;
+		emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, actionValue);
+	}
 	return true;
 }
 

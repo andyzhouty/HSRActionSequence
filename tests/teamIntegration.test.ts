@@ -124,22 +124,6 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 			}),
 		);
 
-		// ── 打印所有行动，便于调试 ──
-		console.log("=== 行动列表 ===");
-		actions.forEach((a) => {
-			console.log(
-				a.key.padEnd(30),
-				"| AV:",
-				a.actionValue.toFixed(4).padStart(10),
-				"| skill:",
-				a.skill.padEnd(4),
-				"| domain:",
-				String(a.isDomainAction ?? "").padEnd(5),
-				"| final:",
-				a.isDomainFinalAction ?? "",
-			);
-		});
-
 		// ── 基础验证 ──
 		expect(actions.length).toBeGreaterThan(0);
 
@@ -155,19 +139,10 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 			(a) => a.characterId === "phainon" && a.skill === "Q",
 		);
 		expect(phainonQ).toBeDefined();
-		console.log("\n白厄 Q 在 AV:", phainonQ?.actionValue.toFixed(4));
 
 		// Q 后应该进入境界
 		const domainActions = actions.filter((a) => a.isDomainAction);
 		expect(domainActions.length).toBeGreaterThan(0);
-		console.log(
-			"境界行动数:",
-			domainActions.length,
-			" 起止 AV:",
-			domainActions[0].actionValue.toFixed(4),
-			"-",
-			domainActions[domainActions.length - 1].actionValue.toFixed(4),
-		);
 
 		// ── 验证知更鸟插队大招 ──
 		const robinInterrupt = actions.find(
@@ -207,7 +182,6 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 		const finalDomain = domainActions.find((a) => a.isDomainFinalAction);
 		expect(finalDomain).toBeDefined();
 		expect(finalDomain?.skill).toBe("Q");
-		console.log("境界终结 @ AV:", finalDomain?.actionValue.toFixed(4));
 
 		// ── 验证境界持续时间 ──
 		// extraActionCount=8 + 1 final, E1 coeff=0.66, baseSpeed=106
@@ -225,12 +199,6 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 				a.actionValue > finalAV,
 		);
 		expect(alliesAfter.length).toBeGreaterThan(0);
-		console.log(
-			"\n境界后友方行动:",
-			alliesAfter
-				.map((a) => `${a.characterId} @ ${a.actionValue.toFixed(4)}`)
-				.join(", "),
-		);
 
 		// ── 验证白厄境界后正常行动（说明境界结束、状态重置） ──
 		const phainonAfterDomain = actions.filter(
@@ -240,9 +208,6 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 				a.actionValue > finalAV,
 		);
 		expect(phainonAfterDomain.length).toBeGreaterThan(0);
-		console.log(
-			`白厄境界后行动: ${phainonAfterDomain[0].key} @ ${phainonAfterDomain[0].actionValue.toFixed(4)}`,
-		);
 	});
 });
 

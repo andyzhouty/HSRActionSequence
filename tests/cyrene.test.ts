@@ -82,8 +82,8 @@ describe("Cyrene (昔涟)", () => {
 
 		expect(stripAv0(actions).map((a) => a.key).slice(0, 4)).toEqual([
 			"cyrene-1",
-			"cyrene-1-memosprite-Q",
 			"cyrene-1-q",
+			"cyrene-1-memosprite-Q",
 			"cyrene-2",
 		]);
 		const memosprite = actions.find((a) => a.key === "cyrene-1-memosprite-Q");
@@ -120,8 +120,8 @@ describe("Cyrene (昔涟)", () => {
 		// ally (80 spd) acts at AV=125, after memosprite and Q (AV=100)
 		expect(stripAv0(actions).map((a) => a.key).slice(0, 4)).toEqual([
 			"cyrene-1",
-			"cyrene-1-memosprite-Q",
 			"cyrene-1-q",
+			"cyrene-1-memosprite-Q",
 			"ally-1",
 		]);
 	});
@@ -255,6 +255,27 @@ describe("Cyrene (昔涟)", () => {
 		expect(cyreneFirst?.actionValue).toBeCloseTo(100, 4);
 		expect(cyreneSecond?.actionValue).toBeCloseTo(100, 4);
 		expect(allySecond?.actionValue).toBeCloseTo(100.0001, 4);
+	});
+
+	it("6魂外部插队 Q 会将昔涟和全体我方按原行动顺序拉至当前行动值", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("actor", "行动角色", 100),
+					character("cyrene", "昔涟", 80, { eidolon: 6 }),
+					character("ally", "队友", 75),
+				],
+				ultInterrupts: interrupts({
+					"actor-1": [{ casterId: "cyrene", timing: "before" }],
+				}),
+				limit: 140,
+			}),
+		);
+
+		expect(actions.find((action) => action.key === "cyrene-1")?.actionValue)
+			.toBeCloseTo(100, 4);
+		expect(actions.find((action) => action.key === "ally-1")?.actionValue)
+			.toBeCloseTo(100.0002, 4);
 	});
 
 	it("6魂昔涟 QE 时自身不吃首次 100% 拉条", () => {

@@ -227,10 +227,31 @@ export default function ExportExcelButton() {
 			XLSX.utils.book_append_sheet(wb, ws, "行动序列");
 			XLSX.utils.book_append_sheet(wb, charWs, "角色配置");
 			const base64 = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
+			const fileName = `action-sequence-${Date.now()}.xlsx`;
+			const isWailsRuntime = Boolean(window.go?.main?.App?.SaveFileDialog);
+			if (!isWailsRuntime) {
+				const binary = atob(base64);
+				const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+				const url = URL.createObjectURL(
+					new Blob([bytes], {
+						type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+					}),
+				);
+				const download = document.createElement("a");
+				download.href = url;
+				download.download = fileName;
+				download.style.display = "none";
+				document.body.append(download);
+				download.click();
+				download.remove();
+				URL.revokeObjectURL(url);
+				ctx.setMessage(`已下载 Excel 文件：${fileName}`);
+				return;
+			}
 
 			const selectedPath = await save({
 				title: "导出 Excel",
-				defaultPath: `action-sequence-${Date.now()}.xlsx`,
+				defaultPath: fileName,
 				filters: [{ name: "Excel", extensions: ["xlsx"] }],
 			});
 			if (!selectedPath) {

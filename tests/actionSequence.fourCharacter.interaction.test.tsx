@@ -136,7 +136,7 @@ describe("ActionSequence four-character front-end interaction", () => {
 			).value;
 			expect(json).toContain('"evernight-1":"AQ"');
 		});
-		expect(within(firstEvernightRow).getByDisplayValue("A")).toBeInTheDocument();
+		expect(within(firstEvernightRow).getByDisplayValue("AQ")).toBeInTheDocument();
 
 		const hyacineLabel = screen.getAllByText("风堇")[0];
 		const hyacineRow = hyacineLabel.closest("tr");

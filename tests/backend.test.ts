@@ -26,7 +26,7 @@ function mapMethod(method: string): string {
 	return methodMap[method] ?? method;
 }
 
-describe.skip("backend method mapping", () => {
+describe("backend method mapping", () => {
 	it("maps greet → Greet", () => {
 		expect(mapMethod("greet")).toBe("Greet");
 	});
@@ -60,7 +60,7 @@ describe.skip("backend method mapping", () => {
 	});
 });
 
-describe.skip("save dialog option serialization", () => {
+describe("save dialog option serialization", () => {
 	function buildSaveOptions(opts?: {
 		defaultPath?: string;
 		filters?: { name: string; extensions: string[] }[];
@@ -137,7 +137,7 @@ describe.skip("save dialog option serialization", () => {
 	});
 });
 
-describe.skip("open dialog option serialization", () => {
+describe("open dialog option serialization", () => {
 	function buildOpenOptions(opts?: {
 		filters?: { name: string; extensions: string[] }[];
 		title?: string;

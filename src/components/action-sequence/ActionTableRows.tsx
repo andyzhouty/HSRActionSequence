@@ -561,7 +561,7 @@ function AttackInline({ action }: { action: GeneratedAction }) {
 					return next;
 				});
 			}}
-			className={`h-8 rounded-md border px-2 text-xs font-medium ${
+			className={`h-10 shrink-0 rounded-lg border px-2 text-xs font-medium ${
 				isEnabled
 					? "border-red-500/60 bg-red-900/50 text-red-100 hover:bg-red-800/60"
 					: "border-gray-600 bg-gray-800 text-gray-500 disabled:cursor-not-allowed"
@@ -582,11 +582,8 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 		action.isCombustionAction
 			? action.skill
 			: (ctx.skillOverrides[action.key] ?? action.skill);
-	// 输入框失焦后自动去除 AQ/EQ 中的 Q（Q 由引擎处理为插队）
-	const displaySkill =
-		rawDisplaySkill.length > 1 && rawDisplaySkill.includes("Q")
-			? rawDisplaySkill.replace(/Q/g, "")
-			: rawDisplaySkill;
+	// AQ/EQ/QE/QA 是用户可编辑的自身插队 Q 简写，必须原样显示。
+	const displaySkill = rawDisplaySkill;
 	const isDomain = action.isDomainAction;
 	const isDomainFinalAction = action.isDomainFinalAction;
 	const isInterrupt =
@@ -653,20 +650,12 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 
 	if (isDomainFinalAction) {
 		return (
-			<>
-				<span
-					title="境界最后一动，固定显示为 Q，不视为白厄再次释放大招"
-					className="flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-lg border border-[#fbbf2499] bg-[#f59e0b33] font-mono text-sm font-black text-amber-100"
-				>
-					Q
-				</span>
-				<span
-					title="白厄大招境界"
-					className="flex h-10 shrink-0 select-none items-center rounded-lg border border-[#a855f799] bg-[#581c8733] px-2 text-xs font-semibold text-purple-100"
-				>
-					境界
-				</span>
-			</>
+			<span
+				title="境界最后一动，固定显示为 Q，不视为白厄再次释放大招"
+				className="flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-lg border border-[#fbbf2499] bg-[#f59e0b33] font-mono text-sm font-black text-amber-100"
+			>
+				Q
+			</span>
 		);
 	}
 
@@ -707,14 +696,6 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 								: "w-12 border-gray-600 bg-gray-700 text-gray-300"
 				}`}
 			/>
-			{isDomain && (
-				<span
-					title="白厄大招境界"
-					className="flex h-10 shrink-0 select-none items-center rounded-lg border border-[#a855f799] bg-[#581c8733] px-2 text-xs font-semibold text-purple-100"
-				>
-					境界
-				</span>
-			)}
 		</>
 	);
 }
@@ -810,7 +791,7 @@ function CombustionBreakInline({ action }: { action: GeneratedAction }) {
 					return next;
 				});
 			}}
-			className={`flex h-7 shrink-0 items-center rounded-md px-2 text-xs font-semibold transition-colors ${
+			className={`flex h-10 shrink-0 items-center rounded-lg px-2 text-xs font-semibold transition-colors ${
 				isBreakOn
 					? "border border-orange-500/70 bg-orange-500/20 text-orange-200"
 					: "border border-gray-600 bg-gray-700 text-gray-500"
@@ -849,7 +830,7 @@ function PolluxKillInline({ action }: { action: GeneratedAction }) {
 					return next;
 				});
 			}}
-			className={`flex h-7 shrink-0 items-center rounded-md px-2 text-xs font-semibold transition-colors ${
+			className={`flex h-10 shrink-0 items-center rounded-lg px-2 text-xs font-semibold transition-colors ${
 				isKillOn
 					? "border border-red-500/70 bg-red-500/20 text-red-200"
 					: "border border-gray-600 bg-gray-700 text-gray-500"

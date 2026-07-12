@@ -1,4 +1,5 @@
 import type { GeneratedAction } from "../utils/actionSequence";
+import { getCharacterPath } from "../utils/actionSequence";
 import {
 	advanceSouldragon,
 	emitImmediateSouldragonAction,
@@ -83,6 +84,27 @@ export function simulateActions(
 				souldragonAdvance,
 			);
 		}
+		// 阿哈时刻：若同袍为欢愉角色，阿哈行动也推进龙灵
+		if (
+			action.characterId === "@aha" &&
+			currentBondmateTarget &&
+			!isForcedNonAttack
+		) {
+			const bondmateChar = input.characters.find(
+				(c) => c.id === currentBondmateTarget,
+			);
+			if (bondmateChar) {
+				const isElation = getCharacterPath(bondmateChar.name) === "Elation";
+				if (isElation) {
+					advanceSouldragon(
+						states,
+						souldragonOwner.character.id,
+						action.actionValue,
+						0.15,
+					);
+				}
+			}
+		}
 	};
 	actions = new Proxy(rawActions, {
 		get(target, property, receiver) {
@@ -126,6 +148,8 @@ export function simulateActions(
 		interruptKey: string,
 		interrupt: { casterId: string; timing: "before" | "after" },
 		actionValue: number,
+		qIsFront?: boolean,
+		effectSourceKey?: string,
 	) => {
 		emitSpecialInterrupt(
 			interruptKey,
@@ -138,6 +162,8 @@ export function simulateActions(
 			calcAhaSpeed,
 			emitExtraAhaAction,
 			emitSparxieExtraAction,
+			qIsFront,
+			effectSourceKey,
 		);
 	};
 	const emitSparxieExtraAction = (sourceKey: string, actionValue: number) => {
