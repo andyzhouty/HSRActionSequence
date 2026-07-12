@@ -80,7 +80,12 @@ export function setupSouldragonBondmate(
 		? (input.bondmateTarget ?? null)
 		: null;
 	if (souldragonOwner && currentBondmateTarget) {
-		summonSouldragonState(states, souldragonOwner.character, 0, currentBondmateTarget);
+		summonSouldragonState(
+			states,
+			souldragonOwner.character,
+			0,
+			currentBondmateTarget,
+		);
 	}
 	return { souldragonOwner, currentBondmateTarget };
 }

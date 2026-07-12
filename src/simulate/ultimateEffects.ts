@@ -2,7 +2,11 @@
  * 统一的 Q 大招后效处理——消除 normalAction 与 interrupts 之间的重复逻辑。
  */
 
-import { hasPassive, hasSkillEffect } from "../data/characters";
+import {
+	getCharacterPath,
+	hasPassive,
+	hasSkillEffect,
+} from "../data/characters";
 import { handleAglaeaSkillEffects } from "../mechanics/aglaeaGarmentmaker";
 import {
 	applyCastoriceE2Pull,
@@ -25,6 +29,7 @@ import {
 	isAllyTarget,
 	summonMemeState,
 } from "./effects";
+import { emitSingleElationSkill } from "./interrupts";
 import type {
 	ActionState,
 	ActiveOdeState,
@@ -52,6 +57,7 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 	const {
 		states,
 		casterIndex,
+		actions,
 		actionValue,
 		input,
 		sourceKey,
@@ -140,7 +146,35 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 		}
 	}
 
-	// 8. 丹恒 Q 击杀立即行动
+	// 8. 欢愉主 Q：非欢愉目标 → 50% 拉条；欢愉目标 → 立即释放欢愉技
+	if (
+		isCharacterTarget(character) &&
+		hasSkillEffect(character.name, "Q", "elationTrailblazerUltimate")
+	) {
+		const targetId = input.skillTargets[sourceKey];
+		if (targetId) {
+			const targetState = states.find(
+				(s) => s.character.id === targetId && isAllyTarget(s.character.kind),
+			);
+			if (targetState) {
+				const isElationTarget =
+					getCharacterPath(targetState.character.name) === "Elation";
+				if (isElationTarget) {
+					emitSingleElationSkill(targetState, sourceKey, actionValue, actions);
+				} else {
+					const advance = targetState.nextActionValue * 0.5;
+					if (!targetState.blockNextAdvance) {
+						targetState.nextActionValue = Math.max(
+							actionValue,
+							targetState.nextActionValue - advance,
+						);
+					}
+				}
+			}
+		}
+	}
+
+	// 9. 丹恒 Q 击杀立即行动
 	if (
 		isCharacterTarget(character) &&
 		hasPassive(character.name, "killReset") &&

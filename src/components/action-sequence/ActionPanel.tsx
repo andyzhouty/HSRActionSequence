@@ -1,9 +1,14 @@
-import { Fragment, useMemo } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import { hasHyacineIca } from "../../mechanics/hyacineIca";
 import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
-import { getDisplayOrderedActions } from "../../utils/actionDisplayOrder";
+import {
+	canExchangeActionOrder,
+	getActionValueBucket,
+	getDisplayOrderedActions,
+	getExtraTurnParentKey,
+} from "../../utils/actionDisplayOrder";
 import type { SpeedChangeMode } from "../../utils/actionSequence";
 import {
 	canSelectSkillTargetForAction,
@@ -23,18 +28,52 @@ import { ActionLimitMarkerRow, ActionRow } from "./ActionTableRows";
 import { SelectInput, TextInput } from "./Controls";
 import ExportExcelButton from "./ExportExcelButton";
 
+function isGodmodeActiveAtAction(
+	actions: readonly import("../../utils/actionSequence").GeneratedAction[],
+	selectedActionKey: string,
+	silverWolfId: string,
+): boolean {
+	let isActive = false;
+	let consumedActions = 0;
+	for (const action of actions) {
+		if (action.characterId === silverWolfId) {
+			if (action.skill.includes("Q")) {
+				isActive = true;
+				consumedActions = 0;
+			} else if (isActive && action.actionNo > 0) {
+				consumedActions += 1;
+				if (consumedActions >= 3) isActive = false;
+			} else if (action.lockedSkill) {
+				// 兼容导入的旧轴：锁定技能行表示该行动仍处于无敌玩家状态。
+				isActive = true;
+			}
+		}
+		if (action.key === selectedActionKey) return isActive;
+	}
+	return false;
+}
+
 export default function ActionPanel() {
 	const ctx = useActionSequence();
 	const isImageExportLocked = ctx.actions.length > 100;
 	const orderedActions = useMemo(
-		() => getDisplayOrderedActions(ctx.actions),
-		[ctx.actions],
+		() => getDisplayOrderedActions(ctx.actions, ctx.sameAVOrder),
+		[ctx.actions, ctx.sameAVOrder],
 	);
 
 	// 白厄境界期间：只显示境界动作 + 非忆灵 + 敌人，隐藏我方角色和忆灵
 	// 昔涟自 Q：不显示昔涟Q行，仅显示德谬歌Q
 	const visibleActions = useMemo(() => {
 		const filtered = orderedActions.filter((action) => {
+			// 欢愉技：父级行有 hasElationSkills（阿哈时刻）→ 折叠菜单；否则独立行
+			if (
+				action.isElationSkill &&
+				action.elationSkillParentKey &&
+				orderedActions.some(
+					(a) => a.key === action.elationSkillParentKey && a.hasElationSkills,
+				)
+			)
+				return false;
 			// 隐藏昔涟自 Q 行（德谬歌 Q 已单独显示）
 			if (
 				action.skill === "Q" &&
@@ -72,6 +111,238 @@ export default function ActionPanel() {
 	);
 	const limitMarkerPosition =
 		limitMarkerIndex === -1 ? visibleActions.length : limitMarkerIndex;
+
+	// 欢愉技折叠菜单
+	const [expandedAhaKeys, setExpandedAhaKeys] = useState<Set<string>>(
+		new Set(),
+	);
+	const elationSkillsByParent = useMemo(() => {
+		const map = new Map<string, typeof orderedActions>();
+		for (const action of orderedActions) {
+			if (action.isElationSkill && action.elationSkillParentKey) {
+				const list = map.get(action.elationSkillParentKey) ?? [];
+				list.push(action);
+				map.set(action.elationSkillParentKey, list);
+			}
+		}
+		return map;
+	}, [orderedActions]);
+	const elationSkillsExportData = useMemo(() => {
+		const entries: Record<
+			string,
+			{
+				id: string;
+				name: string;
+				av: number;
+				resources: Record<string, string>;
+			}[]
+		> = {};
+		for (const [parentKey, skills] of elationSkillsByParent) {
+			entries[parentKey] = skills.map((es) => ({
+				id: es.characterId,
+				name: ctx.characterNames[es.characterId] ?? es.characterId,
+				av: es.actionValue,
+				resources: Object.fromEntries(
+					ctx.resources.map((r) => [r, ctx.resourceValues[es.key]?.[r] ?? ""]),
+				),
+			}));
+		}
+		return JSON.stringify(entries);
+	}, [
+		elationSkillsByParent,
+		ctx.characterNames,
+		ctx.resources,
+		ctx.resourceValues,
+	]);
+	const toggleAhaExpand = (ahaKey: string) => {
+		setExpandedAhaKeys((prev) => {
+			const next = new Set(prev);
+			if (next.has(ahaKey)) next.delete(ahaKey);
+			else next.add(ahaKey);
+			return next;
+		});
+	};
+
+	// 拖拽排序状态
+	const [dragSourceKey, setDragSourceKey] = useState<string | null>(null);
+	const dragPreviewRef = useRef<HTMLDivElement | null>(null);
+	const describeDragAction = (action: (typeof orderedActions)[number]) => {
+		const name = ctx.characterNames[action.characterId] ?? action.characterId;
+		const skill = action.skill || "行动";
+		return `${name} · ${skill}`;
+	};
+	const updateDragPreview = (
+		event: React.DragEvent,
+		source: (typeof orderedActions)[number],
+		target?: (typeof orderedActions)[number],
+		insertAfter = false,
+	) => {
+		const preview = dragPreviewRef.current;
+		if (!preview) return;
+		preview.textContent = target
+			? `移动：${describeDragAction(source)} -> ${describeDragAction(target)}${insertAfter ? " 后" : " 前"}`
+			: `拖拽：${describeDragAction(source)}（拖到行动上方或下方以插入）`;
+		preview.style.left = `${event.clientX + 16}px`;
+		preview.style.top = `${event.clientY + 16}px`;
+	};
+	const removeDragPreview = () => {
+		dragPreviewRef.current?.remove();
+		dragPreviewRef.current = null;
+	};
+	const getDragGroupActions = (
+		actions: readonly (typeof orderedActions)[number][],
+		parentKey: string,
+		actionValue: number,
+	) =>
+		actions.filter(
+			(candidate) =>
+				getExtraTurnParentKey(candidate) === parentKey &&
+				getActionValueBucket(candidate.actionValue) ===
+					getActionValueBucket(actionValue),
+		);
+	const isDropAfterAction = (event: React.DragEvent, target: Element) => {
+		const bounds = target.getBoundingClientRect();
+		// 无布局环境（例如测试或不可见行）没有可用的落点区域，按行末处理。
+		if (bounds.height <= 1) return true;
+		return event.clientY > bounds.top + bounds.height / 2;
+	};
+	const dragGroupLabels = useMemo(() => {
+		const groups = new Map<string, (typeof orderedActions)[number][]>();
+		for (const action of ctx.actions) {
+			const parentKey = getExtraTurnParentKey(action);
+			if (!parentKey) continue;
+			const groupKey = `${parentKey}:${getActionValueBucket(action.actionValue)}`;
+			const members = groups.get(groupKey) ?? [];
+			members.push(action);
+			groups.set(groupKey, members);
+		}
+		const labels = new Map<string, number>();
+		let groupNumber = 1;
+		for (const members of groups.values()) {
+			if (members.length < 2) continue;
+			for (const member of members) labels.set(member.key, groupNumber);
+			groupNumber += 1;
+		}
+		return labels;
+	}, [ctx.actions]);
+
+	const getDragProps = (action: (typeof orderedActions)[number]) => {
+		const parentKey = getExtraTurnParentKey(action);
+		const groupNumber = dragGroupLabels.get(action.key);
+		if (!parentKey || groupNumber === undefined) return undefined;
+		const getDragSourceKey = (event: React.DragEvent) => {
+			if (dragSourceKey) return dragSourceKey;
+			try {
+				const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+				return typeof data.key === "string" ? data.key : null;
+			} catch {
+				return null;
+			}
+		};
+		return {
+			draggable: true,
+			groupNumber,
+			onDragStart: (e: React.DragEvent) => {
+				if (!parentKey) return;
+				setDragSourceKey(action.key);
+				e.dataTransfer.effectAllowed = "move";
+				e.dataTransfer.setData(
+					"text/plain",
+					JSON.stringify({ key: action.key, parentKey }),
+				);
+				removeDragPreview();
+				const preview = document.createElement("div");
+				preview.className =
+					"pointer-events-none fixed z-50 max-w-sm rounded-md border border-cyan-300/70 bg-gray-900/95 px-3 py-2 text-xs text-cyan-50 shadow-xl";
+				document.body.appendChild(preview);
+				dragPreviewRef.current = preview;
+				updateDragPreview(e, action);
+				e.dataTransfer.setDragImage(preview, 12, 12);
+			},
+			onDragOver: (e: React.DragEvent) => {
+				const sourceKey = getDragSourceKey(e);
+				if (!sourceKey) return;
+				const source = orderedActions.find(
+					(candidate) => candidate.key === sourceKey,
+				);
+				if (
+					!source ||
+					!canExchangeActionOrder(source, action) ||
+					getExtraTurnParentKey(source) !== parentKey ||
+					getActionValueBucket(source.actionValue) !==
+						getActionValueBucket(action.actionValue)
+				) {
+					return;
+				}
+				e.preventDefault();
+				updateDragPreview(
+					e,
+					source,
+					action,
+					isDropAfterAction(e, e.currentTarget),
+				);
+			},
+			onDrop: (e: React.DragEvent) => {
+				e.preventDefault();
+				const sourceKey = getDragSourceKey(e);
+				if (!sourceKey || sourceKey === action.key) return;
+				const source = orderedActions.find(
+					(candidate) => candidate.key === sourceKey,
+				);
+				if (
+					!source ||
+					!canExchangeActionOrder(source, action) ||
+					getExtraTurnParentKey(source) !== parentKey ||
+					getActionValueBucket(source.actionValue) !==
+						getActionValueBucket(action.actionValue)
+				) {
+					return;
+				}
+				const orderedGroup = getDragGroupActions(
+					orderedActions,
+					parentKey,
+					action.actionValue,
+				);
+				const sourceIndex = orderedGroup.findIndex(
+					(candidate) => candidate.key === source.key,
+				);
+				const targetIndex = orderedGroup.findIndex(
+					(candidate) => candidate.key === action.key,
+				);
+				if (sourceIndex < 0 || targetIndex < 0) return;
+				const insertAfter = isDropAfterAction(e, e.currentTarget);
+				const reorderedGroup = orderedGroup.filter(
+					(candidate) => candidate.key !== source.key,
+				);
+				let insertionIndex = targetIndex + (insertAfter ? 1 : 0);
+				if (sourceIndex < insertionIndex) insertionIndex -= 1;
+				reorderedGroup.splice(insertionIndex, 0, source);
+				const defaultGroup = getDragGroupActions(
+					ctx.actions,
+					parentKey,
+					action.actionValue,
+				);
+				ctx.setSameAVOrder((prev) => {
+					const next = { ...prev };
+					for (let index = 0; index < reorderedGroup.length; index++) {
+						const key = reorderedGroup[index].key;
+						const defaultIndex = defaultGroup.findIndex(
+							(candidate) => candidate.key === key,
+						);
+						if (index === defaultIndex) delete next[key];
+						else next[key] = index;
+					}
+					return next;
+				});
+				setDragSourceKey(null);
+				removeDragPreview();
+			},
+			onDragEnd: () => {
+				setDragSourceKey(null);
+				removeDragPreview();
+			},
+		};
+	};
 
 	return (
 		<section className="min-w-0 rounded-2xl bg-gray-800 p-4 shadow">
@@ -252,6 +523,7 @@ export default function ActionPanel() {
 			{/* Action table */}
 			<div
 				ref={ctx.imageExportRef}
+				data-elation-skills={elationSkillsExportData}
 				className="overflow-x-auto rounded-xl border border-gray-700 bg-gray-800 pb-4"
 			>
 				<div className="bg-gray-800">
@@ -324,7 +596,81 @@ export default function ActionPanel() {
 												isPastOriginalLimit={
 													action.actionValue > ctx.actionLimit
 												}
+												onToggleElationSkills={
+													action.hasElationSkills
+														? () => toggleAhaExpand(action.key)
+														: undefined
+												}
+												dragProps={getDragProps(action)}
 											/>
+											{action.hasElationSkills &&
+												expandedAhaKeys.has(action.key) &&
+												elationSkillsByParent.get(action.key)?.map((es) => {
+													const esChar = ctx.charactersById[es.characterId];
+													const esDragProps = getDragProps(es);
+													return (
+														<tr
+															key={es.key}
+															data-action-key={es.key}
+															draggable={esDragProps?.draggable || undefined}
+															onDragStart={esDragProps?.onDragStart}
+															onDragOver={esDragProps?.onDragOver}
+															onDrop={esDragProps?.onDrop}
+															onDragEnd={esDragProps?.onDragEnd}
+															className={`${esDragProps ? "cursor-grab ring-1 ring-inset ring-orange-300/70" : "cursor-pointer"} bg-[#c2410c15] hover:bg-[#c2410c25]`}
+														>
+															<td className="w-12 min-w-12 max-w-12 whitespace-nowrap px-2 py-2 text-center text-xs text-orange-400/60">
+																ES
+																{esDragProps && (
+																	<span
+																		role="img"
+																		aria-label={`可交换组 ${esDragProps.groupNumber}`}
+																		className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-orange-300/70 bg-orange-950/80 text-xs font-bold text-orange-100"
+																		title="可与相同交换标记的行动拖拽互换"
+																	>
+																		⇄
+																	</span>
+																)}
+															</td>
+															<td className="w-[1%] max-w-32 whitespace-nowrap px-3 py-2">
+																<div className="truncate text-sm font-medium text-orange-200/80">
+																	{esChar?.name ?? es.characterId}
+																</div>
+															</td>
+															<td className="whitespace-nowrap px-2 py-2 text-center text-xs text-orange-300/60">
+																{formatActionValue(es.actionValue)}
+															</td>
+															<td className="whitespace-nowrap px-2 py-2">
+																<span className="rounded bg-orange-500/20 px-1.5 py-0.5 font-mono text-xs font-bold text-orange-300">
+																	ES
+																</span>
+															</td>
+															{ctx.resources.map((name) => (
+																<td
+																	key={`es-res-${es.key}-${name}`}
+																	className="whitespace-nowrap px-2 py-2"
+																>
+																	<input
+																		type="text"
+																		value={
+																			ctx.resourceValues[es.key]?.[name] ?? ""
+																		}
+																		onClick={(e) => e.stopPropagation()}
+																		onContextMenu={(e) => e.stopPropagation()}
+																		onChange={(e) =>
+																			ctx.updateResourceValue(
+																				es.key,
+																				name,
+																				e.target.value,
+																			)
+																		}
+																		className="h-10 w-full min-w-0 rounded-lg border border-gray-600 bg-gray-700 px-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+																	/>
+																</td>
+															))}
+														</tr>
+													);
+												})}
 										</Fragment>
 									))}
 									{limitMarkerPosition === visibleActions.length && (
@@ -505,6 +851,9 @@ function MenuContent() {
 			{/* Silver Wolf E2 godmode extra section */}
 			<GodmodeExtraSection />
 
+			{/* FUA toggle section */}
+			<FuaToggleSection />
+
 			{/* Hyacine E2 section */}
 			<HyacineE2Section />
 
@@ -534,8 +883,9 @@ function SkillTargetSection() {
 		: (ctx.skillOverrides[firstKey] ?? firstAction.skill);
 	const isEligible =
 		isCharacterTarget(character) &&
-		skill.includes("E") &&
-		hasTargetableESkill(character.name);
+		((skill.includes("E") && hasTargetableESkill(character.name)) ||
+			(skill.includes("Q") &&
+				hasSkillEffect(character.name, "Q", "elationTrailblazerUltimate")));
 	if (!isEligible) return null;
 
 	const availableMemos = ctx.memospriteTargets.filter((m) =>
@@ -609,7 +959,7 @@ function isMemospriteAvailableForAction(
 	memosprite: import("../../utils/actionSequence").CharacterConfig,
 	currentActionKey: string,
 ): boolean {
-	const orderedActions = getDisplayOrderedActions(ctx.actions);
+	const orderedActions = getDisplayOrderedActions(ctx.actions, ctx.sameAVOrder);
 	const isGarmentmaker = memosprite.id.endsWith("-garmentmaker");
 	const isMeme = memosprite.id.endsWith("-meme");
 	const isCyreneMemosprite = memosprite.id.endsWith("-memosprite");
@@ -715,7 +1065,7 @@ function hasEveyOnFieldBeforeAction(
 	);
 	if (!owner) return false;
 	if (actionKey.startsWith(`${owner.id}-evey-`)) return true;
-	const orderedActions = getDisplayOrderedActions(ctx.actions);
+	const orderedActions = getDisplayOrderedActions(ctx.actions, ctx.sameAVOrder);
 	const selectedIndex = orderedActions.findIndex(
 		(action) => action.key === actionKey,
 	);
@@ -807,7 +1157,7 @@ function hasMemeBeenSummonedBeforeAction(
 	ownerId: string,
 	actionKey: string,
 ) {
-	const orderedActions = getDisplayOrderedActions(ctx.actions);
+	const orderedActions = getDisplayOrderedActions(ctx.actions, ctx.sameAVOrder);
 	const selectedIndex = orderedActions.findIndex(
 		(action) => action.key === actionKey,
 	);
@@ -921,13 +1271,16 @@ function InterruptSection() {
 	if (firstAction?.isDomainAction) return null;
 	const existingInterrupts = ctx.ultInterrupts[firstKey] ?? [];
 	const allCasters = ctx.characters.filter(
-		(c) => toPositiveNumber(c.speed, 0) > 0,
+		(c) => c.kind === "角色" && toPositiveNumber(c.speed, 0) > 0,
 	);
 	const casterOptions = allCasters.map((c) => ({
 		value: c.id,
 		label:
 			c.name.trim() || getTargetDefaultName(c.kind, ctx.characters.indexOf(c)),
 	}));
+	const hasValidDraftCaster = allCasters.some(
+		(caster) => caster.id === ctx.draftInterruptCaster,
+	);
 
 	// 检测本行动是否有自 Q 插队（AQ/EQ/QA）
 	const selfQOverride = (() => {
@@ -1006,7 +1359,7 @@ function InterruptSection() {
 							onChange={ctx.setDraftInterruptCaster}
 							className="w-28"
 						/>
-						{ctx.draftInterruptCaster && (
+						{hasValidDraftCaster && (
 							<>
 								<SelectInput
 									value={ctx.draftInterruptTiming}
@@ -1022,6 +1375,7 @@ function InterruptSection() {
 								<button
 									type="button"
 									onClick={() => {
+										if (!hasValidDraftCaster) return;
 										ctx.setUltInterrupts((prev) => {
 											const n = { ...prev };
 											const a = [...(n[firstKey] ?? [])];
@@ -1074,12 +1428,7 @@ function GodmodeExtraSection() {
 	// 仅银狼在无敌玩家状态时显示
 	const swChar = ctx.characters.find((c) => hasSilverWolfGodmode(c.name));
 	if (!swChar) return null;
-	// 无敌玩家状态：有SW的Q行动记录即视为可能处于无敌玩家中
-	const swInGodmode = ctx.actions.some(
-		(a) =>
-			a.characterId === swChar.id &&
-			(a.skill === "Q" || a.lockedSkill === true),
-	);
+	const swInGodmode = isGodmodeActiveAtAction(ctx.actions, firstKey, swChar.id);
 	if (!swInGodmode) return null;
 
 	const isOn = ctx.godmodeExtraActions[toggleKey] === true;
@@ -1330,6 +1679,54 @@ function EvernightSelfDestructSection() {
 			>
 				{hint}
 			</span>
+		</div>
+	);
+}
+
+function FuaToggleSection() {
+	const ctx = useActionSequence();
+	const selectedKeys = [...ctx.selectedActionKeys];
+	if (selectedKeys.length === 0) return null;
+	const firstKey = selectedKeys[0];
+	const firstAction = ctx.actions.find((action) => action.key === firstKey);
+	if (
+		!firstAction ||
+		firstAction.isFuaAction ||
+		firstAction.isElationSkill ||
+		firstAction.isDomainAction ||
+		firstAction.isSouldragonAction ||
+		firstAction.isPolluxAction ||
+		firstAction.isEveyAction ||
+		firstAction.isAglaeaGarmentmakerAction ||
+		firstAction.isAssistAction ||
+		firstAction.isOdeExtraAction
+	) {
+		return null;
+	}
+	const isFuaOn = ctx.fuaToggles[firstKey] === true;
+	return (
+		<div className="flex flex-wrap items-center gap-3 border-t border-gray-700 pt-3">
+			<span className="whitespace-nowrap text-sm text-gray-300">
+				绯英追击：
+			</span>
+			<button
+				type="button"
+				onClick={() =>
+					ctx.setFuaToggles((prev) => {
+						const next = { ...prev };
+						if (isFuaOn) delete next[firstKey];
+						else next[firstKey] = true;
+						return next;
+					})
+				}
+				className={`rounded-md px-3 py-1 text-xs font-medium ${
+					isFuaOn
+						? "bg-fuchsia-700 text-fuchsia-100"
+						: "bg-gray-700 text-gray-400 hover:bg-gray-600"
+				}`}
+			>
+				{isFuaOn ? "已插入追击（Z）" : "插入追击（Z）"}
+			</button>
 		</div>
 	);
 }

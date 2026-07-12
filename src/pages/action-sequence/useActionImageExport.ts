@@ -49,6 +49,61 @@ export function useActionImageExport({
 				},
 				onCloneNode: (cloned) => {
 					if (!(cloned instanceof HTMLElement)) return;
+					// 图片导出时注入展开的欢愉技行（不影响页面实际状态）
+					const elationData = cloned.getAttribute("data-elation-skills");
+					if (elationData) {
+						cloned.removeAttribute("data-elation-skills");
+						try {
+							const skillsMap: Record<
+								string,
+								{
+									id: string;
+									name: string;
+									av: number;
+									resources: Record<string, string>;
+								}[]
+							> = JSON.parse(elationData);
+							cloned
+								.querySelectorAll<HTMLTableRowElement>("tr[data-action-key]")
+								.forEach((tr) => {
+									const ahaKey = tr.dataset.actionKey;
+									if (!ahaKey || !skillsMap[ahaKey]) return;
+									const skills = skillsMap[ahaKey];
+									skills.forEach((es) => {
+										const resourceCells =
+											tr.querySelectorAll("td").length > 4
+												? Object.entries(es.resources)
+														.map(
+															([, val]) =>
+																`<td style="white-space:nowrap;padding:0.5rem"><div style="display:flex;align-items:center;box-sizing:border-box;border-radius:0.5rem;border:1px solid #4b5563;background:#374151;color:#fff;height:40px;padding:0 0.5rem;white-space:nowrap">${val}</div></td>`,
+														)
+														.join("")
+												: Array.from(
+														{
+															length: Math.max(
+																0,
+																tr.querySelectorAll("td").length - 4,
+															),
+														},
+														() =>
+															'<td style="white-space:nowrap;padding:0.5rem"></td>',
+													).join("");
+										const esRow = document.createElement("tr");
+										esRow.style.backgroundColor = "#9a341210";
+										esRow.innerHTML = [
+											`<td style="width:3rem;min-width:3rem;max-width:3rem;white-space:nowrap;padding:0.5rem;text-align:center;font-size:0.75rem;color:#fb923c99">ES</td>`,
+											`<td style="width:1%;max-width:8rem;white-space:nowrap;padding:0.5rem 0.75rem"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.875rem;font-weight:500;color:#fed7aacc">${es.name}</div></td>`,
+											`<td style="white-space:nowrap;padding:0.5rem;text-align:center;font-size:0.75rem;color:#fdba7499">${es.av.toFixed(2)}</td>`,
+											`<td style="white-space:nowrap;padding:0.5rem"><span style="border-radius:0.25rem;background:#f9731620;padding:0.125rem 0.375rem;font-family:monospace;font-size:0.75rem;font-weight:700;color:#fdba74">ES</span></td>`,
+											resourceCells,
+										].join("");
+										tr.after(esRow);
+									});
+								});
+						} catch {
+							/* JSON parse error, skip */
+						}
+					}
 					// 导出宽度已扩展到完整表格，不能保留页面用的横向滚动容器。
 					cloned.classList.remove("overflow-x-auto");
 					cloned.style.setProperty("overflow", "visible", "important");

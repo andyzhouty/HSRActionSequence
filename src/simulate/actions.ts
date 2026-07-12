@@ -2,6 +2,10 @@ import {
 	advanceSouldragon,
 	emitImmediateSouldragonAction,
 } from "../mechanics/danHengSouldragon";
+import {
+	hasSilverWolfGodmode,
+	isInGodmode,
+} from "../mechanics/silverWolfGodmode";
 import type { GeneratedAction } from "../utils/actionSequence";
 import { getCharacterPath } from "../utils/actionSequence";
 import {
@@ -15,6 +19,7 @@ import {
 import {
 	emitEvernightSelfDestructAction as emitEvernightSelfDestruct,
 	emitExtraAhaAction as emitExtraAha,
+	emitFuaAction as emitFua,
 	emitGodmodeExtraAction as emitGodmodeExtra,
 	emitSparxieExtraAction as emitSparxieExtra,
 	emitSpecialInterruptAction as emitSpecialInterrupt,
@@ -73,11 +78,22 @@ export function simulateActions(
 		const isForcedNonAttack =
 			action.characterId === souldragonOwner.character.id &&
 			action.skill === "E";
+		const skipElationAttackForSW =
+			action.isElationSkill &&
+			hasSilverWolfGodmode(attacker?.name ?? "") &&
+			(() => {
+				const atkState = states.find(
+					(s) => s.character.id === action.characterId,
+				);
+				return !atkState || !isInGodmode(atkState);
+			})();
+
 		if (
 			attacker?.kind === "角色" &&
 			action.characterId === currentBondmateTarget.value &&
 			!isForcedNonAttack &&
-			input.attackDisabled?.[action.key] !== true
+			input.attackDisabled?.[action.key] !== true &&
+			!skipElationAttackForSW
 		) {
 			// 境界内双字符技能码（如 EW、EA）视为两次攻击，龙灵提前两次
 			const domainDoubleAttack =
@@ -91,6 +107,7 @@ export function simulateActions(
 			);
 		}
 		// 阿哈时刻：若同袍为欢愉角色，阿哈行动也推进龙灵
+		// SP 银狼特殊规则：若同袍为 SP 银狼且未处于无敌玩家状态，则不触发龙灵提前
 		if (
 			action.characterId === "@aha" &&
 			currentBondmateTarget.value &&
@@ -102,12 +119,22 @@ export function simulateActions(
 			if (bondmateChar) {
 				const isElation = getCharacterPath(bondmateChar.name) === "Elation";
 				if (isElation) {
-					advanceSouldragon(
-						states,
-						souldragonOwner.character.id,
-						action.actionValue,
-						0.15,
-					);
+					const isSilverWolf = hasSilverWolfGodmode(bondmateChar.name);
+					let skipForSilverWolf = false;
+					if (isSilverWolf) {
+						const swState = states.find(
+							(s) => s.character.id === currentBondmateTarget.value,
+						);
+						skipForSilverWolf = !swState || !isInGodmode(swState);
+					}
+					if (!skipForSilverWolf) {
+						advanceSouldragon(
+							states,
+							souldragonOwner.character.id,
+							action.actionValue,
+							0.15,
+						);
+					}
 				}
 			}
 		}
@@ -200,6 +227,9 @@ export function simulateActions(
 			emitSparxieExtraAction,
 		);
 	};
+	const emitFuaAction = (sourceKey: string, actionValue: number) => {
+		emitFua(sourceKey, actionValue, states, actions, input);
+	};
 
 	return runSimulationLoop({
 		input,
@@ -216,6 +246,7 @@ export function simulateActions(
 			emitSpecialInterruptAction,
 			emitSparxieExtraAction,
 			emitEvernightSelfDestructAction,
+			emitFuaAction,
 		},
 	});
 }

@@ -8,6 +8,7 @@ type CharacterEntry = {
 	passives?: string[];
 	semantics?: string[];
 	path?: string;
+	participantId?: number;
 };
 
 const data = characterData as {
@@ -102,7 +103,12 @@ export function getSpecialActionHint(name: string) {
 	return `已识别：${displayName}`;
 }
 
-export const validSkillChars = ["A", "E", "Q", "W", "F"];
+export const validSkillChars = ["A", "E", "Q", "W", "F", "S", "Z"];
+
+export function getCharacterParticipantId(name: string): number | undefined {
+	const entry = findCharacterEntry(name);
+	return entry?.participantId;
+}
 
 export function isQFrontCombo(skill: string) {
 	return skill.length > 1 && skill.startsWith("Q");

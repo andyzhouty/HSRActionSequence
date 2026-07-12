@@ -31,7 +31,9 @@ export function runSimulationLoop(params: {
 	const runtime: SimulationRuntime = {
 		...params,
 		currentMeritTarget: params.input.meritTarget ?? null,
-		currentBondmateTarget: params.currentBondmateTarget as { value: string | null },
+		currentBondmateTarget: params.currentBondmateTarget as {
+			value: string | null;
+		},
 	};
 	const { input, states, actions, activeOdes } = runtime;
 	const { emitSpecialInterruptAction } = runtime.callbacks;

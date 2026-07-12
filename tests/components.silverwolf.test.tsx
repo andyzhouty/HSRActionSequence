@@ -2,7 +2,10 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import ActionPanel from "../src/components/action-sequence/ActionPanel";
-import type { GeneratedAction } from "../src/utils/actionSequence";
+import {
+	defaultCharacters,
+	type GeneratedAction,
+} from "../src/utils/actionSequence";
 import { renderWithContext } from "./helpers/actionSequenceComponentTestUtils";
 
 describe("ActionPanel Silver Wolf", () => {
@@ -332,6 +335,81 @@ describe("ActionPanel Silver Wolf", () => {
 			actionMenuOpen: true,
 			actionMenuKey: "@aha-1",
 			selectedActionKeys: new Set(["@aha-1"]),
+		});
+
+		expect(screen.queryByText("银狼 E2 额外行动：")).toBeNull();
+	});
+
+	it("银狼无敌玩家状态在三次正常行动后结束，后续菜单不显示 E2 开关", () => {
+		const sw = {
+			...defaultCharacters[0],
+			id: "sw",
+			name: "银狼LV.999",
+			kind: "角色" as const,
+			speed: "100",
+			baseSpeed: "100",
+		};
+		const ally = {
+			...defaultCharacters[0],
+			id: "ally",
+			name: "队友",
+			kind: "角色" as const,
+			speed: "80",
+			baseSpeed: "80",
+		};
+		const actions: GeneratedAction[] = [
+			{
+				key: "sw-1-q",
+				characterId: "sw",
+				actionNo: 0,
+				actionValue: 1,
+				skill: "Q",
+				speed: 100,
+			},
+			{
+				key: "sw-1",
+				characterId: "sw",
+				actionNo: 1,
+				actionValue: 2,
+				skill: "A",
+				speed: 100,
+				lockedSkill: true,
+			},
+			{
+				key: "sw-2",
+				characterId: "sw",
+				actionNo: 2,
+				actionValue: 3,
+				skill: "A",
+				speed: 100,
+				lockedSkill: true,
+			},
+			{
+				key: "sw-3",
+				characterId: "sw",
+				actionNo: 3,
+				actionValue: 4,
+				skill: "A",
+				speed: 100,
+			},
+			{
+				key: "ally-1",
+				characterId: "ally",
+				actionNo: 1,
+				actionValue: 5,
+				skill: "E",
+				speed: 80,
+			},
+		];
+		renderWithContext(<ActionPanel />, {
+			characters: [sw, ally],
+			characterNames: { sw: "银狼LV.999", ally: "队友" },
+			characterKinds: { sw: "角色", ally: "角色" },
+			charactersById: { sw, ally },
+			actions,
+			actionMenuOpen: true,
+			actionMenuKey: "ally-1",
+			selectedActionKeys: new Set(["ally-1"]),
 		});
 
 		expect(screen.queryByText("银狼 E2 额外行动：")).toBeNull();

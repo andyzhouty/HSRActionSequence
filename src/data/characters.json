@@ -976,7 +976,8 @@
       "passives": [
         "ahaExtraTurnAtE2"
       ],
-      "path": "Elation"
+      "path": "Elation",
+      "participantId": 144
     },
     {
       "cid": "1502",
@@ -988,7 +989,8 @@
       "effects": {
         "Q": "extraAhaAfterUltimate"
       },
-      "path": "Elation"
+      "path": "Elation",
+      "participantId": 116
     },
     {
       "cid": "1504",
@@ -1005,7 +1007,8 @@
         "Evanescia",
         "绯"
       ],
-      "path": "Elation"
+      "path": "Elation",
+      "participantId": 146
     },
     {
       "cid": "1506",
@@ -1018,12 +1021,14 @@
         "银狼Lv999",
         "银狼LV999",
         "银狼999",
-        "9狼"
+        "9狼",
+        "狼尊"
       ],
       "effects": {
         "Q": "selfAdvance100"
       },
-      "path": "Elation"
+      "path": "Elation",
+      "participantId": 999
     },
     {
       "cid": "1507",
@@ -1141,7 +1146,11 @@
         "EMC",
         "Elation Trailblazer"
       ],
-      "path": "Elation"
+      "effects": {
+        "Q": "elationTrailblazerUltimate"
+      },
+      "path": "Elation",
+      "participantId": 120
     }
   ],
   "_defaults": {

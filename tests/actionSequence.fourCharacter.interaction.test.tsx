@@ -146,8 +146,9 @@ describe("ActionSequence four-character front-end interaction", () => {
 			).value;
 			expect(json).toContain('"evernight-1":"AQ"');
 		});
+		// 连招分离：AQ → 输入显示 A（Q 由中断行展示），存储仍为 AQ
 		expect(
-			within(firstEvernightRow).getByDisplayValue("AQ"),
+			within(firstEvernightRow).getByDisplayValue("A"),
 		).toBeInTheDocument();
 
 		const hyacineLabel = screen.getAllByText("风堇")[0];

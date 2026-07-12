@@ -56,6 +56,8 @@ function buildSimulationConfig(
 		dancePartner: savedData.dancePartner,
 		bondmateTarget: savedData.bondmateTarget,
 		attackDisabled: savedData.attackDisabled,
+		fuaToggles: savedData.fuaToggles,
+		sameAVOrder: savedData.sameAVOrder,
 	};
 }
 
@@ -266,6 +268,7 @@ export function useGeneratedActions({
 				prev.evernightThresholdBurstToggles,
 			);
 			const nextAttackDisabled = pruneToggleMap(prev.attackDisabled);
+			const nextFuaToggles = pruneToggleMap(prev.fuaToggles);
 			changed =
 				changed ||
 				nextCastoriceKillToggles !== prev.castoriceKillToggles ||
@@ -275,7 +278,8 @@ export function useGeneratedActions({
 					prev.evernightSelfDestructToggles ||
 				nextEvernightThresholdBurstToggles !==
 					prev.evernightThresholdBurstToggles ||
-				nextAttackDisabled !== prev.attackDisabled;
+				nextAttackDisabled !== prev.attackDisabled ||
+				nextFuaToggles !== prev.fuaToggles;
 
 			if (!changed) return prev;
 			return {
@@ -290,6 +294,7 @@ export function useGeneratedActions({
 				evernightSelfDestructToggles: nextEvernightSelfDestructToggles,
 				evernightThresholdBurstToggles: nextEvernightThresholdBurstToggles,
 				attackDisabled: nextAttackDisabled,
+				fuaToggles: nextFuaToggles,
 			};
 		});
 		setSelectedActionKeys((prev) => {

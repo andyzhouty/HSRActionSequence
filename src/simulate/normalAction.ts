@@ -1,7 +1,10 @@
 import { hasPassive, hasSkillEffect } from "../data/characters";
 import { handleAglaeaSkillEffects } from "../mechanics/aglaeaGarmentmaker";
 import { hasCastoriceSummon } from "../mechanics/castoricePollux";
-import { summonSouldragonState, updateSouldragonBondmate } from "../mechanics/danHengSouldragon";
+import {
+	summonSouldragonState,
+	updateSouldragonBondmate,
+} from "../mechanics/danHengSouldragon";
 import {
 	consumeEvernightSpeedBuff,
 	hasEvernightEvey,
@@ -382,8 +385,17 @@ export function handleNormalAction(
 		if (validTarget && nextBondmate !== runtime.currentBondmateTarget.value) {
 			runtime.currentBondmateTarget.value = nextBondmate;
 			// 确保龙灵存在（可能是首次召唤），然后更新归属
-			summonSouldragonState(states, souldragonOwner.character, actionValue, nextBondmate);
-			updateSouldragonBondmate(states, souldragonOwner.character.id, nextBondmate);
+			summonSouldragonState(
+				states,
+				souldragonOwner.character,
+				actionValue,
+				nextBondmate,
+			);
+			updateSouldragonBondmate(
+				states,
+				souldragonOwner.character.id,
+				nextBondmate,
+			);
 		}
 	}
 

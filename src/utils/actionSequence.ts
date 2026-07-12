@@ -10,6 +10,7 @@ import {
 export {
 	getCharacterCid,
 	getCharacterDisplayName,
+	getCharacterParticipantId,
 	getCharacterPath,
 	getDefaultEffectRule,
 	getEffectRule,
@@ -108,6 +109,11 @@ export type GeneratedAction = {
 	isEveyThresholdBurstAction?: boolean;
 	isSouldragonAction?: boolean;
 	souldragonOwnerId?: string;
+	isElationSkill?: boolean; // 欢愉技标记
+	hasElationSkills?: boolean; // 阿哈时刻容器标记（含可折叠的欢愉技子列表）
+	elationSkillParentKey?: string; // 欢愉技所属的阿哈时刻 key
+	isFuaAction?: boolean; // 绯英追击标记（技能 Z）
+	interruptTiming?: "before" | "after"; // 手动插队 Q 的相对时机
 };
 
 export type SpeedAdjustment = {
@@ -445,6 +451,8 @@ export type SavedData = {
 	memeKillToggles?: Record<string, boolean>;
 	evernightSelfDestructToggles?: Record<string, boolean>;
 	evernightThresholdBurstToggles?: Record<string, boolean>;
+	fuaToggles?: Record<string, boolean>;
+	sameAVOrder?: Record<string, number>;
 	hyacineE2Active?: boolean;
 	meritTarget?: string;
 	dancePartner?: string;

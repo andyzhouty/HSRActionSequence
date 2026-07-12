@@ -65,6 +65,8 @@ export function createMockContext(
 		setEvernightSelfDestructToggles: vi.fn(),
 		evernightThresholdBurstToggles: {},
 		setEvernightThresholdBurstToggles: vi.fn(),
+		fuaToggles: {},
+		setFuaToggles: vi.fn(),
 		hyacineE2Active: true,
 		setHyacineE2Active: vi.fn(),
 		meritTarget: undefined,

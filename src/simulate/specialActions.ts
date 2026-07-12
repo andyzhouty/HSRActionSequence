@@ -11,6 +11,7 @@ import {
 } from "../mechanics/fireflyCombustion";
 import type { GeneratedAction, SkillCode } from "../utils/actionSequence";
 import { emitMemeAdvanceAction } from "./effects";
+import { emitElationSkills } from "./interrupts";
 import type {
 	ActionState,
 	ActiveOdeState,
@@ -30,6 +31,7 @@ export type SpecialActionCallbacks = {
 		sourceKey: string,
 		actionValue: number,
 	) => void;
+	emitFuaAction: (sourceKey: string, actionValue: number) => void;
 };
 
 /** 处理不走普通角色技能状态机的特殊实体行动。 */
@@ -63,6 +65,7 @@ export function handleSpecialAction({
 		emitSpecialInterruptAction,
 		emitSparxieExtraAction,
 		emitEvernightSelfDestructAction,
+		emitFuaAction,
 	} = callbacks;
 	// ── 0 行动值：仅在 AV=0 行动一次后移除 ──
 	if (character.id === "@av0") {
@@ -103,7 +106,10 @@ export function handleSpecialAction({
 			skill: "" as SkillCode,
 			speed: ahaSpeed,
 			isAhaInstant: true,
+			hasElationSkills: true,
 		});
+		// 欢愉技：所有欢愉角色按参演编号依次释放 ES
+		emitElationSkills(key, actionValue, states, actions);
 		// 阿哈时刻支持 after 插队（不支持 before），必须复用统一 Q 处理以结算角色效果。
 		const ahaInterrupts = input.ultInterrupts[key] ?? [];
 		for (let ai = 0; ai < ahaInterrupts.length; ai++) {
@@ -114,6 +120,7 @@ export function handleSpecialAction({
 		// 银狼 E2：无敌玩家状态下，阿哈行动后可插入额外 A
 		emitGodmodeExtraAction(key, actionValue);
 		emitSparxieExtraAction(key, actionValue);
+		emitFuaAction(key, actionValue);
 		states[stateIndex].actionNo += 1;
 		states[stateIndex].nextActionValue = actionValue + 10000 / ahaSpeed;
 		return true;

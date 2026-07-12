@@ -38,6 +38,8 @@ export type SimulateActionsInput = {
 	dancePartner?: string;
 	bondmateTarget?: string;
 	attackDisabled?: Record<string, boolean>;
+	fuaToggles?: Record<string, boolean>;
+	sameAVOrder?: Record<string, number>;
 };
 
 // ── 内部状态类型 ──

@@ -1,4 +1,8 @@
-import { hasPassive, hasSkillEffect } from "../data/characters";
+import {
+	getCharacterParticipantId,
+	hasPassive,
+	hasSkillEffect,
+} from "../data/characters";
 import { handleEveyAction } from "../mechanics/evernightEvey";
 import {
 	createIcaAction,
@@ -125,7 +129,10 @@ export function emitExtraAhaAction(
 		speed: extraAhaSpeed,
 		isAhaInstant: true,
 		isExtraAha: true,
+		hasElationSkills: true,
 	});
+	// 额外阿哈时刻与常规阿哈时刻相同，依次触发全部欢愉技。
+	emitElationSkills(extraAhaKey, actionValue, states, actions);
 
 	for (let ai = 0; ai < extraAhaInterrupts.length; ai++) {
 		const int = extraAhaInterrupts[ai];
@@ -184,6 +191,7 @@ export function emitSpecialInterruptAction(
 		actionValue,
 		skill: "Q" as SkillCode,
 		speed: casterSpeed,
+		interruptTiming: int.timing,
 		activeOdeLabels: getActiveOdeLabels(activeOdes, caster.character.id),
 	});
 	emitMemeAdvanceAction({
@@ -341,6 +349,8 @@ export function emitSpecialInterruptAction(
 		}
 	}
 	emitGodmodeExtraAction(interruptKey, actionValue, states, actions, input);
+	// 手动插队 Q 不经过普通行动收尾，需在此补发绯英追击。
+	emitFuaAction(interruptKey, actionValue, states, actions, input);
 }
 
 export function emitSparxieExtraAction(
@@ -624,5 +634,86 @@ export function emitEvernightSelfDestructAction(
 			emitExtraAhaActionFn,
 			emitSparxieExtraActionFn,
 		);
+	}
+}
+
+/** 获取队伍中所有欢愉命途角色，按参演编号从小到大排序。 */
+export function getElationParticipants(states: ActionState[]): ActionState[] {
+	return states
+		.filter(
+			(s) =>
+				s.character.kind === "角色" &&
+				getCharacterParticipantId(s.character.name) !== undefined,
+		)
+		.sort((a, b) => {
+			const aId = getCharacterParticipantId(a.character.name) ?? 999;
+			const bId = getCharacterParticipantId(b.character.name) ?? 999;
+			return aId - bId;
+		});
+}
+
+/** 发射单个欢愉角色的欢愉技（ES）行动。 */
+export function emitSingleElationSkill(
+	elationState: ActionState,
+	parentKey: string,
+	actionValue: number,
+	actions: GeneratedAction[],
+): void {
+	actions.push({
+		key: `${parentKey}-elation-${elationState.character.id}`,
+		characterId: elationState.character.id,
+		actionNo: 0,
+		actionValue,
+		skill: "ES" as SkillCode,
+		speed: 0,
+		isElationSkill: true,
+		elationSkillParentKey: parentKey,
+		lockedSkill: true,
+	});
+}
+
+/** 发射所有欢愉角色的欢愉技（按参演编号顺序），用于阿哈时刻。 */
+export function emitElationSkills(
+	parentKey: string,
+	actionValue: number,
+	states: ActionState[],
+	actions: GeneratedAction[],
+): void {
+	const elationChars = getElationParticipants(states);
+	for (const elationState of elationChars) {
+		emitSingleElationSkill(elationState, parentKey, actionValue, actions);
+	}
+}
+
+/** 发射绯英追击（Z），由右键菜单 fuaToggles 控制。E1+ 追加一次欢愉技。 */
+export function emitFuaAction(
+	sourceKey: string,
+	actionValue: number,
+	states: ActionState[],
+	actions: GeneratedAction[],
+	input: SimulateActionsInput,
+): void {
+	if (!input.fuaToggles?.[sourceKey]) return;
+	const evanescia = states.find(
+		(s) =>
+			s.character.kind === "角色" &&
+			getCharacterCid(s.character.name) === "1505",
+	);
+	if (!evanescia) return;
+	const fuaKey = `${sourceKey}-fua`;
+	actions.push({
+		key: fuaKey,
+		characterId: evanescia.character.id,
+		displayName: "绯英",
+		actionNo: 0,
+		actionValue,
+		skill: "Z" as SkillCode,
+		speed: 0,
+		isFuaAction: true,
+		lockedSkill: true,
+	});
+	// E1+ 追加欢愉技
+	if (evanescia.character.eidolon >= 1) {
+		emitSingleElationSkill(evanescia, fuaKey, actionValue, actions);
 	}
 }

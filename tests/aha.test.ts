@@ -62,6 +62,26 @@ function input(
 // ───── 阿哈时刻 ─────
 
 describe("Aha Instant (阿哈时刻)", () => {
+	it("手动插队 Q 后也会生成绯英追击", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("actor", "停云", 100),
+					character("evanescia", "绯英", 80),
+				],
+				ultInterrupts: {
+					"actor-1": [{ casterId: "actor", timing: "after" }],
+				},
+				fuaToggles: { "actor-1-interrupt-0": true },
+				limit: 110,
+			}),
+		);
+
+		expect(
+			actions.find((action) => action.key === "actor-1-interrupt-0-fua"),
+		).toMatchObject({ isFuaAction: true, skill: "Z" });
+	});
+
 	it("无欢愉角色时不生成阿哈时刻", () => {
 		const actions = simulateActions(
 			input({
@@ -155,7 +175,15 @@ describe("Aha Instant (阿哈时刻)", () => {
 		expect(yaoguangQ).toBeDefined();
 		expect(extraAha?.isAhaInstant).toBe(true);
 		expect(extraAha?.isExtraAha).toBe(true);
+		expect(extraAha?.hasElationSkills).toBe(true);
 		expect(extraAha?.actionValue).toBeCloseTo(yaoguangQ?.actionValue, 2);
+		expect(
+			actions.some(
+				(action) =>
+					action.isElationSkill &&
+					action.elationSkillParentKey === extraAha?.key,
+			),
+		).toBe(true);
 	});
 
 	it("爻光额外阿哈支持前后插入 Q", () => {

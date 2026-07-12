@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import ActionPanel from "../src/components/action-sequence/ActionPanel";
 import CharacterPanel from "../src/components/action-sequence/CharacterPanel";
 import {
@@ -177,6 +177,348 @@ describe("ActionPanel rendering", () => {
 	it("shows empty state message when no actions", () => {
 		renderWithContext(<ActionPanel />);
 		expect(screen.getByText("请至少填写一个有效速度。")).toBeInTheDocument();
+	});
+
+	it("does not render a drag handle for a normal turn", () => {
+		renderWithContext(<ActionPanel />, {
+			actions: [
+				{
+					key: "c1-1",
+					characterId: "c1",
+					actionNo: 1,
+					actionValue: 100,
+					skill: "A",
+					speed: 100,
+				},
+			],
+		});
+		const row = document.querySelector('tr[data-action-key="c1-1"]');
+		expect(row).not.toBeNull();
+		expect(row?.querySelector('[draggable="true"]')).toBeNull();
+	});
+
+	it("shows a shared exchange group for the Aha parent turn", () => {
+		renderWithContext(<ActionPanel />, {
+			actions: [
+				{
+					key: "@aha-1",
+					characterId: "@aha",
+					actionNo: 1,
+					actionValue: 100,
+					skill: "",
+					speed: 100,
+					isAhaInstant: true,
+					hasElationSkills: true,
+				},
+				{
+					key: "@aha-1-godmode-A",
+					characterId: "c1",
+					actionNo: 0,
+					actionValue: 100,
+					skill: "A",
+					speed: 0,
+				},
+			],
+		});
+		const row = document.querySelector('tr[data-action-key="@aha-1"]');
+		expect(row).toHaveAttribute("draggable", "true");
+		expect(screen.getAllByRole("img", { name: "阿哈时刻" })).toHaveLength(2);
+		expect(document.querySelectorAll('[data-exchange-group="1"]')).toHaveLength(
+			2,
+		);
+		expect(screen.getAllByRole("img", { name: "可交换组 1" })).toHaveLength(2);
+	});
+
+	it("makes expanded Elation skills draggable with their parent extras", async () => {
+		renderWithContext(<ActionPanel />, {
+			actions: [
+				{
+					key: "@aha-1",
+					characterId: "@aha",
+					actionNo: 1,
+					actionValue: 100,
+					skill: "",
+					speed: 100,
+					isAhaInstant: true,
+					hasElationSkills: true,
+				},
+				{
+					key: "@aha-1-elation-c1",
+					characterId: "c1",
+					actionNo: 0,
+					actionValue: 100,
+					skill: "ES",
+					speed: 0,
+					isElationSkill: true,
+					elationSkillParentKey: "@aha-1",
+				},
+				{
+					key: "@aha-1-godmode-A",
+					characterId: "c2",
+					actionNo: 0,
+					actionValue: 100,
+					skill: "A",
+					speed: 0,
+				},
+			],
+		});
+
+		await userEvent.click(screen.getAllByRole("img", { name: "阿哈时刻" })[0]);
+		expect(
+			document.querySelector('tr[data-action-key="@aha-1-elation-c1"]'),
+		).toHaveAttribute("draggable", "true");
+	});
+
+	it("renders drag handles only for after-inserted Q actions", () => {
+		renderWithContext(<ActionPanel />, {
+			actions: [
+				{
+					key: "c1-1",
+					characterId: "c1",
+					actionNo: 1,
+					actionValue: 100,
+					skill: "A",
+					speed: 100,
+				},
+				{
+					key: "c1-1-interrupt-0",
+					characterId: "c2",
+					actionNo: 0,
+					actionValue: 100,
+					skill: "Q",
+					speed: 100,
+					interruptTiming: "after",
+				},
+				{
+					key: "c1-1-interrupt-1",
+					characterId: "c3",
+					actionNo: 0,
+					actionValue: 100,
+					skill: "Q",
+					speed: 100,
+					interruptTiming: "after",
+				},
+			],
+		});
+
+		expect(
+			document.querySelector('tr[data-action-key="c1-1"]'),
+		).not.toHaveAttribute("draggable", "true");
+		expect(
+			document.querySelector('tr[data-action-key="c1-1-interrupt-0"]'),
+		).toHaveAttribute("draggable", "true");
+		expect(
+			document.querySelector('tr[data-action-key="c1-1-interrupt-1"]'),
+		).toHaveAttribute("draggable", "true");
+		expect(document.querySelectorAll('[data-exchange-group="1"]')).toHaveLength(
+			2,
+		);
+	});
+
+	it("limits interrupt ultimate casters to ally characters", async () => {
+		const ally = {
+			...defaultCharacters[0],
+			id: "ally",
+			kind: "角色" as const,
+			name: "我方角色",
+			speed: "100",
+			baseSpeed: "100",
+		};
+		const enemy = {
+			...defaultCharacters[0],
+			id: "enemy",
+			kind: "敌人" as const,
+			name: "敌方目标",
+			speed: "100",
+			baseSpeed: "100",
+		};
+		const memosprite = {
+			...defaultCharacters[0],
+			id: "memo",
+			kind: "忆灵" as const,
+			name: "忆灵目标",
+			speed: "100",
+			baseSpeed: "100",
+		};
+		renderWithContext(<ActionPanel />, {
+			characters: [ally, enemy, memosprite],
+			actions: [
+				{
+					key: "ally-1",
+					characterId: "ally",
+					actionNo: 1,
+					actionValue: 100,
+					skill: "A",
+					speed: 100,
+				},
+			],
+			selectedActionKeys: new Set(["ally-1"]),
+			actionMenuOpen: true,
+			actionMenuKey: "ally-1",
+		});
+
+		await userEvent.click(screen.getByRole("button", { name: "添加…▼" }));
+
+		expect(screen.getByText("我方角色")).toBeInTheDocument();
+		expect(screen.queryByText("敌方目标")).toBeNull();
+		expect(screen.queryByText("忆灵目标")).toBeNull();
+	});
+
+	it("updates sameAVOrder when an after-inserted Q row is dropped", () => {
+		const setSameAVOrder = vi.fn();
+		renderWithContext(<ActionPanel />, {
+			setSameAVOrder,
+			actions: [
+				{
+					key: "c1-1-interrupt-0",
+					characterId: "c2",
+					actionNo: 0,
+					actionValue: 100,
+					skill: "Q",
+					speed: 100,
+					interruptTiming: "after",
+				},
+				{
+					key: "c1-1-interrupt-1",
+					characterId: "c3",
+					actionNo: 0,
+					actionValue: 100,
+					skill: "Q",
+					speed: 100,
+					interruptTiming: "after",
+				},
+			],
+		});
+		const source = document.querySelector(
+			'tr[data-action-key="c1-1-interrupt-0"]',
+		);
+		const target = document.querySelector(
+			'tr[data-action-key="c1-1-interrupt-1"]',
+		);
+		expect(source).not.toBeNull();
+		expect(target).not.toBeNull();
+		if (!(source instanceof HTMLElement) || !(target instanceof HTMLElement)) {
+			throw new Error("拖拽测试行未渲染");
+		}
+		vi.spyOn(target, "getBoundingClientRect").mockReturnValue({
+			top: -1,
+			height: 1,
+		} as DOMRect);
+		const values = new Map<string, string>();
+		const dataTransfer = {
+			effectAllowed: "",
+			setData: (type: string, value: string) => values.set(type, value),
+			getData: (type: string) => values.get(type) ?? "",
+			setDragImage: vi.fn(),
+		};
+
+		fireEvent.dragStart(source, { dataTransfer });
+		fireEvent.dragOver(target, { dataTransfer });
+		fireEvent.drop(target, { dataTransfer });
+
+		expect(setSameAVOrder).toHaveBeenCalledOnce();
+		const updater = setSameAVOrder.mock.calls[0][0];
+		expect(updater({})).toEqual({
+			"c1-1-interrupt-0": 1,
+			"c1-1-interrupt-1": 0,
+		});
+	});
+
+	it("inserts an extra action at the end instead of swapping with the target", () => {
+		const setSameAVOrder = vi.fn();
+		renderWithContext(<ActionPanel />, {
+			setSameAVOrder,
+			actions: [0, 1, 2].map((index) => ({
+				key: `c1-1-interrupt-${index}`,
+				characterId: `c${index + 2}`,
+				actionNo: 0,
+				actionValue: 100,
+				skill: "Q",
+				speed: 100,
+				interruptTiming: "after" as const,
+			})),
+		});
+		const source = document.querySelector(
+			'tr[data-action-key="c1-1-interrupt-0"]',
+		);
+		const target = document.querySelector(
+			'tr[data-action-key="c1-1-interrupt-2"]',
+		);
+		if (!(source instanceof HTMLElement) || !(target instanceof HTMLElement)) {
+			throw new Error("拖拽测试行未渲染");
+		}
+		vi.spyOn(target, "getBoundingClientRect").mockReturnValue({
+			top: -1,
+			height: 1,
+		} as DOMRect);
+		const values = new Map<string, string>();
+		const dataTransfer = {
+			effectAllowed: "",
+			setData: (type: string, value: string) => values.set(type, value),
+			getData: (type: string) => values.get(type) ?? "",
+			setDragImage: vi.fn(),
+		};
+
+		fireEvent.dragStart(source, { dataTransfer });
+		fireEvent.dragOver(target, { dataTransfer });
+		fireEvent.drop(target, { dataTransfer });
+
+		const updater = setSameAVOrder.mock.calls[0][0];
+		expect(updater({})).toEqual({
+			"c1-1-interrupt-0": 2,
+			"c1-1-interrupt-1": 0,
+			"c1-1-interrupt-2": 1,
+		});
+	});
+
+	it("shows the source and target actions in the drag preview", () => {
+		renderWithContext(<ActionPanel />, {
+			actions: [
+				{
+					key: "c1-1-interrupt-0",
+					characterId: "c1",
+					actionNo: 0,
+					actionValue: 100,
+					skill: "Q",
+					speed: 100,
+					interruptTiming: "after",
+				},
+				{
+					key: "c1-1-interrupt-1",
+					characterId: "c2",
+					actionNo: 0,
+					actionValue: 100,
+					skill: "Q",
+					speed: 100,
+					interruptTiming: "after",
+				},
+			],
+		});
+		const source = document.querySelector(
+			'tr[data-action-key="c1-1-interrupt-0"]',
+		);
+		const target = document.querySelector(
+			'tr[data-action-key="c1-1-interrupt-1"]',
+		);
+		if (!(source instanceof HTMLElement) || !(target instanceof HTMLElement)) {
+			throw new Error("拖拽测试行未渲染");
+		}
+		const values = new Map<string, string>();
+		const dataTransfer = {
+			effectAllowed: "",
+			setData: (type: string, value: string) => values.set(type, value),
+			getData: (type: string) => values.get(type) ?? "",
+			setDragImage: vi.fn(),
+		};
+
+		fireEvent.dragStart(source, { dataTransfer, clientX: 10, clientY: 20 });
+		fireEvent.dragOver(target, { dataTransfer, clientX: 30, clientY: 40 });
+
+		expect(
+			screen.getByText(/移动：角色 1 · Q -> 角色 2 · Q 后/),
+		).toBeInTheDocument();
+		fireEvent.dragEnd(source);
+		expect(screen.queryByText(/交换：角色 1 · Q <-> 角色 2 · Q/)).toBeNull();
 	});
 
 	it("renders export buttons", () => {

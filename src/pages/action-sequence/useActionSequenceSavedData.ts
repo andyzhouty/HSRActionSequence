@@ -56,6 +56,8 @@ type SavedDataFieldSetters = {
 	setEvernightThresholdBurstToggles: Dispatch<
 		SetStateAction<Record<string, boolean>>
 	>;
+	setFuaToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
+	setSameAVOrder: Dispatch<SetStateAction<Record<string, number>>>;
 	setHyacineE2Active: Dispatch<SetStateAction<boolean>>;
 	setMeritTarget: Dispatch<SetStateAction<string | undefined>>;
 	setDancePartner: Dispatch<SetStateAction<string | undefined>>;
@@ -146,6 +148,8 @@ export function useActionSequenceSavedData() {
 				setSavedField("evernightSelfDestructToggles", updater),
 			setEvernightThresholdBurstToggles: (updater) =>
 				setSavedField("evernightThresholdBurstToggles", updater),
+			setFuaToggles: (updater: any) => setSavedField("fuaToggles", updater),
+			setSameAVOrder: (updater: any) => setSavedField("sameAVOrder", updater),
 			setHyacineE2Active: (updater) =>
 				setSavedField("hyacineE2Active", updater),
 			setMeritTarget: (updater) => setSavedField("meritTarget", updater),

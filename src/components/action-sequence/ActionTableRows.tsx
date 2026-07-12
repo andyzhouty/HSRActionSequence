@@ -29,6 +29,25 @@ import {
 } from "../../utils/actionSequence";
 import { SelectInput } from "./Controls";
 
+const exchangeGroupThemes = [
+	{
+		ring: "ring-cyan-300/70",
+		marker: "border-cyan-300/70 bg-cyan-950/80 text-cyan-100",
+	},
+	{
+		ring: "ring-emerald-300/70",
+		marker: "border-emerald-300/70 bg-emerald-950/80 text-emerald-100",
+	},
+	{
+		ring: "ring-fuchsia-300/70",
+		marker: "border-fuchsia-300/70 bg-fuchsia-950/80 text-fuchsia-100",
+	},
+	{
+		ring: "ring-amber-300/70",
+		marker: "border-amber-300/70 bg-amber-950/80 text-amber-100",
+	},
+] as const;
+
 function getMemeTargetOptions(ctx: ReturnType<typeof useActionSequence>) {
 	const allTargets = [
 		...ctx.characters,
@@ -153,10 +172,21 @@ export function ActionRow({
 	action,
 	index,
 	isPastOriginalLimit,
+	onToggleElationSkills,
+	dragProps,
 }: {
 	action: GeneratedAction;
 	index: number;
 	isPastOriginalLimit: boolean;
+	onToggleElationSkills?: () => void;
+	dragProps?: {
+		draggable: boolean;
+		groupNumber: number;
+		onDragStart: (e: React.DragEvent) => void;
+		onDragOver: (e: React.DragEvent) => void;
+		onDrop: (e: React.DragEvent) => void;
+		onDragEnd: () => void;
+	};
 }) {
 	const ctx = useActionSequence();
 	const isInterrupt =
@@ -189,6 +219,11 @@ export function ActionRow({
 		action.characterId;
 	const isSelected = ctx.selectedActionKeys.has(action.key);
 	const speedAdjustment = ctx.speedAdjustments[action.key];
+	const exchangeGroupTheme = dragProps
+		? exchangeGroupThemes[
+				(dragProps.groupNumber - 1) % exchangeGroupThemes.length
+			]
+		: undefined;
 	const [actionValueDraft, setActionValueDraft] = useState<string | null>(null);
 	const getPreviousDomainActionValue = () => {
 		const match = action.key.match(/^(.*-domain-)(\d+)$/);
@@ -220,6 +255,16 @@ export function ActionRow({
 		ctx.setMessage("白厄境界行动值不能早于上一个额外回合");
 	};
 	const rowClass = (() => {
+		if (action.isElationSkill) {
+			return isSelected
+				? "bg-[#c2410c80] outline outline-1 outline-orange-300"
+				: "bg-[#c2410c15] hover:bg-[#c2410c25]";
+		}
+		if (action.isFuaAction) {
+			return isSelected
+				? "bg-[#a21caf80] outline outline-1 outline-fuchsia-300"
+				: "bg-[#86198f15] hover:bg-[#86198f25]";
+		}
 		if (isInterrupt) {
 			return isSelected
 				? "bg-[#065f4680] outline outline-1 outline-emerald-300"
@@ -298,6 +343,12 @@ export function ActionRow({
 		<tr
 			key={action.key}
 			data-action-key={action.key}
+			data-exchange-group={dragProps?.groupNumber}
+			draggable={dragProps?.draggable || undefined}
+			onDragStart={dragProps?.draggable ? dragProps.onDragStart : undefined}
+			onDragOver={dragProps?.draggable ? dragProps.onDragOver : undefined}
+			onDrop={dragProps?.draggable ? dragProps.onDrop : undefined}
+			onDragEnd={dragProps?.draggable ? dragProps.onDragEnd : undefined}
 			onClick={(event) =>
 				ctx.selectAction(action.key, event.ctrlKey || event.metaKey)
 			}
@@ -314,7 +365,7 @@ export function ActionRow({
 					? `速度: ${action.speed} (后续${speedAdjustment.mode === "relative" ? `${speedAdjustment.value}%` : speedAdjustment.value}) / 行动值: ${formatActionValue(action.actionValue)}`
 					: `速度: ${action.speed} / 行动值: ${formatActionValue(action.actionValue)}`
 			}
-			className={`cursor-pointer select-none ${rowClass} ${isPastOriginalLimit ? "border-l-2 border-l-cyan-400/70 opacity-80" : ""}`}
+			className={`${dragProps?.draggable ? `cursor-grab ring-1 ring-inset ${exchangeGroupTheme?.ring}` : "cursor-pointer"} select-none ${rowClass} ${isPastOriginalLimit ? "border-l-2 border-l-cyan-400/70 opacity-80" : ""}`}
 		>
 			<td
 				className={`w-12 min-w-12 max-w-12 whitespace-nowrap px-2 py-3 ${isEnemyAction ? "text-red-100" : "text-gray-400"}`}
@@ -328,9 +379,24 @@ export function ActionRow({
 						/>
 					</div>
 				) : action.isAhaInstant ? (
-					<div className="flex h-full items-center justify-center">
-						<img src={ahaIcon} alt="🎭" className="inline-block h-6 w-6" />
-					</div>
+					<button
+						type="button"
+						className="flex h-full w-full items-center justify-center"
+						title={
+							action.hasElationSkills ? "点击折叠/展开欢愉技列表" : "阿哈时刻"
+						}
+						onClick={(event) => {
+							event.stopPropagation();
+							onToggleElationSkills?.();
+						}}
+						onMouseDown={(event) => event.stopPropagation()}
+					>
+						<img
+							src={ahaIcon}
+							alt="阿哈时刻"
+							className="inline-block h-6 w-6"
+						/>
+					</button>
 				) : action.isSouldragonAction ? (
 					<div className="flex h-full items-center justify-center">
 						<img
@@ -350,6 +416,10 @@ export function ActionRow({
 							className="inline-block h-6 w-6"
 						/>
 					</div>
+				) : action.isFuaAction ? (
+					<div className="flex h-full items-center justify-center">
+						<span className="text-xs font-bold text-fuchsia-300">Z</span>
+					</div>
 				) : action.key.includes("-godmode-A") ? (
 					<div className="flex h-full items-center justify-center">
 						<img src={swRank2Icon} alt="E2" className="inline-block h-6 w-6" />
@@ -360,6 +430,16 @@ export function ActionRow({
 				{action.isRomanceAction && (
 					<span className="text-yellow-300" title="浪漫之诗充能">
 						⚡
+					</span>
+				)}
+				{dragProps?.draggable && (
+					<span
+						role="img"
+						aria-label={`可交换组 ${dragProps.groupNumber}`}
+						className={`ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border text-xs font-bold ${exchangeGroupTheme?.marker}`}
+						title="可与相同颜色的交换标记拖拽互换"
+					>
+						⇄
 					</span>
 				)}
 				{action.activeOdeLabels && action.activeOdeLabels.length > 0 && (
@@ -385,35 +465,39 @@ export function ActionRow({
 						<div
 							className={`truncate text-xs leading-5 ${isEnemyAction ? "text-[#fecacacc]" : "text-gray-400"}`}
 						>
-							{action.isAhaInstant
-								? action.isExtraAha
-									? "额外"
-									: "阿哈"
-								: action.isSparxieExtraAction
-									? "额外"
-									: isDomain
-										? `境界 ${action.actionNo}`
-										: isAssist
-											? "助战"
-											: action.isEveySelfDestructAction
-												? "额外"
-												: action.isMemeAction
-													? "额外"
-													: action.isMemospriteAction && action.actionNo > 0
-														? `第 ${action.actionNo} 动`
-														: action.isMemospriteAction
+							{action.isFuaAction
+								? "追击"
+								: action.isAhaInstant
+									? action.isExtraAha
+										? "额外"
+										: "阿哈"
+									: action.isElationSkill
+										? "欢愉技"
+										: action.isSparxieExtraAction
+											? "额外"
+											: isDomain
+												? `境界 ${action.actionNo}`
+												: isAssist
+													? "助战"
+													: action.isEveySelfDestructAction
+														? "额外"
+														: action.isMemeAction
 															? "额外"
-															: action.isOdeExtraAction
-																? "诗篇"
-																: isInterrupt
-																	? "插队"
-																	: action.isAssistFollowUp
-																		? `额外 ${action.actionNo}`
-																		: action.key.includes("-break-extra-")
-																			? "额外"
-																			: action.isAglaeaSupremeAction
-																				? `至高 ${action.actionNo}`
-																				: `第 ${action.actionNo} 动`}
+															: action.isMemospriteAction && action.actionNo > 0
+																? `第 ${action.actionNo} 动`
+																: action.isMemospriteAction
+																	? "额外"
+																	: action.isOdeExtraAction
+																		? "诗篇"
+																		: isInterrupt
+																			? "插队"
+																			: action.isAssistFollowUp
+																				? `额外 ${action.actionNo}`
+																				: action.key.includes("-break-extra-")
+																					? "额外"
+																					: action.isAglaeaSupremeAction
+																						? `至高 ${action.actionNo}`
+																						: `第 ${action.actionNo} 动`}
 						</div>
 					)}
 			</td>
@@ -536,6 +620,8 @@ function AttackInline({ action }: { action: GeneratedAction }) {
 		return null;
 	}
 
+	// 欢愉技的攻击判定由模拟引擎自动处理，不显示手动切换
+	if (action.isElationSkill) return null;
 	const isForcedOff =
 		getCharacterCid(attacker.name) === "1414" && action.skill === "E";
 	const isEnabled = !isForcedOff && ctx.attackDisabled[action.key] !== true;
@@ -576,8 +662,16 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 		action.isCombustionAction
 			? action.skill
 			: (ctx.skillOverrides[action.key] ?? action.skill);
-	// AQ/EQ/QE/QA 是用户可编辑的自身插队 Q 简写，必须原样显示。
-	const displaySkill = rawDisplaySkill;
+	// 连招分离：若主行动上有 AQ/EQ/QE/QA 覆盖，只显示非 Q 部分，Q 由中断行展示
+	const rawOverride = ctx.skillOverrides[action.key];
+	const isComboOverride =
+		!action.isDomainAction &&
+		!action.isAssistFollowUp &&
+		rawOverride &&
+		/^(?:[AE]Q|Q[AE])$/.test(rawOverride);
+	const displaySkill = isComboOverride
+		? rawOverride.replace(/Q/g, "") || ""
+		: rawDisplaySkill;
 	const isDomain = action.isDomainAction;
 	const isDomainFinalAction = action.isDomainFinalAction;
 	const isInterrupt =
@@ -628,7 +722,7 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 	const commitDraftSkill = (rawSkill: string) => {
 		const normalizedSkill = rawSkill.trim().toUpperCase();
 		window.setTimeout(() => {
-			if (normalizedSkill !== displaySkill) {
+			if (normalizedSkill !== displaySkill || isComboOverride) {
 				ctx.updateActionSkill(action, normalizedSkill);
 			}
 		}, 0);
@@ -637,7 +731,7 @@ function SkillInput({ action }: { action: GeneratedAction }) {
 	if (action.isAhaInstant) {
 		return (
 			<div className="flex h-10 w-10 shrink-0 items-center justify-center">
-				<img src={ahaIcon} alt="🎭" className="inline-block h-8 w-8" />
+				<img src={ahaIcon} alt="阿哈时刻" className="inline-block h-8 w-8" />
 			</div>
 		);
 	}
@@ -869,16 +963,40 @@ function SkillTargetInline({ action }: { action: GeneratedAction }) {
 		char && shouldRememberSkillTarget(char.name)
 			? ctx.defaultSkillTargets[action.characterId]
 			: undefined;
-	const targetId = ctx.skillTargets[action.key] ?? rememberedTargetId;
-	const skill =
+	// 自 Q 中断（连招分离产生）：目标写回主行动 key
+	const isSelfQInterrupt =
+		action.key.endsWith("-q") &&
+		action.actionNo === 0 &&
+		!action.isDomainAction &&
+		!action.isMemospriteAction &&
+		!action.isAssistAction;
+	const parentKey = isSelfQInterrupt ? action.key.slice(0, -2) : action.key;
+	const targetId =
+		ctx.skillTargets[action.key] ??
+		(isSelfQInterrupt ? ctx.skillTargets[parentKey] : undefined) ??
+		rememberedTargetId;
+	// 分离连招：EQ→主行动看E，中断行看Q
+	const rawOverride = ctx.skillOverrides[action.key];
+	const rawSkill =
 		action.isDomainFinalAction || action.isCombustionAction
 			? action.skill
-			: (ctx.skillOverrides[action.key] ?? action.skill);
+			: (rawOverride ?? action.skill);
+	const isComboOverride =
+		!action.isDomainAction &&
+		!action.isAssistFollowUp &&
+		rawOverride &&
+		/^(?:[AE]Q|Q[AE])$/.test(rawOverride);
+	const skillForCheck = isComboOverride
+		? rawOverride.replace(/Q/g, "") || ""
+		: isSelfQInterrupt
+			? "Q"
+			: rawSkill;
 	const isTargetableSkill = Boolean(
 		char &&
 			isCharacterTarget(char) &&
-			skill.includes("E") &&
-			hasTargetableESkill(char.name),
+			((skillForCheck.includes("E") && hasTargetableESkill(char.name)) ||
+				(skillForCheck === "Q" &&
+					hasSkillEffect(char.name, "Q", "elationTrailblazerUltimate"))),
 	);
 
 	if (isTargetableSkill && char) {

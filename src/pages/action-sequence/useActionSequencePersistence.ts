@@ -8,6 +8,12 @@ import {
 import { invoke, open, save } from "../../utils/backend";
 import { toNormalizedSavedData } from "./savedData";
 
+const BROWSER_DRAFT_STORAGE_KEY = "hsr-action-sequence-browser-draft";
+
+function hasWailsRuntime(): boolean {
+	return Boolean(window.go?.main?.App);
+}
+
 type ApplyImportedData = (
 	parsed: Partial<SavedData>,
 	options?: {
@@ -31,11 +37,37 @@ export function useActionSequencePersistence({
 	const autosaveTimerRef = useRef<number | null>(null);
 	const lastImportedJsonRef = useRef("");
 	const didRestoreInitialDataRef = useRef(false);
+	const [isInitialRestoreComplete, setIsInitialRestoreComplete] =
+		useState(false);
 
 	useEffect(() => {
 		if (didRestoreInitialDataRef.current) return;
 		didRestoreInitialDataRef.current = true;
 		let cancelled = false;
+		if (!hasWailsRuntime()) {
+			try {
+				const text =
+					window.localStorage.getItem(BROWSER_DRAFT_STORAGE_KEY) ?? "";
+				if (text.trim()) {
+					const parsed = JSON.parse(text) as Partial<SavedData>;
+					if (
+						Array.isArray(parsed.characters) &&
+						parsed.characters.length > 0
+					) {
+						lastImportedJsonRef.current = JSON.stringify(
+							toNormalizedSavedData(parsed),
+						);
+						applyImportedData(parsed, {
+							message: "已恢复浏览器草稿",
+						});
+					}
+				}
+			} catch {
+				// 浏览器草稿损坏或存储不可用时，从默认数据开始。
+			}
+			setIsInitialRestoreComplete(true);
+			return;
+		}
 
 		void (async () => {
 			try {
@@ -60,6 +92,8 @@ export function useActionSequencePersistence({
 				applyImportedData(parsed, { message: "已自动恢复上次的排轴数据" });
 			} catch {
 				// 首次使用或无上次保存数据，静默忽略
+			} finally {
+				if (!cancelled) setIsInitialRestoreComplete(true);
 			}
 		})();
 
@@ -76,6 +110,18 @@ export function useActionSequencePersistence({
 	}, [exportData]);
 
 	useEffect(() => {
+		if (!isInitialRestoreComplete) return;
+		if (!hasWailsRuntime()) {
+			try {
+				window.localStorage.setItem(
+					BROWSER_DRAFT_STORAGE_KEY,
+					JSON.stringify(exportData),
+				);
+			} catch {
+				// 隐私模式等无法写入 localStorage 时，不影响正常排轴。
+			}
+			return;
+		}
 		if (autosaveTimerRef.current !== null) {
 			window.clearTimeout(autosaveTimerRef.current);
 		}
@@ -98,7 +144,7 @@ export function useActionSequencePersistence({
 				window.clearTimeout(autosaveTimerRef.current);
 			}
 		};
-	}, [exportData]);
+	}, [exportData, isInitialRestoreComplete]);
 
 	const exportJson = async (setMessage: (message: string) => void) => {
 		const json = JSON.stringify(exportData, null, 2);
@@ -194,6 +240,14 @@ export function useActionSequencePersistence({
 	};
 
 	const clearAutosaveFile = () => {
+		if (!hasWailsRuntime()) {
+			try {
+				window.localStorage.removeItem(BROWSER_DRAFT_STORAGE_KEY);
+			} catch {
+				// 清空浏览器草稿失败不影响当前排轴。
+			}
+			return;
+		}
 		const path = autosavePathRef.current;
 		if (!path) return;
 		invoke("write_text_file", {
