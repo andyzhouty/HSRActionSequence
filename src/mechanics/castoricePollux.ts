@@ -3,8 +3,8 @@ import type {
 	CharacterConfig,
 	GeneratedAction,
 	SkillCode,
-} from "./actionSequence";
-import { getPolluxRule } from "./actionSequence";
+} from "../utils/actionSequence";
+import { getPolluxRule } from "../utils/actionSequence";
 
 // ── 类型 ──
 
@@ -219,3 +219,4 @@ export function applyCastoriceE2Pull(
 		}
 	}
 }
+

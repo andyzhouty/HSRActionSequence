@@ -8,7 +8,7 @@ import type {
 import {
 	type SimulateActionsInput,
 	simulateActions,
-} from "../src/utils/simulateActions";
+} from "../src/simulate/actions";
 
 function character(
 	id: string,
@@ -386,3 +386,7 @@ describe("Cyrene + Memory Trailblazer Full Integration", () => {
 		expect(enhancedQs.length).toBe(1);
 	});
 });
+
+
+
+

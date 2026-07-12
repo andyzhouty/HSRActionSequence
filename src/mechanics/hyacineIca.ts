@@ -3,8 +3,8 @@ import type {
 	CharacterConfig,
 	GeneratedAction,
 	SkillCode,
-} from "./actionSequence";
-import { toPositiveNumber } from "./actionSequence";
+} from "../utils/actionSequence";
+import { toPositiveNumber } from "../utils/actionSequence";
 
 // ── 类型 ──
 
@@ -145,3 +145,4 @@ export function applyHyacineE2SpeedBuff(
 	}
 	hyacine.hyacineE2SpeedBonus = 1; // 标记已应用
 }
+

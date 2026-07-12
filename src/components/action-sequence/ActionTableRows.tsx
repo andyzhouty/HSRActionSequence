@@ -26,7 +26,7 @@ import {
 	shouldRememberSkillTarget,
 	toPositiveNumber,
 } from "../../utils/actionSequence";
-import { hasSilverWolfGodmode } from "../../utils/silverWolfGodmode";
+import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
 import { SelectInput } from "./Controls";
 
 function getMemeTargetOptions(ctx: ReturnType<typeof useActionSequence>) {
@@ -950,3 +950,4 @@ function SkillTargetInline({ action }: { action: GeneratedAction }) {
 
 	return null;
 }
+

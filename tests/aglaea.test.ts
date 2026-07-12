@@ -7,7 +7,7 @@ import type {
 import {
 	type SimulateActionsInput,
 	simulateActions,
-} from "../src/utils/simulateActions";
+} from "../src/simulate/actions";
 
 const stripAv0 = (axs: { characterId: string }[]) =>
 	axs.filter((a) => a.characterId !== "@av0");
@@ -589,3 +589,7 @@ describe("Aglaea team integration", () => {
 		expect(qExtra?.actionValue).toBeCloseTo(aAction2?.actionValue ?? 0, 4);
 	});
 });
+
+
+
+

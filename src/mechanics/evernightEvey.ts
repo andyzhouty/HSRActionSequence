@@ -3,8 +3,8 @@ import type {
 	CharacterConfig,
 	GeneratedAction,
 	SkillCode,
-} from "./actionSequence";
-import { getEveyRule } from "./actionSequence";
+} from "../utils/actionSequence";
+import { getEveyRule } from "../utils/actionSequence";
 
 type EveyActionState = {
 	character: CharacterConfig;
@@ -194,3 +194,4 @@ export function handleEveyAction(
 	state.nextActionValue = actionValue + 10000 / state.currentSpeed;
 	state.blockNextAdvance = false;
 }
+

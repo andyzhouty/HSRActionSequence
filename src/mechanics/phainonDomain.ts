@@ -4,7 +4,7 @@ import {
 	getCounterWDomainRule,
 	type SkillCode,
 	toPositiveNumber,
-} from "./actionSequence";
+} from "../utils/actionSequence";
 
 export type PhainonDomainState = {
 	keyPrefix: string;
@@ -140,3 +140,4 @@ export function hasPhainonEnemyTriggerSkill(
 		rule.enemyTriggerSkills?.some((trigger) => skill.includes(trigger)) ?? false
 	);
 }
+

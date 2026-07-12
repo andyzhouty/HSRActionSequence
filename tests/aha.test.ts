@@ -3,7 +3,7 @@ import type { CharacterConfig, SkillCode } from "../src/utils/actionSequence";
 import {
 	type SimulateActionsInput,
 	simulateActions,
-} from "../src/utils/simulateActions";
+} from "../src/simulate/actions";
 
 function character(
 	id: string,
@@ -638,3 +638,7 @@ describe("Silver Wolf LV.999", () => {
 	});
 
 });
+
+
+
+

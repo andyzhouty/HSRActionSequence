@@ -129,7 +129,7 @@ export type OdeRule = {
 	code: string;
 	label: string;
 	fullName: string;
-	targetNames: string[];
+	targetCid?: string;
 	duration:
 		| "battle"
 		| "nextTurn"
@@ -408,12 +408,10 @@ export function getFireflyCombustionRule(
 
 export function getOdeRuleForTarget(
 	rule: CyreneUltimateRule,
-	targetName: string,
+	targetCid: string | undefined,
 ) {
 	return (
-		rule.odes.find((ode) =>
-			characterNameMatchesAliases(targetName, ode.targetNames),
-		) ?? rule.genericOde
+		rule.odes.find((ode) => ode.targetCid === targetCid) ?? rule.genericOde
 	);
 }
 

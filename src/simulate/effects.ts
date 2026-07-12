@@ -2,8 +2,8 @@ import { getCharacterPath, hasSkillEffect } from "../data/characters";
 import {
 	type CharacterConfig,
 	canUseSkillCode,
-	characterNameMatchesAliases,
 	type GeneratedAction,
+	getCharacterCid,
 	getCyreneUltimateRule,
 	getGarmentmakerRule,
 	getMemeAdvanceRule,
@@ -15,17 +15,17 @@ import {
 	type SpeedAdjustment,
 	shouldRememberSkillTarget,
 	toSignedNumber,
-} from "./actionSequence";
+} from "../utils/actionSequence";
 import {
 	findGarmentmakerState,
 	getAglaeaStackLimit,
 	syncGarmentmakerStacksToAglaea,
-} from "./aglaeaGarmentmaker";
+} from "../mechanics/aglaeaGarmentmaker";
 import type {
 	ActionState,
 	ActiveOdeState,
 	SimulateActionsInput,
-} from "./simulateTypes";
+} from "./types";
 
 // --- Internal helpers ---
 
@@ -470,10 +470,10 @@ export function applyOdeSelection(
 	if (!target) return;
 	const ode =
 		rule.odes.find((candidate) => candidate.code === selection.odeCode) ??
-		getOdeRuleForTarget(rule, target.character.name);
+		getOdeRuleForTarget(rule, getCharacterCid(target.character.name));
 	if (
-		ode.targetNames.length > 0 &&
-		!characterNameMatchesAliases(target.character.name, ode.targetNames)
+		ode.targetCid !== undefined &&
+		ode.targetCid !== getCharacterCid(target.character.name)
 	) {
 		return;
 	}
@@ -562,15 +562,12 @@ export function emitCyreneMemospriteAction({
 	const selectedOde =
 		selection && selectedTarget
 			? (cyreneRule.odes.find((ode) => ode.code === selection.odeCode) ??
-				getOdeRuleForTarget(cyreneRule, selectedTarget.character.name))
+				getOdeRuleForTarget(cyreneRule, getCharacterCid(selectedTarget.character.name)))
 			: undefined;
 	if (selection && selectedOde?.effects?.includes("immediateEnhancedSkill")) {
 		if (
 			selectedTarget &&
-			characterNameMatchesAliases(
-				selectedTarget.character.name,
-				selectedOde.targetNames,
-			)
+			selectedOde.targetCid === getCharacterCid(selectedTarget.character.name)
 		) {
 			actions.push({
 				key: `${memospriteKey}-ode-${selectedOde.code}`,
@@ -644,3 +641,6 @@ export function emitMemeAdvanceAction({
 	meme.nextActionValue = actionValue + 10000 / meme.currentSpeed;
 	meme.blockNextAdvance = false;
 }
+
+
+

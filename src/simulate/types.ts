@@ -5,9 +5,9 @@ import type {
 	SkillCode,
 	SpeedAdjustment,
 	UltInterrupt,
-} from "./actionSequence";
-import type { AglaeaActionState } from "./aglaeaGarmentmaker";
-import type { PhainonDomainState } from "./phainonDomain";
+} from "../utils/actionSequence";
+import type { AglaeaActionState } from "../mechanics/aglaeaGarmentmaker";
+import type { PhainonDomainState } from "../mechanics/phainonDomain";
 
 // ── 输入类型 ──
 

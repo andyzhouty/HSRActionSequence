@@ -3,7 +3,7 @@ import {
 	type CharacterConfig,
 	canUseSkillCode,
 } from "../src/utils/actionSequence";
-import { simulateActions } from "../src/utils/simulateActions";
+import { simulateActions } from "../src/simulate/actions";
 import {
 	character,
 	input,
@@ -13,7 +13,7 @@ import {
 	stripAv0,
 } from "./helpers/simulateActionTestUtils";
 
-describe("simulateActions", () => {
+describe("actions", () => {
 	it("orders basic actions by action value and applies manual overrides", () => {
 		const actions = simulateActions(
 			input({
@@ -494,3 +494,6 @@ describe("The Herta", () => {
 		);
 	});
 });
+
+
+

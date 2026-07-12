@@ -6,7 +6,7 @@ import type {
 import {
 	type SimulateActionsInput,
 	simulateActions,
-} from "../src/utils/simulateActions";
+} from "../src/simulate/actions";
 
 function character(
 	id: string,
@@ -1145,3 +1145,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		);
 	});
 });
+
+
+
+

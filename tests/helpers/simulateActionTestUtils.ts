@@ -4,7 +4,7 @@ import type {
 	SpeedAdjustment,
 	UltInterrupt,
 } from "../../src/utils/actionSequence";
-import type { SimulateActionsInput } from "../../src/utils/simulateActions";
+import type { SimulateActionsInput } from "../../src/simulate/actions";
 
 export const stripAv0 = (axs: { characterId: string }[]) =>
 	axs.filter((a) => a.characterId !== "@av0");
@@ -68,3 +68,5 @@ export function interrupts(
 ): Record<string, UltInterrupt[]> {
 	return entries;
 }
+
+

@@ -20,8 +20,8 @@ import {
 import { ActionLimitMarkerRow, ActionRow } from "./ActionTableRows";
 import { SelectInput, TextInput } from "./Controls";
 import ExportExcelButton from "./ExportExcelButton";
-import { hasHyacineIca } from "../../utils/hyacineIca";
-import { hasSilverWolfGodmode } from "../../utils/silverWolfGodmode";
+import { hasHyacineIca } from "../../mechanics/hyacineIca";
+import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
 
 export default function ActionPanel() {
 	const ctx = useActionSequence();
@@ -1336,3 +1336,4 @@ function EvernightSelfDestructSection() {
 		</div>
 	);
 }
+

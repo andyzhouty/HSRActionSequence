@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { simulateActions } from "../src/utils/simulateActions";
+import { simulateActions } from "../src/simulate/actions";
 import { character, input, skills } from "./helpers/simulateActionTestUtils";
 
 describe("Himeko Nova Assist (姬子·启行 F)", () => {
@@ -104,3 +104,6 @@ describe("Himeko Nova Assist (姬子·启行 F)", () => {
 		expect(actions.find((a) => a.key === "other-2")).toBeDefined();
 	});
 });
+
+
+

@@ -6,7 +6,7 @@ import type {
 import {
 	type SimulateActionsInput,
 	simulateActions,
-} from "../src/utils/simulateActions";
+} from "../src/simulate/actions";
 
 function character(
 	id: string,
@@ -281,3 +281,7 @@ describe("Hyacine (风堇) Ica System", () => {
 		expect(actions.find((a) => a.key === "ally-1-interrupt-0-ica")).toBeDefined();
 	});
 });
+
+
+
+

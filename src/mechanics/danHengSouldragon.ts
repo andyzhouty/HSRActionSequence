@@ -2,8 +2,8 @@ import type {
 	CharacterConfig,
 	GeneratedAction,
 	SkillCode,
-} from "./actionSequence";
-import { getCharacterCid } from "./actionSequence";
+} from "../utils/actionSequence";
+import { getCharacterCid } from "../utils/actionSequence";
 
 export const SOULDRAGON_SPEED = 165;
 
@@ -114,3 +114,4 @@ export function emitImmediateSouldragonAction(
 	if (!state) return;
 	emitSouldragonAction(state, actions, actionValue, `${sourceKey}-souldragon`);
 }
+

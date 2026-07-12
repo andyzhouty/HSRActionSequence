@@ -1,5 +1,5 @@
 import { getCharacterCid } from "../data/characters";
-import { type SkillCode } from "./actionSequence";
+import { type SkillCode } from "../utils/actionSequence";
 
 export type GodmodeState = {
 	isInGodmode?: boolean;
@@ -45,3 +45,4 @@ export function getGodmodeSkill(
 	if (!isInGodmode(state)) return (override ?? "") as SkillCode;
 	return "A" as SkillCode;
 }
+

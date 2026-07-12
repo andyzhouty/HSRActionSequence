@@ -7,7 +7,7 @@ import type {
 import {
 	type SimulateActionsInput,
 	simulateActions,
-} from "../src/utils/simulateActions";
+} from "../src/simulate/actions";
 
 /** Filter out the utility @av0 target from action arrays */
 const stripAv0 = (actions: { key: string; characterId: string }[]) =>
@@ -386,3 +386,7 @@ describe("Cyrene (昔涟)", () => {
 		expect(recharged?.activeOdeLabels).toContain("浪漫");
 	});
 });
+
+
+
+

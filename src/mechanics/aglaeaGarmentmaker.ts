@@ -6,7 +6,7 @@ import {
 	getGarmentmakerRule,
 	isCharacterTarget,
 	type SkillCode,
-} from "./actionSequence";
+} from "../utils/actionSequence";
 
 export type AglaeaActionState = {
 	character: CharacterConfig;
@@ -391,3 +391,4 @@ export function handleAglaeaSkillEffects(
 		increaseGarmentmakerStacks(states, state.character.id, actionValue);
 	}
 }
+

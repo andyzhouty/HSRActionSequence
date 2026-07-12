@@ -851,7 +851,6 @@
             "code": "generic",
             "label": "诗篇",
             "fullName": "诗篇",
-            "targetNames": [],
             "duration": "turns",
             "turns": 2
           },
@@ -860,53 +859,35 @@
               "code": "genesis",
               "label": "创世",
               "fullName": "创世之诗",
-              "targetNames": [
-                "开拓者·记忆",
-                "记忆主",
-                "RMC"
-              ],
+              "targetCid": "8008",
               "duration": "battle"
             },
             {
               "code": "passage",
               "label": "门径",
               "fullName": "门径之诗",
-              "targetNames": [
-                "缇宝",
-                "Tribbie"
-              ],
+              "targetCid": "1403",
               "duration": "battle"
             },
             {
               "code": "lifeDeath",
               "label": "生死",
               "fullName": "生死之诗",
-              "targetNames": [
-                "遐蝶",
-                "Castorice"
-              ],
+              "targetCid": "1407",
               "duration": "battle"
             },
             {
               "code": "trickery",
               "label": "诡计",
               "fullName": "诡计之诗",
-              "targetNames": [
-                "赛飞儿",
-                "猫",
-                "猫猫",
-                "Cipher"
-              ],
+              "targetCid": "1406",
               "duration": "battle"
             },
             {
               "code": "worldbearing",
               "label": "负世",
               "fullName": "负世之诗",
-              "targetNames": [
-                "白厄",
-                "Phainon"
-              ],
+              "targetCid": "1408",
               "duration": "battle",
               "effects": [
                 "endlessCounterWDomain"
@@ -916,45 +897,28 @@
               "code": "law",
               "label": "律法",
               "fullName": "律法之诗",
-              "targetNames": [
-                "刻律德菈",
-                "刻律",
-                "刻",
-                "Cerydra"
-              ],
+              "targetCid": "1412",
               "duration": "battle"
             },
             {
               "code": "time",
               "label": "岁月",
               "fullName": "岁月之诗",
-              "targetNames": [
-                "长夜月",
-                "月",
-                "Evernight"
-              ],
+              "targetCid": "1413",
               "duration": "battle"
             },
             {
               "code": "earth",
               "label": "大地",
               "fullName": "大地之诗",
-              "targetNames": [
-                "丹恒·腾荒",
-                "盾丹",
-                "DHPT"
-              ],
+              "targetCid": "1414",
               "duration": "battle"
             },
             {
               "code": "reason",
               "label": "理性",
               "fullName": "理性之诗",
-              "targetNames": [
-                "那刻夏",
-                "夏",
-                "Anaxa"
-              ],
+              "targetCid": "1405",
               "duration": "nextTurn",
               "effects": [
                 "immediateTurn"
@@ -964,10 +928,7 @@
               "code": "strife",
               "label": "纷争",
               "fullName": "纷争之诗",
-              "targetNames": [
-                "万敌",
-                "Mydei"
-              ],
+              "targetCid": "1404",
               "duration": "extraTurn",
               "effects": [
                 "immediateEnhancedSkill"
@@ -977,20 +938,14 @@
               "code": "ocean",
               "label": "海洋",
               "fullName": "海洋之诗",
-              "targetNames": [
-                "海瑟音",
-                "Hysilens"
-              ],
+              "targetCid": "1410",
               "duration": "nextAttack"
             },
             {
               "code": "sky",
               "label": "天空",
               "fullName": "天空之诗",
-              "targetNames": [
-                "风堇",
-                "Hyacine"
-              ],
+              "targetCid": "1409",
               "duration": "stacks",
               "stacks": 2
             },
@@ -998,10 +953,7 @@
               "code": "romance",
               "label": "浪漫",
               "fullName": "浪漫之诗",
-              "targetNames": [
-                "阿格莱雅",
-                "Aglaea"
-              ],
+              "targetCid": "1402",
               "duration": "battle",
               "effects": [
                 "odeToRomance"
@@ -1214,7 +1166,6 @@
         "code": "generic",
         "label": "诗篇",
         "fullName": "诗篇",
-        "targetNames": [],
         "duration": "turns",
         "turns": 2
       },
@@ -1263,3 +1214,5 @@
     }
   }
 }
+
+

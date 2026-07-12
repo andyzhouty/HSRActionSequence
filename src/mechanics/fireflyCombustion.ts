@@ -3,10 +3,10 @@ import type {
 	CharacterConfig,
 	GeneratedAction,
 	SkillCode,
-} from "./actionSequence";
-import { getFireflyCombustionRule, isCharacterTarget } from "./actionSequence";
-import { findHimekoNovaAssistState } from "./simulateEffects";
-import type { ActionState, SimulateActionsInput } from "./simulateTypes";
+} from "../utils/actionSequence";
+import { getFireflyCombustionRule, isCharacterTarget } from "../utils/actionSequence";
+import { findHimekoNovaAssistState } from "../simulate/effects";
+import type { ActionState, SimulateActionsInput } from "../simulate/types";
 
 // ── Firefly Complete Combustion ──
 // Character-specific numbers live in characters.json; this module keeps only
@@ -284,3 +284,7 @@ export function checkBreakTrigger(
 		input,
 	);
 }
+
+
+
+

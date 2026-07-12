@@ -16,8 +16,8 @@ import {
 	type CharacterConfig,
 	type GeneratedAction,
 } from "../../utils/actionSequence";
-import { simulateActions } from "../../utils/simulateActions";
-import type { SimulateActionsInput } from "../../utils/simulateActions";
+import { simulateActions } from "../../simulate/actions";
+import type { SimulateActionsInput } from "../../simulate/actions";
 import { pruneRecord } from "./savedData";
 import type { NormalizedSavedData } from "./savedData";
 
@@ -370,3 +370,6 @@ export function useGeneratedActions({
 		charactersById,
 	};
 }
+
+
+

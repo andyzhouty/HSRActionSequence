@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { simulateActions } from "../src/utils/simulateActions";
+import { simulateActions } from "../src/simulate/actions";
 import { character, input, skills } from "./helpers/simulateActionTestUtils";
 
 describe("Evernight (长夜月)", () => {
@@ -282,3 +282,6 @@ describe("Evernight (长夜月)", () => {
 		expect(owner?.speed).toBeCloseTo(132.67, 4);
 	});
 });
+
+
+

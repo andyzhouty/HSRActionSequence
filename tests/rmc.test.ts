@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { simulateActions } from "../src/utils/simulateActions";
+import { simulateActions } from "../src/simulate/actions";
 import { character, input, skills } from "./helpers/simulateActionTestUtils";
 
 describe("Memory Trailblazer (开拓者·记忆)", () => {
@@ -134,3 +134,6 @@ describe("Memory Trailblazer (开拓者·记忆)", () => {
 		expect(ownerMeme!.actionValue).toBeLessThan(directMeme!.actionValue);
 	});
 });
+
+
+

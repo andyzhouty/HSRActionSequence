@@ -44,7 +44,7 @@ import {
 	type SavedData,
 	type SkillCode,
 } from "../utils/actionSequence";
-import { hasDanHengSouldragon } from "../utils/danHengSouldragon";
+import { hasDanHengSouldragon } from "../mechanics/danHengSouldragon";
 
 export default function ActionSequence() {
 	const [selectedActionKeys, setSelectedActionKeys] = useState<Set<string>>(
@@ -513,3 +513,6 @@ const updateActionSkill = (action: GeneratedAction, value: string) => {
 		</ActionSequenceCtx.Provider>
 	);
 }
+
+
+
