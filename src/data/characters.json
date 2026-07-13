@@ -91,7 +91,6 @@
       "cid": "1013",
       "names": [
         "黑塔",
-        "黑塔女士",
         "Herta",
         "小黑塔"
       ],
@@ -148,8 +147,7 @@
       "cid": "1103",
       "names": [
         "希露瓦",
-        "Serval",
-        "希露瓦姐姐"
+        "Serval"
       ],
       "path": "Erudition"
     },
@@ -492,8 +490,7 @@
       "cid": "1304",
       "names": [
         "砂金",
-        "Aventurine",
-        "砂金石"
+        "Aventurine"
       ],
       "path": "Preservation"
     },
@@ -502,6 +499,7 @@
       "names": [
         "真理医生",
         "Dr. Ratio",
+        "Dr.Ratio",
         "真理"
       ],
       "path": "Hunt"
@@ -529,8 +527,7 @@
       "cid": "1308",
       "names": [
         "黄泉",
-        "Acheron",
-        "泉姐"
+        "Acheron"
       ],
       "path": "Nihility"
     },
@@ -612,8 +609,7 @@
       "cid": "1315",
       "names": [
         "波提欧",
-        "Boothill",
-        "波波"
+        "Boothill"
       ],
       "path": "Hunt"
     },
@@ -716,7 +712,8 @@
       "cid": "1407",
       "names": [
         "遐蝶",
-        "Castorice"
+        "Castorice",
+        "蝶"
       ],
       "effects": {
         "Q": "summonPollux"
@@ -820,6 +817,7 @@
         "丹恒•腾荒",
         "盾丹",
         "DHPT",
+        "dhpt",
         "Dan Heng • Permansor Terrae"
       ],
 		"passives": [
