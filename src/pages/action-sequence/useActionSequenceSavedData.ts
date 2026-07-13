@@ -63,6 +63,7 @@ type SavedDataFieldSetters = {
 	setDancePartner: Dispatch<SetStateAction<string | undefined>>;
 	setBondmateTarget: Dispatch<SetStateAction<string | undefined>>;
 	setAttackDisabled: Dispatch<SetStateAction<Record<string, boolean>>>;
+	setSaberAdvanceToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 };
 
 export function useActionSequenceSavedData() {
@@ -148,14 +149,16 @@ export function useActionSequenceSavedData() {
 				setSavedField("evernightSelfDestructToggles", updater),
 			setEvernightThresholdBurstToggles: (updater) =>
 				setSavedField("evernightThresholdBurstToggles", updater),
-			setFuaToggles: (updater: any) => setSavedField("fuaToggles", updater),
-			setSameAVOrder: (updater: any) => setSavedField("sameAVOrder", updater),
+			setFuaToggles: (updater) => setSavedField("fuaToggles", updater),
+			setSameAVOrder: (updater) => setSavedField("sameAVOrder", updater),
 			setHyacineE2Active: (updater) =>
 				setSavedField("hyacineE2Active", updater),
 			setMeritTarget: (updater) => setSavedField("meritTarget", updater),
 			setDancePartner: (updater) => setSavedField("dancePartner", updater),
 			setBondmateTarget: (updater) => setSavedField("bondmateTarget", updater),
 			setAttackDisabled: (updater) => setSavedField("attackDisabled", updater),
+			setSaberAdvanceToggles: (updater) =>
+				setSavedField("saberAdvanceToggles", updater),
 		}),
 		[setSavedField],
 	);

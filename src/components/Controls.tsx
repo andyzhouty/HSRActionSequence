@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getSpecialActionHint } from "../../utils/actionSequence";
+import { getSpecialActionHint } from "../utils/actionSequence";
 
 export type SelectOption = {
 	value: string;

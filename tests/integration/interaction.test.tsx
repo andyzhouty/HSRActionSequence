@@ -36,7 +36,7 @@ function character(
 		hasVonwacq: options.hasVonwacq ?? false,
 		hasWindSet: options.hasWindSet ?? false,
 		hasDance: options.hasDance ?? false,
-		hasCastoriceTechnique: options.hasCastoriceTechnique ?? false,
+		techniqueOn: options.techniqueOn ?? false,
 		eidolon: options.eidolon ?? 0,
 		superimpose: options.superimpose ?? 1,
 		lc_id: options.lc_id ?? 0,
@@ -76,7 +76,7 @@ describe("ActionSequence front-end interaction", () => {
 			characters: [
 				character("castorice", "遐蝶", 94, {
 					eidolon: 2,
-					hasCastoriceTechnique: true,
+					techniqueOn: true,
 				}),
 				character("sunday", "星期日", 164, {
 					hasVonwacq: true,

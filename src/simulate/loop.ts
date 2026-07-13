@@ -1,8 +1,9 @@
+import { advanceSaberAfterAction } from "../mechanics/saber";
 import type { GeneratedAction } from "../utils/actionSequence";
 import { createActionContext } from "./context";
 import { handleDomainAction } from "./domain";
 import { handleGarmentmakerActionTurn } from "./garmentmakerAction";
-import { handleNormalAction, type NormalActionResult } from "./normalAction";
+import { handleNormalAction, type NormalActionResult } from "./normal-action";
 import { runPostActionCleanup } from "./postAction";
 import { runPreActionChecks } from "./preAction";
 import type { SimulationCallbacks, SimulationRuntime } from "./runtime";
@@ -68,10 +69,22 @@ export function runSimulationLoop(params: {
 				callbacks: runtime.callbacks,
 			})
 		) {
+			advanceSaberAfterAction(
+				states,
+				input.saberAdvanceToggles,
+				key,
+				actionValue,
+			);
 			continue;
 		}
 
 		if (handleGarmentmakerActionTurn(runtime, context)) {
+			advanceSaberAfterAction(
+				states,
+				input.saberAdvanceToggles,
+				key,
+				actionValue,
+			);
 			continue;
 		}
 
@@ -86,6 +99,12 @@ export function runSimulationLoop(params: {
 				input,
 			)
 		) {
+			advanceSaberAfterAction(
+				states,
+				input.saberAdvanceToggles,
+				key,
+				actionValue,
+			);
 			continue;
 		}
 

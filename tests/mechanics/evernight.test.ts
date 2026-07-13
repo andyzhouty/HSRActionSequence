@@ -26,7 +26,7 @@ describe("Evernight (长夜月)", () => {
 			input({
 				characters: [
 					character("castorice", "遐蝶", 100, {
-						hasCastoriceTechnique: true,
+						techniqueOn: true,
 					}),
 					character("evernight", "长夜月", 100),
 				],

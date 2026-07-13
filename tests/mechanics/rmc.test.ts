@@ -39,6 +39,32 @@ describe("Memory Trailblazer (开拓者·记忆)", () => {
 		expect(seeleAction?.actionValue).toBeCloseTo(rmc1?.actionValue, 1);
 	});
 
+	it("迷迷提前记忆主后优先于同 AV 的 Saber 正常行动", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("rmc", "开拓者·记忆", 200),
+					character("saber", "Saber", 130),
+				],
+				skillOverrides: skills({ "rmc-1": "E" }),
+				memeSelections: { "saber-1-meme": "rmc" },
+				saberAdvanceToggles: { "saber-1": true },
+				limit: 120,
+			}),
+		);
+		const saberFirst = actions.findIndex((action) => action.key === "saber-1");
+		const meme = actions.findIndex((action) => action.key === "saber-1-meme");
+		const rmcSecond = actions.findIndex((action) => action.key === "rmc-2");
+		const saberSecond = actions.findIndex((action) => action.key === "saber-2");
+
+		expect(saberFirst).toBeGreaterThanOrEqual(0);
+		expect(meme).toBeGreaterThan(saberFirst);
+		expect(rmcSecond).toBeGreaterThan(meme);
+		expect(saberSecond).toBeGreaterThan(rmcSecond);
+		expect(actions[meme]?.isMemeAdvanceAction).toBe(true);
+		expect(actions[meme]).not.toHaveProperty("isMemeAction");
+	});
+
 	it("迷迷死亡只能通过右键标记触发，并使记忆主 25% 自拉条", () => {
 		const baseInput = input({
 			characters: [

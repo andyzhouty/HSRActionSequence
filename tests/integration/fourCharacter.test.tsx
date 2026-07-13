@@ -36,7 +36,7 @@ function character(
 		hasVonwacq: options.hasVonwacq ?? false,
 		hasWindSet: options.hasWindSet ?? false,
 		hasDance: options.hasDance ?? false,
-		hasCastoriceTechnique: options.hasCastoriceTechnique ?? false,
+		techniqueOn: options.techniqueOn ?? false,
 		eidolon: options.eidolon ?? 0,
 		superimpose: options.superimpose ?? 1,
 		lc_id: options.lc_id ?? 0,
@@ -77,7 +77,7 @@ describe("ActionSequence four-character front-end interaction", () => {
 			characters: [
 				character("castorice", "遐蝶", 94, {
 					eidolon: 2,
-					hasCastoriceTechnique: true,
+					techniqueOn: true,
 				}),
 				character("evernight", "长夜月", 100),
 				character("hyacine", "风堇", 101),

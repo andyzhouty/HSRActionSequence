@@ -14,15 +14,19 @@ export function selectNextAction(
 ): ActionCandidate | undefined {
 	const candidates = states.map((state, stateIndex) => {
 		const key =
-			state.isGarmentmakerState && state.garmentmakerGeneration
-				? `${state.character.id}-g${state.garmentmakerGeneration}-${state.actionNo}`
-				: state.isEveyAction && state.eveyGeneration && state.eveyGeneration > 1
-					? `${state.character.id}-${state.actionNo}-g${state.eveyGeneration}`
-					: state.isPolluxAction &&
-							state.polluxGeneration &&
-							state.polluxGeneration > 1
-						? `${state.character.id}-${state.actionNo}-g${state.polluxGeneration}`
-						: `${state.character.id}-${state.actionNo}`;
+			state.isMemeState && state.memeAdvanceSourceKey
+				? `${state.memeAdvanceSourceKey}-meme`
+				: state.isGarmentmakerState && state.garmentmakerGeneration
+					? `${state.character.id}-g${state.garmentmakerGeneration}-${state.actionNo}`
+					: state.isEveyAction &&
+							state.eveyGeneration &&
+							state.eveyGeneration > 1
+						? `${state.character.id}-${state.actionNo}-g${state.eveyGeneration}`
+						: state.isPolluxAction &&
+								state.polluxGeneration &&
+								state.polluxGeneration > 1
+							? `${state.character.id}-${state.actionNo}-g${state.polluxGeneration}`
+							: `${state.character.id}-${state.actionNo}`;
 		return {
 			stateIndex,
 			key,

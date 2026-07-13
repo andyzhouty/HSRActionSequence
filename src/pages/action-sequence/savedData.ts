@@ -118,6 +118,7 @@ export type NormalizedSavedData = SavedData & {
 	sameAVOrder: Record<string, number>;
 	hyacineE2Active: boolean;
 	attackDisabled: Record<string, boolean>;
+	saberAdvanceToggles: Record<string, boolean>;
 };
 
 export function toNormalizedSavedData(
@@ -171,6 +172,7 @@ export function toNormalizedSavedData(
 		dancePartner: migrated.dancePartner || undefined,
 		bondmateTarget: migrated.bondmateTarget || undefined,
 		attackDisabled: migrated.attackDisabled ?? {},
+		saberAdvanceToggles: migrated.saberAdvanceToggles ?? {},
 	};
 }
 
@@ -203,6 +205,7 @@ export function createDefaultSavedData(): NormalizedSavedData {
 		sameAVOrder: {},
 		hyacineE2Active: true,
 		attackDisabled: {},
+		saberAdvanceToggles: {},
 	});
 }
 

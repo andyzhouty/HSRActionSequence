@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import ActionPanel from "../components/action-sequence/ActionPanel";
-import CharacterPanel from "../components/action-sequence/CharacterPanel";
+import ActionPanel from "../components/ActionPanel";
+import CharacterPanel from "../components/CharacterPanel";
 import { ActionSequenceCtx } from "../contexts/ActionSequenceContext";
 import { hasDanHengSouldragon } from "../mechanics/danHengSouldragon";
 import {
@@ -135,6 +135,8 @@ export default function ActionSequence() {
 		setBondmateTarget,
 		attackDisabled,
 		setAttackDisabled,
+		saberAdvanceToggles,
+		setSaberAdvanceToggles,
 	} = useActionSequenceSavedData();
 
 	// 长夜月在队伍时自动锁死"忆质"资源列
@@ -449,6 +451,8 @@ export default function ActionSequence() {
 				setBondmateTarget,
 				attackDisabled,
 				setAttackDisabled,
+				saberAdvanceToggles,
+				setSaberAdvanceToggles,
 				resourceValues,
 				setResourceValues,
 				actions,

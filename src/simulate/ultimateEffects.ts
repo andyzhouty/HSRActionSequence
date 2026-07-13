@@ -18,6 +18,7 @@ import {
 	activateCombustion,
 	shouldActivateCombustion,
 } from "../mechanics/fireflyCombustion";
+import { hasSaber } from "../mechanics/saber";
 import {
 	activateGodmode,
 	hasSilverWolfGodmode,
@@ -65,6 +66,7 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 	} = params;
 	const caster = states[casterIndex];
 	const character = caster.character;
+	if (hasSaber(character)) caster.saberForceBasicAttack = true;
 
 	// 1. 阿格莱雅至高之姿
 	handleAglaeaSkillEffects(states, casterIndex, "Q", actionValue);

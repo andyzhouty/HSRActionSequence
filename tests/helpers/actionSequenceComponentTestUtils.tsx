@@ -77,6 +77,8 @@ export function createMockContext(
 		setBondmateTarget: vi.fn(),
 		attackDisabled: {},
 		setAttackDisabled: vi.fn(),
+		saberAdvanceToggles: {},
+		setSaberAdvanceToggles: vi.fn(),
 		resourceValues: {},
 		setResourceValues: vi.fn(),
 		actions: [],

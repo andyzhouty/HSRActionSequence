@@ -1,5 +1,6 @@
 import {
 	hasSemanticFlag as characterHasSemanticFlag,
+	getCharacterCid,
 	getDefaultEffectRule,
 	getEffectRule,
 	hasSkillEffect,
@@ -40,8 +41,12 @@ export type CharacterConfig = {
 	hasVonwacq: boolean;
 	hasWindSet: boolean;
 	hasDance: boolean;
+	/** @deprecated 使用 techniqueOn 替代，保留以兼容旧数据 */
 	hasCastoriceTechnique?: boolean;
+	/** @deprecated 使用 techniqueOn 替代，保留以兼容旧数据 */
 	hasAglaeaTechnique?: boolean;
+	/** 通用秘技开关。开启后由引擎根据角色 CID 决定秘技效果。 */
+	techniqueOn?: boolean;
 	eidolon: number;
 	superimpose: number;
 	lc_id: number;
@@ -88,6 +93,8 @@ export type GeneratedAction = {
 	isMemospriteAction?: boolean;
 	memospriteOwnerId?: string;
 	isMemeAction?: boolean;
+	/** 由右键配置提前的迷迷正常行动。 */
+	isMemeAdvanceAction?: boolean;
 	memeOwnerId?: string;
 	isOdeExtraAction?: boolean;
 	isCombustionAction?: boolean;
@@ -112,8 +119,14 @@ export type GeneratedAction = {
 	isElationSkill?: boolean; // 欢愉技标记
 	hasElationSkills?: boolean; // 阿哈时刻容器标记（含可折叠的欢愉技子列表）
 	elationSkillParentKey?: string; // 欢愉技所属的阿哈时刻 key
-	isFuaAction?: boolean; // 绯英追击标记（技能 Z）
+	isFuaAction?: boolean; // 追击标记（绯英右键 Z 或红A充能 Z）
 	interruptTiming?: "before" | "after"; // 手动插队 Q 的相对时机
+	isArcherExtraE?: boolean; // 红A {n}E 拆分后的额外 E 回合
+	archerExtraEIndex?: number; // 红A 额外 E 的序号（第 i 箭）
+	hasArcherExtraEs?: boolean; // 红A多箭主 E 的可折叠子行动容器
+	archerExtraEParentKey?: string; // 红A额外箭所属的主 E key
+	isArcherFua?: boolean;
+	archerFuaCharge?: number;
 };
 
 export type SpeedAdjustment = {
@@ -458,6 +471,7 @@ export type SavedData = {
 	dancePartner?: string;
 	bondmateTarget?: string;
 	attackDisabled?: Record<string, boolean>;
+	saberAdvanceToggles?: Record<string, boolean>;
 };
 
 export const targetKinds: TargetKind[] = [
@@ -472,6 +486,7 @@ export const limitPresets = ["150", "300", "500", "自定义"];
 export const maxResources = 6;
 export const defaultResources = ["战技点"];
 export const evernightResourceName = "忆质";
+export const archerFuaResourceName = "红A追击";
 export const CURRENT_SAVEDATA_VERSION = 1;
 
 export function isCharacterTarget(character: CharacterConfig) {
@@ -486,24 +501,31 @@ export function hasEvernightCharacter(characters: CharacterConfig[]) {
 	);
 }
 
+export function hasArcherCharacter(characters: CharacterConfig[]) {
+	return characters.some(
+		(character) =>
+			isCharacterTarget(character) &&
+			hasSkillEffect(character.name, "Q", "archerUltimate"),
+	);
+}
+
 export function normalizeResourcesForCharacters(
 	resources: string[],
 	characters: CharacterConfig[],
 ) {
 	const hasEvernight = hasEvernightCharacter(characters);
+	const hasArcher = hasArcherCharacter(characters);
 	const filtered = resources.filter(
-		(resource) => resource !== evernightResourceName,
+		(resource) =>
+			resource !== evernightResourceName &&
+			resource !== archerFuaResourceName &&
+			(!hasArcher || resource !== defaultResources[0]),
 	);
-	if (!hasEvernight) {
-		return filtered.slice(0, maxResources);
-	}
-	if (filtered.length >= maxResources) {
-		return [
-			evernightResourceName,
-			...filtered.slice(0, Math.max(0, maxResources - 1)),
-		];
-	}
-	return [evernightResourceName, ...filtered];
+	const locked = [
+		...(hasArcher ? [defaultResources[0], archerFuaResourceName] : []),
+		...(hasEvernight ? [evernightResourceName] : []),
+	];
+	return [...locked, ...filtered].slice(0, maxResources);
 }
 
 export function isLockedResourceNameForCharacters(
@@ -511,7 +533,11 @@ export function isLockedResourceNameForCharacters(
 	characters: CharacterConfig[],
 ) {
 	return (
-		hasEvernightCharacter(characters) && resourceName === evernightResourceName
+		(hasEvernightCharacter(characters) &&
+			resourceName === evernightResourceName) ||
+		(hasArcherCharacter(characters) &&
+			(resourceName === defaultResources[0] ||
+				resourceName === archerFuaResourceName))
 	);
 }
 
@@ -534,6 +560,46 @@ export function canSelectSkillTargetForAction(
 	return true;
 }
 
+/** 返回技能本身是否支持选择我方角色或忆灵作为目标。 */
+export function canSelectAllyForSkill(
+	character: CharacterConfig,
+	skill: SkillCode,
+): boolean {
+	if (!isCharacterTarget(character)) return false;
+	const targetsWithE =
+		skill === "E" &&
+		(hasSkillEffect(character.name, "E", "allyPullToCurrent") ||
+			hasSkillEffect(character.name, "E", "sundayPullWithMemosprite") ||
+			hasSkillEffect(character.name, "E", "allyAdvance50NotPast") ||
+			hasSkillEffect(character.name, "E", "allyTargetSelectable"));
+	const targetsWithQ =
+		skill === "Q" &&
+		(hasSkillEffect(character.name, "Q", "allyTargetSelectable") ||
+			hasSkillEffect(character.name, "Q", "elationTrailblazerUltimate"));
+	return targetsWithE || targetsWithQ;
+}
+
+export function isBasicAttackSkill(skill: SkillCode): boolean {
+	return skill === "" || skill === "A";
+}
+
+/** 可选我方目标的技能、知更鸟/阮梅 E/Q 和藿藿 E 都不计为攻击。 */
+export function isNonAttackSkill(
+	character: CharacterConfig,
+	skill: SkillCode,
+): boolean {
+	const cid = getCharacterCid(character.name);
+	// Saber 的 A/E/Q 均固定视为攻击。
+	if (cid === "1014" && (skill === "A" || skill === "E" || skill === "Q")) {
+		return false;
+	}
+	return (
+		canSelectAllyForSkill(character, skill) ||
+		((cid === "1303" || cid === "1309") && (skill === "E" || skill === "Q")) ||
+		(cid === "1217" && skill === "E")
+	);
+}
+
 export function isEnemyTarget(kind: TargetKind | undefined) {
 	return kind === "敌人";
 }
@@ -545,6 +611,13 @@ export function shouldRememberSkillTarget(characterName: string) {
 export function canUseSkillCode(character: CharacterConfig, skill: SkillCode) {
 	if (skill === "") return true;
 	if (!isCharacterTarget(character)) return false;
+
+	// 红A {n}E 支持：数字前缀 + E（如 4E、1E、E）
+	if (
+		hasSkillEffect(character.name, "Q", "archerUltimate") &&
+		/^\d*E$/.test(skill)
+	)
+		return true;
 
 	const chars = [...skill];
 	for (const c of chars) {
@@ -600,6 +673,7 @@ export function createTarget(
 		hasDance: false,
 		hasCastoriceTechnique: false,
 		hasAglaeaTechnique: false,
+		techniqueOn: true,
 		eidolon: 0,
 		superimpose: 1,
 		lc_id: 0,

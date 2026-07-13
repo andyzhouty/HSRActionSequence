@@ -1,5 +1,6 @@
 import { hasPassive, hasSkillEffect } from "../data/characters";
 import { summonGarmentmakerState } from "../mechanics/aglaeaGarmentmaker";
+import { clampArcherFuaCharge, hasArcher } from "../mechanics/archer";
 import {
 	applyCastoriceE2Pull,
 	hasCastoriceSummon,
@@ -54,6 +55,9 @@ export function buildInitialStates(
 				actionNo: 1,
 				nextActionValue: firstActionValue,
 				blockNextAdvance: false,
+				archerFuaCharge: hasArcher(character)
+					? clampArcherFuaCharge(isTechniqueOn(character) ? 2 : 1)
+					: undefined,
 			};
 		});
 }
@@ -158,13 +162,23 @@ export function setupAhaMoment(states: ActionState[]): AhaState {
 	};
 }
 
-/** 在 AV=0 应用遐蝶、阿格莱雅和长夜的秘技召唤。 */
+/** 通用秘技开关（兼容旧字段 hasCastoriceTechnique / hasAglaeaTechnique）。 */
+function isTechniqueOn(character: CharacterConfig): boolean {
+	return (
+		character.techniqueOn ??
+		character.hasCastoriceTechnique ??
+		character.hasAglaeaTechnique ??
+		false
+	);
+}
+
+/** 在 AV=0 应用秘技召唤：遐蝶 → 死龙，阿格莱雅 → 衣匠，长夜月 → 长夜（无需开关）。 */
 export function applyTechniqueSummons(states: ActionState[]): void {
 	for (const state of [...states]) {
 		if (
 			isCharacterTarget(state.character) &&
 			hasCastoriceSummon(state.character.name) &&
-			state.character.hasCastoriceTechnique &&
+			isTechniqueOn(state.character) &&
 			!state.polluxOnField
 		) {
 			summonPollux(states, state.character, 0, { sameActionPriority: -1 });
@@ -180,7 +194,7 @@ export function applyTechniqueSummons(states: ActionState[]): void {
 		if (
 			isCharacterTarget(state.character) &&
 			hasSkillEffect(state.character.name, "E", "summonGarmentmaker") &&
-			state.character.hasAglaeaTechnique &&
+			isTechniqueOn(state.character) &&
 			!states.some(
 				(candidate) =>
 					candidate.isGarmentmakerState &&

@@ -29,6 +29,32 @@ function extra(key: string, skill = ""): GeneratedAction {
 }
 
 describe("getDisplayOrderedActions with sameAVOrder", () => {
+	it("redA arrow extras and inserted Q share the main E ordering group", () => {
+		const arrow2 = {
+			...extra("archer-1-ea2", "E"),
+			isArcherExtraE: true,
+			archerExtraEParentKey: "archer-1",
+		};
+		const insertedQ = {
+			...extra("archer-1-ea2-interrupt-0", "Q"),
+			interruptTiming: "before" as const,
+		};
+		const arrow3 = {
+			...extra("archer-1-ea3", "E"),
+			isArcherExtraE: true,
+			archerExtraEParentKey: "archer-1",
+		};
+
+		expect(getExtraTurnParentKey(arrow2)).toBe("archer-1");
+		expect(getExtraTurnParentKey(insertedQ)).toBe("archer-1");
+		expect(getExtraTurnParentKey(arrow3)).toBe("archer-1");
+		expect(
+			getDisplayOrderedActions([arrow2, insertedQ, arrow3], {
+				"archer-1-ea2-interrupt-0": 3,
+			}).map((action) => action.key),
+		).toEqual(["archer-1-ea2", "archer-1-ea3", "archer-1-ea2-interrupt-0"]);
+	});
+
 	it("只重排同父级的额外回合", () => {
 		const actions = [extra("turn-1-q", "Q"), extra("turn-1-godmode-A", "A")];
 		const result = getDisplayOrderedActions(actions, {

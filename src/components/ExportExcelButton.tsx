@@ -1,15 +1,15 @@
 import { useCallback, useState } from "react";
 import * as XLSX from "xlsx";
-import { useActionSequence } from "../../contexts/ActionSequenceContext";
-import type { UltInterrupt } from "../../utils/actionSequence";
+import { useActionSequence } from "../contexts/ActionSequenceContext";
+import type { UltInterrupt } from "../utils/actionSequence";
 import {
 	ensureFileExtension,
 	formatActionValue,
 	getCharacterPath,
 	getErrorMessage,
 	isAllyTarget,
-} from "../../utils/actionSequence";
-import { invoke, save } from "../../utils/backend";
+} from "../utils/actionSequence";
+import { invoke, save } from "../utils/backend";
 
 export default function ExportExcelButton() {
 	const ctx = useActionSequence();

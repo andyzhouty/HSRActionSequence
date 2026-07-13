@@ -38,6 +38,7 @@ export type SimulateActionsInput = {
 	dancePartner?: string;
 	bondmateTarget?: string;
 	attackDisabled?: Record<string, boolean>;
+	saberAdvanceToggles?: Record<string, boolean>;
 	fuaToggles?: Record<string, boolean>;
 	sameAVOrder?: Record<string, number>;
 };
@@ -62,6 +63,8 @@ export interface ActionState extends AglaeaActionState {
 	combustionDelayCount?: number;
 	domainState?: PhainonDomainState;
 	memeOwnerId?: string;
+	/** 迷迷被右键提前时，保存触发行动 key 以复用其目标配置。 */
+	memeAdvanceSourceKey?: string;
 	aglaeaSupremeActive?: boolean;
 	isInGodmode?: boolean;
 	godmodeActionCount?: number;
@@ -100,6 +103,10 @@ export interface ActionState extends AglaeaActionState {
 	lastActionValue?: number;
 	isSouldragonAction?: boolean;
 	souldragonOwnerId?: string;
+	// 红A 追击充能（0-4）
+	archerFuaCharge?: number;
+	/** Saber 释放 Q 后，下一次正常行动固定为 A。 */
+	saberForceBasicAttack?: boolean;
 }
 
 export type ActiveOdeState = {

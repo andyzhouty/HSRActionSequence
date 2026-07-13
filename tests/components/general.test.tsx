@@ -1,14 +1,14 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import ActionPanel from "../../src/components/action-sequence/ActionPanel";
-import CharacterPanel from "../../src/components/action-sequence/CharacterPanel";
+import ActionPanel from "../../src/components/ActionPanel";
+import CharacterPanel from "../../src/components/CharacterPanel";
 import {
 	NumberInput,
 	SelectInput,
 	TextInput,
 	Toggle,
-} from "../../src/components/action-sequence/Controls";
+} from "../../src/components/Controls";
 import type { GeneratedAction } from "../../src/utils/actionSequence";
 import { defaultCharacters } from "../../src/utils/actionSequence";
 import {
@@ -92,6 +92,70 @@ describe("CharacterPanel rendering", () => {
 		renderWithContext(<CharacterPanel />);
 		expect(screen.getAllByText("翁瓦克").length).toBeGreaterThanOrEqual(4);
 		expect(screen.getAllByText("风套").length).toBeGreaterThanOrEqual(4);
+	});
+
+	it("shows an enabled technique toggle for every character", () => {
+		const archer = {
+			...defaultCharacters[0],
+			id: "archer",
+			name: "Archer",
+			speed: "100",
+			baseSpeed: "100",
+		};
+		renderWithContext(<CharacterPanel />, { characters: [archer] });
+
+		expect(screen.getByRole("switch", { name: "秘技" })).toHaveAttribute(
+			"aria-checked",
+			"true",
+		);
+	});
+
+	it("does not show attack toggles for ally-targetable skills or Huohuo E", () => {
+		const character = (id: string, name: string) => ({
+			...defaultCharacters[0],
+			id,
+			name,
+			speed: "100",
+			baseSpeed: "100",
+		});
+		renderWithContext(<ActionPanel />, {
+			characters: [
+				character("archer", "Archer"),
+				character("bronya", "布洛妮娅"),
+				character("huohuo", "藿藿"),
+			],
+			actions: [
+				{
+					key: "archer-1",
+					characterId: "archer",
+					actionNo: 1,
+					actionValue: 40,
+					skill: "A",
+					speed: 100,
+				},
+				{
+					key: "bronya-1",
+					characterId: "bronya",
+					actionNo: 1,
+					actionValue: 50,
+					skill: "E",
+					speed: 100,
+				},
+				{
+					key: "huohuo-1",
+					characterId: "huohuo",
+					actionNo: 1,
+					actionValue: 60,
+					skill: "E",
+					speed: 100,
+				},
+			],
+		});
+
+		for (const key of ["archer-1", "bronya-1", "huohuo-1"]) {
+			const row = document.querySelector(`tr[data-action-key="${key}"]`);
+			expect(row?.textContent).not.toContain("攻击");
+		}
 	});
 
 	it("renders '添加目标' button", () => {
@@ -267,6 +331,91 @@ describe("ActionPanel rendering", () => {
 		expect(
 			document.querySelector('tr[data-action-key="@aha-1-elation-c1"]'),
 		).toHaveAttribute("draggable", "true");
+	});
+
+	it("expands Archer arrows together with their inserted extra actions", async () => {
+		const setSameAVOrder = vi.fn();
+		renderWithContext(<ActionPanel />, {
+			setSameAVOrder,
+			actions: [
+				{
+					key: "c1-1",
+					characterId: "c1",
+					actionNo: 1,
+					actionValue: 100,
+					skill: "E",
+					speed: 100,
+					hasArcherExtraEs: true,
+				},
+				{
+					key: "c1-1-ea2-interrupt-0",
+					characterId: "c2",
+					actionNo: 0,
+					actionValue: 100,
+					skill: "Q",
+					speed: 100,
+					interruptTiming: "before",
+				},
+				{
+					key: "c1-1-ea2",
+					characterId: "c1",
+					actionNo: 0,
+					actionValue: 100,
+					skill: "E",
+					speed: 100,
+					isArcherExtraE: true,
+					archerExtraEIndex: 2,
+					archerExtraEParentKey: "c1-1",
+					lockedSkill: true,
+				},
+			],
+		});
+
+		expect(document.querySelector('tr[data-action-key="c1-1-ea2"]')).toBeNull();
+		await userEvent.click(screen.getByTitle("点击折叠/展开红A射箭列表"));
+		expect(
+			document.querySelector('tr[data-action-key="c1-1-ea2-interrupt-0"]'),
+		).toHaveAttribute("draggable", "true");
+		expect(
+			document.querySelector('tr[data-action-key="c1-1-ea2"]'),
+		).not.toHaveAttribute("draggable", "true");
+		const source = document.querySelector(
+			'tr[data-action-key="c1-1-ea2-interrupt-0"]',
+		);
+		const target = document.querySelector('tr[data-action-key="c1-1-ea2"]');
+		if (!(source instanceof HTMLElement) || !(target instanceof HTMLElement)) {
+			throw new Error("红A射箭拖拽测试行未渲染");
+		}
+		vi.spyOn(target, "getBoundingClientRect").mockReturnValue({
+			top: -1,
+			height: 1,
+		} as DOMRect);
+		const values = new Map<string, string>();
+		const dataTransfer = {
+			effectAllowed: "",
+			setData: (type: string, value: string) => values.set(type, value),
+			getData: (type: string) => values.get(type) ?? "",
+			setDragImage: vi.fn(),
+		};
+		fireEvent.dragStart(source, { dataTransfer, clientX: 10, clientY: 20 });
+		fireEvent.dragOver(target, { dataTransfer, clientX: 30, clientY: 40 });
+		expect(
+			screen.getByText(/移动：角色 2 · Q -> 第 2 箭 后/),
+		).toBeInTheDocument();
+		fireEvent.drop(target, { dataTransfer, clientX: 30, clientY: 40 });
+		expect(setSameAVOrder).toHaveBeenCalledOnce();
+		const updater = setSameAVOrder.mock.calls[0][0];
+		expect(updater({})).toEqual({
+			"c1-1-ea2": 0,
+			"c1-1-ea2-interrupt-0": 1,
+		});
+		fireEvent.dragEnd(source);
+		expect(
+			document.querySelector('tr[data-action-key="c1-1-ea2-interrupt-0"]'),
+		).not.toBeNull();
+		expect(
+			document.querySelector('tr[data-action-key="c1-1-ea2"]'),
+		).not.toBeNull();
 	});
 
 	it("renders drag handles only for after-inserted Q actions", () => {
@@ -514,6 +663,11 @@ describe("ActionPanel rendering", () => {
 		fireEvent.dragStart(source, { dataTransfer, clientX: 10, clientY: 20 });
 		fireEvent.dragOver(target, { dataTransfer, clientX: 30, clientY: 40 });
 
+		expect(dataTransfer.setDragImage).toHaveBeenCalledWith(
+			expect.any(HTMLCanvasElement),
+			0,
+			0,
+		);
 		expect(
 			screen.getByText(/移动：角色 1 · Q -> 角色 2 · Q 后/),
 		).toBeInTheDocument();

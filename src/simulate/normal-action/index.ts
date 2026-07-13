@@ -1,74 +1,68 @@
-import { hasPassive, hasSkillEffect } from "../data/characters";
-import { handleAglaeaSkillEffects } from "../mechanics/aglaeaGarmentmaker";
-import { hasCastoriceSummon } from "../mechanics/castoricePollux";
+import { hasPassive, hasSkillEffect } from "../../data/characters";
+import { clampArcherFuaCharge, hasArcher } from "../../mechanics/archer";
+import { hasCastoriceSummon } from "../../mechanics/castoricePollux";
 import {
 	summonSouldragonState,
 	updateSouldragonBondmate,
-} from "../mechanics/danHengSouldragon";
-import {
-	consumeEvernightSpeedBuff,
-	hasEvernightEvey,
-	summonEveyState,
-} from "../mechanics/evernightEvey";
+} from "../../mechanics/danHengSouldragon";
+import { consumeEvernightSpeedBuff } from "../../mechanics/evernightEvey";
 import {
 	activateCombustion,
 	checkBreakTrigger,
 	shouldActivateCombustion,
 	shouldCheckBreakTrigger,
-} from "../mechanics/fireflyCombustion";
-import {
-	createIcaAction,
-	handleHyacineQ,
-	hasHyacineIca,
-	summonIca,
-	triggerIcaExtraTurn,
-} from "../mechanics/hyacineIca";
+} from "../../mechanics/fireflyCombustion";
 import {
 	expirePhainonDomainSpeedBonus,
 	freezeAlliesForDomain,
 	getPhainonDomainEndIndex,
 	getPhainonDomainInterval,
-} from "../mechanics/phainonDomain";
+} from "../../mechanics/phainonDomain";
+import { hasSaber } from "../../mechanics/saber";
 import {
 	consumeGodmodeAction,
 	getGodmodeSkill,
 	hasSilverWolfGodmode as hasSilverWolfGodmodeCheck,
 	isInGodmode,
-} from "../mechanics/silverWolfGodmode";
+} from "../../mechanics/silverWolfGodmode";
 import {
 	getCharacterPath,
 	getCounterWDomainRule,
 	getCyreneUltimateRule,
 	isCharacterTarget,
 	type SkillCode,
-} from "../utils/actionSequence";
+} from "../../utils/actionSequence";
 import {
 	advanceNotPastCurrent,
 	advanceTeamByUltimate,
-	pullToCurrentAction,
-} from "./advance";
-import { resolveHimekoNovaAssist } from "./assist";
-import type { ActionContext } from "./context";
+} from "../advance";
+import { resolveHimekoNovaAssist } from "../assist";
+import type { ActionContext } from "../context";
 import {
+	applyMemeAdvanceTarget,
 	consumeActionOdes,
 	consumeMemoryTrailblazerEpic,
-	emitCyreneMemospriteAction,
 	findCyreneState,
 	getActionSkill,
 	getActiveOdeLabels,
 	getNextSpeed,
 	getSkillTarget,
 	getTeamAdvanceOnUltimate,
-	handleCyrenePostUltimate,
 	handleMemoryTrailblazerQ,
 	hasActiveOde,
 	hasActiveOdeEffect,
 	isAllyTarget,
 	killMeme,
-	summonMemeState,
-} from "./effects";
-import type { SimulationRuntime } from "./runtime";
-import { handlePostUltimateEffects } from "./ultimateEffects";
+} from "../effects";
+import {
+	emitArcherExtraEs,
+	handleCyreneNormalUltimate,
+} from "./archerCyrene";
+import { handleHyacineNormalAction } from "./hyacine";
+import { handleTargetEffects } from "./targetEffects";
+import { handleSummons } from "./summons";
+import type { SimulationRuntime } from "../runtime";
+import { handlePostUltimateEffects } from "../ultimateEffects";
 
 export type NormalActionResult = {
 	/** 是否因为协战规则而跳过原行动主体的行动后处理（follow-up）。 */
@@ -96,6 +90,7 @@ export function handleNormalAction(
 	const { input, states, actions, activeOdes, souldragonOwner, callbacks } =
 		runtime;
 	const { stateIndex, key, actionValue, character, actionNo } = context;
+	const isMemeAdvanceAction = Boolean(states[stateIndex].memeAdvanceSourceKey);
 	const { emitSpecialInterruptAction } = callbacks;
 
 	const configuredSkill = getActionSkill(
@@ -107,9 +102,16 @@ export function handleNormalAction(
 	);
 	const savedSkill = states[stateIndex].e2SavedActionSkill;
 	states[stateIndex].e2SavedActionSkill = undefined;
-	const rawSkill = hasSilverWolfGodmodeCheck(character.name)
-		? getGodmodeSkill(states[stateIndex], savedSkill ?? configuredSkill)
-		: ((savedSkill ?? configuredSkill) as SkillCode);
+	const isSaberForcedBasicAttack =
+		hasSaber(character) && states[stateIndex].saberForceBasicAttack === true;
+	const rawSkill = isSaberForcedBasicAttack
+		? ("A" as SkillCode)
+		: hasSilverWolfGodmodeCheck(character.name)
+			? getGodmodeSkill(states[stateIndex], savedSkill ?? configuredSkill)
+			: ((savedSkill ?? configuredSkill) as SkillCode);
+	if (isSaberForcedBasicAttack) {
+		states[stateIndex].saberForceBasicAttack = false;
+	}
 
 	const assistPlan = resolveHimekoNovaAssist(states, character, rawSkill);
 	const skill = assistPlan.skill;
@@ -123,6 +125,17 @@ export function handleNormalAction(
 	const resolvedSkill = (
 		hasSelfQ ? skill.replace(/Q/g, "") || "" : skill
 	) as SkillCode;
+	// 红A {n}E：解析数字前缀，拆分 E（如 4E → 1 个主 E + 3 个额外 E）
+	const archerEMatch = hasArcher(character)
+		? /^(\d*)E$/.exec(resolvedSkill)
+		: null;
+	const archerECount = archerEMatch
+		? archerEMatch[1]
+			? Number.parseInt(archerEMatch[1], 10)
+			: 1
+		: 0;
+	const isArcherMultiE = archerECount > 0;
+
 	const usesUltimate = skill.includes("Q");
 	const normalUsesUltimate = usesUltimate && !hasSelfQ;
 	const qIsFront = hasSelfQ && skill.startsWith("Q");
@@ -244,6 +257,11 @@ export function handleNormalAction(
 
 	// ── 主行动生成 ──
 	if (!skipAssistFollowUp && !shouldSkipMainForE2Pull) {
+		if (hasArcher(character) && usesUltimate) {
+			states[stateIndex].archerFuaCharge = clampArcherFuaCharge(
+				(states[stateIndex].archerFuaCharge ?? 0) + 2,
+			);
+		}
 		actions.push({
 			key,
 			characterId: character.id,
@@ -253,18 +271,30 @@ export function handleNormalAction(
 			isAglaeaSupremeAction: states[stateIndex].aglaeaSupremeActive,
 			actionNo,
 			actionValue,
-			skill: resolvedSkill as SkillCode,
+			skill: (isArcherMultiE ? "E" : resolvedSkill) as SkillCode,
 			speed: actionSpeed,
+			...(isSaberForcedBasicAttack ? { lockedSkill: true } : {}),
 			isAssistFollowUp: himekoNovaAssist !== undefined,
 			isMemospriteAction: states[stateIndex].isMemeState,
+			isMemeAdvanceAction,
 			memospriteOwnerId: states[stateIndex].memeOwnerId,
 			activeOdeLabels: getActiveOdeLabels(activeOdes, character.id),
+			archerFuaCharge: states[stateIndex].archerFuaCharge,
 		});
+		if (isMemeAdvanceAction) {
+			applyMemeAdvanceTarget(
+				states,
+				input,
+				states[stateIndex],
+				key,
+				actionValue,
+			);
+		}
 		// 浪漫之诗：阿格莱雅/衣匠非 Q 行动消耗充能
 		const romanceOwnerId = states[stateIndex].isGarmentmakerState
 			? states[stateIndex].garmentmakerOwnerId
 			: character.id;
-		if (!resolvedSkill.includes("Q")) {
+		if (!(isArcherMultiE ? "E" : resolvedSkill).includes("Q")) {
 			const romanceOdes = activeOdes.get(romanceOwnerId ?? "");
 			const romanceActive = romanceOdes?.find(
 				(o) => o.ode.effects?.includes("odeToRomance") && o.romanceCharged,
@@ -288,29 +318,39 @@ export function handleNormalAction(
 		) {
 			actions[actions.length - 1].lockedSkill = true;
 		}
-		consumeActionOdes(activeOdes, character.id, resolvedSkill, true);
+		consumeActionOdes(
+			activeOdes,
+			character.id,
+			isArcherMultiE ? "E" : resolvedSkill,
+			true,
+		);
+		if (isArcherMultiE && archerECount > 1) {
+			actions[actions.length - 1].hasArcherExtraEs = true;
+		}
+
+		if (isArcherMultiE && archerECount > 1) {
+			emitArcherExtraEs({
+				runtime,
+				stateIndex,
+				key,
+				character,
+				actionValue,
+				actionSpeed,
+				count: archerECount,
+			});
+		}
 		if (
 			isCharacterTarget(character) &&
 			hasSkillEffect(character.name, "Q", "cyreneUltimate") &&
 			usesUltimate &&
 			!hasSelfQ
 		) {
-			emitCyreneMemospriteAction({
-				input,
-				actions,
-				states,
-				activeOdes,
-				cyrene: character,
-				sourceKey: key,
-				actionValue,
-			});
-			handleCyrenePostUltimate({
-				states,
-				casterIndex: stateIndex,
+			handleCyreneNormalUltimate({
+				runtime,
+				stateIndex,
+				key,
 				character,
-				actions,
 				actionValue,
-				activeOdes,
 			});
 		}
 	}
@@ -377,7 +417,9 @@ export function handleNormalAction(
 		character.id === souldragonOwner.character.id &&
 		resolvedSkill.includes("E")
 	) {
-		const nextBondmate = getSkillTarget(input, key, character);
+		const nextBondmate =
+			getSkillTarget(input, key, character) ??
+			runtime.currentBondmateTarget.value;
 		const validTarget = states.find(
 			(state) =>
 				state.character.id === nextBondmate && state.character.kind === "角色",
@@ -520,102 +562,25 @@ export function handleNormalAction(
 			}
 		}
 
-		// Bronya/Sunday E: pull target to current action value
-		if (
-			isCharacterTarget(character) &&
-			skill.includes("E") &&
-			(hasSkillEffect(character.name, "E", "allyPullToCurrent") ||
-				hasSkillEffect(character.name, "E", "sundayPullWithMemosprite"))
-		) {
-			const targetId = getSkillTarget(input, key, character);
-			if (targetId) {
-				const targetState = states.find(
-					(state) => state.character.id === targetId,
-				);
-				const isSundayInvalidDirectMemospriteTarget =
-					hasSkillEffect(character.name, "E", "sundayPullWithMemosprite") &&
-					targetState !== undefined &&
-					!isCharacterTarget(targetState.character);
-				if (!isSundayInvalidDirectMemospriteTarget) {
-					const isSundayAndHarmonyTarget =
-						hasSkillEffect(character.name, "E", "sundayPullWithMemosprite") &&
-						getCharacterPath(
-							states.find((s) => s.character.id === targetId)?.character.name ??
-								"",
-						) === "Harmony";
-					if (!isSundayAndHarmonyTarget) {
-						for (const teammate of states) {
-							if (
-								teammate.character.id === targetId &&
-								!teammate.blockNextAdvance
-							) {
-								pullToCurrentAction(teammate, actionValue);
-							}
-						}
-					}
-					// Sunday additionally pulls the target's owned summons
-					if (hasSkillEffect(character.name, "E", "sundayPullWithMemosprite")) {
-						for (const entity of states) {
-							const isOwnedSummon =
-								entity.character.id !== targetId &&
-								((entity.isGarmentmakerState &&
-									entity.garmentmakerOwnerId === targetId) ||
-									(entity.isMemeState && entity.memeOwnerId === targetId) ||
-									(entity.isEveyAction &&
-										entity.character.id === `${targetId}-evey`) ||
-									(entity.isPolluxAction &&
-										entity.character.id === `${targetId}-pollux`) ||
-									(entity.isSouldragonAction &&
-										entity.souldragonOwnerId === targetId));
-							if (isOwnedSummon && !entity.blockNextAdvance) {
-								pullToCurrentAction(entity, actionValue);
-							}
-						}
-					}
-				}
-			}
-		}
+		// 目标拉条：布洛妮娅/星期日/花火
+		handleTargetEffects({
+			character,
+			skill,
+			states,
+			actionValue,
+			input,
+			key,
+		});
 
-		// Sparkle E: 50% advance, not past current action value
-		if (
-			isCharacterTarget(character) &&
-			hasSkillEffect(character.name, "E", "allyAdvance50NotPast") &&
-			skill.includes("E")
-		) {
-			const targetId = getSkillTarget(input, key, character);
-			if (targetId) {
-				for (const teammate of states) {
-					if (
-						teammate.character.id === targetId &&
-						!teammate.blockNextAdvance
-					) {
-						const advance = teammate.nextActionValue * 0.5;
-						advanceNotPastCurrent(teammate, actionValue, advance);
-					}
-				}
-			}
-		}
-
-		// Memory Trailblazer E/Q: summon Meme as a 130-speed memosprite.
-		if (
-			isCharacterTarget(character) &&
-			hasSkillEffect(character.name, "E", "summonMeme") &&
-			(skill.includes("E") || normalUsesUltimate)
-		) {
-			summonMemeState(states, character, actionValue);
-		}
-
-		if (
-			isCharacterTarget(character) &&
-			hasEvernightEvey(character.name) &&
-			(resolvedSkill.includes("E") || normalUsesUltimate) &&
-			!states[stateIndex].eveyOnField
-		) {
-			summonEveyState(states, character, actionValue, {
-				immediate: true,
-				sameActionPriority: -2,
-			});
-		}
+				// 召唤与忆灵：迷迷/长夜/衣匠
+		handleSummons({
+			character,
+			resolvedSkill,
+			normalUsesUltimate,
+			states,
+			stateIndex,
+			actionValue,
+		});
 
 		// Memory Trailblazer Q: increment epic
 		if (
@@ -626,86 +591,17 @@ export function handleNormalAction(
 			handleMemoryTrailblazerQ(states[stateIndex]);
 		}
 
-		// Aglaea E: summon Garmentmaker (Q case handled by unified function)
-		if (!normalUsesUltimate) {
-			handleAglaeaSkillEffects(states, stateIndex, resolvedSkill, actionValue);
-		}
-
-		// 风堇 Q: Ica interrupt dispatch + createIcaAction（必须在 A/E 之前，先设 afterRain）
-		if (
-			isCharacterTarget(character) &&
-			hasHyacineIca(character.name) &&
-			normalUsesUltimate
-		) {
-			handleHyacineQ(states, character.id);
-			const icaQKey = `${key}-q-ica`;
-			const configured = input.ultInterrupts[icaQKey] ?? [];
-			for (let ai = 0; ai < configured.length; ai++) {
-				const int = configured[ai];
-				if (int.timing !== "before") continue;
-				emitSpecialInterruptAction(
-					`${icaQKey}-interrupt-${ai}`,
-					int,
-					actionValue,
-				);
-			}
-			actions.push(createIcaAction(character.id, `${key}-q`, actionValue));
-			for (let ai = 0; ai < configured.length; ai++) {
-				const int = configured[ai];
-				if (int.timing !== "after") continue;
-				emitSpecialInterruptAction(
-					`${icaQKey}-interrupt-${ai}`,
-					int,
-					actionValue,
-				);
-			}
-		}
-
-		// 风堇 E: summon Ica (first E or first E after death)
-		if (
-			isCharacterTarget(character) &&
-			hasHyacineIca(character.name) &&
-			resolvedSkill.includes("E") &&
-			!states[stateIndex].icaOnField
-		) {
-			summonIca(states[stateIndex]);
-		}
-
-		// 风堇 A/E: trigger Ica extra turn (afterRain > 0 && Ica on field)
-		if (
-			isCharacterTarget(character) &&
-			hasHyacineIca(character.name) &&
-			(resolvedSkill === "" ||
-				resolvedSkill === "A" ||
-				resolvedSkill.includes("E")) &&
-			(!usesUltimate || qIsFront)
-		) {
-			const beforeRain = states[stateIndex].afterRain ?? 0;
-			triggerIcaExtraTurn(states, character.id);
-			if ((states[stateIndex].afterRain ?? 0) < beforeRain) {
-				const icaKey = `${key}-ica`;
-				const configured = input.ultInterrupts[icaKey] ?? [];
-				for (let ai = 0; ai < configured.length; ai++) {
-					const int = configured[ai];
-					if (int.timing !== "before") continue;
-					emitSpecialInterruptAction(
-						`${icaKey}-interrupt-${ai}`,
-						int,
-						actionValue,
-					);
-				}
-				actions.push(createIcaAction(character.id, key, actionValue));
-				for (let ai = 0; ai < configured.length; ai++) {
-					const int = configured[ai];
-					if (int.timing !== "after") continue;
-					emitSpecialInterruptAction(
-						`${icaKey}-interrupt-${ai}`,
-						int,
-						actionValue,
-					);
-				}
-			}
-		}
+		handleHyacineNormalAction({
+			runtime,
+			stateIndex,
+			key,
+			character,
+			actionValue,
+			resolvedSkill,
+			normalUsesUltimate,
+			usesUltimate,
+			qIsFront,
+		});
 
 		// ── 流萤 完全燃烧中击破触发 ──
 		if (

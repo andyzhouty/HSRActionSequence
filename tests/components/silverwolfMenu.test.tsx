@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import ActionPanel from "../../src/components/action-sequence/ActionPanel";
+import ActionPanel from "../../src/components/ActionPanel";
 import {
 	defaultCharacters,
 	type GeneratedAction,

@@ -105,7 +105,6 @@
         "Saber",
         "阿尔托莉雅",
         "c8",
-        "C8",
         "呆毛王"
       ],
       "path": "Destruction"
@@ -118,6 +117,9 @@
         "红A",
         "卫宫士郎"
       ],
+      "effects": {
+        "Q": "archerUltimate"
+      },
       "path": "Hunt"
     },
     {
@@ -164,8 +166,7 @@
       "cid": "1105",
       "names": [
         "娜塔莎",
-        "Natasha",
-        "娜塔"
+        "Natasha"
       ],
       "path": "Abundance",
       "effects": {
@@ -228,7 +229,8 @@
         "托帕",
         "账账",
         "Topaz",
-        "Numby"
+        "Numby",
+        "Topaz & Numby"
       ],
       "path": "Hunt"
     },
@@ -268,8 +270,7 @@
       "cid": "1204",
       "names": [
         "景元",
-        "Jing Yuan",
-        "景元元"
+        "Jing Yuan"
       ],
       "path": "Erudition"
     },
@@ -278,7 +279,7 @@
       "names": [
         "刃",
         "Blade",
-        "阿刃"
+        "风刃"
       ],
       "semantics": [
         "ambiguousBaseName"
@@ -314,8 +315,7 @@
       "cid": "1209",
       "names": [
         "彦卿",
-        "Yanqing",
-        "彦卿卿"
+        "Yanqing"
       ],
       "path": "Hunt"
     },
@@ -450,7 +450,8 @@
       "names": [
         "忘归人",
         "Fugue",
-        "sp停云"
+        "sp停云",
+        "大停云"
       ],
       "effects": {
         "Q": "teamAdvance24",
@@ -586,7 +587,8 @@
       "names": [
         "星期日",
         "周日",
-        "Sunday"
+        "Sunday",
+        "日"
       ],
       "effects": {
         "E": "sundayPullWithMemosprite",
@@ -786,7 +788,6 @@
       "names": [
         "刻律德菈",
         "刻律",
-        "刻",
         "Cerydra"
       ],
       "effects": {
@@ -817,7 +818,6 @@
         "丹恒•腾荒",
         "盾丹",
         "DHPT",
-        "dhpt",
         "Dan Heng • Permansor Terrae"
       ],
 		"passives": [
@@ -1014,10 +1014,7 @@
         "银狼LV.999",
         "Silver Wolf LV.999",
         "sp银狼",
-        "SP银狼",
         "银狼lv999",
-        "银狼Lv999",
-        "银狼LV999",
         "银狼999",
         "9狼",
         "狼尊"
@@ -1064,7 +1061,6 @@
         "姬子·启行",
         "姬子启行",
         "sp姬子",
-        "SP姬子",
         "Himeko Nova"
       ],
       "effects": {

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useActionSequence } from "../../contexts/ActionSequenceContext";
-import lightConeData from "../../data/lightcones.json";
+import { useActionSequence } from "../contexts/ActionSequenceContext";
+import lightConeData from "../data/lightcones.json";
 import {
 	type defaultCharacters,
 	getCharacterPath,
@@ -11,7 +11,7 @@ import {
 	type TargetKind,
 	targetKinds,
 	withoutCharacterOnlyEffects,
-} from "../../utils/actionSequence";
+} from "../utils/actionSequence";
 import {
 	CharacterNameInput,
 	NumberInput,
@@ -323,34 +323,27 @@ function CharacterCard({
 								}))
 							}
 						/>
-						{hasSkillEffect(character.name, "Q", "summonPollux") && (
-							<Toggle
-								className="flex-1"
-								label="遐蝶秘技"
-								checked={character.hasCastoriceTechnique ?? false}
-								onChange={() =>
-									ctx.updateCharacter(character.id, (prev) => ({
-										...prev,
-										hasCastoriceTechnique: !(
-											prev.hasCastoriceTechnique ?? false
-										),
-									}))
-								}
-							/>
-						)}
-						{hasSkillEffect(character.name, "E", "summonGarmentmaker") && (
-							<Toggle
-								className="flex-1"
-								label="阿格莱雅秘技"
-								checked={character.hasAglaeaTechnique ?? false}
-								onChange={() =>
-									ctx.updateCharacter(character.id, (prev) => ({
-										...prev,
-										hasAglaeaTechnique: !(prev.hasAglaeaTechnique ?? false),
-									}))
-								}
-							/>
-						)}
+						<Toggle
+							className="flex-1"
+							label="秘技"
+							checked={
+								character.techniqueOn ??
+								character.hasCastoriceTechnique ??
+								character.hasAglaeaTechnique ??
+								false
+							}
+							onChange={() =>
+								ctx.updateCharacter(character.id, (prev) => ({
+									...prev,
+									techniqueOn: !(
+										prev.techniqueOn ??
+										prev.hasCastoriceTechnique ??
+										prev.hasAglaeaTechnique ??
+										false
+									),
+								}))
+							}
+						/>
 					</div>
 					<div className="flex gap-2">
 						<SelectInput

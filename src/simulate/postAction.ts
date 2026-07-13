@@ -1,3 +1,4 @@
+import { advanceSaberAfterAction } from "../mechanics/saber";
 import type { ActionContext } from "./context";
 import { emitMemeAdvanceAction, isAllyTarget } from "./effects";
 import type { SimulationRuntime } from "./runtime";
@@ -52,5 +53,11 @@ export function runPostActionCleanup(
 	if (!skipAssistFollowUp) {
 		callbacks.emitFuaAction(key, actionValue);
 	}
+	advanceSaberAfterAction(
+		states,
+		runtime.input.saberAdvanceToggles,
+		key,
+		actionValue,
+	);
 	if (clearAdvanceBlockAfterAction) states[stateIndex].blockNextAdvance = false;
 }

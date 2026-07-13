@@ -602,44 +602,42 @@ export function emitMemeAdvanceAction({
 	activeOdes: Map<string, ActiveOdeState[]>;
 }) {
 	const memeKey = `${sourceKey}-meme`;
-	const targetId = input.memeSelections[memeKey];
-	if (!targetId) return;
+	if (!input.memeSelections[memeKey]) return;
 	const owner = findMemeAdvanceOwnerState(states);
 	if (!owner) return;
 	const meme = findMemeState(states, owner.character.id);
 	if (!meme) return;
-	const target = findTargetStateById(states, targetId);
-	if (!target) return;
+	// 迷迷不是额外行动：将其下一次正常行动提前到当前 AV。
+	meme.nextActionValue = actionValue;
+	meme.sameActionPriority = -1;
+	meme.memeAdvanceSourceKey = sourceKey;
+	void actions;
+	void activeOdes;
+}
 
+/** 结算被提前的迷迷正常行动对目标施加的拉条。 */
+export function applyMemeAdvanceTarget(
+	states: ActionState[],
+	input: SimulateActionsInput,
+	meme: ActionState,
+	actionKey: string,
+	actionValue: number,
+): void {
+	if (!meme.memeAdvanceSourceKey) return;
+	meme.memeAdvanceSourceKey = undefined;
+	const targetId = input.memeSelections[actionKey];
+	const owner = meme.memeOwnerId
+		? states.find((state) => state.character.id === meme.memeOwnerId)
+		: undefined;
+	const target = targetId ? findTargetStateById(states, targetId) : undefined;
+	if (!owner || !target || target.character.id === meme.character.id) return;
+	if (!isAllyTarget(target.character.kind) || target.blockNextAdvance) return;
+	if (target.nextActionValue <= actionValue) return;
 	const rule = getMemeAdvanceRule(owner.character.name);
-	actions.push({
-		key: memeKey,
-		characterId: meme.character.id,
-		displayName: rule.memospriteName,
-		targetKind: "忆灵",
-		actionNo: meme.actionNo,
-		actionValue,
-		skill: rule.memospriteSkill,
-		speed: meme.currentSpeed,
-		isMemospriteAction: true,
-		isMemeAction: true,
-		memospriteOwnerId: owner.character.id,
-		memeOwnerId: owner.character.id,
-		activeOdeLabels: getActiveOdeLabels(activeOdes, owner.character.id),
-	});
-
-	if (
-		target.character.id !== meme.character.id &&
-		isAllyTarget(target.character.kind) &&
-		!target.blockNextAdvance &&
-		target.nextActionValue > actionValue
-	) {
-		const remainingActionValue = target.nextActionValue - actionValue;
-		target.nextActionValue =
-			actionValue +
-			(remainingActionValue * Math.max(0, 100 - rule.advancePercent)) / 100;
-	}
-	meme.actionNo += 1;
-	meme.nextActionValue = actionValue + 10000 / meme.currentSpeed;
-	meme.blockNextAdvance = false;
+	const remainingActionValue = target.nextActionValue - actionValue;
+	target.nextActionValue =
+		actionValue +
+		(remainingActionValue * Math.max(0, 100 - rule.advancePercent)) / 100;
+	// 迷迷拉条后的目标优先于同 AV 的其他普通行动。
+	target.sameActionPriority = -1;
 }

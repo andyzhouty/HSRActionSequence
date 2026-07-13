@@ -659,7 +659,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			input({
 				characters: [
 					character("castorice", "遐蝶", 100, {
-						hasCastoriceTechnique: true,
+						techniqueOn: true,
 					}),
 				],
 				limit: 200,
@@ -677,7 +677,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			input({
 				characters: [
 					character("castorice", "遐蝶", 100, {
-						hasCastoriceTechnique: true,
+						techniqueOn: true,
 						eidolon: 2,
 					}),
 				],
@@ -696,7 +696,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			input({
 				characters: [
 					character("castorice", "遐蝶", 100, {
-						hasCastoriceTechnique: true,
+						techniqueOn: true,
 					}),
 				],
 				skillOverrides: skills({
@@ -718,7 +718,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			input({
 				characters: [
 					character("castorice", "遐蝶", 100, {
-						hasCastoriceTechnique: true,
+						techniqueOn: true,
 					}),
 				],
 				skillOverrides: skills({
@@ -859,7 +859,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 				characters: [
 					character("castorice", "遐蝶", 94, {
 						eidolon: 2,
-						hasCastoriceTechnique: true,
+						techniqueOn: true,
 					}),
 					character("sunday", "星期日", 166),
 				],
@@ -913,7 +913,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			input({
 				characters: [
 					character("castorice", "遐蝶", 100, {
-						hasCastoriceTechnique: true,
+						techniqueOn: true,
 					}),
 					character("bronya", "布洛妮娅", 90),
 				],
@@ -938,7 +938,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			input({
 				characters: [
 					character("castorice", "遐蝶", 100, {
-						hasCastoriceTechnique: true,
+						techniqueOn: true,
 					}),
 				],
 				skillOverrides: skills({
@@ -978,7 +978,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			input({
 				characters: [
 					character("castorice", "遐蝶", 100, {
-						hasCastoriceTechnique: true,
+						techniqueOn: true,
 					}),
 				],
 				skillOverrides: skills({
@@ -1020,7 +1020,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			characters: [
 				character("castorice", "遐蝶", 94, {
 					eidolon: 2,
-					hasCastoriceTechnique: true,
+					techniqueOn: true,
 				}),
 				character("sunday", "星期日", 164, {
 					hasVonwacq: true,

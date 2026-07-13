@@ -3,7 +3,10 @@ import {
 	type SimulateActionsInput,
 	simulateActions,
 } from "../../src/simulate/actions";
-import type { CharacterConfig, SkillCode } from "../../src/utils/actionSequence";
+import type {
+	CharacterConfig,
+	SkillCode,
+} from "../../src/utils/actionSequence";
 
 function character(
 	id: string,
@@ -59,7 +62,7 @@ describe("Dan Heng Permansor Terrae Souldragon", () => {
 		expect(actions.some((action) => action.isSouldragonAction)).toBe(false);
 	});
 
-	it("runs at 165 speed and advances 15% for each enabled Bondmate attack", () => {
+	it("basic attacks advance Souldragon even with a legacy disabled toggle", () => {
 		const base = {
 			characters: [
 				character("dhpt", "丹恒·腾荒", 100),
@@ -78,7 +81,53 @@ describe("Dan Heng Permansor Terrae Souldragon", () => {
 		).toBeCloseTo(50 + 250 / 165, 4);
 		expect(
 			disabled.find((action) => action.isSouldragonAction)?.actionValue,
+		).toBeCloseTo(50 + 250 / 165, 4);
+	});
+
+	it("does not advance for Huohuo E", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("dhpt", "丹恒·腾荒", 100),
+					character("huohuo", "藿藿", 200),
+				],
+				bondmateTarget: "huohuo",
+				skillOverrides: skills({ "huohuo-1": "E" }),
+				limit: 100,
+			}),
+		);
+
+		expect(
+			actions.find((action) => action.isSouldragonAction)?.actionValue,
 		).toBeCloseTo(10000 / 165, 4);
+	});
+
+	it("Souldragon attack toggle does not affect its own schedule", () => {
+		const base = {
+			characters: [
+				character("dhpt", "丹恒·腾荒", 100),
+				character("ally", "队友", 200),
+			],
+			bondmateTarget: "ally",
+			limit: 150,
+		};
+		const enabled = simulateActions(input(base));
+		const disabled = simulateActions(
+			input({
+				...base,
+				attackDisabled: { "dhpt-souldragon-1": true },
+			}),
+		);
+
+		expect(
+			disabled
+				.filter((action) => action.isSouldragonAction)
+				.map((action) => action.actionValue),
+		).toEqual(
+			enabled
+				.filter((action) => action.isSouldragonAction)
+				.map((action) => action.actionValue),
+		);
 	});
 
 	it("summons after the first targeted E and treats that E as a non-attack", () => {
@@ -179,7 +228,7 @@ describe("Dan Heng Permansor Terrae Souldragon", () => {
 			(action) => action.isSouldragonAction,
 		);
 		expect(souldragonActions[0]?.actionValue).toBeCloseTo(50, 4);
-		expect(souldragonActions[1]?.actionValue).toBeCloseTo(50 + 10000 / 165, 4);
+		expect(souldragonActions[1]?.actionValue).toBeCloseTo(100 + 250 / 165, 4);
 	});
 
 	it("keeps Souldragon actions running during Phainon's domain", () => {
@@ -222,7 +271,7 @@ describe("Dan Heng Permansor Terrae Souldragon", () => {
 			input({
 				...base,
 				skillOverrides: skills({
-					"phainon-1": "AQ",
+					"phainon-1": "EQ",
 					"phainon-1-domain-0": "E",
 				}),
 			}),
@@ -231,7 +280,7 @@ describe("Dan Heng Permansor Terrae Souldragon", () => {
 			input({
 				...base,
 				skillOverrides: skills({
-					"phainon-1": "AQ",
+					"phainon-1": "EQ",
 					"phainon-1-domain-0": "EW",
 				}),
 			}),
@@ -243,7 +292,7 @@ describe("Dan Heng Permansor Terrae Souldragon", () => {
 		const doubleSd2 = double.find(
 			(a) => a.isSouldragonAction && a.actionNo === 2,
 		);
-		// 双段攻击(EW)应比单段(E)使龙灵更早行动
+		// 双段攻击(EW)应比单段(E)使龙灵更早行动。
 		expect(singleSd2).toBeDefined();
 		expect(doubleSd2).toBeDefined();
 		expect(doubleSd2?.actionValue).toBeLessThan(singleSd2?.actionValue);

@@ -56,6 +56,7 @@ function buildSimulationConfig(
 		dancePartner: savedData.dancePartner,
 		bondmateTarget: savedData.bondmateTarget,
 		attackDisabled: savedData.attackDisabled,
+		saberAdvanceToggles: savedData.saberAdvanceToggles,
 		fuaToggles: savedData.fuaToggles,
 		sameAVOrder: savedData.sameAVOrder,
 	};
@@ -269,6 +270,7 @@ export function useGeneratedActions({
 			);
 			const nextAttackDisabled = pruneToggleMap(prev.attackDisabled);
 			const nextFuaToggles = pruneToggleMap(prev.fuaToggles);
+			const nextSaberAdvanceToggles = pruneToggleMap(prev.saberAdvanceToggles);
 			changed =
 				changed ||
 				nextCastoriceKillToggles !== prev.castoriceKillToggles ||
@@ -279,7 +281,8 @@ export function useGeneratedActions({
 				nextEvernightThresholdBurstToggles !==
 					prev.evernightThresholdBurstToggles ||
 				nextAttackDisabled !== prev.attackDisabled ||
-				nextFuaToggles !== prev.fuaToggles;
+				nextFuaToggles !== prev.fuaToggles ||
+				nextSaberAdvanceToggles !== prev.saberAdvanceToggles;
 
 			if (!changed) return prev;
 			return {
@@ -295,6 +298,7 @@ export function useGeneratedActions({
 				evernightThresholdBurstToggles: nextEvernightThresholdBurstToggles,
 				attackDisabled: nextAttackDisabled,
 				fuaToggles: nextFuaToggles,
+				saberAdvanceToggles: nextSaberAdvanceToggles,
 			};
 		});
 		setSelectedActionKeys((prev) => {

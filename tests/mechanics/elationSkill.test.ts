@@ -3,7 +3,10 @@ import {
 	type SimulateActionsInput,
 	simulateActions,
 } from "../../src/simulate/actions";
-import type { CharacterConfig, SkillCode } from "../../src/utils/actionSequence";
+import type {
+	CharacterConfig,
+	SkillCode,
+} from "../../src/utils/actionSequence";
 
 function character(
 	id: string,
@@ -234,7 +237,7 @@ describe("Elation Skill + Souldragon", () => {
 		expect(sd[0].actionValue).toBeLessThan(10000 / 165);
 	});
 
-	it("SP银狼非无敌时，阿哈时刻不推进龙灵", () => {
+	it("SP银狼非无敌时，A 仍固定推进龙灵", () => {
 		const acts = simulateActions(
 			input({
 				characters: [
@@ -253,7 +256,7 @@ describe("Elation Skill + Souldragon", () => {
 		);
 		const sd = acts.filter((a) => a.isSouldragonAction);
 		expect(sd.length).toBeGreaterThan(0);
-		// 龙灵首动 AV 应 ≥ 自然间隔 (10000/165 ≈ 60.6)，未被推进
-		expect(sd[0].actionValue).toBeGreaterThan(55); // ~10000/180, 略小于自然间隔 60.6
+		// 无敌玩家外的 A 固定视为攻击，旧关闭项不能阻止其推进龙灵。
+		expect(sd[0].actionValue).toBeCloseTo(10000 / 300, 4);
 	});
 });

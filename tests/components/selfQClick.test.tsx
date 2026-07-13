@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import ActionPanel from "../../src/components/action-sequence/ActionPanel";
+import ActionPanel from "../../src/components/ActionPanel";
 import { simulateActions } from "../../src/simulate/actions";
 import type {
 	CharacterConfig,

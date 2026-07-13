@@ -85,25 +85,20 @@ describe("Dan Heng Permansor Terrae front-end interaction", () => {
 				.queryAllByRole("textbox")
 				.some((input) => input.getAttribute("maxlength") === "6"),
 		).toBe(false);
+		expect(
+			within(dragonRow).getByRole("button", { name: "攻击" }),
+		).toHaveAttribute("aria-pressed", "true");
 
 		const allyRow = document.querySelector(
 			'tr[data-action-key="ally-1"]',
 		) as HTMLElement;
-		const attack = within(allyRow).getByRole("button", { name: "攻击" });
-		expect(attack).toHaveAttribute("aria-pressed", "true");
-		await userEvent.click(attack);
-
-		await waitFor(() => {
-			const value = (importArea as HTMLTextAreaElement).value;
-			expect(JSON.parse(value).attackDisabled).toEqual({ "ally-1": true });
-		});
+		// 普攻固定视为攻击，不显示可关闭的攻击开关。
+		expect(within(allyRow).queryByRole("button", { name: "攻击" })).toBeNull();
 
 		const ownerRow = document.querySelector(
 			'tr[data-action-key="dhpt-1"]',
 		) as HTMLElement;
-		const ownerAttack = within(ownerRow).getByRole("button", { name: "攻击" });
-		expect(ownerAttack).toBeDisabled();
-		expect(ownerAttack).toHaveAttribute("aria-pressed", "false");
+		expect(within(ownerRow).queryByRole("button", { name: "攻击" })).toBeNull();
 	});
 
 	it("keeps the non-memosprite Souldragon visible during Phainon's domain", async () => {

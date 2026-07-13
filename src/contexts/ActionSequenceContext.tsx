@@ -42,6 +42,7 @@ export type ActionSequenceContextType = {
 	dancePartner?: string;
 	bondmateTarget?: string;
 	attackDisabled: Record<string, boolean>;
+	saberAdvanceToggles: Record<string, boolean>;
 	resourceValues: Record<string, Record<string, string>>;
 	actions: GeneratedAction[];
 	setIsExportingImage: React.Dispatch<React.SetStateAction<boolean>>;
@@ -132,6 +133,9 @@ export type ActionSequenceContextType = {
 	setDancePartner: React.Dispatch<React.SetStateAction<string | undefined>>;
 	setBondmateTarget: React.Dispatch<React.SetStateAction<string | undefined>>;
 	setAttackDisabled: React.Dispatch<
+		React.SetStateAction<Record<string, boolean>>
+	>;
+	setSaberAdvanceToggles: React.Dispatch<
 		React.SetStateAction<Record<string, boolean>>
 	>;
 	setResourceValues: React.Dispatch<

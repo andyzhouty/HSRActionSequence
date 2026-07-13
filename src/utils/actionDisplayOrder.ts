@@ -67,6 +67,14 @@ function getDerivedExtraTurnSourceKey(action: GeneratedAction): string | null {
 	return null;
 }
 
+function getArcherArrowParentKey(action: GeneratedAction): string | null {
+	return (
+		action.archerExtraEParentKey ??
+		action.key.match(/^(.*)-ea\d+(?:-|$)/)?.[1] ??
+		null
+	);
+}
+
 function getRequiredPredecessorKey(action: GeneratedAction): string | null {
 	const extraAhaSourceKey = getExtraAhaSourceKey(action);
 	if (extraAhaSourceKey) return extraAhaSourceKey;
@@ -88,6 +96,10 @@ export function getExtraTurnParentKey(action: GeneratedAction): string | null {
 	// 阿哈本体是一个可移动的复合单元，内部欢愉技随它整体移动。
 	if (action.isAhaInstant && action.hasElationSkills && !action.isExtraAha) {
 		return action.key;
+	}
+	const archerArrowParentKey = getArcherArrowParentKey(action);
+	if (action.actionNo === 0 && archerArrowParentKey) {
+		return archerArrowParentKey;
 	}
 	const derivedSourceKey = getDerivedExtraTurnSourceKey(action);
 	if (derivedSourceKey) return getOriginalActionParentKey(derivedSourceKey);

@@ -1,4 +1,9 @@
 import {
+	archerFuaResourceName,
+	clampArcherFuaCharge,
+	hasArcher,
+} from "../mechanics/archer";
+import {
 	advanceSouldragon,
 	emitImmediateSouldragonAction,
 } from "../mechanics/danHengSouldragon";
@@ -7,7 +12,11 @@ import {
 	isInGodmode,
 } from "../mechanics/silverWolfGodmode";
 import type { GeneratedAction } from "../utils/actionSequence";
-import { getCharacterPath } from "../utils/actionSequence";
+import {
+	getCharacterPath,
+	isBasicAttackSkill,
+	isNonAttackSkill,
+} from "../utils/actionSequence";
 import {
 	applyTeamSpeedBuffs,
 	applyTechniqueSummons,
@@ -43,6 +52,58 @@ export function simulateActions(
 	const rawActions: GeneratedAction[] = [];
 	let actions: GeneratedAction[];
 	const handleRecordedAction = (action: GeneratedAction) => {
+		const attacker = input.characters.find(
+			(character) => character.id === action.characterId,
+		);
+		const attackerState = states.find(
+			(state) => state.character.id === action.characterId,
+		);
+		const isSilverWolfNonAttack =
+			hasSilverWolfGodmode(attacker?.name ?? "") &&
+			(action.skill === "Q" ||
+				(action.isElationSkill &&
+					(!attackerState || !isInGodmode(attackerState))));
+		const archerState = states.find((state) => hasArcher(state.character));
+		const manualCharge = Number.parseFloat(
+			input.resourceValues?.[action.key]?.[archerFuaResourceName] ?? "",
+		);
+		if (archerState && Number.isFinite(manualCharge)) {
+			archerState.archerFuaCharge = clampArcherFuaCharge(manualCharge);
+		}
+		if (archerState) action.archerFuaCharge = archerState.archerFuaCharge;
+		const isForcedAttack = isBasicAttackSkill(action.skill);
+		if (
+			archerState &&
+			!action.isArcherFua &&
+			!action.isAssistAction &&
+			(isForcedAttack || input.attackDisabled?.[action.key] !== true)
+		) {
+			if (
+				attacker?.kind === "角色" &&
+				action.characterId !== archerState.character.id &&
+				(isForcedAttack || !isNonAttackSkill(attacker, action.skill)) &&
+				!isSilverWolfNonAttack &&
+				(archerState.archerFuaCharge ?? 0) > 0
+			) {
+				archerState.archerFuaCharge = clampArcherFuaCharge(
+					(archerState.archerFuaCharge ?? 0) - 1,
+				);
+				action.archerFuaCharge = archerState.archerFuaCharge;
+				actions.push({
+					key: `${action.key}-archer-fua`,
+					characterId: archerState.character.id,
+					displayName: "红A",
+					actionNo: 0,
+					actionValue: action.actionValue,
+					skill: "Z",
+					speed: archerState.currentSpeed,
+					isFuaAction: true,
+					isArcherFua: true,
+					lockedSkill: true,
+					archerFuaCharge: archerState.archerFuaCharge,
+				});
+			}
+		}
 		if (!souldragonOwner || action.isSouldragonAction) return;
 
 		if (
@@ -72,28 +133,16 @@ export function simulateActions(
 			);
 		}
 
-		const attacker = input.characters.find(
-			(character) => character.id === action.characterId,
-		);
 		const isForcedNonAttack =
-			action.characterId === souldragonOwner.character.id &&
-			action.skill === "E";
-		const skipElationAttackForSW =
-			action.isElationSkill &&
-			hasSilverWolfGodmode(attacker?.name ?? "") &&
-			(() => {
-				const atkState = states.find(
-					(s) => s.character.id === action.characterId,
-				);
-				return !atkState || !isInGodmode(atkState);
-			})();
-
+			(attacker !== undefined && isNonAttackSkill(attacker, action.skill)) ||
+			(action.characterId === souldragonOwner.character.id &&
+				action.skill === "E");
 		if (
 			attacker?.kind === "角色" &&
 			action.characterId === currentBondmateTarget.value &&
-			!isForcedNonAttack &&
-			input.attackDisabled?.[action.key] !== true &&
-			!skipElationAttackForSW
+			(isForcedAttack || !isForcedNonAttack) &&
+			(isForcedAttack || input.attackDisabled?.[action.key] !== true) &&
+			!isSilverWolfNonAttack
 		) {
 			// 境界内双字符技能码（如 EW、EA）视为两次攻击，龙灵提前两次
 			const domainDoubleAttack =

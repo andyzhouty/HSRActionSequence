@@ -13,6 +13,7 @@
     "format:ci": "biome ci src/ tests/",
     "check": "pnpm exec tsc --noEmit && pnpm lint && pnpm test",
     "check:docs": "node scripts/checkDocPaths.mjs",
+    "docs:merge": "node scripts/merge-docs.mjs",
     "preview": "vite preview",
     "wails": "wails"
   },
