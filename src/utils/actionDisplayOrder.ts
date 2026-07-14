@@ -53,6 +53,12 @@ function getDisplayExtraAhaSourceKey(action: GeneratedAction): string | null {
 
 /** 返回可独立排序的派生额外回合所依附的源行动。 */
 function getDerivedExtraTurnSourceKey(action: GeneratedAction): string | null {
+	if (
+		action.isMydeiGodslayerAction &&
+		action.key.endsWith("-mydei-godslayer")
+	) {
+		return action.key.slice(0, -"-mydei-godslayer".length);
+	}
 	if (action.isFuaAction && action.key.endsWith("-fua")) {
 		return action.key.slice(0, -"-fua".length);
 	}
@@ -218,6 +224,12 @@ export function getDisplayOrderedActions(
 			}
 			if (left.action.actionValue !== right.action.actionValue) {
 				return left.action.actionValue - right.action.actionValue;
+			}
+			if (
+				left.action.isMydeiGodslayerAction !==
+				right.action.isMydeiGodslayerAction
+			) {
+				return left.action.isMydeiGodslayerAction ? -1 : 1;
 			}
 			if (
 				left.parentKey &&

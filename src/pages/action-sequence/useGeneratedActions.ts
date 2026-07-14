@@ -58,6 +58,8 @@ function buildSimulationConfig(
 		attackDisabled: savedData.attackDisabled,
 		saberAdvanceToggles: savedData.saberAdvanceToggles,
 		evanesciaFuaToggles: savedData.evanesciaFuaToggles,
+		mydeiVendettaToggles: savedData.mydeiVendettaToggles,
+		mydeiGodslayerToggles: savedData.mydeiGodslayerToggles,
 		sameAVOrder: savedData.sameAVOrder,
 	};
 }
@@ -269,8 +271,12 @@ export function useGeneratedActions({
 				prev.evernightThresholdBurstToggles,
 			);
 			const nextAttackDisabled = pruneToggleMap(prev.attackDisabled);
-			const nextEvanesciaFuaToggles = pruneToggleMap(
-				prev.evanesciaFuaToggles,
+			const nextEvanesciaFuaToggles = pruneToggleMap(prev.evanesciaFuaToggles);
+			const nextMydeiVendettaToggles = pruneToggleMap(
+				prev.mydeiVendettaToggles,
+			);
+			const nextMydeiGodslayerToggles = pruneToggleMap(
+				prev.mydeiGodslayerToggles,
 			);
 			const nextSaberAdvanceToggles = pruneToggleMap(prev.saberAdvanceToggles);
 			changed =
@@ -284,6 +290,8 @@ export function useGeneratedActions({
 					prev.evernightThresholdBurstToggles ||
 				nextAttackDisabled !== prev.attackDisabled ||
 				nextEvanesciaFuaToggles !== prev.evanesciaFuaToggles ||
+				nextMydeiVendettaToggles !== prev.mydeiVendettaToggles ||
+				nextMydeiGodslayerToggles !== prev.mydeiGodslayerToggles ||
 				nextSaberAdvanceToggles !== prev.saberAdvanceToggles;
 
 			if (!changed) return prev;
@@ -300,6 +308,8 @@ export function useGeneratedActions({
 				evernightThresholdBurstToggles: nextEvernightThresholdBurstToggles,
 				attackDisabled: nextAttackDisabled,
 				evanesciaFuaToggles: nextEvanesciaFuaToggles,
+				mydeiVendettaToggles: nextMydeiVendettaToggles,
+				mydeiGodslayerToggles: nextMydeiGodslayerToggles,
 				saberAdvanceToggles: nextSaberAdvanceToggles,
 			};
 		});

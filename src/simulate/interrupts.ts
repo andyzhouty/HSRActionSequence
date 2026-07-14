@@ -10,6 +10,10 @@ import {
 	hasHyacineIca,
 } from "../mechanics/hyacineIca";
 import {
+	applyMydeiVendettaToggle,
+	emitMydeiGodslayerExtraAction,
+} from "../mechanics/mydei";
+import {
 	expirePhainonDomainSpeedBonus,
 	freezeAlliesForDomain,
 	getPhainonDomainEndIndex,
@@ -182,6 +186,7 @@ export function emitSpecialInterruptAction(
 	const casterIndex = states.findIndex((s) => s.character.id === int.casterId);
 	if (casterIndex === -1) return;
 	const caster = states[casterIndex];
+	applyMydeiVendettaToggle(states, input, interruptKey, actionValue);
 	const casterSpeed = caster.currentSpeed;
 	caster.lastActionValue = actionValue;
 	actions.push({
@@ -351,6 +356,13 @@ export function emitSpecialInterruptAction(
 	emitGodmodeExtraAction(interruptKey, actionValue, states, actions, input);
 	// 手动插队 Q 不经过普通行动收尾，需在此补发绯英追击。
 	emitFuaAction(interruptKey, actionValue, states, actions, input);
+	emitMydeiGodslayerExtraAction(
+		interruptKey,
+		actionValue,
+		states,
+		actions,
+		input,
+	);
 }
 
 export function emitSparxieExtraAction(

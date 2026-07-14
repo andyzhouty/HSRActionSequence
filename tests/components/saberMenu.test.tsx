@@ -113,6 +113,39 @@ describe("Saber right-click menu", () => {
 		expect(screen.queryByText("绯英追击：")).toBeNull();
 	});
 
+	it("万敌在场时可在任意行动点切换血仇并触发弑神登神", () => {
+		const mydei = character("mydei", "万敌");
+		mydei.eidolon = 6;
+		const ally = character("ally", "停云");
+		const setMydeiVendettaToggles = vi.fn();
+		const setMydeiGodslayerToggles = vi.fn();
+		renderWithContext(<ActionPanel />, {
+			characters: [mydei, ally],
+			charactersById: { mydei, ally },
+			characterNames: { mydei: "万敌", ally: "停云" },
+			characterKinds: { mydei: "角色", ally: "角色" },
+			actions: [
+				{
+					key: "ally-1",
+					characterId: "ally",
+					actionNo: 1,
+					actionValue: 100,
+					skill: "E",
+					speed: 100,
+				},
+			],
+			actionMenuOpen: true,
+			actionMenuKey: "ally-1",
+			selectedActionKeys: new Set(["ally-1"]),
+			setMydeiVendettaToggles,
+			setMydeiGodslayerToggles,
+		});
+
+		expect(screen.getByRole("button", { name: "血仇中" })).toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: "弑神登神" }));
+		expect(setMydeiGodslayerToggles).toHaveBeenCalledOnce();
+	});
+
 	it("可为姬子助战行动插入绯英追击", () => {
 		const himeko = character("himeko", "姬子·启行");
 		const evanescia = character("evanescia", "绯英");
@@ -136,6 +169,8 @@ describe("Saber right-click menu", () => {
 			selectedActionKeys: new Set([assist.key]),
 		});
 
-		expect(screen.getByRole("button", { name: "插入追击（Z）" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "插入追击（Z）" }),
+		).toBeInTheDocument();
 	});
 });

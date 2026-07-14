@@ -88,6 +88,11 @@ describe("CharacterPanel rendering", () => {
 		expect(screen.getAllByDisplayValue("100").length).toBeGreaterThanOrEqual(4);
 	});
 
+	it("does not expose an editable base-speed input", () => {
+		renderWithContext(<CharacterPanel />);
+		expect(screen.queryByText("基础速度 v₀")).not.toBeInTheDocument();
+	});
+
 	it("shows toggle labels for character-type targets", () => {
 		renderWithContext(<CharacterPanel />);
 		expect(screen.getAllByText("翁瓦克").length).toBeGreaterThanOrEqual(4);

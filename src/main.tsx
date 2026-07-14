@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import ActionSequence from "./pages/ActionSequence";
+import App from "./App";
 import "./index.css";
 import { validateCharacterSchema } from "./data/characterSchema";
 
@@ -31,7 +31,7 @@ ReactDOM.createRoot(rootElement).render(
 	<React.StrictMode>
 		<div className="min-h-screen bg-gray-900 text-white">
 			<main className="p-2">
-				<ActionSequence />
+				<App />
 			</main>
 		</div>
 	</React.StrictMode>,

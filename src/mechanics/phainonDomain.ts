@@ -3,8 +3,8 @@ import {
 	type DomainRule,
 	getCounterWDomainRule,
 	type SkillCode,
-	toPositiveNumber,
 } from "../utils/actionSequence";
+import { getEffectiveCharacterBaseSpeed } from "./baseSpeed";
 
 export type PhainonDomainState = {
 	keyPrefix: string;
@@ -115,9 +115,9 @@ export function getPhainonDomainInterval(
 ) {
 	const domainRule = getCounterWDomainRule(character.name);
 	const v0 =
-		toPositiveNumber(character.baseSpeed, 0) > 0
-			? toPositiveNumber(character.baseSpeed, actionSpeed)
-			: domainRule.defaultBaseSpeed;
+		getEffectiveCharacterBaseSpeed(character) ||
+		domainRule.defaultBaseSpeed ||
+		actionSpeed;
 	const coeff =
 		character.eidolon >= 1
 			? domainRule.eidolon1EquivalentSpeedCoefficient

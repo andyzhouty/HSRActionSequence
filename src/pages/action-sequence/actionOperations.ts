@@ -1,3 +1,4 @@
+import { getEffectiveCharacterBaseSpeed } from "../../mechanics/baseSpeed";
 import type { CharacterConfig } from "../../utils/actionSequence";
 import {
 	formatEditableNumber,
@@ -5,7 +6,6 @@ import {
 	getCounterWDomainRule,
 	type SpeedAdjustment,
 	type SpeedChangeMode,
-	toPositiveNumber,
 } from "../../utils/actionSequence";
 
 type CharacterLookup = Record<string, CharacterConfig>;
@@ -17,9 +17,7 @@ function getPhainonDomainEquivalentSpeed(
 	if (!character) return action.speed;
 	const domainRule = getCounterWDomainRule(character.name);
 	const baseSpeed =
-		toPositiveNumber(character.baseSpeed, 0) > 0
-			? toPositiveNumber(character.baseSpeed, action.speed)
-			: domainRule.defaultBaseSpeed;
+		getEffectiveCharacterBaseSpeed(character) || domainRule.defaultBaseSpeed;
 	const coeff =
 		character.eidolon >= 1
 			? domainRule.eidolon1EquivalentSpeedCoefficient
@@ -113,7 +111,7 @@ export function hasMissingRelativeBaseSpeed(params: {
 		return (
 			operationSpeedMode === "relative" &&
 			character !== undefined &&
-			toPositiveNumber(character.baseSpeed) <= 0
+			getEffectiveCharacterBaseSpeed(character) <= 0
 		);
 	});
 }

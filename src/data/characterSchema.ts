@@ -21,6 +21,7 @@ export class CharacterValidationError extends Error {
 type CharacterEntry = {
 	cid: string;
 	names: string[];
+	baseSpeed?: number;
 	effects?: Record<string, string>;
 	effectRules?: Record<string, unknown>;
 	passives?: string[];
@@ -110,6 +111,16 @@ function validateCharacterEntry(
 	if (character.path && !validPaths.has(character.path)) {
 		throw new CharacterValidationError(
 			`CID ${character.cid} 的 path "${character.path}" 无效`,
+		);
+	}
+
+	if (
+		typeof character.baseSpeed !== "number" ||
+		!Number.isFinite(character.baseSpeed) ||
+		character.baseSpeed <= 0
+	) {
+		throw new CharacterValidationError(
+			`CID ${character.cid} 的 baseSpeed 必须是正数`,
 		);
 	}
 

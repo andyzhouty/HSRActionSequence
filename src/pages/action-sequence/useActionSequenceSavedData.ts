@@ -57,6 +57,8 @@ type SavedDataFieldSetters = {
 		SetStateAction<Record<string, boolean>>
 	>;
 	setEvanesciaFuaToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
+	setMydeiVendettaToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
+	setMydeiGodslayerToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 	setSameAVOrder: Dispatch<SetStateAction<Record<string, number>>>;
 	setHyacineE2Active: Dispatch<SetStateAction<boolean>>;
 	setMeritTarget: Dispatch<SetStateAction<string | undefined>>;
@@ -151,6 +153,10 @@ export function useActionSequenceSavedData() {
 				setSavedField("evernightThresholdBurstToggles", updater),
 			setEvanesciaFuaToggles: (updater) =>
 				setSavedField("evanesciaFuaToggles", updater),
+			setMydeiVendettaToggles: (updater) =>
+				setSavedField("mydeiVendettaToggles", updater),
+			setMydeiGodslayerToggles: (updater) =>
+				setSavedField("mydeiGodslayerToggles", updater),
 			setSameAVOrder: (updater) => setSavedField("sameAVOrder", updater),
 			setHyacineE2Active: (updater) =>
 				setSavedField("hyacineE2Active", updater),

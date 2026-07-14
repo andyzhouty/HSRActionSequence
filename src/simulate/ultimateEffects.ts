@@ -180,6 +180,7 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 	if (
 		isCharacterTarget(character) &&
 		hasPassive(character.name, "killReset") &&
+		character.eidolon >= 4 &&
 		input.killToggles?.[sourceKey]
 	) {
 		caster.nextActionValue = actionValue;

@@ -217,7 +217,8 @@ describe("刻律军功目标中途切换", () => {
 	it("刻律 E 切换军功目标后速度正确转移", () => {
 		// 刻律 180 速 翁瓦克，初始军功目标=白厄(111速)
 		// 刻律第一动 E 选择那刻夏(111速)
-		// 刻律翁瓦克首发比白厄快，E 切换后白厄速度降为 111，那刻夏升为 133.2
+		// 刻律翁瓦克首发比白厄快，E 切换后白厄速度降为 111；
+		// 那刻夏基础速度固定为 97，因此速度升为 111 + 97×20% = 130.4。
 		const actions = simulateActions(
 			input({
 				characters: [
@@ -238,11 +239,11 @@ describe("刻律军功目标中途切换", () => {
 			}),
 		);
 
-		// 刻律速度始终 216（180*1.2）
+		// 刻律基础速度为 99，速度始终为 180 + 99×20% = 199.8。
 		const cerydraActions = actions.filter((a) => a.characterId === "cerydra");
 		expect(cerydraActions.length).toBeGreaterThanOrEqual(1);
 		for (const a of cerydraActions) {
-			expect(a.speed).toBeCloseTo(216, 1);
+			expect(a.speed).toBeCloseTo(199.8, 1);
 		}
 
 		// 白厄在刻律 E 切换后才行动，速度应降为 111
@@ -250,10 +251,10 @@ describe("刻律军功目标中途切换", () => {
 		const baiFirst = baiActions[0];
 		expect(baiFirst.speed).toBeCloseTo(111, 0);
 
-		// 那刻夏在刻律 E 切换后才行动，速度应升为 133.2
+		// 那刻夏在刻律 E 切换后才行动，速度应升为 130.4
 		const nakexiaActions = actions.filter((a) => a.characterId === "nakexia");
 		const nakexiaFirst = nakexiaActions[0];
-		expect(nakexiaFirst.speed).toBeCloseTo(133.2, 1);
+		expect(nakexiaFirst.speed).toBeCloseTo(130.4, 1);
 	});
 
 	it("刻律 E 切换后旧目标速度正确降低", () => {
@@ -286,8 +287,8 @@ describe("刻律军功目标中途切换", () => {
 		const baiFirst = actions.find((a) => a.characterId === "bai-e");
 		expect(baiFirst?.speed).toBeCloseTo(111, 0);
 
-		// 那刻夏 E 切换后速度升为 133.2
+		// 那刻夏 E 切换后速度升为 130.4（固定基础速度 97）
 		const nakexiaFirst = actions.find((a) => a.characterId === "nakexia");
-		expect(nakexiaFirst?.speed).toBeCloseTo(133.2, 1);
+		expect(nakexiaFirst?.speed).toBeCloseTo(130.4, 1);
 	});
 });

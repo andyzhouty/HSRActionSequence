@@ -19,7 +19,7 @@ describe("example-蝶夜堇昔", () => {
 		).toBeCloseTo(0.0001, 4);
 		expect(
 			actions.find((action) => action.key === "c4-2")?.actionValue,
-		).toBeCloseTo(31.6557, 4);
+		).toBeCloseTo(36.5899, 4);
 		expect(actions.findIndex((action) => action.key === "c3-1")).toBeLessThan(
 			actions.findIndex((action) => action.key === "c4-1"),
 		);

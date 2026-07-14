@@ -37,6 +37,8 @@ export type ActionSequenceContextType = {
 	evernightSelfDestructToggles: Record<string, boolean>;
 	evernightThresholdBurstToggles: Record<string, boolean>;
 	evanesciaFuaToggles: Record<string, boolean>;
+	mydeiVendettaToggles: Record<string, boolean>;
+	mydeiGodslayerToggles: Record<string, boolean>;
 	hyacineE2Active: boolean;
 	meritTarget?: string;
 	dancePartner?: string;
@@ -126,6 +128,12 @@ export type ActionSequenceContextType = {
 		React.SetStateAction<Record<string, boolean>>
 	>;
 	setEvanesciaFuaToggles: React.Dispatch<
+		React.SetStateAction<Record<string, boolean>>
+	>;
+	setMydeiVendettaToggles: React.Dispatch<
+		React.SetStateAction<Record<string, boolean>>
+	>;
+	setMydeiGodslayerToggles: React.Dispatch<
 		React.SetStateAction<Record<string, boolean>>
 	>;
 	sameAVOrder: Record<string, number>;

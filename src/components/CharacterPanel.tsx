@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useActionSequence } from "../contexts/ActionSequenceContext";
 import lightConeData from "../data/lightcones.json";
-import { getGilgameshBaseSpeed, hasGilgamesh } from "../mechanics/gilgamesh";
 import {
 	type defaultCharacters,
 	getCharacterPath,
@@ -244,9 +243,6 @@ function CharacterCard({
 								return {
 									...prev,
 									name: value,
-									...(hasGilgamesh({ ...prev, name: value })
-										? { baseSpeed: String(getGilgameshBaseSpeed({ ...prev, name: value })) }
-										: {}),
 									lc_id: oldPath !== newPath && !lcStillValid ? 0 : prev.lc_id,
 								};
 							})
@@ -266,14 +262,7 @@ function CharacterCard({
 				)}
 			</div>
 
-			<div
-				className={`grid gap-3 ${
-					isCharacterTarget(character) &&
-					!hasSkillEffect(character.name, "W", "counterW")
-						? "grid-cols-2"
-						: "grid-cols-1"
-				}`}
-			>
+			<div className="grid gap-3">
 				<NumberInput
 					label="速度 v"
 					labelClassName="text-xs whitespace-nowrap leading-5"
@@ -285,21 +274,6 @@ function CharacterCard({
 						}))
 					}
 				/>
-				{isCharacterTarget(character) &&
-					!hasSkillEffect(character.name, "W", "counterW") && (
-						<NumberInput
-							label="基础速度 v₀"
-							labelClassName="text-xs whitespace-nowrap leading-5"
-							placeholder="可不填"
-							value={character.baseSpeed}
-							onChange={(value) =>
-								ctx.updateCharacter(character.id, (prev) => ({
-									...prev,
-									baseSpeed: value,
-								}))
-							}
-						/>
-					)}
 			</div>
 
 			{isCharacterTarget(character) && (
@@ -429,13 +403,6 @@ function CharacterCard({
 								ctx.updateCharacter(character.id, (prev) => ({
 									...prev,
 									lc_id: Number(value),
-									...(hasGilgamesh(prev)
-										? {
-												baseSpeed: String(
-													getGilgameshBaseSpeed({ ...prev, lc_id: Number(value) }),
-												),
-											}
-										: {}),
 								}))
 							}
 							className="flex-1"
@@ -456,26 +423,6 @@ function CharacterCard({
 								ctx.updateCharacter(character.id, (prev) => ({
 									...prev,
 									superimpose: Number(value),
-									...(hasGilgamesh(prev)
-										? {
-												baseSpeed: String(
-													getGilgameshBaseSpeed({
-														...prev,
-														superimpose: Number(value),
-													}),
-												),
-											}
-										: hasSkillEffect(prev.name, "W", "counterW")
-										? {
-												baseSpeed: String(
-													prev.lc_id === 23044
-														? Number(value) > 0
-															? 104 + 2 * Number(value)
-															: 94
-														: 94,
-												),
-											}
-										: {}),
 								}))
 							}
 							className="flex-1"

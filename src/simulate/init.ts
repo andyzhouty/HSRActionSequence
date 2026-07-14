@@ -1,6 +1,7 @@
 import { hasPassive, hasSkillEffect } from "../data/characters";
 import { summonGarmentmakerState } from "../mechanics/aglaeaGarmentmaker";
 import { clampArcherFuaCharge, hasArcher } from "../mechanics/archer";
+import { getEffectiveCharacterBaseSpeed } from "../mechanics/baseSpeed";
 import {
 	applyCastoriceE2Pull,
 	hasCastoriceSummon,
@@ -11,10 +12,10 @@ import {
 	summonSouldragonState,
 } from "../mechanics/danHengSouldragon";
 import { hasEvernightEvey, summonEveyState } from "../mechanics/evernightEvey";
-import { getGilgameshBaseSpeed, hasGilgamesh } from "../mechanics/gilgamesh";
+import { hasGilgamesh } from "../mechanics/gilgamesh";
 import { applyHyacineE2SpeedBuff } from "../mechanics/hyacineIca";
+import { hasMydei } from "../mechanics/mydei";
 import {
-	getHertaTeamFixedBaseSpeed,
 	getTheHertaInitialInspiration,
 	hasTheHerta,
 } from "../mechanics/theHerta";
@@ -35,7 +36,6 @@ export function buildInitialStates(
 		.filter((c) => toPositiveNumber(c.speed, 0) > 0)
 		.map((character) => {
 			const speed = toPositiveNumber(character.speed, 0);
-			const hertaTeamFixedBaseSpeed = getHertaTeamFixedBaseSpeed(character);
 			let advancePct = 0;
 			if (isCharacterTarget(character) && character.hasVonwacq)
 				advancePct += 0.4;
@@ -47,18 +47,7 @@ export function buildInitialStates(
 
 			return {
 				character,
-				baseSpeed: hasGilgamesh(character)
-					? getGilgameshBaseSpeed(character)
-					: (hertaTeamFixedBaseSpeed ??
-						(toPositiveNumber(character.baseSpeed, 0) > 0
-							? toPositiveNumber(character.baseSpeed, speed)
-							: hasSkillEffect(character.name, "W", "counterW")
-								? character.lc_id === 23044
-									? character.superimpose > 0
-										? 104 + 2 * character.superimpose
-										: 94
-									: 94
-								: speed)),
+				baseSpeed: getEffectiveCharacterBaseSpeed(character),
 				currentSpeed: speed,
 				phainonDomainSpeedBonus: 0,
 				actionNo: 1,
@@ -73,6 +62,9 @@ export function buildInitialStates(
 					: undefined,
 				gilgameshEUnlocked: hasGilgamesh(character) ? false : undefined,
 				gilgameshAttackCount: hasGilgamesh(character) ? 0 : undefined,
+				mydeiVendettaActive: hasMydei(character.name)
+					? character.eidolon >= 6
+					: undefined,
 				theHertaInspiration: hasTheHerta(character)
 					? getTheHertaInitialInspiration(character)
 					: undefined,
@@ -268,14 +260,8 @@ export function applyTeamSpeedBuffs(
 	if (huohuoState) {
 		for (const s of states) {
 			if (s.character.kind === "角色") {
-				const v0 =
-					toPositiveNumber(s.character.baseSpeed, 0) > 0
-						? toPositiveNumber(s.character.baseSpeed, 100)
-						: hasSkillEffect(s.character.name, "W", "counterW")
-							? s.baseSpeed
-							: 100;
 				const oldSpeed = s.currentSpeed;
-				s.currentSpeed = s.currentSpeed + v0 * 0.12;
+				s.currentSpeed = s.currentSpeed + s.baseSpeed * 0.12;
 				s.nextActionValue = s.nextActionValue * (oldSpeed / s.currentSpeed);
 			}
 		}
@@ -293,14 +279,8 @@ export function applyTeamSpeedBuffs(
 					s.character.id === meritOwner.character.id ||
 					s.character.id === input.meritTarget
 				) {
-					const v0_merit =
-						toPositiveNumber(s.character.baseSpeed, 0) > 0
-							? toPositiveNumber(s.character.baseSpeed, 100)
-							: hasSkillEffect(s.character.name, "W", "counterW")
-								? s.baseSpeed
-								: 100;
 					const oldSpeed = s.currentSpeed;
-					s.currentSpeed = s.currentSpeed + v0_merit * 0.2;
+					s.currentSpeed = s.currentSpeed + s.baseSpeed * 0.2;
 					s.nextActionValue = s.nextActionValue * (oldSpeed / s.currentSpeed);
 				}
 			}
@@ -329,14 +309,8 @@ export function applyTeamSpeedBuffs(
 				partnerCid !== undefined &&
 				dancePartnerCidWhitelist.has(partnerCid)
 			) {
-				const v0_dahlia =
-					toPositiveNumber(partner.character.baseSpeed, 0) > 0
-						? toPositiveNumber(partner.character.baseSpeed, 100)
-						: hasSkillEffect(partner.character.name, "W", "counterW")
-							? partner.baseSpeed
-							: 100;
 				const oldSpeed = partner.currentSpeed;
-				partner.currentSpeed = partner.currentSpeed + v0_dahlia * 0.3;
+				partner.currentSpeed = partner.currentSpeed + partner.baseSpeed * 0.3;
 				partner.nextActionValue =
 					partner.nextActionValue * (oldSpeed / partner.currentSpeed);
 			}

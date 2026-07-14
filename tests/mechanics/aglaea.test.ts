@@ -68,7 +68,7 @@ function interrupts(
 // ───── 阿格莱雅至高之姿速度 ─────
 
 describe("Aglaea Supreme Stance speed", () => {
-	it("速度 = currentSpeed + baseSpeed × 15% × 层数", () => {
+	it("速度 = currentSpeed + 角色数据基础速度 × 15% × 层数", () => {
 		// 阿格莱雅 E → 衣匠行动（层数=1）→ Q → 衣匠再行动（层数=2）
 		// 速度 160，基础速度 100，2 层：speed = 160 + 100 × 0.15 × 2 = 190
 		const actions = simulateActions(
@@ -83,10 +83,10 @@ describe("Aglaea Supreme Stance speed", () => {
 		const supremeActions = actions.filter((a) => a.isAglaeaSupremeAction);
 		expect(supremeActions.length).toBeGreaterThan(1);
 		// 第一动是 Q 后即时行动（0 层），第二动才有层数加成
-		expect(supremeActions[1].speed).toBe(175);
+		expect(supremeActions[1].speed).toBe(175.3);
 	});
 
-	it("无基础速度时降级使用当前速度作为基础", () => {
+	it("忽略旧存档基础速度字段，使用角色数据基础速度", () => {
 		// 不设 baseSpeed，getAglaeaBaseSpeed 降级返回 currentSpeed
 		// 1 层：speed = 160 + 160 × 0.15 × 1 = 184
 		const actions = simulateActions(
@@ -98,7 +98,7 @@ describe("Aglaea Supreme Stance speed", () => {
 		);
 		const supremeActions = actions.filter((a) => a.isAglaeaSupremeAction);
 		expect(supremeActions.length).toBeGreaterThan(1);
-		expect(supremeActions[1].speed).toBe(184);
+		expect(supremeActions[1].speed).toBe(175.3);
 	});
 
 	it("无基础速度时降级使用当前速度作为基础", () => {

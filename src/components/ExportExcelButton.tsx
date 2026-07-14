@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import * as XLSX from "xlsx";
 import { useActionSequence } from "../contexts/ActionSequenceContext";
+import { getEffectiveCharacterBaseSpeed } from "../mechanics/baseSpeed";
 import type { UltInterrupt } from "../utils/actionSequence";
 import {
 	ensureFileExtension,
@@ -172,7 +173,7 @@ export default function ExportExcelButton() {
 					c.name,
 					c.kind,
 					c.speed,
-					c.baseSpeed,
+					getEffectiveCharacterBaseSpeed(c),
 					c.hasVonwacq ? "是" : "否",
 					c.hasWindSet ? "是" : "否",
 					c.hasDance ? "是" : "否",

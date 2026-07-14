@@ -20,6 +20,7 @@ import { SelectInput } from "../Controls";
 import { EvanesciaFuaToggleSection } from "./EvanesciaFuaToggleSection";
 import { isGodmodeActiveAtAction } from "./godmodeActivity";
 import { HyacineE2Section } from "./HyacineE2Section";
+import { MydeiVendettaSection } from "./MydeiVendettaSection";
 
 /** Sub-component: the floating context menu content */
 export function ActionMenuContent() {
@@ -152,6 +153,9 @@ export function ActionMenuContent() {
 
 			{/* FUA toggle section */}
 			<EvanesciaFuaToggleSection />
+
+			{/* Mydei vendetta and godslayer extra turn */}
+			<MydeiVendettaSection />
 
 			{/* Hyacine E2 section */}
 			<HyacineE2Section />
@@ -423,7 +427,6 @@ function AssistCancelSection() {
 		</div>
 	);
 }
-
 
 function getMemeTargetOptions(ctx: ReturnType<typeof useActionSequence>) {
 	const allTargets = [

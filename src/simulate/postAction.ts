@@ -1,3 +1,4 @@
+import { emitMydeiGodslayerExtraAction } from "../mechanics/mydei";
 import { advanceSaberAfterAction } from "../mechanics/saber";
 import type { ActionContext } from "./context";
 import { emitMemeAdvanceAction, isAllyTarget } from "./effects";
@@ -49,6 +50,13 @@ export function runPostActionCleanup(
 		activeOdes,
 	});
 	callbacks.emitEvernightSelfDestructAction(key, actionValue);
+	emitMydeiGodslayerExtraAction(
+		key,
+		actionValue,
+		states,
+		runtime.actions,
+		runtime.input,
+	);
 	// 绯英追击（右键菜单 evanesciaFuaToggles 控制）
 	if (!skipAssistFollowUp) {
 		callbacks.emitFuaAction(key, actionValue);

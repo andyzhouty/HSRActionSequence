@@ -167,7 +167,7 @@ describe("大黑塔灵感", () => {
 			actions.find((action) => action.key === "anaxa-1")?.speed,
 		).toBeCloseTo(111.64);
 		expect(actions.find((action) => action.key === "himeko-1")?.speed).toBe(
-			114.4,
+			111.52,
 		);
 		expect(actions.find((action) => action.key === "tingyun-1")?.speed).toBe(
 			100,

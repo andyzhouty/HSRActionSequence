@@ -17,6 +17,8 @@ function char(
 		vonwacq?: boolean;
 		windSet?: boolean;
 		dance?: boolean;
+		lc_id?: number;
+		superimpose?: number;
 	} = {},
 ): CharacterConfig {
 	return {
@@ -29,8 +31,8 @@ function char(
 		hasWindSet: opts.windSet ?? false,
 		hasDance: opts.dance ?? false,
 		eidolon: opts.eidolon ?? 0,
-		superimpose: 1,
-		lc_id: 0,
+		superimpose: opts.superimpose ?? 1,
+		lc_id: opts.lc_id ?? 0,
 	};
 }
 
@@ -138,7 +140,11 @@ describe("白花鸭鸟", () => {
 		characters: [
 			char("花火", "花火", 164, { vonwacq: true, windSet: true }),
 			char("鸭鸭", "鸭鸭", 163, { vonwacq: true, windSet: true }),
-			char("白厄", "白厄", 111, { baseSpeed: 106, eidolon: 1 }),
+			char("白厄", "白厄", 111, {
+				eidolon: 1,
+				lc_id: 23044,
+				superimpose: 1,
+			}),
 			char("知更鸟", "知更鸟", 120, { vonwacq: true }),
 		],
 		skillOverrides: skillOverrides({

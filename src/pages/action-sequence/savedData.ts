@@ -115,6 +115,8 @@ export type NormalizedSavedData = SavedData & {
 	evernightSelfDestructToggles: Record<string, boolean>;
 	evernightThresholdBurstToggles: Record<string, boolean>;
 	evanesciaFuaToggles: Record<string, boolean>;
+	mydeiVendettaToggles: Record<string, boolean>;
+	mydeiGodslayerToggles: Record<string, boolean>;
 	sameAVOrder: Record<string, number>;
 	hyacineE2Active: boolean;
 	attackDisabled: Record<string, boolean>;
@@ -166,6 +168,8 @@ export function toNormalizedSavedData(
 		evernightThresholdBurstToggles:
 			migrated.evernightThresholdBurstToggles ?? {},
 		evanesciaFuaToggles: migrated.evanesciaFuaToggles ?? {},
+		mydeiVendettaToggles: migrated.mydeiVendettaToggles ?? {},
+		mydeiGodslayerToggles: migrated.mydeiGodslayerToggles ?? {},
 		sameAVOrder: migrated.sameAVOrder ?? {},
 		hyacineE2Active: migrated.hyacineE2Active ?? true,
 		meritTarget: migrated.meritTarget || undefined,
@@ -202,6 +206,8 @@ export function createDefaultSavedData(): NormalizedSavedData {
 		evernightSelfDestructToggles: {},
 		evernightThresholdBurstToggles: {},
 		evanesciaFuaToggles: {},
+		mydeiVendettaToggles: {},
+		mydeiGodslayerToggles: {},
 		sameAVOrder: {},
 		hyacineE2Active: true,
 		attackDisabled: {},

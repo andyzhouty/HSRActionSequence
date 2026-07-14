@@ -46,7 +46,11 @@ import { useActionSequencePersistence } from "./action-sequence/useActionSequenc
 import { useActionSequenceSavedData } from "./action-sequence/useActionSequenceSavedData";
 import { useGeneratedActions } from "./action-sequence/useGeneratedActions";
 
-export default function ActionSequence() {
+export default function ActionSequence({
+	onOpenGuide = () => {},
+}: {
+	onOpenGuide?: () => void;
+}) {
 	const [selectedActionKeys, setSelectedActionKeys] = useState<Set<string>>(
 		() => new Set(),
 	);
@@ -123,6 +127,10 @@ export default function ActionSequence() {
 		setEvernightThresholdBurstToggles,
 		evanesciaFuaToggles,
 		setEvanesciaFuaToggles,
+		mydeiVendettaToggles,
+		setMydeiVendettaToggles,
+		mydeiGodslayerToggles,
+		setMydeiGodslayerToggles,
 		sameAVOrder,
 		setSameAVOrder,
 		hyacineE2Active,
@@ -439,6 +447,10 @@ export default function ActionSequence() {
 				setEvernightThresholdBurstToggles,
 				evanesciaFuaToggles: evanesciaFuaToggles ?? {},
 				setEvanesciaFuaToggles,
+				mydeiVendettaToggles: mydeiVendettaToggles ?? {},
+				setMydeiVendettaToggles,
+				mydeiGodslayerToggles: mydeiGodslayerToggles ?? {},
+				setMydeiGodslayerToggles,
 				sameAVOrder: sameAVOrder ?? {},
 				setSameAVOrder,
 				hyacineE2Active,
@@ -513,11 +525,20 @@ export default function ActionSequence() {
 			}}
 		>
 			<div className="mx-auto max-w-7xl px-1 py-2">
-				<div className="mb-4 rounded-2xl bg-gray-800 p-4 shadow">
-					<h2 className="mb-2 text-2xl font-bold text-white">行动排轴器</h2>
-					<p className="text-gray-300">
-						星穹铁道行动值序列工具，支持翁瓦克、风套、舞舞舞、手动行动值和资源备注。
-					</p>
+				<div className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-2xl bg-gray-800 p-4 shadow">
+					<div>
+						<h2 className="mb-2 text-2xl font-bold text-white">行动排轴器</h2>
+						<p className="text-gray-300">
+							星穹铁道行动值序列工具，支持翁瓦克、风套、舞舞舞、手动行动值和资源备注。
+						</p>
+					</div>
+					<button
+						type="button"
+						onClick={onOpenGuide}
+						className="rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-sm font-bold text-gray-100 hover:border-blue-400"
+					>
+						使用指南
+					</button>
 				</div>
 				<div className="grid grid-cols-1 gap-4 xl:grid-cols-[420px_minmax(0,1fr)]">
 					<CharacterPanel />

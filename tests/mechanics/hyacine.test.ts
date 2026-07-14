@@ -3,7 +3,10 @@ import {
 	type SimulateActionsInput,
 	simulateActions,
 } from "../../src/simulate/actions";
-import type { CharacterConfig, SkillCode } from "../../src/utils/actionSequence";
+import type {
+	CharacterConfig,
+	SkillCode,
+} from "../../src/utils/actionSequence";
 
 function character(
 	id: string,
@@ -281,5 +284,41 @@ describe("Hyacine (风堇) Ica System", () => {
 		expect(
 			actions.find((a) => a.key === "ally-1-interrupt-0-ica"),
 		).toBeDefined();
+	});
+});
+
+describe("Hyacine E2 后续忆灵加速", () => {
+	it("战斗中召唤的死龙继承已启用的 E2 速度加成", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("hyacine", "风堇", 100, { eidolon: 2 }),
+					character("castorice", "遐蝶", 200),
+				],
+				skillOverrides: skills({ "castorice-1": "AQ" }),
+				hyacineE2Active: true,
+				limit: 120,
+			}),
+		);
+		expect(actions.find((action) => action.isPolluxAction)?.speed).toBeCloseTo(
+			214.5,
+		);
+	});
+
+	it("战斗中召唤的迷迷继承已启用的 E2 速度加成", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("hyacine", "风堇", 100, { eidolon: 2 }),
+					character("rmc", "开拓者·记忆", 200),
+				],
+				skillOverrides: skills({ "rmc-1": "E" }),
+				hyacineE2Active: true,
+				limit: 120,
+			}),
+		);
+		expect(
+			actions.find((action) => action.isMemospriteAction)?.speed,
+		).toBeCloseTo(169);
 	});
 });

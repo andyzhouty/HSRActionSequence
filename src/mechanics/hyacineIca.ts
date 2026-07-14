@@ -4,7 +4,6 @@ import type {
 	GeneratedAction,
 	SkillCode,
 } from "../utils/actionSequence";
-import { toPositiveNumber } from "../utils/actionSequence";
 
 // ── 类型 ──
 
@@ -122,11 +121,7 @@ export function applyHyacineE2SpeedBuff(states: HyacineActionState[]) {
 	for (const state of states) {
 		const kind = state.character.kind;
 		if (kind !== "角色" && kind !== "忆灵") continue;
-		const v0 =
-			toPositiveNumber(state.character.baseSpeed, 0) > 0
-				? toPositiveNumber(state.character.baseSpeed, 100)
-				: state.baseSpeed;
-		const bonus = v0 * 0.3;
+		const bonus = state.baseSpeed * 0.3;
 		const oldSpeed = state.currentSpeed;
 		state.currentSpeed += bonus;
 		if (oldSpeed > 0 && state.nextActionValue > 0) {
@@ -135,4 +130,28 @@ export function applyHyacineE2SpeedBuff(states: HyacineActionState[]) {
 		}
 	}
 	hyacine.hyacineE2SpeedBonus = 1; // 标记已应用
+}
+
+/**
+ * 为战斗中后续召唤的忆灵补上已启用的风堇 E2 速度加成。
+ * 召唤物可能在开场团队加速结算之后才入场，因此不能只依赖初始全队遍历。
+ */
+export function applyActiveHyacineE2SpeedBuffToSummon(
+	states: HyacineActionState[],
+	summon: HyacineActionState,
+	actionValue: number,
+): void {
+	const hyacine = findHyacineState(states);
+	if (
+		!hyacine ||
+		(hyacine.hyacineE2SpeedBonus ?? 0) <= 0 ||
+		summon.character.kind !== "忆灵"
+	)
+		return;
+	const oldSpeed = summon.currentSpeed;
+	if (oldSpeed <= 0) return;
+	summon.currentSpeed += summon.baseSpeed * 0.3;
+	const remaining = Math.max(0, summon.nextActionValue - actionValue);
+	summon.nextActionValue =
+		actionValue + remaining * (oldSpeed / summon.currentSpeed);
 }

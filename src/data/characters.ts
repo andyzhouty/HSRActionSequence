@@ -3,6 +3,7 @@ import characterData from "./characters.json";
 type CharacterEntry = {
 	cid: string;
 	names: string[];
+	baseSpeed?: number;
 	effects?: Record<string, string>;
 	effectRules?: Record<string, unknown>;
 	passives?: string[];
@@ -11,11 +12,26 @@ type CharacterEntry = {
 	participantId?: number;
 };
 
+export type CharacterCatalogEntry = Pick<
+	CharacterEntry,
+	"cid" | "names" | "path" | "baseSpeed"
+>;
+
 const data = characterData as {
 	characters: CharacterEntry[];
 	_defaults?: Record<string, unknown>;
 };
 const characters = data.characters;
+
+/** 面向 UI 的角色检索目录；返回副本，避免调用方修改角色配置。 */
+export function getCharacterCatalog(): CharacterCatalogEntry[] {
+	return characters.map(({ cid, names, path, baseSpeed }) => ({
+		cid,
+		names: [...names],
+		path,
+		baseSpeed,
+	}));
+}
 
 export function getDefaultEffectRule<T = unknown>(
 	effect: string,
@@ -47,6 +63,11 @@ export function getCharacterCid(name: string): string | undefined {
 export function getCharacterPath(name: string): string | undefined {
 	const entry = findCharacterEntry(name);
 	return entry?.path;
+}
+
+/** 角色数据表中的基础速度；召唤物等运行时实体不在此表内。 */
+export function getCharacterBaseSpeed(name: string): number | undefined {
+	return findCharacterEntry(name)?.baseSpeed;
 }
 
 export function hasSkillEffect(

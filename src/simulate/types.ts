@@ -40,6 +40,8 @@ export type SimulateActionsInput = {
 	attackDisabled?: Record<string, boolean>;
 	saberAdvanceToggles?: Record<string, boolean>;
 	evanesciaFuaToggles?: Record<string, boolean>;
+	mydeiVendettaToggles?: Record<string, boolean>;
+	mydeiGodslayerToggles?: Record<string, boolean>;
 	sameAVOrder?: Record<string, number>;
 };
 
@@ -53,6 +55,7 @@ export interface ActionState extends AglaeaActionState {
 	nextActionValue: number;
 	actionNo: number;
 	blockNextAdvance: boolean;
+	mydeiVendettaActive?: boolean;
 	isInCompleteCombustion?: boolean;
 	isMemeState?: boolean;
 	isGarmentmakerState?: boolean;

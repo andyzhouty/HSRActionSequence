@@ -24,6 +24,7 @@ import type {
 
 export {
 	getCharacterCid,
+	getCharacterBaseSpeed,
 	getCharacterDisplayName,
 	getCharacterParticipantId,
 	getCharacterPath,

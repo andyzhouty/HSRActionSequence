@@ -5,11 +5,13 @@ import type {
 	SkillCode,
 } from "../utils/actionSequence";
 import { getPolluxRule } from "../utils/actionSequence";
+import { applyActiveHyacineE2SpeedBuffToSummon } from "./hyacineIca";
 
 // ── 类型 ──
 
 export interface CastoriceActionState {
 	character: CharacterConfig;
+	baseSpeed: number;
 	currentSpeed: number;
 	actionNo: number;
 	nextActionValue: number;
@@ -87,7 +89,7 @@ export function summonPollux(
 		lc_id: 0,
 	};
 
-	states.push({
+	const polluxState = {
 		character: polluxChar,
 		baseSpeed: speed,
 		currentSpeed: speed,
@@ -101,7 +103,9 @@ export function summonPollux(
 		polluxCount: 0,
 		polluxGeneration: nextGeneration,
 		sameActionPriority: options?.sameActionPriority,
-	} as unknown as CastoriceActionState);
+	} as unknown as CastoriceActionState;
+	states.push(polluxState);
+	applyActiveHyacineE2SpeedBuffToSummon(states, polluxState, actionValue);
 }
 
 // ── 处理死龙行动 ──

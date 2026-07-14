@@ -103,3 +103,28 @@
 		font-family: "Inconsolata Nerd Font", monospace;
 	}
 }
+
+@layer components {
+	.guide-character-scroll {
+		scrollbar-color: #4b5563 transparent;
+		scrollbar-width: thin;
+	}
+
+	.guide-character-scroll::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	.guide-character-scroll::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.guide-character-scroll::-webkit-scrollbar-thumb {
+		background: #4b5563;
+		border: 2px solid #1f2937;
+		border-radius: 9999px;
+	}
+
+	.guide-character-scroll:hover::-webkit-scrollbar-thumb {
+		background: #6b7280;
+	}
+}

@@ -76,6 +76,7 @@ export type GeneratedAction = {
 	hasElationSkills?: boolean;
 	elationSkillParentKey?: string;
 	isFuaAction?: boolean;
+	isMydeiGodslayerAction?: boolean;
 	interruptTiming?: "before" | "after";
 	isArcherExtraE?: boolean;
 	archerExtraEIndex?: number;
@@ -203,6 +204,8 @@ export type SavedData = {
 	evernightSelfDestructToggles?: Record<string, boolean>;
 	evernightThresholdBurstToggles?: Record<string, boolean>;
 	evanesciaFuaToggles?: Record<string, boolean>;
+	mydeiVendettaToggles?: Record<string, boolean>;
+	mydeiGodslayerToggles?: Record<string, boolean>;
 	sameAVOrder?: Record<string, number>;
 	hyacineE2Active?: boolean;
 	meritTarget?: string;

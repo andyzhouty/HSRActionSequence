@@ -1,4 +1,5 @@
 import { hasHyacineIca, killIca } from "../mechanics/hyacineIca";
+import { applyMydeiVendettaToggle } from "../mechanics/mydei";
 import type { ActionContext } from "./context";
 import { killMeme } from "./effects";
 import type { SimulationRuntime } from "./runtime";
@@ -10,6 +11,7 @@ export function runPreActionChecks(
 ): void {
 	const { input, states } = runtime;
 	const { stateIndex, key, actionValue, character, actionNo } = context;
+	applyMydeiVendettaToggle(states, input, key, actionValue);
 	if (
 		input.icaKillToggles?.[key] &&
 		character.id !== "@av0" &&

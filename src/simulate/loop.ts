@@ -1,3 +1,4 @@
+import { emitMydeiGodslayerExtraAction } from "../mechanics/mydei";
 import { advanceSaberAfterAction } from "../mechanics/saber";
 import type { GeneratedAction } from "../utils/actionSequence";
 import { createActionContext } from "./context";
@@ -69,6 +70,7 @@ export function runSimulationLoop(params: {
 				callbacks: runtime.callbacks,
 			})
 		) {
+			emitMydeiGodslayerExtraAction(key, actionValue, states, actions, input);
 			advanceSaberAfterAction(
 				states,
 				input.saberAdvanceToggles,
@@ -79,6 +81,7 @@ export function runSimulationLoop(params: {
 		}
 
 		if (handleGarmentmakerActionTurn(runtime, context)) {
+			emitMydeiGodslayerExtraAction(key, actionValue, states, actions, input);
 			advanceSaberAfterAction(
 				states,
 				input.saberAdvanceToggles,
@@ -99,6 +102,7 @@ export function runSimulationLoop(params: {
 				input,
 			)
 		) {
+			emitMydeiGodslayerExtraAction(key, actionValue, states, actions, input);
 			advanceSaberAfterAction(
 				states,
 				input.saberAdvanceToggles,

@@ -4,6 +4,7 @@ import {
 	getAglaeaStackLimit,
 	syncGarmentmakerStacksToAglaea,
 } from "../mechanics/aglaeaGarmentmaker";
+import { applyActiveHyacineE2SpeedBuffToSummon } from "../mechanics/hyacineIca";
 import {
 	type CharacterConfig,
 	canUseSkillCode,
@@ -345,7 +346,7 @@ export function summonMemeState(
 	if (findMemeState(states, owner.id)) return;
 	const rule = getMemeAdvanceRule(owner.name);
 	const speed = rule.memospriteSpeed > 0 ? rule.memospriteSpeed : 130;
-	states.push({
+	const memeState: ActionState = {
 		character: {
 			...owner,
 			id: `${owner.id}-meme`,
@@ -367,7 +368,9 @@ export function summonMemeState(
 		blockNextAdvance: false,
 		isMemeState: true,
 		memeOwnerId: owner.id,
-	});
+	};
+	states.push(memeState);
+	applyActiveHyacineE2SpeedBuffToSummon(states, memeState, actionValue);
 }
 
 export function killMeme(states: ActionState[], actionValue: number) {
