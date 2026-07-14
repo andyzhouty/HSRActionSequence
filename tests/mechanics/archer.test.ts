@@ -62,12 +62,27 @@ describe("Archer (红A)", () => {
 		expect(hasSkillEffect("Archer", "Q", "archerUltimate")).toBe(true);
 	});
 
-	it("canUseSkillCode accepts 4E for Archer", () => {
+	it("canUseSkillCode accepts Archer E chains up to five arrows", () => {
 		const archer = c("archer", "红A", 150);
+		expect(canUseSkillCode(archer, "5E")).toBe(true);
 		expect(canUseSkillCode(archer, "4E")).toBe(true);
 		expect(canUseSkillCode(archer, "2E")).toBe(true);
 		expect(canUseSkillCode(archer, "E")).toBe(true);
 		expect(canUseSkillCode(archer, "A")).toBe(true);
+		expect(canUseSkillCode(archer, "0E")).toBe(false);
+		expect(canUseSkillCode(archer, "6E")).toBe(false);
+	});
+
+	it("rejects imported Archer E chains over five arrows", () => {
+		const acts = simulateActions(
+			inp({
+				characters: [c("archer", "红A", 150)],
+				skillOverrides: { "archer-1": "6E" },
+				limit: 100,
+			}),
+		);
+		expect(acts.filter((a) => a.key.startsWith("archer-1-ea"))).toHaveLength(0);
+		expect(acts.find((a) => a.key === "archer-1")?.skill).toBe("");
 	});
 
 	it("locks battle points first and Archer FUA charge second", () => {
@@ -126,7 +141,129 @@ describe("Archer (红A)", () => {
 		expect(extras.length).toBe(1);
 		expect(extras[0].archerExtraEIndex).toBe(2);
 		expect(extras[0].skill).toBe("E");
-		expect(extras[0].lockedSkill).toBe(true);
+		expect(extras[0].lockedSkill).toBeUndefined();
+	});
+
+	it("an extra arrow changed to A terminates the remaining arrow segment", () => {
+		const acts = simulateActions(
+			inp({
+				characters: [c("archer", "红A", 150)],
+				skillOverrides: { "archer-1": "4E", "archer-1-ea2": "A" },
+				limit: 100,
+			}),
+		);
+		expect(acts.find((a) => a.key === "archer-1-ea2")?.skill).toBe("A");
+		expect(acts.find((a) => a.key === "archer-1-ea3")).toBeUndefined();
+		expect(acts.find((a) => a.key === "archer-1-ea4")).toBeUndefined();
+	});
+
+	it("an Archer extra arrow F resets a configurable arrow segment", () => {
+		const acts = simulateActions(
+			inp({
+				characters: [
+					c("archer", "红A", 150, { techniqueOn: true }),
+					c("himeko", "姬子·启行", 100, { eidolon: 2 }),
+				],
+				skillOverrides: {
+					"archer-1": "4E",
+					"archer-1-ea2": "F",
+					"archer-1-ea2-reset": "3E",
+				},
+				limit: 100,
+			}),
+		);
+		const assist = acts.find((a) => a.key === "archer-1-ea2-assist-F");
+		expect(assist).toMatchObject({ isAssistAction: true, skill: "F" });
+		expect(acts.find((a) => a.key === "archer-1-ea2-reset")).toMatchObject({
+			isArcherExtraE: true,
+			skill: "E",
+		});
+		expect(
+			acts.filter((a) => a.key.startsWith("archer-1-ea2-reset-ea")),
+		).toHaveLength(2);
+		expect(
+			acts.find((a) => a.key === "archer-1-ea2-assist-F-archer-fua"),
+		).toMatchObject({ skill: "Z" });
+	});
+
+	it.each([
+		0, 1,
+	])("does not trigger the Himeko linkage below E2 (E%d)", (eidolon) => {
+		const acts = simulateActions(
+			inp({
+				characters: [
+					c("archer", "红A", 150),
+					c("himeko", "姬子·启行", 100, { eidolon }),
+				],
+				skillOverrides: { "archer-1": "3E", "archer-1-ea2": "F" },
+				limit: 200,
+			}),
+		);
+
+		expect(acts.find((action) => action.key === "archer-1-ea2")).toMatchObject({
+			skill: "E",
+		});
+		expect(acts.some((action) => action.isAssistAction)).toBe(false);
+		expect(
+			acts.find((action) => action.key.includes("-reset")),
+		).toBeUndefined();
+	});
+
+	it("Archer Q restores two FUA charges when inserted", () => {
+		const acts = simulateActions(
+			inp({
+				characters: [c("archer", "红A", 150, { techniqueOn: false })],
+				skillOverrides: { "archer-1": "2E" },
+				ultInterrupts: {
+					"archer-1-ea2": [{ casterId: "archer", timing: "after" }],
+				},
+				limit: 100,
+			}),
+		);
+		expect(
+			acts.find((a) => a.key === "archer-1-ea2-interrupt-0"),
+		).toMatchObject({
+			skill: "Q",
+			archerFuaCharge: 3,
+		});
+	});
+
+	it("FF on an Archer extra arrow ends the current arrow chain", () => {
+		const acts = simulateActions(
+			inp({
+				characters: [
+					c("archer", "红A", 150),
+					c("himeko", "姬子·启行", 100, { eidolon: 2 }),
+				],
+				skillOverrides: { "archer-1": "4E", "archer-1-ea2": "FF" },
+				limit: 100,
+			}),
+		);
+		expect(
+			acts.filter(
+				(a) => a.isAssistAction && a.assistSourceKey === "archer-1-ea2",
+			),
+		).toHaveLength(2);
+		expect(acts.find((a) => a.key === "archer-1-ea2")).toBeUndefined();
+		expect(acts.find((a) => a.key === "archer-1-ea3")).toBeUndefined();
+	});
+
+	it("an Archer extra arrow can trigger Evanescia FUA", () => {
+		const acts = simulateActions(
+			inp({
+				characters: [c("archer", "红A", 150), c("evanescia", "绯英", 100)],
+				skillOverrides: { "archer-1": "2E" },
+				evanesciaFuaToggles: { "archer-1-ea2": true },
+				limit: 100,
+			}),
+		);
+		expect(
+			acts.find((action) => action.key === "archer-1-ea2-fua"),
+		).toMatchObject({
+			isFuaAction: true,
+			characterId: "evanescia",
+			skill: "Z",
+		});
 	});
 
 	it("technique starts with two charges, Q restores two charges up to four", () => {
@@ -186,6 +323,37 @@ describe("Archer (红A)", () => {
 		expect(isNonAttackSkill(c("robin", "知更鸟", 100), "Q")).toBe(true);
 		expect(isNonAttackSkill(c("ruanmei", "阮梅", 100), "E")).toBe(true);
 		expect(isNonAttackSkill(c("ruanmei", "阮梅", 100), "Q")).toBe(true);
+	});
+
+	it("treats Phainon Q as non-attack and does not spend Archer charges in domain", () => {
+		const actions = simulateActions(
+			inp({
+				characters: [
+					c("archer", "Archer", 100, { techniqueOn: true }),
+					c("phainon", "白厄", 200),
+				],
+				skillOverrides: { "phainon-1": "AQ" },
+				attackDisabled: { "phainon-1": true },
+				limit: 150,
+			}),
+		);
+		expect(isNonAttackSkill(c("phainon", "白厄", 100), "Q")).toBe(true);
+		expect(
+			actions.find((action) => action.key === "phainon-1-q"),
+		).toMatchObject({
+			archerFuaCharge: 1,
+		});
+		expect(actions.find((action) => action.isDomainAction)).toMatchObject({
+			archerFuaCharge: 1,
+		});
+		expect(
+			actions.filter(
+				(action) =>
+					action.isArcherFua &&
+					(action.key.includes("phainon-1-q-") ||
+						action.key.includes("phainon-1-domain-")),
+			),
+		).toEqual([]);
 	});
 
 	it("manual charge resource is clamped before the action attack is resolved", () => {

@@ -70,7 +70,7 @@ export function SkillInput({ action }: { action: GeneratedAction }) {
 	const commitDraftSkill = (rawSkill: string) => {
 		const normalizedSkill = rawSkill.trim().toUpperCase();
 		window.setTimeout(() => {
-			if (normalizedSkill !== displaySkill || isComboOverride) {
+			if (normalizedSkill !== displaySkill) {
 				ctx.updateActionSkill(action, normalizedSkill);
 			}
 		}, 0);

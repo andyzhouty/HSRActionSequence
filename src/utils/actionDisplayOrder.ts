@@ -35,6 +35,10 @@ export function canExchangeActionOrder(
 	right: GeneratedAction,
 ): boolean {
 	return (
+		!left.isGilgameshTechniqueAction &&
+		!right.isGilgameshTechniqueAction &&
+		!left.isElationSkill &&
+		!right.isElationSkill &&
 		getRequiredPredecessorKey(left) !== right.key &&
 		getRequiredPredecessorKey(right) !== left.key
 	);
@@ -93,6 +97,12 @@ function getDisplayRequiredPredecessorKey(
 
 /** 仅同父级的额外回合可参与拖拽排序。 */
 export function getExtraTurnParentKey(action: GeneratedAction): string | null {
+	if (
+		action.isGilgameshTechniqueAction &&
+		action.key.endsWith("-gilgamesh-technique")
+	) {
+		return action.key.slice(0, -"-gilgamesh-technique".length);
+	}
 	// 阿哈本体是一个可移动的复合单元，内部欢愉技随它整体移动。
 	if (action.isAhaInstant && action.hasElationSkills && !action.isExtraAha) {
 		return action.key;
@@ -181,7 +191,9 @@ export function getDisplayOrderedActions(
 		for (const [itemKey, entry] of items) {
 			resolvedOrders.set(
 				`${groupKey}:${itemKey}`,
-				sameAVOrder?.[itemKey] ?? entry.defaultOrder ?? 0,
+				entry.action.isElationSkill
+					? (entry.defaultOrder ?? 0)
+					: (sameAVOrder?.[itemKey] ?? entry.defaultOrder ?? 0),
 			);
 		}
 		for (const [itemKey, entry] of items) {
@@ -213,6 +225,12 @@ export function getDisplayOrderedActions(
 				left.defaultOrder !== undefined &&
 				right.defaultOrder !== undefined
 			) {
+				if (
+					left.action.isGilgameshTechniqueAction !==
+					right.action.isGilgameshTechniqueAction
+				) {
+					return left.action.isGilgameshTechniqueAction ? -1 : 1;
+				}
 				const groupKey = `${left.bucket}:${left.parentKey}`;
 				const leftOrder =
 					resolvedOrders.get(`${groupKey}:${left.itemKey}`) ??

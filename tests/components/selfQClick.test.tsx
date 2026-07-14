@@ -1,7 +1,8 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import ActionPanel from "../../src/components/ActionPanel";
+import { SkillInput } from "../../src/components/action-table/SkillInput";
 import { simulateActions } from "../../src/simulate/actions";
 import type {
 	CharacterConfig,
@@ -45,6 +46,36 @@ function sim(characters: CharacterConfig[]): GeneratedAction[] {
 }
 
 describe("self-Q interrupt click stability", () => {
+	it("blurring Saber AQ does not overwrite the combo as A", async () => {
+		const saber = c("saber", "Saber", 200);
+		const updateActionSkill = vi.fn();
+		renderWithContext(
+			<SkillInput
+				action={{
+					key: "saber-1",
+					characterId: saber.id,
+					actionNo: 1,
+					actionValue: 0,
+					skill: "A",
+					speed: 200,
+				}}
+			/>,
+			{
+				characters: [saber],
+				skillOverrides: { "saber-1": "AQ" },
+				charactersById: { saber },
+				characterNames: { saber: "Saber" },
+				characterKinds: { saber: "角色" },
+				updateActionSkill,
+			},
+		);
+
+		const input = screen.getByDisplayValue("A");
+		await userEvent.click(input);
+		await userEvent.tab();
+		await waitFor(() => expect(updateActionSkill).not.toHaveBeenCalled());
+	});
+
 	it("Q interrupt exists after EQ combo", () => {
 		const chars = [c("emc", "欢愉主", 200), c("target", "火花", 150)];
 		const actions = sim(chars);

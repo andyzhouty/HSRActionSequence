@@ -1,0 +1,63 @@
+{
+  "limitPreset": "150",
+  "customLimit": "",
+  "displayedLimit": "250",
+  "characters": [
+    {
+      "id": "gil",
+      "kind": "角色",
+      "name": "吉尔伽美什",
+      "speed": "100",
+      "baseSpeed": "113",
+      "hasVonwacq": false,
+      "hasWindSet": false,
+      "hasDance": false,
+      "techniqueOn": false,
+      "eidolon": 2,
+      "superimpose": 3,
+      "lc_id": 23044
+    },
+    {
+      "id": "saber",
+      "kind": "角色",
+      "name": "Saber",
+      "speed": "100",
+      "baseSpeed": "",
+      "hasVonwacq": false,
+      "hasWindSet": false,
+      "hasDance": false,
+      "techniqueOn": false,
+      "eidolon": 0,
+      "superimpose": 1,
+      "lc_id": 0
+    }
+  ],
+  "resources": ["兴致", "战技点"],
+  "overrides": {},
+  "ultOverrides": {},
+  "skillOverrides": {},
+  "domainEndOverrides": {},
+  "speedAdjustments": {},
+  "skillTargets": {},
+  "defaultSkillTargets": {},
+  "odeSelections": {},
+  "memeSelections": {},
+  "ultInterrupts": {
+    "saber-1": [{ "casterId": "gil", "timing": "after" }]
+  },
+  "resourceValues": {
+    "@av0-1": { "兴致": "5" }
+  },
+  "fireflyBreakCounters": {},
+  "godmodeExtraActions": {},
+  "castoriceKillToggles": {},
+  "icaKillToggles": {},
+  "memeKillToggles": {},
+  "evernightSelfDestructToggles": {},
+  "evernightThresholdBurstToggles": {},
+  "evanesciaFuaToggles": {},
+  "sameAVOrder": {},
+  "hyacineE2Active": true,
+  "attackDisabled": {},
+  "saberAdvanceToggles": {}
+}

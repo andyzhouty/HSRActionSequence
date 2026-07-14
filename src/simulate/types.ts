@@ -39,7 +39,7 @@ export type SimulateActionsInput = {
 	bondmateTarget?: string;
 	attackDisabled?: Record<string, boolean>;
 	saberAdvanceToggles?: Record<string, boolean>;
-	fuaToggles?: Record<string, boolean>;
+	evanesciaFuaToggles?: Record<string, boolean>;
 	sameAVOrder?: Record<string, number>;
 };
 
@@ -105,6 +105,9 @@ export interface ActionState extends AglaeaActionState {
 	souldragonOwnerId?: string;
 	// 红A 追击充能（0-4）
 	archerFuaCharge?: number;
+	gilgameshInterest?: number;
+	gilgameshEUnlocked?: boolean;
+	gilgameshAttackCount?: number;
 	/** Saber 释放 Q 后，下一次正常行动固定为 A。 */
 	saberForceBasicAttack?: boolean;
 }

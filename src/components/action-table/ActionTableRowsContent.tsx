@@ -6,6 +6,7 @@ import swPassiveIcon from "../../assets/skillIcons/SkillIcon_1506_Passive.webp";
 import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import { archerFuaResourceName } from "../../mechanics/archer";
+import { gilgameshInterestResourceName } from "../../mechanics/gilgamesh";
 import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
 import type { GeneratedAction } from "../../utils/actionSequence";
 import {
@@ -15,7 +16,6 @@ import {
 	isEnemyTarget,
 	isQFrontCombo,
 } from "../../utils/actionSequence";
-import { AttackInline } from "./AttackInline";
 import {
 	CombustionBreakInline,
 	MemeInline,
@@ -23,6 +23,7 @@ import {
 	PolluxKillInline,
 	SkillTargetInline,
 } from "./ActionTargetControls";
+import { AttackInline } from "./AttackInline";
 import { SkillInput } from "./SkillInput";
 
 export { ActionLimitMarkerRow } from "./ActionLimitMarkerRow";
@@ -46,6 +47,15 @@ const exchangeGroupThemes = [
 	},
 ] as const;
 
+export type ActionRowDragProps = {
+	draggable: boolean;
+	groupNumber: number;
+	onDragStart: (e: React.DragEvent) => void;
+	onDragOver: (e: React.DragEvent) => void;
+	onDrop: (e: React.DragEvent) => void;
+	onDragEnd: () => void;
+};
+
 /** Sub-component: single action row in the table */
 export function ActionRow({
 	action,
@@ -60,14 +70,7 @@ export function ActionRow({
 	isPastOriginalLimit: boolean;
 	onToggleElationSkills?: () => void;
 	onToggleArcherArrows?: () => void;
-	dragProps?: {
-		draggable: boolean;
-		groupNumber: number;
-		onDragStart: (e: React.DragEvent) => void;
-		onDragOver: (e: React.DragEvent) => void;
-		onDrop: (e: React.DragEvent) => void;
-		onDragEnd: () => void;
-	};
+	dragProps?: ActionRowDragProps;
 }) {
 	const ctx = useActionSequence();
 	const isInterrupt =
@@ -364,40 +367,44 @@ export function ActionRow({
 						>
 							{action.isFuaAction
 								? "追击"
-								: action.isArcherExtraE
-									? `第 ${action.archerExtraEIndex} 箭`
-									: action.isAhaInstant
-										? action.isExtraAha
-											? "额外"
-											: "阿哈"
-										: action.isElationSkill
-											? "欢愉技"
-											: action.isSparxieExtraAction
+								: action.isGilgameshTechniqueAction
+									? "秘技"
+									: action.isArcherExtraE
+										? `第 ${action.archerExtraEIndex} 箭`
+										: action.isAhaInstant
+											? action.isExtraAha
 												? "额外"
-												: isDomain
-													? `境界 ${action.actionNo}`
-													: isAssist
-														? "助战"
-														: action.isEveySelfDestructAction
-															? "额外"
-															: action.isMemeAdvanceAction
-																? `第 ${action.actionNo} 动`
-																: action.isMemospriteAction &&
-																		action.actionNo > 0
+												: "阿哈"
+											: action.isElationSkill
+												? "欢愉技"
+												: action.isSparxieExtraAction
+													? "额外"
+													: isDomain
+														? `境界 ${action.actionNo}`
+														: isAssist
+															? "助战"
+															: action.isEveySelfDestructAction
+																? "额外"
+																: action.isMemeAdvanceAction
 																	? `第 ${action.actionNo} 动`
-																	: action.isMemospriteAction
-																		? "额外"
-																		: action.isOdeExtraAction
-																			? "诗篇"
-																			: isInterrupt
-																				? "插队"
-																				: action.isAssistFollowUp
-																					? `额外 ${action.actionNo}`
-																					: action.key.includes("-break-extra-")
-																						? "额外"
-																						: action.isAglaeaSupremeAction
-																							? `至高 ${action.actionNo}`
-																							: `第 ${action.actionNo} 动`}
+																	: action.isMemospriteAction &&
+																			action.actionNo > 0
+																		? `第 ${action.actionNo} 动`
+																		: action.isMemospriteAction
+																			? "额外"
+																			: action.isOdeExtraAction
+																				? "诗篇"
+																				: isInterrupt
+																					? "插队"
+																					: action.isAssistFollowUp
+																						? `额外 ${action.actionNo}`
+																						: action.key.includes(
+																									"-break-extra-",
+																								)
+																							? "额外"
+																							: action.isAglaeaSupremeAction
+																								? `至高 ${action.actionNo}`
+																								: `第 ${action.actionNo} 动`}
 						</div>
 					)}
 			</td>
@@ -490,22 +497,34 @@ export function ActionRow({
 			{ctx.resources.map((resource) => {
 				const storedValue = ctx.resourceValues[action.key]?.[resource];
 				const isArcherFua = resource === archerFuaResourceName;
+				const isGilgameshInterest = resource === gilgameshInterestResourceName;
 				return (
 					<td key={`${action.key}-resource-${resource}`} className="px-2 py-3">
 						<input
 							type="text"
-							inputMode={isArcherFua ? "numeric" : undefined}
+							inputMode={
+								isArcherFua || isGilgameshInterest ? "numeric" : undefined
+							}
 							value={
 								storedValue ??
 								(isArcherFua && action.archerFuaCharge !== undefined
 									? String(action.archerFuaCharge)
-									: "")
+									: isGilgameshInterest &&
+											action.gilgameshInterest !== undefined
+										? String(action.gilgameshInterest)
+										: "")
 							}
 							onClick={(event) => event.stopPropagation()}
 							onContextMenu={(event) => event.stopPropagation()}
 							onChange={(event) => {
 								const value = event.target.value;
 								if (isArcherFua && value !== "" && !/^[0-4]$/.test(value))
+									return;
+								if (
+									isGilgameshInterest &&
+									value !== "" &&
+									!/^\d*\.?\d*$/.test(value)
+								)
 									return;
 								ctx.updateResourceValue(action.key, resource, value);
 							}}

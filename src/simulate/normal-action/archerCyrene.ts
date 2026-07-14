@@ -1,8 +1,11 @@
 import type { CharacterConfig, SkillCode } from "../../utils/actionSequence";
+import { archerMaxConsecutiveEs } from "../../mechanics/archer";
 import {
 	emitCyreneMemospriteAction,
+	findHimekoNovaAssistState,
 	handleCyrenePostUltimate,
 } from "../effects";
+import { emitHimekoNovaAssists } from "../assist";
 import type { SimulationRuntime } from "../runtime";
 
 type ArcherExtraEParams = {
@@ -15,7 +18,7 @@ type ArcherExtraEParams = {
 	count: number;
 };
 
-/** 生成 Archer 数字 E 中除首箭外的锁定额外行动。 */
+/** 生成 Archer 数字 E 的额外箭；额外箭可改 A，并可在箭后触发姬子 F 刷新新箭段。 */
 export function emitArcherExtraEs({
 	runtime,
 	stateIndex,
@@ -25,12 +28,78 @@ export function emitArcherExtraEs({
 	actionSpeed,
 	count,
 }: ArcherExtraEParams) {
-	const { input, actions, states } = runtime;
-	for (let index = 2; index <= count; index++) {
-		const extraKey = `${key}-ea${index}`;
+	const { input, actions, states, activeOdes } = runtime;
+	const emitAssist = (sourceKey: string, count: number) => {
+		const assist = findHimekoNovaAssistState(states, character.id);
+		if (!assist || assist.character.eidolon < 2) return false;
+		emitHimekoNovaAssists({
+			assist,
+			assistUseCount: count,
+			key: sourceKey,
+			actionValue,
+			states,
+			actions,
+			activeOdes,
+			input,
+			emitFuaAction: runtime.callbacks.emitFuaAction,
+		});
+		return true;
+	};
+	const emitResetTurn = (sourceKey: string): void => {
+		const resetKey = `${sourceKey}-reset`;
+		const configured = input.skillOverrides[resetKey] ?? "E";
+		if (configured === "FF") {
+			if (emitAssist(resetKey, 2)) return;
+		}
+		if (configured === "F") {
+			if (emitAssist(resetKey, 1)) {
+				emitResetTurn(resetKey);
+				return;
+			}
+		}
+		const match = /^(\d*)E$/.exec(configured);
+		const arrowCount = match
+			? Math.max(
+					1,
+					Math.min(
+						archerMaxConsecutiveEs,
+						match[1] ? Number.parseInt(match[1], 10) : 1,
+					),
+				)
+			: 1;
+		const skill = configured === "A" ? ("A" as SkillCode) : ("E" as SkillCode);
+		actions.push({
+			key: resetKey,
+			characterId: character.id,
+			actionNo: 0,
+			actionValue,
+			skill,
+			speed: actionSpeed,
+			isArcherExtraE: true,
+			archerExtraEIndex: 1,
+			archerExtraEParentKey: key,
+			archerFuaCharge: states[stateIndex].archerFuaCharge,
+		});
+		if (skill === "E" && arrowCount > 1) emitSegment(resetKey, 2, arrowCount);
+	};
+	const emitSegment = (prefix: string, start: number, end: number) => {
+		for (let index = start; index <= end; index++) {
+			const extraKey = `${prefix}-ea${index}`;
+			const configured = input.skillOverrides[extraKey];
+			const isDoubleAssist = configured === "FF";
+			if (isDoubleAssist) {
+				if (emitAssist(extraKey, 2)) return;
+			}
+			if (configured === "F") {
+				if (emitAssist(extraKey, 1)) {
+					emitResetTurn(extraKey);
+					return;
+				}
+			}
+		const arrowSkill = configured === "A" ? ("A" as SkillCode) : ("E" as SkillCode);
 		const interrupts = input.ultInterrupts[extraKey] ?? [];
-		for (
-			let interruptIndex = 0;
+			for (
+				let interruptIndex = 0;
 			interruptIndex < interrupts.length;
 			interruptIndex++
 		) {
@@ -47,12 +116,11 @@ export function emitArcherExtraEs({
 			characterId: character.id,
 			actionNo: 0,
 			actionValue,
-			skill: "E" as SkillCode,
+			skill: arrowSkill,
 			speed: actionSpeed,
 			isArcherExtraE: true,
 			archerExtraEIndex: index,
 			archerExtraEParentKey: key,
-			lockedSkill: true,
 			archerFuaCharge: states[stateIndex].archerFuaCharge,
 		});
 		for (
@@ -66,9 +134,13 @@ export function emitArcherExtraEs({
 					`${extraKey}-interrupt-${interruptIndex}`,
 					interrupt,
 					actionValue,
-				);
-		}
+					);
+			}
+			runtime.callbacks.emitFuaAction(extraKey, actionValue);
+			if (arrowSkill === "A") return;
 	}
+	};
+	emitSegment(key, 2, count);
 }
 
 type CyreneUltimateParams = {

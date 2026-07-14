@@ -74,6 +74,28 @@ describe("getDisplayOrderedActions with sameAVOrder", () => {
 		expect(getExtraTurnParentKey(actions[0])).toBeNull();
 	});
 
+	it("吉尔伽美什秘技附在 0 行动值后且不能被其它额外回合越过", () => {
+		const technique = {
+			...extra("@av0-1-gilgamesh-technique", "T"),
+			actionValue: 0,
+			isGilgameshTechniqueAction: true,
+			lockedSkill: true,
+		};
+		const afterQ = {
+			...extra("@av0-1-interrupt-0", "Q"),
+			actionValue: 0,
+			interruptTiming: "after" as const,
+		};
+		expect(getExtraTurnParentKey(technique)).toBe("@av0-1");
+		expect(canExchangeActionOrder(technique, afterQ)).toBe(false);
+		expect(
+			getDisplayOrderedActions([afterQ, technique], {
+				"@av0-1-interrupt-0": 0,
+				"@av0-1-gilgamesh-technique": 1,
+			}).map((action) => action.key),
+		).toEqual(["@av0-1-gilgamesh-technique", "@av0-1-interrupt-0"]);
+	});
+
 	it("不同父级的额外回合不会互相重排", () => {
 		const actions = [
 			{ ...extra("first-1-q", "Q"), characterId: "first" },
@@ -335,20 +357,24 @@ describe("getDisplayOrderedActions with sameAVOrder", () => {
 		]);
 	});
 
-	it("欢愉技可与同父级额外行动交换", () => {
-		const elationSkill = {
-			...extra("@aha-1-elation-sparxie", "ES"),
+	it("阿哈时刻内欢愉技顺序固定且不可交换", () => {
+		const firstElationSkill = {
+			...extra("@aha-1-elation-first", "ES"),
 			isElationSkill: true,
 			elationSkillParentKey: "@aha-1",
 		};
-		const extraAction = extra("@aha-1-godmode-A", "A");
-		expect(getExtraTurnParentKey(elationSkill)).toBe("@aha-1");
+		const secondElationSkill = {
+			...extra("@aha-1-elation-second", "ES"),
+			isElationSkill: true,
+			elationSkillParentKey: "@aha-1",
+		};
+		expect(canExchangeActionOrder(firstElationSkill, secondElationSkill)).toBe(false);
 		expect(
-			getDisplayOrderedActions([elationSkill, extraAction], {
-				"@aha-1-elation-sparxie": 1,
-				"@aha-1-godmode-A": 0,
+			getDisplayOrderedActions([firstElationSkill, secondElationSkill], {
+				"@aha-1-elation-first": 1,
+				"@aha-1-elation-second": 0,
 			}),
-		).toEqual([extraAction, elationSkill]);
+		).toEqual([firstElationSkill, secondElationSkill]);
 	});
 
 	it("正常回合后的绯英追击可与 after 插队 Q 交换", () => {

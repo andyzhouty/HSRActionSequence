@@ -1,23 +1,13 @@
 import { hasPassive, hasSkillEffect } from "../../data/characters";
-import { clampArcherFuaCharge, hasArcher } from "../../mechanics/archer";
+import { archerMaxConsecutiveEs, hasArcher } from "../../mechanics/archer";
 import { hasCastoriceSummon } from "../../mechanics/castoricePollux";
 import {
 	summonSouldragonState,
 	updateSouldragonBondmate,
 } from "../../mechanics/danHengSouldragon";
 import { consumeEvernightSpeedBuff } from "../../mechanics/evernightEvey";
-import {
-	activateCombustion,
-	checkBreakTrigger,
-	shouldActivateCombustion,
-	shouldCheckBreakTrigger,
-} from "../../mechanics/fireflyCombustion";
-import {
-	expirePhainonDomainSpeedBonus,
-	freezeAlliesForDomain,
-	getPhainonDomainEndIndex,
-	getPhainonDomainInterval,
-} from "../../mechanics/phainonDomain";
+import { hasGilgamesh } from "../../mechanics/gilgamesh";
+import { expirePhainonDomainSpeedBonus } from "../../mechanics/phainonDomain";
 import { hasSaber } from "../../mechanics/saber";
 import {
 	consumeGodmodeAction,
@@ -27,42 +17,36 @@ import {
 } from "../../mechanics/silverWolfGodmode";
 import {
 	getCharacterPath,
-	getCounterWDomainRule,
-	getCyreneUltimateRule,
 	isCharacterTarget,
 	type SkillCode,
 } from "../../utils/actionSequence";
-import {
-	advanceNotPastCurrent,
-	advanceTeamByUltimate,
-} from "../advance";
+import { advanceNotPastCurrent, advanceTeamByUltimate } from "../advance";
 import { resolveHimekoNovaAssist } from "../assist";
 import type { ActionContext } from "../context";
 import {
 	applyMemeAdvanceTarget,
 	consumeActionOdes,
-	consumeMemoryTrailblazerEpic,
-	findCyreneState,
 	getActionSkill,
 	getActiveOdeLabels,
 	getNextSpeed,
 	getSkillTarget,
 	getTeamAdvanceOnUltimate,
 	handleMemoryTrailblazerQ,
-	hasActiveOde,
-	hasActiveOdeEffect,
 	isAllyTarget,
-	killMeme,
 } from "../effects";
-import {
-	emitArcherExtraEs,
-	handleCyreneNormalUltimate,
-} from "./archerCyrene";
-import { handleHyacineNormalAction } from "./hyacine";
-import { handleTargetEffects } from "./targetEffects";
-import { handleSummons } from "./summons";
 import type { SimulationRuntime } from "../runtime";
 import { handlePostUltimateEffects } from "../ultimateEffects";
+import { emitArcherExtraEs, handleCyreneNormalUltimate } from "./archerCyrene";
+import { handlePhainonDomain } from "./domains";
+import { handleHyacineNormalAction } from "./hyacine";
+import {
+	handleFireflyBreakCheck,
+	handleMemeDeathCheck,
+	handleMemoryTrailblazerEpicConsumption,
+	tryActivateCombustion,
+} from "./postEffects";
+import { handleSummons } from "./summons";
+import { handleTargetEffects } from "./targetEffects";
 
 export type NormalActionResult = {
 	/** 是否因为协战规则而跳过原行动主体的行动后处理（follow-up）。 */
@@ -104,11 +88,16 @@ export function handleNormalAction(
 	states[stateIndex].e2SavedActionSkill = undefined;
 	const isSaberForcedBasicAttack =
 		hasSaber(character) && states[stateIndex].saberForceBasicAttack === true;
-	const rawSkill = isSaberForcedBasicAttack
-		? ("A" as SkillCode)
-		: hasSilverWolfGodmodeCheck(character.name)
-			? getGodmodeSkill(states[stateIndex], savedSkill ?? configuredSkill)
-			: ((savedSkill ?? configuredSkill) as SkillCode);
+	const isGilgameshLockedSkill = hasGilgamesh(character);
+	const rawSkill = isGilgameshLockedSkill
+		? states[stateIndex].gilgameshEUnlocked
+			? ("E" as SkillCode)
+			: ("A" as SkillCode)
+		: isSaberForcedBasicAttack
+			? ("A" as SkillCode)
+			: hasSilverWolfGodmodeCheck(character.name)
+				? getGodmodeSkill(states[stateIndex], savedSkill ?? configuredSkill)
+				: ((savedSkill ?? configuredSkill) as SkillCode);
 	if (isSaberForcedBasicAttack) {
 		states[stateIndex].saberForceBasicAttack = false;
 	}
@@ -125,13 +114,13 @@ export function handleNormalAction(
 	const resolvedSkill = (
 		hasSelfQ ? skill.replace(/Q/g, "") || "" : skill
 	) as SkillCode;
-	// 红A {n}E：解析数字前缀，拆分 E（如 4E → 1 个主 E + 3 个额外 E）
+	// 红A {n}E：解析数字前缀，拆分 E（最多 5 箭；如 4E → 1 个主 E + 3 个额外 E）
 	const archerEMatch = hasArcher(character)
 		? /^(\d*)E$/.exec(resolvedSkill)
 		: null;
 	const archerECount = archerEMatch
 		? archerEMatch[1]
-			? Number.parseInt(archerEMatch[1], 10)
+			? Math.min(Number.parseInt(archerEMatch[1], 10), archerMaxConsecutiveEs)
 			: 1
 		: 0;
 	const isArcherMultiE = archerECount > 0;
@@ -148,7 +137,6 @@ export function handleNormalAction(
 	const afterInterrupts = interrupts.filter((i) => i.timing === "after");
 
 	const beforeInterruptIndices: number[] = [];
-	const afterInterruptIndices: number[] = [];
 
 	// 插队大招：在目标行动前/后插入多个施法者的大招行动
 	const emitInterrupt = (idx: number) => {
@@ -200,6 +188,22 @@ export function handleNormalAction(
 			) {
 				const assistKey =
 					assistIndex === 1 ? `${k}-assist-F` : `${k}-assist-F-${assistIndex}`;
+				const emitAssistInterrupts = (timing: "before" | "after") => {
+					for (
+						let interruptIndex = 0;
+						interruptIndex < (input.ultInterrupts[assistKey] ?? []).length;
+						interruptIndex++
+					) {
+						const interrupt = input.ultInterrupts[assistKey][interruptIndex];
+						if (interrupt.timing !== timing) continue;
+						emitSpecialInterruptAction(
+							`${assistKey}-interrupt-${interruptIndex}`,
+							interrupt,
+							av,
+						);
+					}
+				};
+				emitAssistInterrupts("before");
 				ac.push({
 					key: assistKey,
 					characterId: assist.character.id,
@@ -212,6 +216,8 @@ export function handleNormalAction(
 					assistIndex,
 					activeOdeLabels: getActiveOdeLabels(ao, assist.character.id),
 				});
+				emitAssistInterrupts("after");
+				callbacks.emitFuaAction(assistKey, av);
 			}
 		}
 	}
@@ -257,11 +263,6 @@ export function handleNormalAction(
 
 	// ── 主行动生成 ──
 	if (!skipAssistFollowUp && !shouldSkipMainForE2Pull) {
-		if (hasArcher(character) && usesUltimate) {
-			states[stateIndex].archerFuaCharge = clampArcherFuaCharge(
-				(states[stateIndex].archerFuaCharge ?? 0) + 2,
-			);
-		}
 		actions.push({
 			key,
 			characterId: character.id,
@@ -273,7 +274,9 @@ export function handleNormalAction(
 			actionValue,
 			skill: (isArcherMultiE ? "E" : resolvedSkill) as SkillCode,
 			speed: actionSpeed,
-			...(isSaberForcedBasicAttack ? { lockedSkill: true } : {}),
+			...(isSaberForcedBasicAttack || isGilgameshLockedSkill
+				? { lockedSkill: true }
+				: {}),
 			isAssistFollowUp: himekoNovaAssist !== undefined,
 			isMemospriteAction: states[stateIndex].isMemeState,
 			isMemeAdvanceAction,
@@ -441,49 +444,23 @@ export function handleNormalAction(
 		}
 	}
 
-	// ── 白厄 Q 境界 ──
-	if (
-		isCharacterTarget(character) &&
-		hasSkillEffect(character.name, "W", "counterW") &&
-		normalUsesUltimate
-	) {
-		const domainRule = getCounterWDomainRule(character.name);
-		const domainInterval = getPhainonDomainInterval(character, actionSpeed);
-		const startAV = actionValue;
-		const isEndlessDomain = hasActiveOdeEffect(
-			activeOdes,
-			character.id,
-			"endlessCounterWDomain",
-		);
-		const maxDomainActionIndex = isEndlessDomain
-			? Math.max(0, Math.ceil((input.limit - startAV) / domainInterval))
-			: Math.max(0, domainRule.extraActionCount - 1);
-		const domainEndIndex = getPhainonDomainEndIndex(
-			key,
-			input.domainEndOverrides,
-			maxDomainActionIndex,
-		);
-
-		if (domainEndIndex >= 0) {
-			states[stateIndex].domainState = {
-				keyPrefix: key,
-				startAV,
-				interval: domainInterval,
-				currentIndex: 0,
-				maxIndex: domainEndIndex,
-				rule: domainRule,
-			};
-			freezeAlliesForDomain(states, stateIndex, startAV);
-			states[stateIndex].nextActionValue = startAV;
-		}
-		return {
-			skipAssistFollowUp,
-			beforeInterruptIndices,
-			afterInterruptIndices,
-			skippedMainAction: shouldSkipMainForE2Pull,
-			clearAdvanceBlockAfterAction: beforeInterrupts.length > 0,
-		};
-	}
+	// domain establishment delegated to handlePhainonDomain
+	const domainResult = handlePhainonDomain({
+		character,
+		normalUsesUltimate,
+		actionSpeed,
+		actionValue,
+		key,
+		stateIndex,
+		states,
+		input,
+		activeOdes,
+		skipAssistFollowUp,
+		beforeInterruptIndices,
+		afterInterruptIndices: afterInterrupts.map((i) => interrupts.indexOf(i)),
+		clearAdvanceBlockAfterAction: beforeInterrupts.length > 0,
+	});
+	if (domainResult) return domainResult;
 
 	// ── 正常下一动间隔（非境界分支） ──
 
@@ -504,18 +481,14 @@ export function handleNormalAction(
 		expirePhainonDomainSpeedBonus(states, actionValue);
 	}
 
-	// ── 流萤完全燃烧（使用 Q 后激活） ──
-	let justActivatedCombustion = false;
-	if (
-		shouldActivateCombustion(
-			character,
-			normalUsesUltimate,
-			Boolean(states[stateIndex].isInCompleteCombustion),
-		)
-	) {
-		activateCombustion(states, stateIndex, character, actionValue);
-		justActivatedCombustion = true;
-	}
+	// combustion activation delegated to tryActivateCombustion
+	const justActivatedCombustion = tryActivateCombustion({
+		character,
+		normalUsesUltimate,
+		stateIndex,
+		states,
+		actionValue,
+	});
 
 	// ── 正常下一动间隔（燃烧激活时由 activateCombustion 设 100%提前） ──
 	{
@@ -572,7 +545,7 @@ export function handleNormalAction(
 			key,
 		});
 
-				// 召唤与忆灵：迷迷/长夜/衣匠
+		// 召唤与忆灵：迷迷/长夜/衣匠
 		handleSummons({
 			character,
 			resolvedSkill,
@@ -604,27 +577,26 @@ export function handleNormalAction(
 		});
 
 		// ── 流萤 完全燃烧中击破触发 ──
-		if (
-			shouldCheckBreakTrigger(
-				states[stateIndex].isInCompleteCombustion,
-				normalUsesUltimate,
-			)
-		) {
-			checkBreakTrigger(
-				states,
-				stateIndex,
-				actions,
-				key,
-				character,
-				actionNo,
-				actionValue,
-				input,
-			);
-		}
+		// firefly break check delegated to handleFireflyBreakCheck
+		handleFireflyBreakCheck({
+			stateIndex,
+			normalUsesUltimate,
+			states,
+			actions,
+			key,
+			character,
+			actionNo,
+			actionValue,
+			input,
+		});
 
-		if (input.memeKillToggles?.[key] && states[stateIndex]?.isMemeState) {
-			killMeme(states, actionValue);
-		}
+		handleMemeDeathCheck({
+			key,
+			stateIndex,
+			states,
+			actionValue,
+			input,
+		});
 
 		// ── 统一 Q 后效处理 ──
 		if (normalUsesUltimate) {
@@ -641,37 +613,19 @@ export function handleNormalAction(
 		}
 	}
 
-	// ── 记忆主 A 消耗【史诗】并触发德谬歌额外 Q ──
-	if (
-		isCharacterTarget(character) &&
-		hasSkillEffect(character.name, "E", "summonMeme") &&
-		states[stateIndex].epicPendingA &&
-		(states[stateIndex].epic ?? 0) > 0 &&
-		(resolvedSkill === "" || resolvedSkill === "A") &&
-		(!usesUltimate || qIsFront)
-	) {
-		const consumed = consumeMemoryTrailblazerEpic(states[stateIndex]);
-		if (consumed) {
-			const cyreneState = findCyreneState(states);
-			if (cyreneState && hasActiveOde(activeOdes, character.id, "genesis")) {
-				const cyreneRule = getCyreneUltimateRule(cyreneState.character.name);
-				actions.push({
-					key: `${key}-epic-memosprite`,
-					characterId: `${cyreneState.character.id}-memosprite`,
-					displayName: cyreneRule.memospriteName,
-					targetKind: "忆灵",
-					actionNo: 0,
-					actionValue,
-					skill: "Q" as SkillCode,
-					speed: 0,
-					isMemospriteAction: true,
-					memospriteOwnerId: cyreneState.character.id,
-					isEpicTriggeredMemosprite: true,
-					lockedSkill: true,
-				});
-			}
-		}
-	}
+	// memory trailblazer epic consumption delegated to handleMemoryTrailblazerEpicConsumption
+	handleMemoryTrailblazerEpicConsumption({
+		character,
+		resolvedSkill,
+		usesUltimate,
+		qIsFront,
+		stateIndex,
+		states,
+		actions,
+		actionValue,
+		activeOdes,
+		key,
+	});
 
 	return {
 		skipAssistFollowUp,

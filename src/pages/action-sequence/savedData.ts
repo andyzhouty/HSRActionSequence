@@ -114,7 +114,7 @@ export type NormalizedSavedData = SavedData & {
 	memeKillToggles: Record<string, boolean>;
 	evernightSelfDestructToggles: Record<string, boolean>;
 	evernightThresholdBurstToggles: Record<string, boolean>;
-	fuaToggles: Record<string, boolean>;
+	evanesciaFuaToggles: Record<string, boolean>;
 	sameAVOrder: Record<string, number>;
 	hyacineE2Active: boolean;
 	attackDisabled: Record<string, boolean>;
@@ -165,7 +165,7 @@ export function toNormalizedSavedData(
 		evernightSelfDestructToggles: migrated.evernightSelfDestructToggles ?? {},
 		evernightThresholdBurstToggles:
 			migrated.evernightThresholdBurstToggles ?? {},
-		fuaToggles: migrated.fuaToggles ?? {},
+		evanesciaFuaToggles: migrated.evanesciaFuaToggles ?? {},
 		sameAVOrder: migrated.sameAVOrder ?? {},
 		hyacineE2Active: migrated.hyacineE2Active ?? true,
 		meritTarget: migrated.meritTarget || undefined,
@@ -201,7 +201,7 @@ export function createDefaultSavedData(): NormalizedSavedData {
 		memeKillToggles: {},
 		evernightSelfDestructToggles: {},
 		evernightThresholdBurstToggles: {},
-		fuaToggles: {},
+		evanesciaFuaToggles: {},
 		sameAVOrder: {},
 		hyacineE2Active: true,
 		attackDisabled: {},

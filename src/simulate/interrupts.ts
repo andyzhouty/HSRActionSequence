@@ -685,7 +685,7 @@ export function emitElationSkills(
 	}
 }
 
-/** 发射绯英追击（Z），由右键菜单 fuaToggles 控制。E1+ 追加一次欢愉技。 */
+/** 发射绯英追击（Z），由右键菜单 evanesciaFuaToggles 控制。E1+ 追加一次欢愉技。 */
 export function emitFuaAction(
 	sourceKey: string,
 	actionValue: number,
@@ -693,7 +693,7 @@ export function emitFuaAction(
 	actions: GeneratedAction[],
 	input: SimulateActionsInput,
 ): void {
-	if (!input.fuaToggles?.[sourceKey]) return;
+	if (!input.evanesciaFuaToggles?.[sourceKey]) return;
 	const evanescia = states.find(
 		(s) =>
 			s.character.kind === "角色" &&

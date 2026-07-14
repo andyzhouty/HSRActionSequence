@@ -22,11 +22,10 @@ export function EvanesciaFuaToggleSection() {
 		action.isPolluxAction ||
 		action.isEveyAction ||
 		action.isAglaeaGarmentmakerAction ||
-		action.isAssistAction ||
 		action.isOdeExtraAction
 	)
 		return null;
-	const isEnabled = ctx.fuaToggles[firstKey] === true;
+	const isEnabled = ctx.evanesciaFuaToggles[firstKey] === true;
 	return (
 		<div className="flex flex-wrap items-center gap-3 border-t border-gray-700 pt-3">
 			<span className="whitespace-nowrap text-sm text-gray-300">
@@ -35,7 +34,7 @@ export function EvanesciaFuaToggleSection() {
 			<button
 				type="button"
 				onClick={() =>
-					ctx.setFuaToggles((previous) => {
+					ctx.setEvanesciaFuaToggles((previous) => {
 						const next = { ...previous };
 						if (isEnabled) delete next[firstKey];
 						else next[firstKey] = true;

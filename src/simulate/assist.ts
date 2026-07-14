@@ -72,6 +72,7 @@ export function emitHimekoNovaAssists(args: {
 	actions: GeneratedAction[];
 	activeOdes: Map<string, ActiveOdeState[]>;
 	input: SimulateActionsInput;
+	emitFuaAction?: (sourceKey: string, actionValue: number) => void;
 }): void {
 	const {
 		assist,
@@ -82,6 +83,7 @@ export function emitHimekoNovaAssists(args: {
 		actions,
 		activeOdes,
 		input,
+		emitFuaAction,
 	} = args;
 	if (!assist) return;
 	for (
@@ -91,6 +93,40 @@ export function emitHimekoNovaAssists(args: {
 	) {
 		const assistKey =
 			assistIndex === 1 ? `${key}-assist-F` : `${key}-assist-F-${assistIndex}`;
+		const emitAssistInterrupts = (timing: "before" | "after") => {
+			for (
+				let ai = 0;
+				ai < (input.ultInterrupts[assistKey] ?? []).length;
+				ai++
+			) {
+				const interrupt = input.ultInterrupts[assistKey][ai];
+				if (interrupt.timing !== timing) continue;
+				const caster = states.find(
+					(state) => state.character.id === interrupt.casterId,
+				);
+				if (!caster) continue;
+				const interruptKey = `${assistKey}-interrupt-${ai}`;
+				actions.push({
+					key: interruptKey,
+					characterId: caster.character.id,
+					actionNo: 0,
+					actionValue,
+					skill: "Q" as SkillCode,
+					speed: caster.currentSpeed,
+					interruptTiming: timing,
+					activeOdeLabels: getActiveOdeLabels(activeOdes, caster.character.id),
+				});
+				emitMemeAdvanceAction({
+					input,
+					actions,
+					states,
+					sourceKey: interruptKey,
+					actionValue,
+					activeOdes,
+				});
+			}
+		};
+		emitAssistInterrupts("before");
 		actions.push({
 			key: assistKey,
 			characterId: assist.character.id,
@@ -111,30 +147,8 @@ export function emitHimekoNovaAssists(args: {
 			actionValue,
 			activeOdes,
 		});
-		for (let ai = 0; ai < (input.ultInterrupts[assistKey] ?? []).length; ai++) {
-			const interrupt = input.ultInterrupts[assistKey][ai];
-			const caster = states.find(
-				(state) => state.character.id === interrupt.casterId,
-			);
-			if (!caster) continue;
-			actions.push({
-				key: `${assistKey}-interrupt-${ai}`,
-				characterId: caster.character.id,
-				actionNo: 0,
-				actionValue,
-				skill: "Q" as SkillCode,
-				speed: caster.currentSpeed,
-				activeOdeLabels: getActiveOdeLabels(activeOdes, caster.character.id),
-			});
-			emitMemeAdvanceAction({
-				input,
-				actions,
-				states,
-				sourceKey: `${assistKey}-interrupt-${ai}`,
-				actionValue,
-				activeOdes,
-			});
-		}
+		emitAssistInterrupts("after");
 		expirePhainonDomainSpeedBonus(states, actionValue);
+		emitFuaAction?.(assistKey, actionValue);
 	}
 }

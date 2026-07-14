@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useActionSequence } from "../contexts/ActionSequenceContext";
 import lightConeData from "../data/lightcones.json";
+import { getGilgameshBaseSpeed, hasGilgamesh } from "../mechanics/gilgamesh";
 import {
 	type defaultCharacters,
 	getCharacterPath,
@@ -243,6 +244,9 @@ function CharacterCard({
 								return {
 									...prev,
 									name: value,
+									...(hasGilgamesh({ ...prev, name: value })
+										? { baseSpeed: String(getGilgameshBaseSpeed({ ...prev, name: value })) }
+										: {}),
 									lc_id: oldPath !== newPath && !lcStillValid ? 0 : prev.lc_id,
 								};
 							})
@@ -425,6 +429,13 @@ function CharacterCard({
 								ctx.updateCharacter(character.id, (prev) => ({
 									...prev,
 									lc_id: Number(value),
+									...(hasGilgamesh(prev)
+										? {
+												baseSpeed: String(
+													getGilgameshBaseSpeed({ ...prev, lc_id: Number(value) }),
+												),
+											}
+										: {}),
 								}))
 							}
 							className="flex-1"
@@ -445,7 +456,16 @@ function CharacterCard({
 								ctx.updateCharacter(character.id, (prev) => ({
 									...prev,
 									superimpose: Number(value),
-									...(hasSkillEffect(prev.name, "W", "counterW")
+									...(hasGilgamesh(prev)
+										? {
+												baseSpeed: String(
+													getGilgameshBaseSpeed({
+														...prev,
+														superimpose: Number(value),
+													}),
+												),
+											}
+										: hasSkillEffect(prev.name, "W", "counterW")
 										? {
 												baseSpeed: String(
 													prev.lc_id === 23044

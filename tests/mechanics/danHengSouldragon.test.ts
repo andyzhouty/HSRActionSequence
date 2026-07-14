@@ -84,6 +84,29 @@ describe("Dan Heng Permansor Terrae Souldragon", () => {
 		).toBeCloseTo(50 + 250 / 165, 4);
 	});
 
+	it("Archer E is a fixed attack and ignores a legacy disabled toggle", () => {
+		const base = {
+			characters: [
+				character("dhpt", "丹恒·腾荒", 100),
+				character("archer", "红A", 200),
+			],
+			bondmateTarget: "archer",
+			skillOverrides: skills({ "archer-1": "E" }),
+			limit: 100,
+		};
+		const enabled = simulateActions(input(base));
+		const disabled = simulateActions(
+			input({ ...base, attackDisabled: { "archer-1": true } }),
+		);
+
+		expect(
+			disabled.find((action) => action.isSouldragonAction)?.actionValue,
+		).toBeCloseTo(
+			enabled.find((action) => action.isSouldragonAction)?.actionValue ?? 0,
+			4,
+		);
+	});
+
 	it("does not advance for Huohuo E", () => {
 		const actions = simulateActions(
 			input({

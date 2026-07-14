@@ -1,6 +1,7 @@
 import { hasPassive, hasSkillEffect } from "../data/characters";
 import { summonGarmentmakerState } from "../mechanics/aglaeaGarmentmaker";
 import { clampArcherFuaCharge, hasArcher } from "../mechanics/archer";
+import { getGilgameshBaseSpeed, hasGilgamesh } from "../mechanics/gilgamesh";
 import {
 	applyCastoriceE2Pull,
 	hasCastoriceSummon,
@@ -40,7 +41,9 @@ export function buildInitialStates(
 
 			return {
 				character,
-				baseSpeed:
+				baseSpeed: hasGilgamesh(character)
+					? getGilgameshBaseSpeed(character)
+					:
 					toPositiveNumber(character.baseSpeed, 0) > 0
 						? toPositiveNumber(character.baseSpeed, speed)
 						: hasSkillEffect(character.name, "W", "counterW")
@@ -58,6 +61,12 @@ export function buildInitialStates(
 				archerFuaCharge: hasArcher(character)
 					? clampArcherFuaCharge(isTechniqueOn(character) ? 2 : 1)
 					: undefined,
+				gilgameshInterest: hasGilgamesh(character)
+					? (character.eidolon >= 2 ? 5 : 0) +
+						(isTechniqueOn(character) ? 3 : 0)
+					: undefined,
+				gilgameshEUnlocked: hasGilgamesh(character) ? false : undefined,
+				gilgameshAttackCount: hasGilgamesh(character) ? 0 : undefined,
 			};
 		});
 }

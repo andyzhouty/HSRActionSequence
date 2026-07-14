@@ -49,7 +49,7 @@ export function runPostActionCleanup(
 		activeOdes,
 	});
 	callbacks.emitEvernightSelfDestructAction(key, actionValue);
-	// 绯英追击（右键菜单 fuaToggles 控制）
+	// 绯英追击（右键菜单 evanesciaFuaToggles 控制）
 	if (!skipAssistFollowUp) {
 		callbacks.emitFuaAction(key, actionValue);
 	}

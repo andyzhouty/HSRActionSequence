@@ -5,6 +5,7 @@ import {
 import { handlePolluxAction } from "../mechanics/castoricePollux";
 import { emitSouldragonAction } from "../mechanics/danHengSouldragon";
 import { handleEveyAction } from "../mechanics/evernightEvey";
+import { hasGilgamesh } from "../mechanics/gilgamesh";
 import {
 	handleFireflyCountdownAction,
 	isFireflyCountdownAction,
@@ -84,6 +85,23 @@ export function handleSpecialAction({
 			skill: "" as SkillCode,
 			speed: 1,
 		});
+		const gilgamesh = states.find(
+			(state) => hasGilgamesh(state.character) && state.character.techniqueOn,
+		);
+		if (gilgamesh) {
+			actions.push({
+				key: `${key}-gilgamesh-technique`,
+				characterId: gilgamesh.character.id,
+				displayName: "吉尔伽美什",
+				actionNo: 0,
+				actionValue,
+				skill: "T" as SkillCode,
+				speed: gilgamesh.currentSpeed,
+				lockedSkill: true,
+				isGilgameshTechniqueAction: true,
+				gilgameshInterest: gilgamesh.gilgameshInterest,
+			});
+		}
 		for (let ai = 0; ai < av0Interrupts.length; ai++) {
 			const int = av0Interrupts[ai];
 			if (int.timing !== "after") continue;

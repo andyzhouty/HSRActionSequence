@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { simulateActions } from "../../src/simulate/actions";
+import { getDisplayOrderedActions } from "../../src/utils/actionDisplayOrder";
 import { character, input, skills } from "../helpers/simulateActionTestUtils";
 
 describe("Himeko Nova Assist (姬子·启行 F)", () => {
@@ -17,6 +18,71 @@ describe("Himeko Nova Assist (姬子·启行 F)", () => {
 		const assistActions = actions.filter((a) => a.isAssistFollowUp);
 		expect(assistActions.length).toBeGreaterThan(0);
 		expect(assistActions[0].actionValue).toBeCloseTo(100, 2);
+	});
+
+	it("姬子助战后可插入绯英追击", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("himeko", "姬子·启行", 100),
+					character("actor", "丹恒", 100),
+					character("evanescia", "绯英", 80),
+				],
+				skillOverrides: skills({ "actor-1": "F" }),
+				evanesciaFuaToggles: { "actor-1-assist-F": true },
+				limit: 250,
+			}),
+		);
+
+		expect(
+			actions.find((action) => action.key === "actor-1-assist-F"),
+		).toMatchObject({
+			isAssistAction: true,
+			skill: "F",
+		});
+		expect(
+			actions.find((action) => action.key === "actor-1-assist-F-fua"),
+		).toMatchObject({
+			isFuaAction: true,
+			characterId: "evanescia",
+			skill: "Z",
+		});
+	});
+
+	it("姬子助战行的前插大招显示在 F 前", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("himeko", "姬子·启行", 100),
+					character("actor", "丹恒", 100),
+					character("caster", "停云", 100),
+				],
+				skillOverrides: skills({ "actor-1": "F" }),
+				ultInterrupts: {
+					"actor-1-assist-F": [{ casterId: "caster", timing: "before" }],
+				},
+				limit: 250,
+			}),
+		);
+		const interruptIndex = actions.findIndex(
+			(action) => action.key === "actor-1-assist-F-interrupt-0",
+		);
+		const assistIndex = actions.findIndex(
+			(action) => action.key === "actor-1-assist-F",
+		);
+		expect(actions[interruptIndex]).toMatchObject({
+			characterId: "caster",
+			skill: "Q",
+		});
+		expect(interruptIndex).toBeLessThan(assistIndex);
+		const displayed = getDisplayOrderedActions(actions);
+		expect(
+			displayed.findIndex(
+				(action) => action.key === "actor-1-assist-F-interrupt-0",
+			),
+		).toBeLessThan(
+			displayed.findIndex((action) => action.key === "actor-1-assist-F"),
+		);
 	});
 
 	it("姬子·启行自身使用 FE 不触发协战", () => {

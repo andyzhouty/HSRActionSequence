@@ -1,3 +1,4 @@
+export type { ActionRowDragProps } from "./action-table/ActionTableRowsContent";
 export {
 	ActionLimitMarkerRow,
 	ActionRow,

@@ -76,6 +76,24 @@ export function validateActionSkillInput(params: {
 	nextSkill: SkillCode;
 }) {
 	const { action, character, characters, nextSkill } = params;
+	const isArcherResetTurn = action.isArcherExtraE && action.key.endsWith("-reset");
+	if (
+		action.isArcherExtraE &&
+		!["E", "A", "F", "FF"].includes(nextSkill) &&
+		!(isArcherResetTurn && /^\d*E$/.test(nextSkill))
+	) {
+		return "红A额外射箭回合只能填写 E、A、F 或 FF";
+	}
+	if (action.isArcherExtraE && nextSkill.includes("F")) {
+		const hasE2HimekoNova = characters.some(
+			(candidate) =>
+				candidate.eidolon >= 2 &&
+				hasSkillEffect(candidate.name, "F", "himekoNovaAssist"),
+		);
+		if (!hasE2HimekoNova) {
+			return "红A额外射箭回合的姬子联动需要 2 魂及以上的姬子·启行";
+		}
+	}
 	if (action.isCombustionAction) {
 		const chars = nextSkill.replace(/F/g, "");
 		const combustionRule = getFireflyCombustionRule(character.name);

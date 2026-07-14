@@ -49,7 +49,18 @@ export function AttackInline({ action }: { action: GeneratedAction }) {
 	) {
 		return null;
 	}
-	if (action.isElationSkill || action.isArcherFua) return null;
+	if (
+		action.isElationSkill ||
+		action.isArcherFua ||
+		action.isAssistAction ||
+		action.isGilgameshTechniqueAction
+	)
+		return null;
+	if (
+		hasSkillEffect(attacker.name, "Q", "archerUltimate") &&
+		["A", "E", "Q"].includes(action.skill)
+	)
+		return null;
 	if (isBasicAttackSkill(action.skill)) return null;
 	if (
 		hasSilverWolfGodmode(attacker.name) &&

@@ -86,7 +86,10 @@ export function applyPhainonDomainPauseAndSpeedBonus(
 	}
 }
 
-/** 境界开始时：冻结友方行动（保存剩余距离，推向远处以防被选中） */
+/**
+ * 境界开始时冻结友方角色与忆灵行动（保存剩余距离，推向远处以防被选中）。
+ * 阿哈时刻是独立行动轴，不属于冻结目标，因而会在境界内照常行动。
+ */
 export function freezeAlliesForDomain(
 	states: PhainonMutableState[],
 	casterIndex: number,

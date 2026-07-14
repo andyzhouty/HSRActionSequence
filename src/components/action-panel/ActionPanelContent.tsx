@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import {
 	canExchangeActionOrder,
@@ -13,10 +13,10 @@ import {
 	limitPresets,
 	maxResources,
 } from "../../utils/actionSequence";
-import { ActionLimitMarkerRow, ActionRow } from "../ActionTableRows";
 import { SelectInput, TextInput } from "../Controls";
 import ExportExcelButton from "../ExportExcelButton";
 import { ActionMenuContent } from "./ActionMenuContent";
+import { ActionSequenceTable } from "./ActionSequenceTable";
 
 export default function ActionPanel() {
 	const ctx = useActionSequence();
@@ -26,7 +26,7 @@ export default function ActionPanel() {
 		[ctx.actions, ctx.sameAVOrder],
 	);
 
-	// 白厄境界期间：只显示境界动作 + 非忆灵 + 敌人，隐藏我方角色和忆灵
+	// 白厄境界期间：显示境界动作、阿哈时刻、非忆灵与敌人，隐藏我方角色和忆灵
 	// 昔涟自 Q：不显示昔涟Q行，仅显示德谬歌Q
 	const visibleActions = useMemo(() => {
 		const archerArrowParentKeys = new Set(
@@ -77,7 +77,7 @@ export default function ActionPanel() {
 		if (firstDomainIdx === -1 || lastDomainIdx === -1) return filtered;
 		return filtered.filter((action, idx) => {
 			if (idx < firstDomainIdx || idx > lastDomainIdx) return true;
-			if (action.isDomainAction) return true;
+			if (action.isDomainAction || action.isAhaInstant) return true;
 			const kind = ctx.characterKinds[action.characterId];
 			if (kind === "非忆灵" || kind === "倒计时" || kind === "敌人")
 				return true;
@@ -240,10 +240,13 @@ export default function ActionPanel() {
 	}, [ctx.actions]);
 
 	const getDragProps = (action: (typeof orderedActions)[number]) => {
+		// 欢愉技在阿哈时刻内按参演顺序固定，不能单独拖拽换序。
+		if (action.isElationSkill) return undefined;
 		const parentKey = getExtraTurnParentKey(action);
 		const groupNumber = dragGroupLabels.get(action.key);
 		if (!parentKey || groupNumber === undefined) return undefined;
-		const draggable = !action.isArcherExtraE;
+		const draggable =
+			!action.isArcherExtraE && !action.isGilgameshTechniqueAction;
 		const getDragSourceKey = (event: React.DragEvent) => {
 			if (dragSourceKeyRef.current) return dragSourceKeyRef.current;
 			try {
@@ -255,12 +258,18 @@ export default function ActionPanel() {
 		};
 		const getDropPlan = (event: React.DragEvent) => {
 			const sourceKey = getDragSourceKey(event);
-			if (!sourceKey || sourceKey === action.key) return null;
+			if (
+				!sourceKey ||
+				sourceKey === action.key ||
+				action.isGilgameshTechniqueAction
+			)
+				return null;
 			const source = orderedActions.find(
 				(candidate) => candidate.key === sourceKey,
 			);
 			if (
 				!source ||
+				source.isGilgameshTechniqueAction ||
 				!canExchangeActionOrder(source, action) ||
 				getExtraTurnParentKey(source) !== parentKey ||
 				getActionValueBucket(source.actionValue) !==
@@ -532,196 +541,18 @@ export default function ActionPanel() {
 				</>
 			)}
 
-			{/* Action table */}
-			<div
-				ref={ctx.imageExportRef}
-				data-elation-skills={elationSkillsExportData}
-				className="overflow-x-auto rounded-xl border border-gray-700 bg-gray-800 pb-4"
-			>
-				<div className="bg-gray-800">
-					<div className="border-b border-gray-700 bg-[#11182799] px-3 py-2">
-						<h3 className="text-lg font-semibold text-white">行动序列</h3>
-						<p className="text-sm text-gray-400">
-							设定行动值上限 {formatActionValue(ctx.actionLimit)} / 显示至{" "}
-							{formatActionValue(ctx.displayedActionLimit)} / 行动数{" "}
-							{visibleActions.length}
-						</p>
-					</div>
-					<table className="w-full table-auto divide-y divide-gray-700 text-left text-sm">
-						<colgroup>
-							<col className="w-12" />
-							<col className="w-[1%]" />
-							<col className="w-28" />
-							<col className="w-28" />
-							{ctx.resources.map((name) => (
-								<col key={`resource-col-${name}`} />
-							))}
-						</colgroup>
-						<thead className="bg-[#11182799] text-gray-300">
-							<tr>
-								<th className="w-12 min-w-12 max-w-12 whitespace-nowrap px-2 py-3 font-semibold">
-									序号
-								</th>
-								<th className="w-[1%] whitespace-nowrap px-3 py-3 font-semibold">
-									目标
-								</th>
-								<th className="whitespace-nowrap px-2 py-3 font-semibold">
-									行动值
-								</th>
-								<th className="whitespace-nowrap px-2 py-3 font-semibold">
-									技能
-								</th>
-								{ctx.resources.map((resource, index) => (
-									<th
-										key={`resource-header-${resource}`}
-										className="truncate whitespace-nowrap px-2 py-3 font-semibold"
-										title={resource || `资源 ${index + 1}`}
-									>
-										{resource || `资源 ${index + 1}`}
-									</th>
-								))}
-							</tr>
-						</thead>
-						<tbody className="divide-y divide-gray-700">
-							{visibleActions.length === 0 ? (
-								<tr>
-									<td
-										colSpan={4 + ctx.resources.length}
-										className="px-4 py-10 text-center text-gray-400"
-									>
-										请至少填写一个有效速度。
-									</td>
-								</tr>
-							) : (
-								<>
-									{visibleActions.map((action, index) => (
-										<Fragment key={`action-with-marker-${action.key}`}>
-											{index === limitMarkerPosition && (
-												<ActionLimitMarkerRow
-													colSpan={4 + ctx.resources.length}
-													actionLimit={ctx.actionLimit}
-												/>
-											)}
-											<ActionRow
-												action={action}
-												index={index}
-												isPastOriginalLimit={
-													action.actionValue > ctx.actionLimit
-												}
-												onToggleElationSkills={
-													action.hasElationSkills
-														? () => toggleAhaExpand(action.key)
-														: undefined
-												}
-												onToggleArcherArrows={
-													action.hasArcherExtraEs
-														? () => toggleArcherArrowExpand(action.key)
-														: undefined
-												}
-												dragProps={getDragProps(action)}
-											/>
-											{action.hasArcherExtraEs &&
-												expandedArcherArrowKeys.has(action.key) &&
-												archerArrowChildrenByParent
-													.get(action.key)
-													?.map((child) => (
-														<ActionRow
-															key={child.key}
-															action={child}
-															index={index}
-															isPastOriginalLimit={
-																child.actionValue > ctx.actionLimit
-															}
-															onToggleElationSkills={
-																child.hasElationSkills
-																	? () => toggleAhaExpand(child.key)
-																	: undefined
-															}
-															dragProps={getDragProps(child)}
-														/>
-													))}
-											{action.hasElationSkills &&
-												expandedAhaKeys.has(action.key) &&
-												elationSkillsByParent.get(action.key)?.map((es) => {
-													const esChar = ctx.charactersById[es.characterId];
-													const esDragProps = getDragProps(es);
-													return (
-														<tr
-															key={es.key}
-															data-action-key={es.key}
-															draggable={esDragProps?.draggable || undefined}
-															onDragStart={esDragProps?.onDragStart}
-															onDragOver={esDragProps?.onDragOver}
-															onDrop={esDragProps?.onDrop}
-															onDragEnd={esDragProps?.onDragEnd}
-															className={`${esDragProps ? "cursor-grab ring-1 ring-inset ring-orange-300/70" : "cursor-pointer"} bg-[#c2410c15] hover:bg-[#c2410c25]`}
-														>
-															<td className="w-12 min-w-12 max-w-12 whitespace-nowrap px-2 py-2 text-center text-xs text-orange-400/60">
-																ES
-																{esDragProps && (
-																	<span
-																		role="img"
-																		aria-label={`可交换组 ${esDragProps.groupNumber}`}
-																		className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-orange-300/70 bg-orange-950/80 text-xs font-bold text-orange-100"
-																		title="可与相同交换标记的行动拖拽互换"
-																	>
-																		⇄
-																	</span>
-																)}
-															</td>
-															<td className="w-[1%] max-w-32 whitespace-nowrap px-3 py-2">
-																<div className="truncate text-sm font-medium text-orange-200/80">
-																	{esChar?.name ?? es.characterId}
-																</div>
-															</td>
-															<td className="whitespace-nowrap px-2 py-2 text-center text-xs text-orange-300/60">
-																{formatActionValue(es.actionValue)}
-															</td>
-															<td className="whitespace-nowrap px-2 py-2">
-																<span className="rounded bg-orange-500/20 px-1.5 py-0.5 font-mono text-xs font-bold text-orange-300">
-																	ES
-																</span>
-															</td>
-															{ctx.resources.map((name) => (
-																<td
-																	key={`es-res-${es.key}-${name}`}
-																	className="whitespace-nowrap px-2 py-2"
-																>
-																	<input
-																		type="text"
-																		value={
-																			ctx.resourceValues[es.key]?.[name] ?? ""
-																		}
-																		onClick={(e) => e.stopPropagation()}
-																		onContextMenu={(e) => e.stopPropagation()}
-																		onChange={(e) =>
-																			ctx.updateResourceValue(
-																				es.key,
-																				name,
-																				e.target.value,
-																			)
-																		}
-																		className="h-10 w-full min-w-0 rounded-lg border border-gray-600 bg-gray-700 px-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-																	/>
-																</td>
-															))}
-														</tr>
-													);
-												})}
-										</Fragment>
-									))}
-									{limitMarkerPosition === visibleActions.length && (
-										<ActionLimitMarkerRow
-											colSpan={4 + ctx.resources.length}
-											actionLimit={ctx.actionLimit}
-										/>
-									)}
-								</>
-							)}
-						</tbody>
-					</table>
-				</div>
-			</div>
+			<ActionSequenceTable
+				visibleActions={visibleActions}
+				limitMarkerPosition={limitMarkerPosition}
+				elationSkillsByParent={elationSkillsByParent}
+				archerArrowChildrenByParent={archerArrowChildrenByParent}
+				expandedAhaKeys={expandedAhaKeys}
+				expandedArcherArrowKeys={expandedArcherArrowKeys}
+				onToggleAha={toggleAhaExpand}
+				onToggleArcherArrows={toggleArcherArrowExpand}
+				getDragProps={getDragProps}
+				elationSkillsExportData={elationSkillsExportData}
+			/>
 
 			{/* Export/Import */}
 			<div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">

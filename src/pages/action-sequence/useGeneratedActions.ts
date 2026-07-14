@@ -57,7 +57,7 @@ function buildSimulationConfig(
 		bondmateTarget: savedData.bondmateTarget,
 		attackDisabled: savedData.attackDisabled,
 		saberAdvanceToggles: savedData.saberAdvanceToggles,
-		fuaToggles: savedData.fuaToggles,
+		evanesciaFuaToggles: savedData.evanesciaFuaToggles,
 		sameAVOrder: savedData.sameAVOrder,
 	};
 }
@@ -269,7 +269,9 @@ export function useGeneratedActions({
 				prev.evernightThresholdBurstToggles,
 			);
 			const nextAttackDisabled = pruneToggleMap(prev.attackDisabled);
-			const nextFuaToggles = pruneToggleMap(prev.fuaToggles);
+			const nextEvanesciaFuaToggles = pruneToggleMap(
+				prev.evanesciaFuaToggles,
+			);
 			const nextSaberAdvanceToggles = pruneToggleMap(prev.saberAdvanceToggles);
 			changed =
 				changed ||
@@ -281,7 +283,7 @@ export function useGeneratedActions({
 				nextEvernightThresholdBurstToggles !==
 					prev.evernightThresholdBurstToggles ||
 				nextAttackDisabled !== prev.attackDisabled ||
-				nextFuaToggles !== prev.fuaToggles ||
+				nextEvanesciaFuaToggles !== prev.evanesciaFuaToggles ||
 				nextSaberAdvanceToggles !== prev.saberAdvanceToggles;
 
 			if (!changed) return prev;
@@ -297,7 +299,7 @@ export function useGeneratedActions({
 				evernightSelfDestructToggles: nextEvernightSelfDestructToggles,
 				evernightThresholdBurstToggles: nextEvernightThresholdBurstToggles,
 				attackDisabled: nextAttackDisabled,
-				fuaToggles: nextFuaToggles,
+				evanesciaFuaToggles: nextEvanesciaFuaToggles,
 				saberAdvanceToggles: nextSaberAdvanceToggles,
 			};
 		});

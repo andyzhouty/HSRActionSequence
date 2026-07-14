@@ -130,7 +130,15 @@ describe("CharacterPanel rendering", () => {
 					characterId: "archer",
 					actionNo: 1,
 					actionValue: 40,
-					skill: "A",
+					skill: "E",
+					speed: 100,
+				},
+				{
+					key: "archer-2",
+					characterId: "archer",
+					actionNo: 2,
+					actionValue: 45,
+					skill: "Q",
 					speed: 100,
 				},
 				{
@@ -152,7 +160,7 @@ describe("CharacterPanel rendering", () => {
 			],
 		});
 
-		for (const key of ["archer-1", "bronya-1", "huohuo-1"]) {
+		for (const key of ["archer-1", "archer-2", "bronya-1", "huohuo-1"]) {
 			const row = document.querySelector(`tr[data-action-key="${key}"]`);
 			expect(row?.textContent).not.toContain("攻击");
 		}
@@ -293,7 +301,46 @@ describe("ActionPanel rendering", () => {
 		expect(screen.getAllByRole("img", { name: "可交换组 1" })).toHaveLength(2);
 	});
 
-	it("makes expanded Elation skills draggable with their parent extras", async () => {
+	it("keeps Aha moment visible during a Phainon domain", () => {
+		renderWithContext(<ActionPanel />, {
+			actions: [
+				{
+					key: "phainon-domain-0",
+					characterId: "c1",
+					actionNo: 1,
+					actionValue: 100,
+					skill: "A",
+					speed: 100,
+					isDomainAction: true,
+				},
+				{
+					key: "@aha-1",
+					characterId: "@aha",
+					actionNo: 1,
+					actionValue: 110,
+					skill: "",
+					speed: 100,
+					isAhaInstant: true,
+					hasElationSkills: true,
+				},
+				{
+					key: "phainon-domain-1",
+					characterId: "c1",
+					actionNo: 2,
+					actionValue: 120,
+					skill: "Q",
+					speed: 100,
+					isDomainAction: true,
+					isDomainFinalAction: true,
+				},
+			],
+		});
+
+		expect(document.querySelector('tr[data-action-key="@aha-1"]')).not.toBeNull();
+		expect(screen.getAllByRole("img", { name: "阿哈时刻" })).toHaveLength(2);
+	});
+
+	it("keeps expanded Elation skills fixed in Aha order", async () => {
 		renderWithContext(<ActionPanel />, {
 			actions: [
 				{
@@ -330,7 +377,7 @@ describe("ActionPanel rendering", () => {
 		await userEvent.click(screen.getAllByRole("img", { name: "阿哈时刻" })[0]);
 		expect(
 			document.querySelector('tr[data-action-key="@aha-1-elation-c1"]'),
-		).toHaveAttribute("draggable", "true");
+		).not.toHaveAttribute("draggable", "true");
 	});
 
 	it("expands Archer arrows together with their inserted extra actions", async () => {

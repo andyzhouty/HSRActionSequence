@@ -112,4 +112,30 @@ describe("Saber right-click menu", () => {
 
 		expect(screen.queryByText("绯英追击：")).toBeNull();
 	});
+
+	it("可为姬子助战行动插入绯英追击", () => {
+		const himeko = character("himeko", "姬子·启行");
+		const evanescia = character("evanescia", "绯英");
+		const assist: GeneratedAction = {
+			key: "ally-1-assist-F",
+			characterId: "himeko",
+			actionNo: 0,
+			actionValue: 100,
+			skill: "F",
+			speed: 100,
+			isAssistAction: true,
+		};
+		renderWithContext(<ActionPanel />, {
+			characters: [himeko, evanescia],
+			charactersById: { himeko, evanescia },
+			characterNames: { himeko: "姬子·启行", evanescia: "绯英" },
+			characterKinds: { himeko: "角色", evanescia: "角色" },
+			actions: [assist],
+			actionMenuOpen: true,
+			actionMenuKey: assist.key,
+			selectedActionKeys: new Set([assist.key]),
+		});
+
+		expect(screen.getByRole("button", { name: "插入追击（Z）" })).toBeInTheDocument();
+	});
 });

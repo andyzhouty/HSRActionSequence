@@ -36,7 +36,7 @@ export type ActionSequenceContextType = {
 	memeKillToggles: Record<string, boolean>;
 	evernightSelfDestructToggles: Record<string, boolean>;
 	evernightThresholdBurstToggles: Record<string, boolean>;
-	fuaToggles: Record<string, boolean>;
+	evanesciaFuaToggles: Record<string, boolean>;
 	hyacineE2Active: boolean;
 	meritTarget?: string;
 	dancePartner?: string;
@@ -125,7 +125,9 @@ export type ActionSequenceContextType = {
 	setEvernightThresholdBurstToggles: React.Dispatch<
 		React.SetStateAction<Record<string, boolean>>
 	>;
-	setFuaToggles: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+	setEvanesciaFuaToggles: React.Dispatch<
+		React.SetStateAction<Record<string, boolean>>
+	>;
 	sameAVOrder: Record<string, number>;
 	setSameAVOrder: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 	setHyacineE2Active: React.Dispatch<React.SetStateAction<boolean>>;

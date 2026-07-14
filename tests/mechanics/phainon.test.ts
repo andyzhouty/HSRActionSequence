@@ -90,6 +90,27 @@ function interrupts(
 // ───── Phainon (白厄) ─────
 
 describe("Phainon (白厄)", () => {
+	it("keeps Aha moment on its normal independent timeline inside the domain", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("phainon", "白厄", 200),
+					character("sparxie", "火花", 160),
+				],
+				skillOverrides: skills({ "phainon-1": "AQ" }),
+				limit: 300,
+			}),
+		);
+
+		const aha = actions.find((action) => action.isAhaInstant);
+		const domainActions = actions.filter((action) => action.isDomainAction);
+		expect(aha).toBeDefined();
+		expect(aha!.actionValue).toBeGreaterThan(domainActions[0].actionValue);
+		expect(aha!.actionValue).toBeLessThan(
+			domainActions[domainActions.length - 1].actionValue,
+		);
+	});
+
 	it("enters domain state after ultimate and generates domain actions", () => {
 		const actions = simulateActions(
 			input({

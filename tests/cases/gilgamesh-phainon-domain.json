@@ -1,0 +1,66 @@
+{
+  "limitPreset": "150",
+  "customLimit": "",
+  "displayedLimit": "250",
+  "characters": [
+    {
+      "id": "gil",
+      "kind": "角色",
+      "name": "吉尔伽美什",
+      "speed": "100",
+      "baseSpeed": "97",
+      "hasVonwacq": false,
+      "hasWindSet": false,
+      "hasDance": false,
+      "techniqueOn": true,
+      "eidolon": 2,
+      "superimpose": 1,
+      "lc_id": 0
+    },
+    {
+      "id": "phainon",
+      "kind": "角色",
+      "name": "白厄",
+      "speed": "100",
+      "baseSpeed": "",
+      "hasVonwacq": false,
+      "hasWindSet": false,
+      "hasDance": false,
+      "techniqueOn": false,
+      "eidolon": 2,
+      "superimpose": 1,
+      "lc_id": 0
+    }
+  ],
+  "resources": ["兴致", "战技点"],
+  "overrides": {},
+  "ultOverrides": {},
+  "skillOverrides": {
+    "phainon-1": "AQ",
+    "phainon-1-domain-0": "EW",
+    "phainon-1-domain-1": "EA",
+    "phainon-1-domain-2": "E"
+  },
+  "domainEndOverrides": {},
+  "speedAdjustments": {},
+  "skillTargets": {},
+  "defaultSkillTargets": {},
+  "odeSelections": {},
+  "memeSelections": {},
+  "ultInterrupts": {},
+  "resourceValues": {
+    "@av0-1": { "兴致": "8" }
+  },
+  "fireflyBreakCounters": {},
+  "godmodeExtraActions": {},
+  "castoriceKillToggles": {},
+  "icaKillToggles": {},
+  "memeKillToggles": {},
+  "evernightSelfDestructToggles": {},
+  "evernightThresholdBurstToggles": {},
+  "evanesciaFuaToggles": {},
+  "sameAVOrder": {},
+  "hyacineE2Active": true,
+  "attackDisabled": {},
+  "saberAdvanceToggles": {}
+}

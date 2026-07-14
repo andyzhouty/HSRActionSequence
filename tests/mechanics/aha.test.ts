@@ -72,7 +72,7 @@ describe("Aha Instant (阿哈时刻)", () => {
 				ultInterrupts: {
 					"actor-1": [{ casterId: "actor", timing: "after" }],
 				},
-				fuaToggles: { "actor-1-interrupt-0": true },
+				evanesciaFuaToggles: { "actor-1-interrupt-0": true },
 				limit: 110,
 			}),
 		);

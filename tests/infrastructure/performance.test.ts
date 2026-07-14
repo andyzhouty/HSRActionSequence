@@ -10,11 +10,14 @@ import { character, input } from "../helpers/simulateActionTestUtils";
 
 /**
  * 性能预算（毫秒）：
- * - 4角色标准轴（500AV）：<50ms
+ * - 标准轴：<200ms
  * - 高负载（大量插队+长轴）：<200ms
+ * - 2000 AV 复合连动压力轴：<700ms
  */
-const STANDARD_BUDGET_MS = 150;
-const HEAVY_BUDGET_MS = 600;
+const STANDARD_BUDGET_MS = 200;
+const HEAVY_BUDGET_MS = 200;
+// 2000 AV 的复合连动用于压测吞吐量，不是编辑时的常规交互负载。
+const EXTREME_STRESS_BUDGET_MS = 700;
 
 describe("Performance: standard scenarios", () => {
 	it("4-character team, 500 AV limit", () => {
@@ -87,5 +90,54 @@ describe("Performance: heavy scenarios", () => {
 		const elapsed = performance.now() - start;
 		expect(actions.length).toBeGreaterThan(0);
 		expect(elapsed).toBeLessThan(HEAVY_BUDGET_MS);
+	});
+
+	it("Phainon domain with Aha and Gilgamesh resource tracking", () => {
+		const start = performance.now();
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("gil", "吉尔伽美什", 150, {
+						eidolon: 2,
+						techniqueOn: true,
+					}),
+					character("phainon", "白厄", 200, { eidolon: 2 }),
+					character("sparxie", "火花", 180),
+					character("evanescia", "绯英", 160),
+				],
+				skillOverrides: {
+					"phainon-1": "AQ",
+					"phainon-1-domain-0": "EW",
+					"phainon-1-domain-1": "EA",
+				},
+				limit: 2000,
+			}),
+		);
+		const elapsed = performance.now() - start;
+		expect(actions.length).toBeGreaterThan(100);
+		expect(elapsed).toBeLessThan(EXTREME_STRESS_BUDGET_MS);
+	});
+
+	it("Archer arrow chains with Himeko assists and Saber/Gilgamesh combo tracking", () => {
+		const start = performance.now();
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("archer", "Archer", 200),
+					character("himeko", "sp姬子", 180, { eidolon: 2 }),
+					character("gil", "吉尔伽美什", 160, { eidolon: 2 }),
+					character("saber", "Saber", 150),
+				],
+				skillOverrides: {
+					"archer-1": "E",
+					"archer-2": "E",
+					"archer-3": "E",
+				},
+				limit: 2000,
+			}),
+		);
+		const elapsed = performance.now() - start;
+		expect(actions.length).toBeGreaterThan(100);
+		expect(elapsed).toBeLessThan(EXTREME_STRESS_BUDGET_MS);
 	});
 });

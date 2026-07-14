@@ -8,6 +8,11 @@ import {
 	emitImmediateSouldragonAction,
 } from "../mechanics/danHengSouldragon";
 import {
+	gilgameshInterestResourceName,
+	hasGilgamesh,
+} from "../mechanics/gilgamesh";
+import { hasSaber } from "../mechanics/saber";
+import {
 	hasSilverWolfGodmode,
 	isInGodmode,
 } from "../mechanics/silverWolfGodmode";
@@ -16,6 +21,7 @@ import {
 	getCharacterPath,
 	isBasicAttackSkill,
 	isNonAttackSkill,
+	toPositiveNumber,
 } from "../utils/actionSequence";
 import {
 	applyTeamSpeedBuffs,
@@ -50,20 +56,145 @@ export function simulateActions(
 	const currentBondmateTarget = { value: initialBondmateTarget };
 
 	const rawActions: GeneratedAction[] = [];
+	// 每条已记录行动都会查询行动者；角色配置与其主状态在整场模拟中稳定，
+	// 预建索引避免高密度行动轴反复线性扫描。
+	const characterById = new Map(
+		input.characters.map((character) => [character.id, character]),
+	);
+	const initialStateByCharacterId = new Map(
+		states.map((state) => [state.character.id, state]),
+	);
+	const gilgameshState = states.find((state) => hasGilgamesh(state.character));
+	const archerState = states.find((state) => hasArcher(state.character));
+	const gilgameshAndSaber =
+		gilgameshState !== undefined &&
+		states.some((state) => hasSaber(state.character));
 	let actions: GeneratedAction[];
 	const handleRecordedAction = (action: GeneratedAction) => {
-		const attacker = input.characters.find(
-			(character) => character.id === action.characterId,
-		);
-		const attackerState = states.find(
-			(state) => state.character.id === action.characterId,
-		);
+		const attacker = characterById.get(action.characterId);
+		const attackerState = initialStateByCharacterId.get(action.characterId);
 		const isSilverWolfNonAttack =
 			hasSilverWolfGodmode(attacker?.name ?? "") &&
 			(action.skill === "Q" ||
 				(action.isElationSkill &&
 					(!attackerState || !isInGodmode(attackerState))));
-		const archerState = states.find((state) => hasArcher(state.character));
+		if (gilgameshState) {
+			const isGilgameshAction =
+				action.characterId === gilgameshState.character.id;
+			const isAhaAction = action.isAhaInstant === true;
+			const isAhaActionDuringPhainonDomain =
+				isAhaAction && states.some((state) => state.domainState !== undefined);
+			const actorIsCounted =
+				attacker?.kind === "角色" ||
+				attacker?.kind === "忆灵" ||
+				attacker?.kind === "非忆灵";
+			const isPhainonEaOrEw =
+				action.isDomainAction &&
+				(action.skill === "EA" || action.skill === "EW");
+			const isCharacterUltimate =
+				attacker?.kind === "角色" && action.skill === "Q";
+			// 白厄的境界退场 Q 只是一段普通行动，不享受 Q 的额外兴致。
+			const hasUltimateInterestBonus =
+				isCharacterUltimate && action.isDomainFinalAction !== true;
+			let interest = gilgameshState.gilgameshInterest ?? 0;
+			if (action.characterId === "@av0") {
+				const initial = Number.parseFloat(
+					input.resourceValues?.[action.key]?.[gilgameshInterestResourceName] ??
+						"",
+				);
+				if (Number.isFinite(initial)) interest = Math.max(0, initial);
+			} else if (!action.isGilgameshComboAction) {
+				if (isGilgameshAction) {
+					if (action.skill === "E") interest = 0;
+				} else if (isAhaAction && !isAhaActionDuringPhainonDomain) {
+					interest += input.characters.filter(
+						(character) => getCharacterPath(character.name) === "Elation",
+					).length;
+				} else if (actorIsCounted && !action.isElationSkill)
+					interest += isPhainonEaOrEw ? 2 : 1;
+				if (hasUltimateInterestBonus) {
+					interest += 2;
+					if (isGilgameshAction && gilgameshState.character.eidolon >= 2)
+						interest += 5;
+				}
+				const manual = Number.parseFloat(
+					input.resourceValues?.[action.key]?.[gilgameshInterestResourceName] ??
+						"",
+				);
+				if (Number.isFinite(manual)) interest = Math.max(0, manual);
+			}
+			gilgameshState.gilgameshInterest = interest;
+			if (interest >= 10) gilgameshState.gilgameshEUnlocked = true;
+			action.gilgameshInterest = interest;
+
+			const oldGilgameshSpeed = gilgameshState.currentSpeed;
+			const nextGilgameshSpeed =
+				toPositiveNumber(
+					gilgameshState.character.speed,
+					gilgameshState.baseSpeed,
+				) +
+				gilgameshState.baseSpeed * 0.1 * interest;
+			if (nextGilgameshSpeed > 0) {
+				const remaining = gilgameshState.nextActionValue - action.actionValue;
+				if (!isGilgameshAction && remaining > 0)
+					gilgameshState.nextActionValue =
+						action.actionValue +
+						remaining * (oldGilgameshSpeed / nextGilgameshSpeed);
+				gilgameshState.currentSpeed = nextGilgameshSpeed;
+			}
+
+			const pairAttack =
+				(hasGilgamesh(attacker) || hasSaber(attacker)) &&
+				(action.isFuaAction === true ||
+					action.isAssistAction === true ||
+					isBasicAttackSkill(action.skill) ||
+					(attacker !== undefined &&
+						!isNonAttackSkill(attacker, action.skill) &&
+						input.attackDisabled?.[action.key] !== true));
+			if (pairAttack && gilgameshAndSaber) {
+				const count = (gilgameshState.gilgameshAttackCount ?? 0) + 1;
+				gilgameshState.gilgameshAttackCount = count;
+				if (count % 8 === 0) {
+					const speedBeforeComboBonus = gilgameshState.currentSpeed;
+					gilgameshState.gilgameshInterest += 3;
+					const speedAfterComboBonus =
+						toPositiveNumber(
+							gilgameshState.character.speed,
+							gilgameshState.baseSpeed,
+						) +
+						gilgameshState.baseSpeed * 0.1 * gilgameshState.gilgameshInterest;
+					const remaining = gilgameshState.nextActionValue - action.actionValue;
+					if (!isGilgameshAction && remaining > 0)
+						gilgameshState.nextActionValue =
+							action.actionValue +
+							remaining * (speedBeforeComboBonus / speedAfterComboBonus);
+					gilgameshState.currentSpeed = speedAfterComboBonus;
+					action.gilgameshInterest = gilgameshState.gilgameshInterest;
+					actions.push({
+						key: `${action.key}-gilgamesh-combo-fua`,
+						characterId: gilgameshState.character.id,
+						displayName: "吉尔伽美什",
+						actionNo: 0,
+						actionValue: action.actionValue,
+						skill: "Z",
+						speed: gilgameshState.currentSpeed,
+						isFuaAction: true,
+						isGilgameshComboAction: true,
+						lockedSkill: true,
+						gilgameshInterest: gilgameshState.gilgameshInterest,
+					});
+				}
+			}
+		}
+		if (
+			archerState &&
+			action.characterId === archerState.character.id &&
+			action.skill === "Q"
+		) {
+			archerState.archerFuaCharge = clampArcherFuaCharge(
+				(archerState.archerFuaCharge ?? 0) + 2,
+			);
+		}
 		const manualCharge = Number.parseFloat(
 			input.resourceValues?.[action.key]?.[archerFuaResourceName] ?? "",
 		);
@@ -71,11 +202,17 @@ export function simulateActions(
 			archerState.archerFuaCharge = clampArcherFuaCharge(manualCharge);
 		}
 		if (archerState) action.archerFuaCharge = archerState.archerFuaCharge;
-		const isForcedAttack = isBasicAttackSkill(action.skill);
+		const isArcherFixedAttack =
+			hasArcher(attacker) && ["A", "E", "Q"].includes(action.skill);
+		const isForcedAttack =
+			isBasicAttackSkill(action.skill) ||
+			action.isAssistAction === true ||
+			action.isGilgameshTechniqueAction === true ||
+			isArcherFixedAttack;
 		if (
 			archerState &&
 			!action.isArcherFua &&
-			!action.isAssistAction &&
+			!action.isDomainAction &&
 			(isForcedAttack || input.attackDisabled?.[action.key] !== true)
 		) {
 			if (
