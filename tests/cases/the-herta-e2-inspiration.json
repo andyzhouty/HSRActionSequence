@@ -1,0 +1,49 @@
+{
+  "limitPreset": "150",
+  "customLimit": "",
+  "displayedLimit": "200",
+  "characters": [
+    {
+      "id": "herta",
+      "kind": "角色",
+      "name": "大黑塔",
+      "speed": "100",
+      "baseSpeed": "",
+      "hasVonwacq": false,
+      "hasWindSet": false,
+      "hasDance": false,
+      "techniqueOn": false,
+      "eidolon": 2,
+      "superimpose": 1,
+      "lc_id": 0
+    }
+  ],
+  "resources": ["战技点"],
+  "overrides": {},
+  "ultOverrides": {},
+  "skillOverrides": {
+    "herta-1": "E",
+    "herta-2": "AQ",
+    "herta-3": "E"
+  },
+  "domainEndOverrides": {},
+  "speedAdjustments": {},
+  "skillTargets": {},
+  "defaultSkillTargets": {},
+  "odeSelections": {},
+  "memeSelections": {},
+  "ultInterrupts": {},
+  "resourceValues": {},
+  "fireflyBreakCounters": {},
+  "godmodeExtraActions": {},
+  "castoriceKillToggles": {},
+  "icaKillToggles": {},
+  "memeKillToggles": {},
+  "evernightSelfDestructToggles": {},
+  "evernightThresholdBurstToggles": {},
+  "evanesciaFuaToggles": {},
+  "sameAVOrder": {},
+  "hyacineE2Active": true,
+  "attackDisabled": {},
+  "saberAdvanceToggles": {}
+}

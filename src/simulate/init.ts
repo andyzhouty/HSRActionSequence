@@ -1,7 +1,6 @@
 import { hasPassive, hasSkillEffect } from "../data/characters";
 import { summonGarmentmakerState } from "../mechanics/aglaeaGarmentmaker";
 import { clampArcherFuaCharge, hasArcher } from "../mechanics/archer";
-import { getGilgameshBaseSpeed, hasGilgamesh } from "../mechanics/gilgamesh";
 import {
 	applyCastoriceE2Pull,
 	hasCastoriceSummon,
@@ -12,7 +11,13 @@ import {
 	summonSouldragonState,
 } from "../mechanics/danHengSouldragon";
 import { hasEvernightEvey, summonEveyState } from "../mechanics/evernightEvey";
+import { getGilgameshBaseSpeed, hasGilgamesh } from "../mechanics/gilgamesh";
 import { applyHyacineE2SpeedBuff } from "../mechanics/hyacineIca";
+import {
+	getHertaTeamFixedBaseSpeed,
+	getTheHertaInitialInspiration,
+	hasTheHerta,
+} from "../mechanics/theHerta";
 import {
 	type CharacterConfig,
 	getCharacterCid,
@@ -30,6 +35,7 @@ export function buildInitialStates(
 		.filter((c) => toPositiveNumber(c.speed, 0) > 0)
 		.map((character) => {
 			const speed = toPositiveNumber(character.speed, 0);
+			const hertaTeamFixedBaseSpeed = getHertaTeamFixedBaseSpeed(character);
 			let advancePct = 0;
 			if (isCharacterTarget(character) && character.hasVonwacq)
 				advancePct += 0.4;
@@ -43,16 +49,16 @@ export function buildInitialStates(
 				character,
 				baseSpeed: hasGilgamesh(character)
 					? getGilgameshBaseSpeed(character)
-					:
-					toPositiveNumber(character.baseSpeed, 0) > 0
-						? toPositiveNumber(character.baseSpeed, speed)
-						: hasSkillEffect(character.name, "W", "counterW")
-							? character.lc_id === 23044
-								? character.superimpose > 0
-									? 104 + 2 * character.superimpose
+					: (hertaTeamFixedBaseSpeed ??
+						(toPositiveNumber(character.baseSpeed, 0) > 0
+							? toPositiveNumber(character.baseSpeed, speed)
+							: hasSkillEffect(character.name, "W", "counterW")
+								? character.lc_id === 23044
+									? character.superimpose > 0
+										? 104 + 2 * character.superimpose
+										: 94
 									: 94
-								: 94
-							: speed,
+								: speed)),
 				currentSpeed: speed,
 				phainonDomainSpeedBonus: 0,
 				actionNo: 1,
@@ -67,6 +73,9 @@ export function buildInitialStates(
 					: undefined,
 				gilgameshEUnlocked: hasGilgamesh(character) ? false : undefined,
 				gilgameshAttackCount: hasGilgamesh(character) ? 0 : undefined,
+				theHertaInspiration: hasTheHerta(character)
+					? getTheHertaInitialInspiration(character)
+					: undefined,
 			};
 		});
 }
@@ -231,6 +240,24 @@ export function applyTeamSpeedBuffs(
 	input: SimulateActionsInput,
 	refreshAhaSchedule: (v: number) => void,
 ): void {
+	// 大黑塔 E4：我方全体智识角色速度 +12%
+	const theHertaE4 = states.some(
+		(state) => hasTheHerta(state.character) && state.character.eidolon >= 4,
+	);
+	if (theHertaE4) {
+		for (const state of states) {
+			if (
+				state.character.kind !== "角色" ||
+				getCharacterPath(state.character.name) !== "Erudition"
+			)
+				continue;
+			const oldSpeed = state.currentSpeed;
+			state.currentSpeed += state.baseSpeed * 0.12;
+			state.nextActionValue *= oldSpeed / state.currentSpeed;
+		}
+	}
+	refreshAhaSchedule(0);
+
 	// 藿藿 1 魂：全队加速 12%
 	const huohuoState = states.find(
 		(s) =>

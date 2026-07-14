@@ -16,6 +16,11 @@ import {
 	hasSilverWolfGodmode,
 	isInGodmode,
 } from "../mechanics/silverWolfGodmode";
+import {
+	clampTheHertaInspiration,
+	getTheHertaUltimateInspirationGain,
+	hasTheHerta,
+} from "../mechanics/theHerta";
 import type { GeneratedAction } from "../utils/actionSequence";
 import {
 	getCharacterPath,
@@ -66,6 +71,7 @@ export function simulateActions(
 	);
 	const gilgameshState = states.find((state) => hasGilgamesh(state.character));
 	const archerState = states.find((state) => hasArcher(state.character));
+	const theHertaState = states.find((state) => hasTheHerta(state.character));
 	const gilgameshAndSaber =
 		gilgameshState !== undefined &&
 		states.some((state) => hasSaber(state.character));
@@ -78,6 +84,23 @@ export function simulateActions(
 			(action.skill === "Q" ||
 				(action.isElationSkill &&
 					(!attackerState || !isInGodmode(attackerState))));
+		if (theHertaState) {
+			const isTheHertaAction =
+				action.characterId === theHertaState.character.id;
+			let inspiration = theHertaState.theHertaInspiration ?? 0;
+			if (isTheHertaAction && action.skill === "Q") {
+				inspiration = clampTheHertaInspiration(
+					inspiration +
+						getTheHertaUltimateInspirationGain(theHertaState.character),
+				);
+			}
+			if (isTheHertaAction && action.skill === "E" && inspiration > 0) {
+				action.isTheHertaEnhancedE = true;
+				if (theHertaState.character.eidolon >= 2) inspiration -= 1;
+			}
+			theHertaState.theHertaInspiration = inspiration;
+			action.theHertaInspiration = inspiration;
+		}
 		if (gilgameshState) {
 			const isGilgameshAction =
 				action.characterId === gilgameshState.character.id;

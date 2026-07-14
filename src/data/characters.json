@@ -46,8 +46,7 @@
       "names": [
         "瓦尔特",
         "Welt",
-        "杨叔",
-        "老杨"
+        "杨", "瓦"
       ],
       "path": "Nihility"
     },
@@ -56,7 +55,7 @@
       "names": [
         "卡芙卡",
         "Kafka",
-        "卡妈"
+        "卡"
       ],
       "path": "Nihility"
     },
@@ -83,7 +82,8 @@
       "cid": "1009",
       "names": [
         "艾丝妲",
-        "Asta"
+        "Asta",
+        "艾"
       ],
       "path": "Harmony"
     },
@@ -113,9 +113,7 @@
       "cid": "1015",
       "names": [
         "Archer",
-        "卫宫",
-        "红A",
-        "卫宫士郎"
+        "红A"
       ],
       "effects": {
         "Q": "archerUltimate"
@@ -177,7 +175,8 @@
       "cid": "1106",
       "names": [
         "佩拉",
-        "Pela"
+        "Pela",
+        "佩"
       ],
       "path": "Nihility"
     },
@@ -186,7 +185,7 @@
       "names": [
         "克拉拉",
         "Clara",
-        "克拉"
+        "克"
       ],
       "path": "Destruction"
     },
@@ -227,9 +226,8 @@
       "names": [
         "托帕&账账",
         "托帕",
-        "账账",
+        "托",
         "Topaz",
-        "Numby",
         "Topaz & Numby"
       ],
       "path": "Hunt"
@@ -247,7 +245,8 @@
       "cid": "1202",
       "names": [
         "停云",
-        "Tingyun"
+        "Tingyun",
+        "停"
       ],
       "path": "Harmony",
       "effects": {
@@ -259,7 +258,8 @@
       "cid": "1203",
       "names": [
         "罗刹",
-        "Luocha"
+        "Luocha",
+        "罗"
       ],
       "path": "Abundance",
       "effects": {
@@ -270,7 +270,8 @@
       "cid": "1204",
       "names": [
         "景元",
-        "Jing Yuan"
+        "Jing Yuan",
+        "景"
       ],
       "path": "Erudition"
     },
@@ -298,7 +299,8 @@
       "cid": "1207",
       "names": [
         "驭空",
-        "Yukong"
+        "Yukong",
+        "驭"
       ],
       "path": "Harmony"
     },
@@ -307,7 +309,8 @@
       "names": [
         "符玄",
         "Fu Xuan",
-        "太卜"
+        "太卜",
+        "符"
       ],
       "path": "Preservation"
     },
@@ -315,7 +318,8 @@
       "cid": "1209",
       "names": [
         "彦卿",
-        "Yanqing"
+        "Yanqing",
+        "彦"
       ],
       "path": "Hunt"
     },
@@ -340,7 +344,8 @@
       "cid": "1212",
       "names": [
         "镜流",
-        "Jingliu"
+        "Jingliu",
+        "镜"
       ],
       "path": "Destruction"
     },
@@ -351,6 +356,7 @@
         "丹恒•饮月",
         "饮月",
         "龙丹",
+        "饮",
         "Dan Heng • Imbibitor Lunae",
         "DHIL"
       ],
@@ -368,7 +374,9 @@
       "cid": "1215",
       "names": [
         "寒鸦",
-        "Hanya"
+        "Hanya",
+        "寒",
+        "鸦"
       ],
       "path": "Harmony",
       "effects": {
@@ -380,6 +388,7 @@
       "names": [
         "藿藿",
         "Huohuo",
+        "藿",
         "霍霍"
       ],
       "path": "Abundance",
@@ -391,7 +400,8 @@
       "cid": "1218",
       "names": [
         "椒丘",
-        "Jiaoqiu"
+        "Jiaoqiu",
+        "椒"
       ],
       "path": "Nihility"
     },
@@ -409,7 +419,8 @@
       "cid": "1221",
       "names": [
         "云璃",
-        "Yunli"
+        "Yunli",
+        "璃"
       ],
       "path": "Destruction"
     },
@@ -417,7 +428,8 @@
       "cid": "1222",
       "names": [
         "灵砂",
-        "Lingsha"
+        "Lingsha",
+        "灵"
       ],
       "path": "Abundance"
     },
@@ -425,7 +437,9 @@
       "cid": "1223",
       "names": [
         "貊泽",
-        "Moze"
+        "Moze",
+        "貊",
+        "莫泽"
       ],
       "path": "Hunt"
     },
@@ -464,7 +478,7 @@
       "names": [
         "加拉赫",
         "Gallagher",
-        "老狗"
+        "加"
       ],
       "path": "Abundance",
       "effects": {
@@ -483,7 +497,8 @@
       "cid": "1303",
       "names": [
         "阮梅",
-        "Ruan Mei"
+        "Ruan Mei",
+        "阮"
       ],
       "path": "Harmony"
     },
@@ -491,7 +506,8 @@
       "cid": "1304",
       "names": [
         "砂金",
-        "Aventurine"
+        "Aventurine",
+        "砂"
       ],
       "path": "Preservation"
     },
@@ -520,7 +536,8 @@
       "cid": "1307",
       "names": [
         "黑天鹅",
-        "Black Swan"
+        "Black Swan",
+        "鹅"
       ],
       "path": "Nihility"
     },
@@ -528,7 +545,9 @@
       "cid": "1308",
       "names": [
         "黄泉",
-        "Acheron"
+        "Acheron",
+        "黄",
+        "泉"
       ],
       "path": "Nihility"
     },
@@ -551,7 +570,8 @@
       "cid": "1310",
       "names": [
         "流萤",
-        "Firefly"
+        "Firefly",
+        "萤"
       ],
       "effects": {
         "Q": "fireflyCombustion"
@@ -600,7 +620,8 @@
       "cid": "1314",
       "names": [
         "翡翠",
-        "Jade"
+        "Jade",
+        "翡"
       ],
       "path": "Erudition",
       "effects": {
@@ -611,7 +632,8 @@
       "cid": "1315",
       "names": [
         "波提欧",
-        "Boothill"
+        "Boothill",
+        "波"
       ],
       "path": "Hunt"
     },
@@ -619,7 +641,8 @@
       "cid": "1317",
       "names": [
         "乱破",
-        "Rappa"
+        "Rappa",
+        "乱"
       ],
       "path": "Erudition"
     },
@@ -688,7 +711,8 @@
       "cid": "1404",
       "names": [
         "万敌",
-        "Mydei"
+        "Mydei",
+        "万"
       ],
       "path": "Destruction"
     },
@@ -696,7 +720,8 @@
       "cid": "1405",
       "names": [
         "那刻夏",
-        "Anaxa"
+        "Anaxa",
+        "夏"
       ],
       "path": "Erudition"
     },
@@ -768,7 +793,9 @@
       "cid": "1409",
       "names": [
         "风堇",
-        "Hyacine"
+        "Hyacine",
+        "风",
+        "堇"
       ],
       "effects": {
         "E": "summonIca"
@@ -779,7 +806,8 @@
       "cid": "1410",
       "names": [
         "海瑟音",
-        "Hysilens"
+        "Hysilens",
+        "海"
       ],
       "path": "Nihility"
     },
@@ -788,7 +816,8 @@
       "names": [
         "刻律德菈",
         "刻律",
-        "Cerydra"
+        "Cerydra",
+        "刻"
       ],
       "effects": {
         "E": "allyTargetSelectable"
@@ -803,6 +832,7 @@
       "names": [
         "长夜月",
         "月",
+        "长",
         "Evernight"
       ],
       "effects": {
@@ -820,9 +850,9 @@
         "DHPT",
         "Dan Heng • Permansor Terrae"
       ],
-		"passives": [
-			"firstActionAdvance40",
-			"souldragonBondmate"
+      "passives": [
+        "firstActionAdvance40",
+        "souldragonBondmate"
       ],
       "path": "Preservation",
       "effects": {
@@ -833,7 +863,8 @@
       "cid": "1415",
       "names": [
         "昔涟",
-        "Cyrene"
+        "Cyrene",
+        "昔", "涟"
       ],
       "effects": {
         "Q": "cyreneUltimate"
@@ -982,7 +1013,8 @@
       "names": [
         "爻光",
         "Yao Guang",
-        "Yaoguang"
+        "Yaoguang",
+        "爻"
       ],
       "effects": {
         "Q": "extraAhaAfterUltimate"
@@ -994,7 +1026,8 @@
       "cid": "1504",
       "names": [
         "不死途",
-        "Ashveil"
+        "Ashveil",
+        "死","途"
       ],
       "path": "Hunt"
     },
@@ -1013,7 +1046,7 @@
       "names": [
         "银狼LV.999",
         "Silver Wolf LV.999",
-        "sp银狼",
+        "sp银狼","sp狼",
         "银狼lv999",
         "银狼999",
         "9狼",
@@ -1059,8 +1092,9 @@
       "cid": "1510",
       "names": [
         "姬子·启行",
-        "姬子启行",
-        "sp姬子",
+        "姬子•启行",
+        "姬子启行", "姬启",
+        "sp姬子", "sp姬",
         "Himeko Nova"
       ],
       "effects": {
@@ -1081,7 +1115,7 @@
       "cid": "8002",
       "names": [
         "开拓者·毁灭",
-        "毁灭主",
+        "毁灭主", "物主",
         "DMC",
         "Destruction Trailblazer"
       ],
@@ -1091,7 +1125,7 @@
       "cid": "8004",
       "names": [
         "开拓者·存护",
-        "存护主",
+        "存护主", "火主",
         "PMC",
         "Preservation Trailblazer"
       ],
@@ -1155,16 +1189,31 @@
         "eidolon1EquivalentSpeedCoefficient": 0.66,
         "extraActionCount": 8,
         "endSpeedBonusBaseSpeedRatio": 0.15,
-        "defaultResources": ["火种", "毁伤"],
-        "allowedSkills": ["", "E", "EW", "EA", "A", "W"],
+        "defaultResources": [
+          "火种",
+          "毁伤"
+        ],
+        "allowedSkills": [
+          "",
+          "E",
+          "EW",
+          "EA",
+          "A",
+          "W"
+        ],
         "finalSkill": "Q",
-        "enemyTriggerSkills": ["W", "EW"]
+        "enemyTriggerSkills": [
+          "W",
+          "EW"
+        ]
       }
     },
     "cyreneUltimate": {
       "memospriteName": "德谬歌",
       "memospriteSkill": "Q",
-      "defaultResources": ["追忆"],
+      "defaultResources": [
+        "追忆"
+      ],
       "genericOde": {
         "code": "generic",
         "label": "诗篇",
@@ -1202,7 +1251,11 @@
       "countdownName": "完全燃烧倒计时",
       "countdownSpeed": 70,
       "speedBonus": 60,
-      "allowedSkills": ["", "A", "E"],
+      "allowedSkills": [
+        "",
+        "A",
+        "E"
+      ],
       "breakLabel": "击破",
       "breakDelayPercent": 10,
       "maxBreakDelayTriggers": 3,
@@ -1217,5 +1270,3 @@
     }
   }
 }
-
-

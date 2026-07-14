@@ -15,6 +15,7 @@ import {
 	hasSilverWolfGodmode as hasSilverWolfGodmodeCheck,
 	isInGodmode,
 } from "../../mechanics/silverWolfGodmode";
+import { hasTheHerta } from "../../mechanics/theHerta";
 import {
 	getCharacterPath,
 	isCharacterTarget,
@@ -131,6 +132,10 @@ export function handleNormalAction(
 	const hasEvernightNextTurnSpeedBuff =
 		(states[stateIndex].evernightNextTurnSpeedBonus ?? 0) > 0;
 	const actionSpeed = states[stateIndex].currentSpeed;
+	const isTheHertaEnhancedE =
+		hasTheHerta(character) &&
+		resolvedSkill === "E" &&
+		(states[stateIndex].theHertaInspiration ?? 0) > 0;
 
 	const interrupts = input.ultInterrupts[key] ?? [];
 	const beforeInterrupts = interrupts.filter((i) => i.timing === "before");
@@ -274,6 +279,7 @@ export function handleNormalAction(
 			actionValue,
 			skill: (isArcherMultiE ? "E" : resolvedSkill) as SkillCode,
 			speed: actionSpeed,
+			isTheHertaEnhancedE,
 			...(isSaberForcedBasicAttack || isGilgameshLockedSkill
 				? { lockedSkill: true }
 				: {}),
@@ -496,6 +502,16 @@ export function handleNormalAction(
 		states[stateIndex].actionNo += 1;
 		if (!justActivatedCombustion && !states[stateIndex].domainState) {
 			states[stateIndex].nextActionValue = actionValue + nextInterval;
+		}
+		if (
+			isTheHertaEnhancedE &&
+			character.eidolon >= 2 &&
+			!states[stateIndex].domainState
+		) {
+			states[stateIndex].nextActionValue = Math.max(
+				actionValue,
+				actionValue + (states[stateIndex].nextActionValue - actionValue) * 0.65,
+			);
 		}
 		// AQ/EQ：先结算主行动的正常下一动，再将 Q 作为 after 插队发射。
 		// 这样 Q 的自拉、召唤及立即行动不会被正常下一动排程覆盖。

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ahaIcon from "../../assets/aha/aha.webp";
 import fireflyUltIcon from "../../assets/skillIcons/SkillIcon_1310_Ultra.webp";
+import theHertaEnhancedEIcon from "../../assets/skillIcons/SkillIcon_1401_BP.webp";
 import souldragonIcon from "../../assets/skillIcons/SkillIcon_1414_BP.webp";
 import swPassiveIcon from "../../assets/skillIcons/SkillIcon_1506_Passive.webp";
 import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
@@ -281,6 +282,15 @@ export function ActionRow({
 							className="inline-block h-6 w-6"
 						/>
 					</button>
+				) : action.isTheHertaEnhancedE ? (
+					<div className="flex h-full items-center justify-center">
+						<img
+							src={theHertaEnhancedEIcon}
+							alt="强化E"
+							title="大黑塔强化战技"
+							className="inline-block h-7 w-7 rounded-full border-2 border-sky-300 object-cover"
+						/>
+					</div>
 				) : action.hasArcherExtraEs ? (
 					<button
 						type="button"

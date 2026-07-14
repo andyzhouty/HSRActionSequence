@@ -233,6 +233,64 @@ describe("CharacterPanel rendering", () => {
 	});
 });
 
+describe("大黑塔强化战技显示", () => {
+	it("只在强化 E 的行动序号列显示图标，且仍保留技能码输入", () => {
+		const herta = {
+			...defaultCharacters[0],
+			id: "herta",
+			name: "大黑塔",
+			speed: "100",
+			baseSpeed: "100",
+		};
+		renderWithContext(<ActionPanel />, {
+			characters: [herta],
+			actions: [
+				{
+					key: "herta-1",
+					characterId: "herta",
+					actionNo: 1,
+					actionValue: 100,
+					skill: "E",
+					speed: 100,
+					isTheHertaEnhancedE: true,
+				},
+				{
+					key: "herta-2",
+					characterId: "herta",
+					actionNo: 2,
+					actionValue: 200,
+					skill: "E",
+					speed: 100,
+				},
+				{
+					key: "herta-3",
+					characterId: "herta",
+					actionNo: 3,
+					actionValue: 300,
+					skill: "A",
+					speed: 100,
+				},
+			],
+		});
+
+		expect(screen.getAllByAltText("强化E")).toHaveLength(1);
+		for (const [key, skill] of [
+			["herta-1", "E"],
+			["herta-2", "E"],
+			["herta-3", "A"],
+		]) {
+			const row = document.querySelector(`tr[data-action-key="${key}"]`);
+			expect(row?.querySelector(`input[value="${skill}"]`)).not.toBeNull();
+		}
+		expect(
+			document.querySelector('tr[data-action-key="herta-2"]')?.textContent,
+		).toContain("2");
+		expect(
+			document.querySelector('tr[data-action-key="herta-3"]')?.textContent,
+		).toContain("3");
+	});
+});
+
 // ───── ActionPanel rendering ─────
 
 describe("ActionPanel rendering", () => {

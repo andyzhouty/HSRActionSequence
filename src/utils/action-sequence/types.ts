@@ -86,6 +86,8 @@ export type GeneratedAction = {
 	gilgameshInterest?: number;
 	isGilgameshComboAction?: boolean;
 	isGilgameshTechniqueAction?: boolean;
+	isTheHertaEnhancedE?: boolean;
+	theHertaInspiration?: number;
 };
 
 export type SpeedAdjustment = { value: string; mode: SpeedChangeMode };

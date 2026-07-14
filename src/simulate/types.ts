@@ -108,6 +108,7 @@ export interface ActionState extends AglaeaActionState {
 	gilgameshInterest?: number;
 	gilgameshEUnlocked?: boolean;
 	gilgameshAttackCount?: number;
+	theHertaInspiration?: number;
 	/** Saber 释放 Q 后，下一次正常行动固定为 A。 */
 	saberForceBasicAttack?: boolean;
 }
