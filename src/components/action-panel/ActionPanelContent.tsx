@@ -13,10 +13,11 @@ import {
 	limitPresets,
 	maxResources,
 } from "../../utils/actionSequence";
-import { SelectInput, TextInput } from "../Controls";
+import { SelectInput } from "../Controls";
 import ExportExcelButton from "../ExportExcelButton";
 import { ActionMenuContent } from "./ActionMenuContent";
 import { ActionSequenceTable } from "./ActionSequenceTable";
+import { ResourceNameInput } from "./ResourceNameInput";
 
 export default function ActionPanel() {
 	const ctx = useActionSequence();
@@ -444,16 +445,15 @@ export default function ActionPanel() {
 										key={`resource-editor-${resource}`}
 										className="grid grid-cols-[minmax(0,1fr)_64px] gap-2"
 									>
-										<TextInput
+										<ResourceNameInput
 											value={resource}
-											placeholder="资源名称"
 											disabled={isLocked}
 											title={
 												isLocked
 													? "长夜月在场时，【忆质】固定存在且不可修改"
 													: undefined
 											}
-											onChange={(value) => ctx.updateResource(index, value)}
+											onCommit={(value) => ctx.updateResource(index, value)}
 										/>
 										{isLocked ? (
 											<div className="flex h-10 items-center justify-center rounded-lg border border-gray-700 bg-gray-900 px-2 text-xs text-gray-500">

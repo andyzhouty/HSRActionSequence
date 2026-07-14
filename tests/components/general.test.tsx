@@ -336,7 +336,9 @@ describe("ActionPanel rendering", () => {
 			],
 		});
 
-		expect(document.querySelector('tr[data-action-key="@aha-1"]')).not.toBeNull();
+		expect(
+			document.querySelector('tr[data-action-key="@aha-1"]'),
+		).not.toBeNull();
 		expect(screen.getAllByRole("img", { name: "阿哈时刻" })).toHaveLength(2);
 	});
 
@@ -735,6 +737,21 @@ describe("ActionPanel rendering", () => {
 		renderWithContext(<ActionPanel />);
 		expect(screen.getByText("行动值上限")).toBeInTheDocument();
 		expect(screen.getByText("显示上限")).toBeInTheDocument();
+	});
+
+	it("commits a custom resource name only after editing finishes", async () => {
+		const updateResource = vi.fn();
+		renderWithContext(<ActionPanel />, {
+			resources: ["旧资源"],
+			updateResource,
+		});
+		const input = screen.getByPlaceholderText("资源名称");
+		await userEvent.clear(input);
+		await userEvent.type(input, "新资源");
+		expect(updateResource).not.toHaveBeenCalled();
+		await userEvent.tab();
+		expect(updateResource).toHaveBeenCalledTimes(1);
+		expect(updateResource).toHaveBeenCalledWith(0, "新资源");
 	});
 
 	it("renders resource column header", () => {
