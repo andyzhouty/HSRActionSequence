@@ -5,11 +5,15 @@ import {
 import { handlePolluxAction } from "../mechanics/castoricePollux";
 import { emitSouldragonAction } from "../mechanics/danHengSouldragon";
 import { handleEveyAction } from "../mechanics/evernightEvey";
-import { hasGilgamesh } from "../mechanics/gilgamesh";
 import {
 	handleFireflyCountdownAction,
 	isFireflyCountdownAction,
 } from "../mechanics/fireflyCombustion";
+import { hasGilgamesh } from "../mechanics/gilgamesh";
+import {
+	endSpBladeInfiniteFury,
+	isSpBladeCountdown,
+} from "../mechanics/spBlade";
 import type { GeneratedAction, SkillCode } from "../utils/actionSequence";
 import { emitMemeAdvanceAction } from "./effects";
 import { emitElationSkills } from "./interrupts";
@@ -32,7 +36,7 @@ export type SpecialActionCallbacks = {
 		sourceKey: string,
 		actionValue: number,
 	) => void;
-	emitFuaAction: (sourceKey: string, actionValue: number) => void;
+	emitEvanesciaFuaAction: (sourceKey: string, actionValue: number) => void;
 };
 
 /** 处理不走普通角色技能状态机的特殊实体行动。 */
@@ -66,7 +70,7 @@ export function handleSpecialAction({
 		emitSpecialInterruptAction,
 		emitSparxieExtraAction,
 		emitEvernightSelfDestructAction,
-		emitFuaAction,
+		emitEvanesciaFuaAction,
 	} = callbacks;
 	// ── 0 行动值：仅在 AV=0 行动一次后移除 ──
 	if (character.id === "@av0") {
@@ -92,7 +96,7 @@ export function handleSpecialAction({
 			actions.push({
 				key: `${key}-gilgamesh-technique`,
 				characterId: gilgamesh.character.id,
-				displayName: "吉尔伽美什",
+				displayName: gilgamesh.character.name,
 				actionNo: 0,
 				actionValue,
 				skill: "T" as SkillCode,
@@ -138,7 +142,7 @@ export function handleSpecialAction({
 		// 银狼 E2：无敌玩家状态下，阿哈行动后可插入额外 A
 		emitGodmodeExtraAction(key, actionValue);
 		emitSparxieExtraAction(key, actionValue);
-		emitFuaAction(key, actionValue);
+		emitEvanesciaFuaAction(key, actionValue);
 		states[stateIndex].actionNo += 1;
 		states[stateIndex].nextActionValue = actionValue + 10000 / ahaSpeed;
 		return true;
@@ -179,6 +183,11 @@ export function handleSpecialAction({
 			actionNo,
 			actionValue,
 		);
+		return true;
+	}
+
+	if (isSpBladeCountdown(states[stateIndex])) {
+		endSpBladeInfiniteFury(states, stateIndex, actions, key, actionValue);
 		return true;
 	}
 

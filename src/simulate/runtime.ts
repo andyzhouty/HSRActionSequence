@@ -20,7 +20,7 @@ export type SimulationCallbacks = {
 		sourceKey: string,
 		actionValue: number,
 	) => void;
-	emitFuaAction: (sourceKey: string, actionValue: number) => void;
+	emitEvanesciaFuaAction: (sourceKey: string, actionValue: number) => void;
 };
 
 /** 模拟循环共享的可变运行时。 */

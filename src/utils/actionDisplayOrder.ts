@@ -1,6 +1,22 @@
 import type { GeneratedAction } from "./actionSequence";
 
 const DISPLAY_ACTION_VALUE_STEP = 0.0001;
+const FOLLOW_UP_KEY_SUFFIXES = [
+	"-gilgamesh-combo-fua",
+	"-ashveil-fua",
+	"-tribbie-fua",
+	"-archer-fua",
+	"-sp-blade-extra",
+	"-kafka-fua",
+	"-fua",
+] as const;
+
+function getFollowUpSourceKey(key: string): string | null {
+	const suffix = FOLLOW_UP_KEY_SUFFIXES.find((candidate) =>
+		key.endsWith(candidate),
+	);
+	return suffix ? key.slice(0, -suffix.length) : null;
+}
 
 export function getActionValueBucket(actionValue: number): number {
 	return Math.round(actionValue / DISPLAY_ACTION_VALUE_STEP);
@@ -8,12 +24,19 @@ export function getActionValueBucket(actionValue: number): number {
 
 function getOriginalActionParentKey(sourceKey: string): string {
 	let key = sourceKey;
-	for (const suffix of ["-sparxie-extra", "-godmode-A", "-extra-aha", "-fua"]) {
+	for (const suffix of [
+		"-sparxie-extra",
+		"-sp-blade-extra",
+		"-godmode-A",
+		"-extra-aha",
+	]) {
 		if (key.endsWith(suffix)) {
 			key = key.slice(0, -suffix.length);
 			break;
 		}
 	}
+	const followUpSourceKey = getFollowUpSourceKey(key);
+	if (followUpSourceKey) key = followUpSourceKey;
 	if (key !== sourceKey) return getOriginalActionParentKey(key);
 	if (key.endsWith("-q")) return key.slice(0, -2);
 	const interruptMatch = key.match(/^(.*)-interrupt-\d+$/);
@@ -53,14 +76,17 @@ function getDisplayExtraAhaSourceKey(action: GeneratedAction): string | null {
 
 /** 返回可独立排序的派生额外回合所依附的源行动。 */
 function getDerivedExtraTurnSourceKey(action: GeneratedAction): string | null {
+	if (action.isSpBladeExtraAction && action.key.endsWith("-sp-blade-extra")) {
+		return action.key.slice(0, -"-sp-blade-extra".length);
+	}
 	if (
 		action.isMydeiGodslayerAction &&
 		action.key.endsWith("-mydei-godslayer")
 	) {
 		return action.key.slice(0, -"-mydei-godslayer".length);
 	}
-	if (action.isFuaAction && action.key.endsWith("-fua")) {
-		return action.key.slice(0, -"-fua".length);
+	if (action.isFuaAction) {
+		return getFollowUpSourceKey(action.key);
 	}
 	if (action.key.endsWith("-godmode-A")) {
 		return action.key.slice(0, -"-godmode-A".length);

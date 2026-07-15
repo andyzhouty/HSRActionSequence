@@ -115,6 +115,9 @@ export type NormalizedSavedData = SavedData & {
 	evernightSelfDestructToggles: Record<string, boolean>;
 	evernightThresholdBurstToggles: Record<string, boolean>;
 	evanesciaFuaToggles: Record<string, boolean>;
+	ashveilFuaToggles: Record<string, boolean>;
+	kafkaFuaToggles: Record<string, boolean>;
+	spBladeExtraTurnToggles: Record<string, boolean>;
 	mydeiVendettaToggles: Record<string, boolean>;
 	mydeiGodslayerToggles: Record<string, boolean>;
 	sameAVOrder: Record<string, number>;
@@ -168,6 +171,9 @@ export function toNormalizedSavedData(
 		evernightThresholdBurstToggles:
 			migrated.evernightThresholdBurstToggles ?? {},
 		evanesciaFuaToggles: migrated.evanesciaFuaToggles ?? {},
+		ashveilFuaToggles: migrated.ashveilFuaToggles ?? {},
+		kafkaFuaToggles: migrated.kafkaFuaToggles ?? {},
+		spBladeExtraTurnToggles: migrated.spBladeExtraTurnToggles ?? {},
 		mydeiVendettaToggles: migrated.mydeiVendettaToggles ?? {},
 		mydeiGodslayerToggles: migrated.mydeiGodslayerToggles ?? {},
 		sameAVOrder: migrated.sameAVOrder ?? {},
@@ -206,6 +212,9 @@ export function createDefaultSavedData(): NormalizedSavedData {
 		evernightSelfDestructToggles: {},
 		evernightThresholdBurstToggles: {},
 		evanesciaFuaToggles: {},
+		ashveilFuaToggles: {},
+		kafkaFuaToggles: {},
+		spBladeExtraTurnToggles: {},
 		mydeiVendettaToggles: {},
 		mydeiGodslayerToggles: {},
 		sameAVOrder: {},

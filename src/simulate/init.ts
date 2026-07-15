@@ -7,6 +7,7 @@ import {
 	hasCastoriceSummon,
 	summonPollux,
 } from "../mechanics/castoricePollux";
+import { hasAshveil, hasKafka } from "../mechanics/companionFollowUp";
 import {
 	hasDanHengSouldragon,
 	summonSouldragonState,
@@ -15,10 +16,12 @@ import { hasEvernightEvey, summonEveyState } from "../mechanics/evernightEvey";
 import { hasGilgamesh } from "../mechanics/gilgamesh";
 import { applyHyacineE2SpeedBuff } from "../mechanics/hyacineIca";
 import { hasMydei } from "../mechanics/mydei";
+import { hasSpBlade } from "../mechanics/spBlade";
 import {
 	getTheHertaInitialInspiration,
 	hasTheHerta,
 } from "../mechanics/theHerta";
+import { hasTribbie } from "../mechanics/tribbie";
 import {
 	type CharacterConfig,
 	getCharacterCid,
@@ -65,6 +68,13 @@ export function buildInitialStates(
 				mydeiVendettaActive: hasMydei(character.name)
 					? character.eidolon >= 6
 					: undefined,
+				tribbieUltimateFuaTriggeredBy: hasTribbie(character.name)
+					? []
+					: undefined,
+				ashveilFuaCharge: hasAshveil(character) ? 2 : undefined,
+				kafkaFuaCharge: hasKafka(character) ? 2 : undefined,
+				spBladeStacks: hasSpBlade(character) ? 0 : undefined,
+				spBladeInfiniteFury: hasSpBlade(character) ? false : undefined,
 				theHertaInspiration: hasTheHerta(character)
 					? getTheHertaInitialInspiration(character)
 					: undefined,

@@ -3,6 +3,7 @@ import { useActionSequence } from "../contexts/ActionSequenceContext";
 import lightConeData from "../data/lightcones.json";
 import {
 	type defaultCharacters,
+	getCharacterCid,
 	getCharacterPath,
 	getTargetDefaultName,
 	hasPassive,
@@ -184,315 +185,358 @@ function CharacterCard({
 	index: number;
 }) {
 	const ctx = useActionSequence();
+	const [showGilgameshInterestNotice, setShowGilgameshInterestNotice] =
+		useState(false);
 
 	return (
-		<div className="rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow">
-			<div className="mb-4 grid grid-cols-[112px_minmax(0,1fr)] gap-3">
-				<SelectInput
-					value={character.kind}
-					options={targetKinds.map((kind) => ({
-						value: kind,
-						label: kind,
-					}))}
-					onChange={(value) =>
-						ctx.updateCharacter(character.id, (prev) => {
-							const nextKind = value as TargetKind;
-							const previousDefaultName = getTargetDefaultName(
-								prev.kind,
-								index,
-							);
-							const shouldUseNextDefaultName =
-								prev.name.trim() === "" ||
-								prev.name.trim() === previousDefaultName;
-							return withoutCharacterOnlyEffects({
-								...prev,
-								kind: nextKind,
-								name: shouldUseNextDefaultName
-									? getTargetDefaultName(nextKind, index)
-									: prev.name,
-							});
-						})
-					}
-				/>
-				{isCharacterTarget(character) ? (
-					<CharacterNameInput
-						value={character.name}
-						placeholder={getTargetDefaultName(character.kind, index)}
+		<>
+			<div className="rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow">
+				<div className="mb-4 grid grid-cols-[112px_minmax(0,1fr)] gap-3">
+					<SelectInput
+						value={character.kind}
+						options={targetKinds.map((kind) => ({
+							value: kind,
+							label: kind,
+						}))}
 						onChange={(value) =>
 							ctx.updateCharacter(character.id, (prev) => {
-								const oldPath = getCharacterPath(prev.name);
-								const newPath = getCharacterPath(value);
-								const allLcs =
-									(
-										lightConeData as {
-											lightcones: {
-												id: number;
-												name: string;
-												rarity: number;
-												path: string;
-											}[];
-										}
-									).lightcones ?? [];
-								const lcStillValid =
-									prev.lc_id === 0 ||
-									(newPath
-										? allLcs.some(
-												(lc) => lc.path === newPath && lc.id === prev.lc_id,
-											)
-										: false);
-								return {
+								const nextKind = value as TargetKind;
+								const previousDefaultName = getTargetDefaultName(
+									prev.kind,
+									index,
+								);
+								const shouldUseNextDefaultName =
+									prev.name.trim() === "" ||
+									prev.name.trim() === previousDefaultName;
+								return withoutCharacterOnlyEffects({
 									...prev,
-									name: value,
-									lc_id: oldPath !== newPath && !lcStillValid ? 0 : prev.lc_id,
-								};
+									kind: nextKind,
+									name: shouldUseNextDefaultName
+										? getTargetDefaultName(nextKind, index)
+										: prev.name,
+								});
 							})
 						}
 					/>
-				) : (
-					<TextInput
-						value={character.name}
-						placeholder={getTargetDefaultName(character.kind, index)}
+					{isCharacterTarget(character) ? (
+						<CharacterNameInput
+							value={character.name}
+							placeholder={getTargetDefaultName(character.kind, index)}
+							onChange={(value) => {
+								ctx.updateCharacter(character.id, (prev) => {
+									const oldPath = getCharacterPath(prev.name);
+									const newPath = getCharacterPath(value);
+									const allLcs =
+										(
+											lightConeData as {
+												lightcones: {
+													id: number;
+													name: string;
+													rarity: number;
+													path: string;
+												}[];
+											}
+										).lightcones ?? [];
+									const lcStillValid =
+										prev.lc_id === 0 ||
+										(newPath
+											? allLcs.some(
+													(lc) => lc.path === newPath && lc.id === prev.lc_id,
+												)
+											: false);
+									return {
+										...prev,
+										name: value,
+										lc_id:
+											oldPath !== newPath && !lcStillValid ? 0 : prev.lc_id,
+									};
+								});
+								if (getCharacterCid(value) === "1509") {
+									setShowGilgameshInterestNotice(true);
+								}
+							}}
+						/>
+					) : (
+						<TextInput
+							value={character.name}
+							placeholder={getTargetDefaultName(character.kind, index)}
+							onChange={(value) =>
+								ctx.updateCharacter(character.id, (prev) => ({
+									...prev,
+									name: value,
+								}))
+							}
+						/>
+					)}
+				</div>
+
+				<div className="grid gap-3">
+					<NumberInput
+						label="速度 v"
+						labelClassName="text-xs whitespace-nowrap leading-5"
+						value={character.speed}
 						onChange={(value) =>
 							ctx.updateCharacter(character.id, (prev) => ({
 								...prev,
-								name: value,
+								speed: value,
 							}))
 						}
 					/>
-				)}
-			</div>
-
-			<div className="grid gap-3">
-				<NumberInput
-					label="速度 v"
-					labelClassName="text-xs whitespace-nowrap leading-5"
-					value={character.speed}
-					onChange={(value) =>
-						ctx.updateCharacter(character.id, (prev) => ({
-							...prev,
-							speed: value,
-						}))
-					}
-				/>
-			</div>
-
-			{isCharacterTarget(character) && (
-				<div className="mt-4 space-y-3">
-					<div className="flex flex-wrap gap-2">
-						<Toggle
-							className="flex-1"
-							label="翁瓦克"
-							checked={character.hasVonwacq}
-							onChange={() =>
-								ctx.updateCharacter(character.id, (prev) => ({
-									...prev,
-									hasVonwacq: !prev.hasVonwacq,
-								}))
-							}
-						/>
-						<Toggle
-							className="flex-1"
-							label="风套"
-							checked={character.hasWindSet}
-							onChange={() =>
-								ctx.updateCharacter(character.id, (prev) => ({
-									...prev,
-									hasWindSet: !prev.hasWindSet,
-								}))
-							}
-						/>
-						<Toggle
-							className="flex-1"
-							label="秘技"
-							checked={
-								character.techniqueOn ??
-								character.hasCastoriceTechnique ??
-								character.hasAglaeaTechnique ??
-								false
-							}
-							onChange={() =>
-								ctx.updateCharacter(character.id, (prev) => ({
-									...prev,
-									techniqueOn: !(
-										prev.techniqueOn ??
-										prev.hasCastoriceTechnique ??
-										prev.hasAglaeaTechnique ??
-										false
-									),
-								}))
-							}
-						/>
-					</div>
-					<div className="flex gap-2">
-						<SelectInput
-							value={String(character.eidolon)}
-							options={Array.from({ length: 7 }, (_, i) => {
-								let hasEffect = false;
-								if (
-									hasSkillEffect(character.name, "W", "counterW") &&
-									(i === 1 || i === 2)
-								)
-									hasEffect = true;
-								if (
-									(hasSkillEffect(character.name, "Q", "fireflyCombustion") ||
-										hasSkillEffect(character.name, "Q", "teamAdvance24")) &&
-									i === 2
-								)
-									hasEffect = true;
-								if (
-									hasSkillEffect(character.name, "E", "summonGarmentmaker") &&
-									i === 4
-								)
-									hasEffect = true;
-								return {
-									value: String(i),
-									label: `${i} 魂${hasEffect ? " *" : ""}`,
-								};
-							})}
-							onChange={(value) =>
-								ctx.updateCharacter(character.id, (prev) => ({
-									...prev,
-									eidolon: Number(value),
-								}))
-							}
-							className="flex-1"
-						/>
-						<SelectInput
-							value={String(character.lc_id)}
-							options={(() => {
-								const charPath = getCharacterPath(character.name);
-								const allLcs =
-									(
-										lightConeData as {
-											lightcones: {
-												id: number;
-												name: string;
-												rarity: number;
-												path: string;
-											}[];
-										}
-									).lightcones ?? [];
-								const matching = allLcs.filter((lc) => lc.path === charPath);
-								matching.sort((a, b) => b.rarity - a.rarity || b.id - a.id);
-								const dddIndex = matching.findIndex((lc) => lc.id === 21018);
-								if (
-									dddIndex !== -1 &&
-									charPath === "Harmony" &&
-									hasSkillEffect(character.name, "Q", "robinUltimate")
-								) {
-									matching.splice(dddIndex, 1);
-								} else if (dddIndex !== -1) {
-									const ddd = matching.splice(dddIndex, 1)[0];
-									matching.unshift(ddd);
-								}
-								return [
-									{ value: "0", label: "无光锥" },
-									...matching.map((lc) => ({
-										value: String(lc.id),
-										label: lc.name,
-										className:
-											lc.rarity >= 5
-												? "text-yellow-300"
-												: lc.rarity >= 4
-													? "text-purple-300"
-													: "text-sky-300",
-									})),
-								];
-							})()}
-							onChange={(value) =>
-								ctx.updateCharacter(character.id, (prev) => ({
-									...prev,
-									lc_id: Number(value),
-								}))
-							}
-							className="flex-1"
-						/>
-					</div>
-					<div className="flex gap-2">
-						<SelectInput
-							value={String(character.superimpose)}
-							options={[
-								{ value: "0", label: "叠 0" },
-								{ value: "1", label: "叠 1" },
-								{ value: "2", label: "叠 2" },
-								{ value: "3", label: "叠 3" },
-								{ value: "4", label: "叠 4" },
-								{ value: "5", label: "叠 5" },
-							]}
-							onChange={(value) =>
-								ctx.updateCharacter(character.id, (prev) => ({
-									...prev,
-									superimpose: Number(value),
-								}))
-							}
-							className="flex-1"
-						/>
-					</div>
-					{hasPassive(character.name, "meritSpeedBuff20") && (
-						<div className="flex gap-2">
-							<SelectInput
-								value={String(ctx.meritTarget ?? "")}
-								options={[
-									{ value: "", label: "无军功" },
-									...ctx.characters
-										.filter((c) => c.id !== character.id && c.kind === "角色")
-										.map((c) => ({
-											value: String(c.id),
-											label: c.name.trim() || c.id,
-										})),
-								]}
-								onChange={(value) => ctx.setMeritTarget(value || undefined)}
-								className="flex-1"
-							/>
-						</div>
-					)}
-					{hasPassive(character.name, "dancePartnerSpeedBuff30") && (
-						<div className="flex gap-2">
-							<SelectInput
-								value={String(ctx.dancePartner ?? "")}
-								options={[
-									{ value: "", label: "无共舞者" },
-									...ctx.characters
-										.filter((c) => c.id !== character.id && c.kind === "角色")
-										.map((c) => ({
-											value: String(c.id),
-											label: c.name.trim() || c.id,
-										})),
-								]}
-								onChange={(value) => ctx.setDancePartner(value || undefined)}
-								className="flex-1"
-							/>
-						</div>
-					)}
-					{hasPassive(character.name, "souldragonBondmate") && (
-						<div className="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-2">
-							<span className="text-sm text-gray-300">初始同袍</span>
-							<SelectInput
-								value={String(ctx.bondmateTarget ?? "")}
-								options={[
-									{ value: "", label: "无初始同袍" },
-									...ctx.characters
-										.filter((candidate) => candidate.kind === "角色")
-										.map((candidate) => ({
-											value: candidate.id,
-											label: candidate.name.trim() || candidate.id,
-										})),
-								]}
-								onChange={(value) => ctx.setBondmateTarget(value)}
-								className="flex-1"
-							/>
-						</div>
-					)}
 				</div>
-			)}
-			<button
-				type="button"
-				onClick={() => ctx.removeTarget(character.id)}
-				disabled={ctx.characters.length <= 1}
-				className="mt-3 h-10 w-full rounded-lg border border-[#ef444466] bg-gray-800 text-xs font-medium text-red-200 whitespace-nowrap hover:bg-[#450a0a4d] disabled:cursor-not-allowed disabled:border-gray-600 disabled:bg-gray-800 disabled:text-gray-500 disabled:hover:bg-gray-800"
-			>
-				删除目标
-			</button>
+
+				{isCharacterTarget(character) && (
+					<div className="mt-4 space-y-3">
+						<div className="flex flex-wrap gap-2">
+							<Toggle
+								className="flex-1"
+								label="翁瓦克"
+								checked={character.hasVonwacq}
+								onChange={() =>
+									ctx.updateCharacter(character.id, (prev) => ({
+										...prev,
+										hasVonwacq: !prev.hasVonwacq,
+									}))
+								}
+							/>
+							<Toggle
+								className="flex-1"
+								label="风套"
+								checked={character.hasWindSet}
+								onChange={() =>
+									ctx.updateCharacter(character.id, (prev) => ({
+										...prev,
+										hasWindSet: !prev.hasWindSet,
+									}))
+								}
+							/>
+							<Toggle
+								className="flex-1"
+								label="秘技"
+								checked={
+									character.techniqueOn ??
+									character.hasCastoriceTechnique ??
+									character.hasAglaeaTechnique ??
+									false
+								}
+								onChange={() =>
+									ctx.updateCharacter(character.id, (prev) => ({
+										...prev,
+										techniqueOn: !(
+											prev.techniqueOn ??
+											prev.hasCastoriceTechnique ??
+											prev.hasAglaeaTechnique ??
+											false
+										),
+									}))
+								}
+							/>
+						</div>
+						<div className="flex gap-2">
+							<SelectInput
+								value={String(character.eidolon)}
+								options={Array.from({ length: 7 }, (_, i) => {
+									let hasEffect = false;
+									if (
+										hasSkillEffect(character.name, "W", "counterW") &&
+										(i === 1 || i === 2)
+									)
+										hasEffect = true;
+									if (
+										(hasSkillEffect(character.name, "Q", "fireflyCombustion") ||
+											hasSkillEffect(character.name, "Q", "teamAdvance24")) &&
+										i === 2
+									)
+										hasEffect = true;
+									if (
+										hasSkillEffect(character.name, "E", "summonGarmentmaker") &&
+										i === 4
+									)
+										hasEffect = true;
+									return {
+										value: String(i),
+										label: `${i} 魂${hasEffect ? " *" : ""}`,
+									};
+								})}
+								onChange={(value) =>
+									ctx.updateCharacter(character.id, (prev) => ({
+										...prev,
+										eidolon: Number(value),
+									}))
+								}
+								className="flex-1"
+							/>
+							<SelectInput
+								value={String(character.lc_id)}
+								options={(() => {
+									const charPath = getCharacterPath(character.name);
+									const allLcs =
+										(
+											lightConeData as {
+												lightcones: {
+													id: number;
+													name: string;
+													rarity: number;
+													path: string;
+												}[];
+											}
+										).lightcones ?? [];
+									const matching = allLcs.filter((lc) => lc.path === charPath);
+									matching.sort((a, b) => b.rarity - a.rarity || b.id - a.id);
+									const dddIndex = matching.findIndex((lc) => lc.id === 21018);
+									if (
+										dddIndex !== -1 &&
+										charPath === "Harmony" &&
+										hasSkillEffect(character.name, "Q", "robinUltimate")
+									) {
+										matching.splice(dddIndex, 1);
+									} else if (dddIndex !== -1) {
+										const ddd = matching.splice(dddIndex, 1)[0];
+										matching.unshift(ddd);
+									}
+									return [
+										{ value: "0", label: "无光锥" },
+										...matching.map((lc) => ({
+											value: String(lc.id),
+											label: lc.name,
+											className:
+												lc.rarity >= 5
+													? "text-yellow-300"
+													: lc.rarity >= 4
+														? "text-purple-300"
+														: "text-sky-300",
+										})),
+									];
+								})()}
+								onChange={(value) =>
+									ctx.updateCharacter(character.id, (prev) => ({
+										...prev,
+										lc_id: Number(value),
+									}))
+								}
+								className="flex-1"
+							/>
+						</div>
+						<div className="flex gap-2">
+							<SelectInput
+								value={String(character.superimpose)}
+								options={[
+									{ value: "0", label: "叠 0" },
+									{ value: "1", label: "叠 1" },
+									{ value: "2", label: "叠 2" },
+									{ value: "3", label: "叠 3" },
+									{ value: "4", label: "叠 4" },
+									{ value: "5", label: "叠 5" },
+								]}
+								onChange={(value) =>
+									ctx.updateCharacter(character.id, (prev) => ({
+										...prev,
+										superimpose: Number(value),
+									}))
+								}
+								className="flex-1"
+							/>
+						</div>
+						{hasPassive(character.name, "meritSpeedBuff20") && (
+							<div className="flex gap-2">
+								<SelectInput
+									value={String(ctx.meritTarget ?? "")}
+									options={[
+										{ value: "", label: "无军功" },
+										...ctx.characters
+											.filter((c) => c.id !== character.id && c.kind === "角色")
+											.map((c) => ({
+												value: String(c.id),
+												label: c.name.trim() || c.id,
+											})),
+									]}
+									onChange={(value) => ctx.setMeritTarget(value || undefined)}
+									className="flex-1"
+								/>
+							</div>
+						)}
+						{hasPassive(character.name, "dancePartnerSpeedBuff30") && (
+							<div className="flex gap-2">
+								<SelectInput
+									value={String(ctx.dancePartner ?? "")}
+									options={[
+										{ value: "", label: "无共舞者" },
+										...ctx.characters
+											.filter((c) => c.id !== character.id && c.kind === "角色")
+											.map((c) => ({
+												value: String(c.id),
+												label: c.name.trim() || c.id,
+											})),
+									]}
+									onChange={(value) => ctx.setDancePartner(value || undefined)}
+									className="flex-1"
+								/>
+							</div>
+						)}
+						{hasPassive(character.name, "souldragonBondmate") && (
+							<div className="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-2">
+								<span className="text-sm text-gray-300">初始同袍</span>
+								<SelectInput
+									value={String(ctx.bondmateTarget ?? "")}
+									options={[
+										{ value: "", label: "无初始同袍" },
+										...ctx.characters
+											.filter((candidate) => candidate.kind === "角色")
+											.map((candidate) => ({
+												value: candidate.id,
+												label: candidate.name.trim() || candidate.id,
+											})),
+									]}
+									onChange={(value) => ctx.setBondmateTarget(value)}
+									className="flex-1"
+								/>
+							</div>
+						)}
+					</div>
+				)}
+				<button
+					type="button"
+					onClick={() => ctx.removeTarget(character.id)}
+					disabled={ctx.characters.length <= 1}
+					className="mt-3 h-10 w-full rounded-lg border border-[#ef444466] bg-gray-800 text-xs font-medium text-red-200 whitespace-nowrap hover:bg-[#450a0a4d] disabled:cursor-not-allowed disabled:border-gray-600 disabled:bg-gray-800 disabled:text-gray-500 disabled:hover:bg-gray-800"
+				>
+					删除目标
+				</button>
+			</div>
+			<InterestNotice
+				open={showGilgameshInterestNotice}
+				onClose={() => setShowGilgameshInterestNotice(false)}
+			/>
+		</>
+	);
+}
+
+function InterestNotice({
+	open,
+	onClose,
+}: {
+	open: boolean;
+	onClose: () => void;
+}) {
+	if (!open) return null;
+	return (
+		<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+			<div className="w-full max-w-sm rounded-xl border border-amber-700/60 bg-gray-900 p-5 shadow-2xl">
+				<h2 className="text-lg font-semibold text-amber-100">
+					兴致需要手动确认
+				</h2>
+				<p className="mt-3 text-sm leading-6 text-gray-200">
+					实际战斗中的兴致会受局内情况影响，模拟器无法完全自动还原。请根据实战自行确认，并在行动表资源列中修改【兴致】数量。
+				</p>
+				<div className="mt-5 flex justify-end">
+					<button
+						type="button"
+						onClick={onClose}
+						className="h-9 rounded-lg bg-amber-700 px-4 text-sm font-medium text-white hover:bg-amber-600"
+					>
+						知道了
+					</button>
+				</div>
+			</div>
 		</div>
 	);
 }

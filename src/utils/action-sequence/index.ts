@@ -23,8 +23,8 @@ import type {
 } from "./types";
 
 export {
-	getCharacterCid,
 	getCharacterBaseSpeed,
+	getCharacterCid,
 	getCharacterDisplayName,
 	getCharacterParticipantId,
 	getCharacterPath,
@@ -304,6 +304,9 @@ export const defaultResources = ["战技点"];
 export const evernightResourceName = "忆质";
 export const archerFuaResourceName = "红A追击";
 export const gilgameshInterestResourceName = "兴致";
+export const ashveilFuaResourceName = "不死途追击";
+export const kafkaFuaResourceName = "卡芙卡追击";
+export const spBladeStackResourceName = "sp刃叠层";
 export const CURRENT_SAVEDATA_VERSION = 1;
 
 export function isCharacterTarget(character: CharacterConfig) {
@@ -332,6 +335,30 @@ export function hasGilgameshCharacter(characters: CharacterConfig[]) {
 	);
 }
 
+export function hasAshveilCharacter(characters: CharacterConfig[]) {
+	return characters.some(
+		(character) =>
+			isCharacterTarget(character) &&
+			getCharacterCid(character.name) === "1504",
+	);
+}
+
+export function hasKafkaCharacter(characters: CharacterConfig[]) {
+	return characters.some(
+		(character) =>
+			isCharacterTarget(character) &&
+			getCharacterCid(character.name) === "1005",
+	);
+}
+
+export function hasSpBladeCharacter(characters: CharacterConfig[]) {
+	return characters.some(
+		(character) =>
+			isCharacterTarget(character) &&
+			getCharacterCid(character.name) === "1507",
+	);
+}
+
 export function normalizeResourcesForCharacters(
 	resources: string[],
 	characters: CharacterConfig[],
@@ -339,17 +366,26 @@ export function normalizeResourcesForCharacters(
 	const hasEvernight = hasEvernightCharacter(characters);
 	const hasArcher = hasArcherCharacter(characters);
 	const hasGilgamesh = hasGilgameshCharacter(characters);
+	const hasAshveil = hasAshveilCharacter(characters);
+	const hasKafka = hasKafkaCharacter(characters);
+	const hasSpBlade = hasSpBladeCharacter(characters);
 	const filtered = resources.filter(
 		(resource) =>
 			resource !== evernightResourceName &&
 			resource !== archerFuaResourceName &&
 			resource !== gilgameshInterestResourceName &&
+			resource !== ashveilFuaResourceName &&
+			resource !== kafkaFuaResourceName &&
+			resource !== spBladeStackResourceName &&
 			(!hasArcher || resource !== defaultResources[0]),
 	);
 	const locked = [
 		...(hasGilgamesh ? [gilgameshInterestResourceName] : []),
 		...(hasArcher ? [defaultResources[0], archerFuaResourceName] : []),
 		...(hasEvernight ? [evernightResourceName] : []),
+		...(hasAshveil ? [ashveilFuaResourceName] : []),
+		...(hasKafka ? [kafkaFuaResourceName] : []),
+		...(hasSpBlade ? [spBladeStackResourceName] : []),
 	];
 	return [...locked, ...filtered].slice(0, maxResources);
 }
@@ -363,6 +399,11 @@ export function isLockedResourceNameForCharacters(
 			resourceName === evernightResourceName) ||
 		(hasGilgameshCharacter(characters) &&
 			resourceName === gilgameshInterestResourceName) ||
+		(hasAshveilCharacter(characters) &&
+			resourceName === ashveilFuaResourceName) ||
+		(hasKafkaCharacter(characters) && resourceName === kafkaFuaResourceName) ||
+		(hasSpBladeCharacter(characters) &&
+			resourceName === spBladeStackResourceName) ||
 		(hasArcherCharacter(characters) &&
 			(resourceName === defaultResources[0] ||
 				resourceName === archerFuaResourceName))
@@ -421,6 +462,8 @@ export function isNonAttackSkill(
 	if (cid === "1014" && (skill === "A" || skill === "E" || skill === "Q")) {
 		return false;
 	}
+	// 缇宝 E 固定不攻击；Q 和 Z 保持攻击判定。
+	if (cid === "1403" && skill === "E") return true;
 	return (
 		canSelectAllyForSkill(character, skill) ||
 		((cid === "1303" || cid === "1309") && (skill === "E" || skill === "Q")) ||

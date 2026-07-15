@@ -57,6 +57,9 @@ type SavedDataFieldSetters = {
 		SetStateAction<Record<string, boolean>>
 	>;
 	setEvanesciaFuaToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
+	setAshveilFuaToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
+	setKafkaFuaToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
+	setSpBladeExtraTurnToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 	setMydeiVendettaToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 	setMydeiGodslayerToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 	setSameAVOrder: Dispatch<SetStateAction<Record<string, number>>>;
@@ -153,6 +156,12 @@ export function useActionSequenceSavedData() {
 				setSavedField("evernightThresholdBurstToggles", updater),
 			setEvanesciaFuaToggles: (updater) =>
 				setSavedField("evanesciaFuaToggles", updater),
+			setAshveilFuaToggles: (updater) =>
+				setSavedField("ashveilFuaToggles", updater),
+			setKafkaFuaToggles: (updater) =>
+				setSavedField("kafkaFuaToggles", updater),
+			setSpBladeExtraTurnToggles: (updater) =>
+				setSavedField("spBladeExtraTurnToggles", updater),
 			setMydeiVendettaToggles: (updater) =>
 				setSavedField("mydeiVendettaToggles", updater),
 			setMydeiGodslayerToggles: (updater) =>

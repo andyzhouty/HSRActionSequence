@@ -17,10 +17,12 @@ import {
 	toPositiveNumber,
 } from "../../utils/actionSequence";
 import { SelectInput } from "../Controls";
+import { CompanionFuaToggleSection } from "./CompanionFuaToggleSection";
 import { EvanesciaFuaToggleSection } from "./EvanesciaFuaToggleSection";
 import { isGodmodeActiveAtAction } from "./godmodeActivity";
 import { HyacineE2Section } from "./HyacineE2Section";
 import { MydeiVendettaSection } from "./MydeiVendettaSection";
+import { SpBladeExtraTurnSection } from "./SpBladeExtraTurnSection";
 
 /** Sub-component: the floating context menu content */
 export function ActionMenuContent() {
@@ -153,6 +155,8 @@ export function ActionMenuContent() {
 
 			{/* FUA toggle section */}
 			<EvanesciaFuaToggleSection />
+			<CompanionFuaToggleSection />
+			<SpBladeExtraTurnSection />
 
 			{/* Mydei vendetta and godslayer extra turn */}
 			<MydeiVendettaSection />

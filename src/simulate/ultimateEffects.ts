@@ -23,6 +23,7 @@ import {
 	activateGodmode,
 	hasSilverWolfGodmode,
 } from "../mechanics/silverWolfGodmode";
+import { emitTribbieUltimateFollowUp } from "../mechanics/tribbie";
 import type { GeneratedAction } from "../utils/actionSequence";
 import { isCharacterTarget } from "../utils/actionSequence";
 import {
@@ -66,6 +67,13 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 	} = params;
 	const caster = states[casterIndex];
 	const character = caster.character;
+	emitTribbieUltimateFollowUp({
+		states,
+		actions,
+		caster,
+		sourceKey,
+		actionValue,
+	});
 	if (hasSaber(character)) caster.saberForceBasicAttack = true;
 
 	// 1. 阿格莱雅至高之姿

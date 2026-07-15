@@ -2,6 +2,7 @@ import {
 	applyPhainonDomainPauseAndSpeedBonus,
 	hasPhainonEnemyTriggerSkill,
 } from "../mechanics/phainonDomain";
+import { emitSpBladeExtraTurn, hasSpBlade } from "../mechanics/spBlade";
 import type { GeneratedAction, SkillCode } from "../utils/actionSequence";
 import { getActiveOdeLabels, toNonNegativeNumber } from "./effects";
 import type {
@@ -87,6 +88,19 @@ export function handleDomainAction(
 			domainAV,
 			ds.rule.endSpeedBonusBaseSpeedRatio,
 		);
+		// SP 刃在境界内只积累叠层。白厄退场 Q 结束后才检查阈值，
+		// 额外战技因此固定附在该退场 Q 后。
+		const spBlade = states.find((state) => hasSpBlade(state.character));
+		const finalAction = actions[actions.length - 1];
+		if (spBlade && finalAction) {
+			emitSpBladeExtraTurn({
+				owner: spBlade,
+				source: finalAction,
+				actions,
+				input,
+				states,
+			});
+		}
 	} else {
 		ds.currentIndex += 1;
 		states[stateIndex].nextActionValue =

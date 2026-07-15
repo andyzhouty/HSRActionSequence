@@ -51,6 +51,7 @@ export function AttackInline({ action }: { action: GeneratedAction }) {
 	}
 	if (
 		action.isElationSkill ||
+		action.isSpBladeFuryActivation ||
 		action.isArcherFua ||
 		action.isAssistAction ||
 		action.isGilgameshTechniqueAction
@@ -61,6 +62,7 @@ export function AttackInline({ action }: { action: GeneratedAction }) {
 		["A", "E", "Q"].includes(action.skill)
 	)
 		return null;
+	if (getCharacterCid(attacker.name) === "1403") return null;
 	if (isBasicAttackSkill(action.skill)) return null;
 	if (
 		hasSilverWolfGodmode(attacker.name) &&

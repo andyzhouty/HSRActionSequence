@@ -368,7 +368,9 @@ describe("getDisplayOrderedActions with sameAVOrder", () => {
 			isElationSkill: true,
 			elationSkillParentKey: "@aha-1",
 		};
-		expect(canExchangeActionOrder(firstElationSkill, secondElationSkill)).toBe(false);
+		expect(canExchangeActionOrder(firstElationSkill, secondElationSkill)).toBe(
+			false,
+		);
 		expect(
 			getDisplayOrderedActions([firstElationSkill, secondElationSkill], {
 				"@aha-1-elation-first": 1,
@@ -394,6 +396,70 @@ describe("getDisplayOrderedActions with sameAVOrder", () => {
 		expect(getExtraTurnParentKey(fua)).toBe("yaoguang-1");
 		expect(getExtraTurnParentKey(insertedQ)).toBe("yaoguang-1");
 		expect(result).toEqual([insertedQ, fua]);
+	});
+
+	it("近期角色的自动追击归入触发行动的同 AV 交换组", () => {
+		const source = normal("ally-1");
+		const afterQ = {
+			...extra("ally-1-interrupt-0", "Q"),
+			interruptTiming: "after" as const,
+		};
+		const followUps = [
+			{
+				...extra("ally-1-archer-fua", "Z"),
+				isFuaAction: true,
+				isArcherFua: true,
+			},
+			{
+				...extra("ally-1-ashveil-fua", "Z"),
+				isFuaAction: true,
+				isAshveilFua: true,
+			},
+			{
+				...extra("ally-1-kafka-fua", "Z"),
+				isFuaAction: true,
+				isKafkaFua: true,
+			},
+			{
+				...extra("ally-1-tribbie-fua", "Z"),
+				isFuaAction: true,
+				isTribbieFuaAction: true,
+			},
+			{
+				...extra("ally-1-gilgamesh-combo-fua", "Z"),
+				isFuaAction: true,
+				isGilgameshComboAction: true,
+			},
+		];
+
+		for (const followUp of followUps) {
+			expect(getExtraTurnParentKey(followUp)).toBe("ally-1");
+			expect(
+				getDisplayOrderedActions([source, followUp, afterQ], {
+					[followUp.key]: 1,
+					[afterQ.key]: 0,
+				}).map((action) => action.key),
+			).toEqual([source.key, afterQ.key, followUp.key]);
+		}
+	});
+
+	it("sp刃额外回合归入触发行动的同 AV 交换组", () => {
+		const extraTurn = {
+			...extra("blade-1-sp-blade-extra", "E"),
+			isSpBladeExtraAction: true,
+			lockedSkill: true,
+		};
+		const afterQ = {
+			...extra("blade-1-interrupt-0", "Q"),
+			interruptTiming: "after" as const,
+		};
+		expect(getExtraTurnParentKey(extraTurn)).toBe("blade-1");
+		expect(
+			getDisplayOrderedActions([extraTurn, afterQ], {
+				"blade-1-sp-blade-extra": 1,
+				"blade-1-interrupt-0": 0,
+			}),
+		).toEqual([afterQ, extraTurn]);
 	});
 
 	it("阿哈时刻作为整体重排，内部欢愉技顺序保持固定", () => {

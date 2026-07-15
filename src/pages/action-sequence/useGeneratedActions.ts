@@ -58,6 +58,9 @@ function buildSimulationConfig(
 		attackDisabled: savedData.attackDisabled,
 		saberAdvanceToggles: savedData.saberAdvanceToggles,
 		evanesciaFuaToggles: savedData.evanesciaFuaToggles,
+		ashveilFuaToggles: savedData.ashveilFuaToggles,
+		kafkaFuaToggles: savedData.kafkaFuaToggles,
+		spBladeExtraTurnToggles: savedData.spBladeExtraTurnToggles,
 		mydeiVendettaToggles: savedData.mydeiVendettaToggles,
 		mydeiGodslayerToggles: savedData.mydeiGodslayerToggles,
 		sameAVOrder: savedData.sameAVOrder,
@@ -272,6 +275,11 @@ export function useGeneratedActions({
 			);
 			const nextAttackDisabled = pruneToggleMap(prev.attackDisabled);
 			const nextEvanesciaFuaToggles = pruneToggleMap(prev.evanesciaFuaToggles);
+			const nextAshveilFuaToggles = pruneToggleMap(prev.ashveilFuaToggles);
+			const nextKafkaFuaToggles = pruneToggleMap(prev.kafkaFuaToggles);
+			const nextSpBladeExtraTurnToggles = pruneToggleMap(
+				prev.spBladeExtraTurnToggles,
+			);
 			const nextMydeiVendettaToggles = pruneToggleMap(
 				prev.mydeiVendettaToggles,
 			);
@@ -290,6 +298,9 @@ export function useGeneratedActions({
 					prev.evernightThresholdBurstToggles ||
 				nextAttackDisabled !== prev.attackDisabled ||
 				nextEvanesciaFuaToggles !== prev.evanesciaFuaToggles ||
+				nextAshveilFuaToggles !== prev.ashveilFuaToggles ||
+				nextKafkaFuaToggles !== prev.kafkaFuaToggles ||
+				nextSpBladeExtraTurnToggles !== prev.spBladeExtraTurnToggles ||
 				nextMydeiVendettaToggles !== prev.mydeiVendettaToggles ||
 				nextMydeiGodslayerToggles !== prev.mydeiGodslayerToggles ||
 				nextSaberAdvanceToggles !== prev.saberAdvanceToggles;
@@ -308,6 +319,9 @@ export function useGeneratedActions({
 				evernightThresholdBurstToggles: nextEvernightThresholdBurstToggles,
 				attackDisabled: nextAttackDisabled,
 				evanesciaFuaToggles: nextEvanesciaFuaToggles,
+				ashveilFuaToggles: nextAshveilFuaToggles,
+				kafkaFuaToggles: nextKafkaFuaToggles,
+				spBladeExtraTurnToggles: nextSpBladeExtraTurnToggles,
 				mydeiVendettaToggles: nextMydeiVendettaToggles,
 				mydeiGodslayerToggles: nextMydeiGodslayerToggles,
 				saberAdvanceToggles: nextSaberAdvanceToggles,

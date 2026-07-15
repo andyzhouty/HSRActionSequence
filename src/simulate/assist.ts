@@ -72,7 +72,7 @@ export function emitHimekoNovaAssists(args: {
 	actions: GeneratedAction[];
 	activeOdes: Map<string, ActiveOdeState[]>;
 	input: SimulateActionsInput;
-	emitFuaAction?: (sourceKey: string, actionValue: number) => void;
+	emitEvanesciaFuaAction?: (sourceKey: string, actionValue: number) => void;
 }): void {
 	const {
 		assist,
@@ -83,7 +83,7 @@ export function emitHimekoNovaAssists(args: {
 		actions,
 		activeOdes,
 		input,
-		emitFuaAction,
+		emitEvanesciaFuaAction,
 	} = args;
 	if (!assist) return;
 	for (
@@ -149,6 +149,6 @@ export function emitHimekoNovaAssists(args: {
 		});
 		emitAssistInterrupts("after");
 		expirePhainonDomainSpeedBonus(states, actionValue);
-		emitFuaAction?.(assistKey, actionValue);
+		emitEvanesciaFuaAction?.(assistKey, actionValue);
 	}
 }

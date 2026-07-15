@@ -23,6 +23,7 @@ type PhainonMutableState = {
 	nextActionValue: number;
 	blockNextAdvance?: boolean;
 	phainonDomainFrozenDistance?: number;
+	spBladeCountdownOwnerId?: string;
 };
 
 function isAllyTarget(kind: string): boolean {
@@ -55,6 +56,16 @@ export function applyPhainonDomainPauseAndSpeedBonus(
 ) {
 	for (let index = 0; index < states.length; index++) {
 		const state = states[index];
+		if (state.spBladeCountdownOwnerId) {
+			const remainingDistance =
+				state.phainonDomainFrozenDistance ??
+				Math.max(0, state.nextActionValue - startActionValue) *
+					state.currentSpeed;
+			state.phainonDomainFrozenDistance = undefined;
+			state.nextActionValue =
+				domainEndActionValue + remainingDistance / state.currentSpeed;
+			continue;
+		}
 		if (!isAllyTarget(state.character.kind)) continue;
 
 		// 不受加速/拉条影响的角色（如知更鸟大招期间）跳过速度 buff，纯平移 AV
@@ -98,6 +109,13 @@ export function freezeAlliesForDomain(
 	for (let index = 0; index < states.length; index++) {
 		if (index === casterIndex) continue;
 		const state = states[index];
+		if (state.spBladeCountdownOwnerId) {
+			state.phainonDomainFrozenDistance =
+				Math.max(0, state.nextActionValue - startActionValue) *
+				state.currentSpeed;
+			state.nextActionValue = startActionValue + 99999;
+			continue;
+		}
 		if (!isAllyTarget(state.character.kind)) continue;
 		if (state.blockNextAdvance) continue;
 

@@ -76,6 +76,12 @@ export type GeneratedAction = {
 	hasElationSkills?: boolean;
 	elationSkillParentKey?: string;
 	isFuaAction?: boolean;
+	isAshveilFua?: boolean;
+	isKafkaFua?: boolean;
+	isTribbieFuaAction?: boolean;
+	isSpBladeExtraAction?: boolean;
+	isSpBladeCountdownAction?: boolean;
+	isSpBladeFuryActivation?: boolean;
 	isMydeiGodslayerAction?: boolean;
 	interruptTiming?: "before" | "after";
 	isArcherExtraE?: boolean;
@@ -84,6 +90,10 @@ export type GeneratedAction = {
 	archerExtraEParentKey?: string;
 	isArcherFua?: boolean;
 	archerFuaCharge?: number;
+	ashveilFuaCharge?: number;
+	kafkaFuaCharge?: number;
+	spBladeStacks?: number;
+	spBladeInfiniteFury?: boolean;
 	gilgameshInterest?: number;
 	isGilgameshComboAction?: boolean;
 	isGilgameshTechniqueAction?: boolean;
@@ -204,6 +214,9 @@ export type SavedData = {
 	evernightSelfDestructToggles?: Record<string, boolean>;
 	evernightThresholdBurstToggles?: Record<string, boolean>;
 	evanesciaFuaToggles?: Record<string, boolean>;
+	ashveilFuaToggles?: Record<string, boolean>;
+	kafkaFuaToggles?: Record<string, boolean>;
+	spBladeExtraTurnToggles?: Record<string, boolean>;
 	mydeiVendettaToggles?: Record<string, boolean>;
 	mydeiGodslayerToggles?: Record<string, boolean>;
 	sameAVOrder?: Record<string, number>;

@@ -11,11 +11,14 @@ import { gilgameshInterestResourceName } from "../../mechanics/gilgamesh";
 import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
 import type { GeneratedAction } from "../../utils/actionSequence";
 import {
+	ashveilFuaResourceName,
 	formatActionValue,
 	formatEditableNumber,
 	hasSkillEffect,
 	isEnemyTarget,
 	isQFrontCombo,
+	kafkaFuaResourceName,
+	spBladeStackResourceName,
 } from "../../utils/actionSequence";
 import {
 	CombustionBreakInline,
@@ -510,12 +513,21 @@ export function ActionRow({
 				const storedValue = ctx.resourceValues[action.key]?.[resource];
 				const isArcherFua = resource === archerFuaResourceName;
 				const isGilgameshInterest = resource === gilgameshInterestResourceName;
+				const isAshveilFua = resource === ashveilFuaResourceName;
+				const isKafkaFua = resource === kafkaFuaResourceName;
+				const isSpBladeStacks = resource === spBladeStackResourceName;
 				return (
 					<td key={`${action.key}-resource-${resource}`} className="px-2 py-3">
 						<input
 							type="text"
 							inputMode={
-								isArcherFua || isGilgameshInterest ? "numeric" : undefined
+								isArcherFua ||
+								isGilgameshInterest ||
+								isAshveilFua ||
+								isKafkaFua ||
+								isSpBladeStacks
+									? "numeric"
+									: undefined
 							}
 							value={
 								storedValue ??
@@ -524,7 +536,13 @@ export function ActionRow({
 									: isGilgameshInterest &&
 											action.gilgameshInterest !== undefined
 										? String(action.gilgameshInterest)
-										: "")
+										: isAshveilFua && action.ashveilFuaCharge !== undefined
+											? String(action.ashveilFuaCharge)
+											: isKafkaFua && action.kafkaFuaCharge !== undefined
+												? String(action.kafkaFuaCharge)
+												: isSpBladeStacks && action.spBladeStacks !== undefined
+													? String(action.spBladeStacks)
+													: "")
 							}
 							onClick={(event) => event.stopPropagation()}
 							onContextMenu={(event) => event.stopPropagation()}
@@ -537,6 +555,12 @@ export function ActionRow({
 									value !== "" &&
 									!/^\d*\.?\d*$/.test(value)
 								)
+									return;
+								if (isAshveilFua && value !== "" && !/^[0-3]$/.test(value))
+									return;
+								if (isKafkaFua && value !== "" && !/^[0-2]$/.test(value))
+									return;
+								if (isSpBladeStacks && value !== "" && !/^\d+$/.test(value))
 									return;
 								ctx.updateResourceValue(action.key, resource, value);
 							}}

@@ -93,6 +93,24 @@ describe("CharacterPanel rendering", () => {
 		expect(screen.queryByText("基础速度 v₀")).not.toBeInTheDocument();
 	});
 
+	it("确认吉尔伽美什时提示手动核对兴致", () => {
+		const gilgamesh = {
+			...defaultCharacters[0],
+			id: "gilgamesh",
+			name: "角色 1",
+			speed: "100",
+			baseSpeed: "100",
+		};
+		renderWithContext(<CharacterPanel />, { characters: [gilgamesh] });
+		fireEvent.change(screen.getByDisplayValue("角色 1"), {
+			target: { value: "吉尔伽美什" },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "确定" }));
+
+		expect(screen.getByText("兴致需要手动确认")).toBeInTheDocument();
+		expect(screen.getByText(/模拟器无法完全自动还原/)).toBeInTheDocument();
+	});
+
 	it("shows toggle labels for character-type targets", () => {
 		renderWithContext(<CharacterPanel />);
 		expect(screen.getAllByText("翁瓦克").length).toBeGreaterThanOrEqual(4);

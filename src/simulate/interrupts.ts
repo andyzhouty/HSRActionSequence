@@ -354,8 +354,8 @@ export function emitSpecialInterruptAction(
 		}
 	}
 	emitGodmodeExtraAction(interruptKey, actionValue, states, actions, input);
-	// 手动插队 Q 不经过普通行动收尾，需在此补发绯英追击。
-	emitFuaAction(interruptKey, actionValue, states, actions, input);
+	// 手动插队 Q 不经过普通行动收尾，需在此补发绯英专属追击。
+	emitEvanesciaFuaAction(interruptKey, actionValue, states, actions, input);
 	emitMydeiGodslayerExtraAction(
 		interruptKey,
 		actionValue,
@@ -697,8 +697,8 @@ export function emitElationSkills(
 	}
 }
 
-/** 发射绯英追击（Z），由右键菜单 evanesciaFuaToggles 控制。E1+ 追加一次欢愉技。 */
-export function emitFuaAction(
+/** 发射绯英专属追击（Z），由右键菜单 evanesciaFuaToggles 控制。E1+ 追加一次欢愉技。 */
+export function emitEvanesciaFuaAction(
 	sourceKey: string,
 	actionValue: number,
 	states: ActionState[],

@@ -57,9 +57,9 @@ export function runPostActionCleanup(
 		runtime.actions,
 		runtime.input,
 	);
-	// 绯英追击（右键菜单 evanesciaFuaToggles 控制）
+	// 绯英专属追击（右键菜单 evanesciaFuaToggles 控制）
 	if (!skipAssistFollowUp) {
-		callbacks.emitFuaAction(key, actionValue);
+		callbacks.emitEvanesciaFuaAction(key, actionValue);
 	}
 	advanceSaberAfterAction(
 		states,

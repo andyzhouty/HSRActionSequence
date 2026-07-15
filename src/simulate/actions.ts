@@ -4,6 +4,13 @@ import {
 	hasArcher,
 } from "../mechanics/archer";
 import {
+	clampAshveilFuaCharge,
+	clampKafkaFuaCharge,
+	emitCompanionFollowUp,
+	hasAshveil,
+	hasKafka,
+} from "../mechanics/companionFollowUp";
+import {
 	advanceSouldragon,
 	emitImmediateSouldragonAction,
 } from "../mechanics/danHengSouldragon";
@@ -17,15 +24,26 @@ import {
 	isInGodmode,
 } from "../mechanics/silverWolfGodmode";
 import {
+	activateSpBladeInfiniteFury,
+	clampSpBladeStacks,
+	emitSpBladeExtraTurn,
+	hasSpBlade,
+	isSpBladeAttack,
+	spBladeStackResourceName,
+} from "../mechanics/spBlade";
+import {
 	clampTheHertaInspiration,
 	getTheHertaUltimateInspirationGain,
 	hasTheHerta,
 } from "../mechanics/theHerta";
 import type { GeneratedAction } from "../utils/actionSequence";
 import {
+	ashveilFuaResourceName,
+	getCharacterCid,
 	getCharacterPath,
 	isBasicAttackSkill,
 	isNonAttackSkill,
+	kafkaFuaResourceName,
 	toPositiveNumber,
 } from "../utils/actionSequence";
 import {
@@ -37,9 +55,9 @@ import {
 	setupSouldragonBondmate,
 } from "./init";
 import {
+	emitEvanesciaFuaAction as emitEvanesciaFua,
 	emitEvernightSelfDestructAction as emitEvernightSelfDestruct,
 	emitExtraAhaAction as emitExtraAha,
-	emitFuaAction as emitFua,
 	emitGodmodeExtraAction as emitGodmodeExtra,
 	emitSparxieExtraAction as emitSparxieExtra,
 	emitSpecialInterruptAction as emitSpecialInterrupt,
@@ -71,6 +89,9 @@ export function simulateActions(
 	);
 	const gilgameshState = states.find((state) => hasGilgamesh(state.character));
 	const archerState = states.find((state) => hasArcher(state.character));
+	const ashveilState = states.find((state) => hasAshveil(state.character));
+	const kafkaState = states.find((state) => hasKafka(state.character));
+	const spBladeState = states.find((state) => hasSpBlade(state.character));
 	const theHertaState = states.find((state) => hasTheHerta(state.character));
 	const gilgameshAndSaber =
 		gilgameshState !== undefined &&
@@ -78,6 +99,15 @@ export function simulateActions(
 	let actions: GeneratedAction[];
 	const handleRecordedAction = (action: GeneratedAction) => {
 		const attacker = characterById.get(action.characterId);
+		if (
+			spBladeState &&
+			action.characterId === spBladeState.character.id &&
+			action.skill === "Q" &&
+			!spBladeState.spBladeInfiniteFury
+		) {
+			action.isSpBladeFuryActivation = true;
+			activateSpBladeInfiniteFury(states, spBladeState, action.actionValue);
+		}
 		const attackerState = initialStateByCharacterId.get(action.characterId);
 		const isSilverWolfNonAttack =
 			hasSilverWolfGodmode(attacker?.name ?? "") &&
@@ -196,7 +226,7 @@ export function simulateActions(
 					actions.push({
 						key: `${action.key}-gilgamesh-combo-fua`,
 						characterId: gilgameshState.character.id,
-						displayName: "吉尔伽美什",
+						displayName: gilgameshState.character.name,
 						actionNo: 0,
 						actionValue: action.actionValue,
 						skill: "Z",
@@ -225,6 +255,25 @@ export function simulateActions(
 			archerState.archerFuaCharge = clampArcherFuaCharge(manualCharge);
 		}
 		if (archerState) action.archerFuaCharge = archerState.archerFuaCharge;
+		const ashveilManualCharge = Number.parseFloat(
+			input.resourceValues?.[action.key]?.[ashveilFuaResourceName] ?? "",
+		);
+		if (ashveilState && Number.isFinite(ashveilManualCharge)) {
+			ashveilState.ashveilFuaCharge =
+				clampAshveilFuaCharge(ashveilManualCharge);
+		}
+		const kafkaManualCharge = Number.parseFloat(
+			input.resourceValues?.[action.key]?.[kafkaFuaResourceName] ?? "",
+		);
+		if (kafkaState && Number.isFinite(kafkaManualCharge)) {
+			kafkaState.kafkaFuaCharge = clampKafkaFuaCharge(kafkaManualCharge);
+		}
+		const spBladeManualStacks = Number.parseFloat(
+			input.resourceValues?.[action.key]?.[spBladeStackResourceName] ?? "",
+		);
+		if (spBladeState && Number.isFinite(spBladeManualStacks)) {
+			spBladeState.spBladeStacks = clampSpBladeStacks(spBladeManualStacks);
+		}
 		const isArcherFixedAttack =
 			hasArcher(attacker) && ["A", "E", "Q"].includes(action.skill);
 		const isForcedAttack =
@@ -236,6 +285,7 @@ export function simulateActions(
 			archerState &&
 			!action.isArcherFua &&
 			!action.isDomainAction &&
+			!action.isSpBladeFuryActivation &&
 			(isForcedAttack || input.attackDisabled?.[action.key] !== true)
 		) {
 			if (
@@ -264,6 +314,103 @@ export function simulateActions(
 				});
 			}
 		}
+		const isCompanionFollowUpTrigger =
+			attacker?.kind === "角色" &&
+			!action.isFuaAction &&
+			!action.isDomainAction &&
+			!action.isSpBladeFuryActivation &&
+			(isForcedAttack || input.attackDisabled?.[action.key] !== true) &&
+			(isForcedAttack || !isNonAttackSkill(attacker, action.skill));
+		if (
+			ashveilState &&
+			isCompanionFollowUpTrigger &&
+			action.characterId !== ashveilState.character.id
+		) {
+			emitCompanionFollowUp({
+				owner: ashveilState,
+				source: action,
+				actions,
+				charge: "ashveil",
+				cancelled: input.ashveilFuaToggles?.[action.key] === false,
+			});
+		}
+		if (
+			kafkaState &&
+			isCompanionFollowUpTrigger &&
+			action.characterId !== kafkaState.character.id
+		) {
+			emitCompanionFollowUp({
+				owner: kafkaState,
+				source: action,
+				actions,
+				charge: "kafka",
+				cancelled: input.kafkaFuaToggles?.[action.key] === false,
+			});
+		}
+		if (
+			ashveilState &&
+			action.characterId === ashveilState.character.id &&
+			action.skill === "Q"
+		) {
+			ashveilState.ashveilFuaCharge = clampAshveilFuaCharge(
+				(ashveilState.ashveilFuaCharge ?? 0) + 3,
+			);
+		}
+		if (kafkaState && action.characterId === kafkaState.character.id) {
+			const isNormalKafkaAction = action.actionNo > 0 && !action.isFuaAction;
+			const isKafkaUltimate = action.skill === "Q";
+			if (isNormalKafkaAction || isKafkaUltimate) {
+				kafkaState.kafkaFuaCharge = clampKafkaFuaCharge(
+					(kafkaState.kafkaFuaCharge ?? 0) + 1,
+				);
+			}
+		}
+		if (spBladeState) {
+			let stacks = spBladeState.spBladeStacks ?? 0;
+			if (
+				isSpBladeAttack({
+					action,
+					attacker,
+					attackDisabled: input.attackDisabled,
+				})
+			)
+				stacks += 1;
+			if (
+				action.isDomainAction &&
+				(action.skill === "EA" || action.skill === "EW")
+			)
+				stacks += 1;
+			if (
+				getCharacterCid(attacker?.name ?? "") === "1407" &&
+				action.skill === "E" &&
+				states.some((state) => state.polluxOnField)
+			)
+				stacks += 1;
+			const memoryTrailblazer =
+				getCharacterCid(attacker?.name ?? "") === "8008";
+			const memoryState = initialStateByCharacterId.get(action.characterId);
+			if (
+				memoryTrailblazer &&
+				isBasicAttackSkill(action.skill) &&
+				(memoryState?.epic ?? 0) > 0 &&
+				memoryState?.epicPendingA
+			)
+				stacks += 1;
+			spBladeState.spBladeStacks = stacks;
+			action.spBladeStacks = spBladeState.spBladeStacks;
+			action.spBladeInfiniteFury = spBladeState.spBladeInfiniteFury;
+			emitSpBladeExtraTurn({
+				owner: spBladeState,
+				source: action,
+				actions,
+				input: states.some((state) => state.domainState !== undefined)
+					? { ...input, spBladeExtraTurnToggles: { [action.key]: false } }
+					: input,
+				states,
+			});
+		}
+		if (ashveilState) action.ashveilFuaCharge = ashveilState.ashveilFuaCharge;
+		if (kafkaState) action.kafkaFuaCharge = kafkaState.kafkaFuaCharge;
 		if (!souldragonOwner || action.isSouldragonAction) return;
 
 		if (
@@ -436,8 +583,8 @@ export function simulateActions(
 			emitSparxieExtraAction,
 		);
 	};
-	const emitFuaAction = (sourceKey: string, actionValue: number) => {
-		emitFua(sourceKey, actionValue, states, actions, input);
+	const emitEvanesciaFuaAction = (sourceKey: string, actionValue: number) => {
+		emitEvanesciaFua(sourceKey, actionValue, states, actions, input);
 	};
 
 	return runSimulationLoop({
@@ -455,7 +602,7 @@ export function simulateActions(
 			emitSpecialInterruptAction,
 			emitSparxieExtraAction,
 			emitEvernightSelfDestructAction,
-			emitFuaAction,
+			emitEvanesciaFuaAction,
 		},
 	});
 }

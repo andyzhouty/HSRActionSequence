@@ -222,7 +222,7 @@ export function handleNormalAction(
 					activeOdeLabels: getActiveOdeLabels(ao, assist.character.id),
 				});
 				emitAssistInterrupts("after");
-				callbacks.emitFuaAction(assistKey, av);
+				callbacks.emitEvanesciaFuaAction(assistKey, av);
 			}
 		}
 	}

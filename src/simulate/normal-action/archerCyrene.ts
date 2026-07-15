@@ -1,11 +1,11 @@
-import type { CharacterConfig, SkillCode } from "../../utils/actionSequence";
 import { archerMaxConsecutiveEs } from "../../mechanics/archer";
+import type { CharacterConfig, SkillCode } from "../../utils/actionSequence";
+import { emitHimekoNovaAssists } from "../assist";
 import {
 	emitCyreneMemospriteAction,
 	findHimekoNovaAssistState,
 	handleCyrenePostUltimate,
 } from "../effects";
-import { emitHimekoNovaAssists } from "../assist";
 import type { SimulationRuntime } from "../runtime";
 
 type ArcherExtraEParams = {
@@ -41,7 +41,7 @@ export function emitArcherExtraEs({
 			actions,
 			activeOdes,
 			input,
-			emitFuaAction: runtime.callbacks.emitFuaAction,
+			emitEvanesciaFuaAction: runtime.callbacks.emitEvanesciaFuaAction,
 		});
 		return true;
 	};
@@ -96,49 +96,50 @@ export function emitArcherExtraEs({
 					return;
 				}
 			}
-		const arrowSkill = configured === "A" ? ("A" as SkillCode) : ("E" as SkillCode);
-		const interrupts = input.ultInterrupts[extraKey] ?? [];
+			const arrowSkill =
+				configured === "A" ? ("A" as SkillCode) : ("E" as SkillCode);
+			const interrupts = input.ultInterrupts[extraKey] ?? [];
 			for (
 				let interruptIndex = 0;
-			interruptIndex < interrupts.length;
-			interruptIndex++
-		) {
-			const interrupt = interrupts[interruptIndex];
-			if (interrupt.timing === "before")
-				runtime.callbacks.emitSpecialInterruptAction(
-					`${extraKey}-interrupt-${interruptIndex}`,
-					interrupt,
-					actionValue,
-				);
-		}
-		actions.push({
-			key: extraKey,
-			characterId: character.id,
-			actionNo: 0,
-			actionValue,
-			skill: arrowSkill,
-			speed: actionSpeed,
-			isArcherExtraE: true,
-			archerExtraEIndex: index,
-			archerExtraEParentKey: key,
-			archerFuaCharge: states[stateIndex].archerFuaCharge,
-		});
-		for (
-			let interruptIndex = 0;
-			interruptIndex < interrupts.length;
-			interruptIndex++
-		) {
-			const interrupt = interrupts[interruptIndex];
-			if (interrupt.timing === "after")
-				runtime.callbacks.emitSpecialInterruptAction(
-					`${extraKey}-interrupt-${interruptIndex}`,
-					interrupt,
-					actionValue,
+				interruptIndex < interrupts.length;
+				interruptIndex++
+			) {
+				const interrupt = interrupts[interruptIndex];
+				if (interrupt.timing === "before")
+					runtime.callbacks.emitSpecialInterruptAction(
+						`${extraKey}-interrupt-${interruptIndex}`,
+						interrupt,
+						actionValue,
 					);
 			}
-			runtime.callbacks.emitFuaAction(extraKey, actionValue);
+			actions.push({
+				key: extraKey,
+				characterId: character.id,
+				actionNo: 0,
+				actionValue,
+				skill: arrowSkill,
+				speed: actionSpeed,
+				isArcherExtraE: true,
+				archerExtraEIndex: index,
+				archerExtraEParentKey: key,
+				archerFuaCharge: states[stateIndex].archerFuaCharge,
+			});
+			for (
+				let interruptIndex = 0;
+				interruptIndex < interrupts.length;
+				interruptIndex++
+			) {
+				const interrupt = interrupts[interruptIndex];
+				if (interrupt.timing === "after")
+					runtime.callbacks.emitSpecialInterruptAction(
+						`${extraKey}-interrupt-${interruptIndex}`,
+						interrupt,
+						actionValue,
+					);
+			}
+			runtime.callbacks.emitEvanesciaFuaAction(extraKey, actionValue);
 			if (arrowSkill === "A") return;
-	}
+		}
 	};
 	emitSegment(key, 2, count);
 }
