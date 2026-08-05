@@ -340,9 +340,10 @@ describe("知更鸟·晴歌 SP Robin", () => {
 		expect(robinFirst!.actionValue).toBeCloseTo(80, 5);
 	});
 
-	it("氛围值上限：星魂 0 为 50，星魂 1+ 为 70", () => {
+	it("氛围值上限：星魂 0/1 为 50，星魂 2+ 为 70", () => {
 		expect(getSpRobinFeverCap(0)).toBe(50);
-		expect(getSpRobinFeverCap(1)).toBe(70);
+		expect(getSpRobinFeverCap(1)).toBe(50);
+		expect(getSpRobinFeverCap(2)).toBe(70);
 		expect(getSpRobinFeverCap(6)).toBe(70);
 	});
 
@@ -351,8 +352,8 @@ describe("知更鸟·晴歌 SP Robin", () => {
 		expect(isValidSpRobinFeverValue("0", 0)).toBe(true);
 		expect(isValidSpRobinFeverValue("50", 0)).toBe(true);
 		expect(isValidSpRobinFeverValue("51", 0)).toBe(false);
-		expect(isValidSpRobinFeverValue("70", 1)).toBe(true);
-		expect(isValidSpRobinFeverValue("71", 1)).toBe(false);
+		expect(isValidSpRobinFeverValue("70", 2)).toBe(true);
+		expect(isValidSpRobinFeverValue("71", 2)).toBe(false);
 		expect(isValidSpRobinFeverValue("abc", 1)).toBe(false);
 		expect(isValidSpRobinFeverValue("-1", 1)).toBe(false);
 		expect(isValidSpRobinFeverValue("1.5", 1)).toBe(false);

@@ -117,7 +117,7 @@ describe("SP Robin Fever 右键菜单", () => {
 		expect(updateResourceValue).toHaveBeenCalledWith("robin-1", "氛围值", "50");
 	});
 
-	it("氛围值输入不超过星魂上限（E1 上限 70）", async () => {
+	it("氛围值输入不超过星魂上限（E2 上限 70）", async () => {
 		const updateResourceValue = vi.fn();
 		const action: GeneratedAction = {
 			key: "robin-1",
@@ -129,10 +129,10 @@ describe("SP Robin Fever 右键菜单", () => {
 			speed: 100,
 		};
 		renderWithContext(<ActionPanel />, {
-			characters: [{ ...robinChar, eidolon: 1 }],
+			characters: [{ ...robinChar, eidolon: 2 }],
 			characterNames: { robin: "sp知更鸟" },
 			characterKinds: { robin: "角色" },
-			charactersById: { robin: { ...robinChar, eidolon: 1 } },
+			charactersById: { robin: { ...robinChar, eidolon: 2 } },
 			actions: [action],
 			resources: ["氛围值"],
 			resourceValues: {},

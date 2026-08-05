@@ -28,7 +28,7 @@ export function hasSpRobin(character: CharacterConfig | undefined): boolean {
 }
 
 export function getSpRobinFeverCap(eidolon: number): number {
-	return eidolon >= 1 ? 70 : 50;
+	return eidolon >= 2 ? 70 : 50;
 }
 
 /** 氛围值资源列的合法输入：空串或不超过星魂对应上限的非负整数。 */
