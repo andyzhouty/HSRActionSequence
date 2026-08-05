@@ -147,3 +147,75 @@ export function emitSpBladeExtraTurn(params: {
 	});
 	return true;
 }
+
+/** sp刃 Q 激活无量忿怒（需在其它角色结算前先打标记）。 */
+export function maybeActivateSpBladeFury(
+	state: ActionState,
+	action: GeneratedAction,
+	states: ActionState[],
+): void {
+	if (
+		action.characterId === state.character.id &&
+		action.skill === "Q" &&
+		!state.spBladeInfiniteFury
+	) {
+		action.isSpBladeFuryActivation = true;
+		activateSpBladeInfiniteFury(states, state, action.actionValue);
+	}
+}
+
+/** 记录一条已生成行动后的 sp刃叠层结算（手动覆盖、叠层来源、阈值额外战技）。 */
+export function handleSpBladeRecordedAction(params: {
+	state: ActionState;
+	action: GeneratedAction;
+	attacker: CharacterConfig | undefined;
+	states: ActionState[];
+	actions: GeneratedAction[];
+	input: SimulateActionsInput;
+}): void {
+	const { state, action, attacker, states, actions, input } = params;
+	const manualStacks = Number.parseFloat(
+		input.resourceValues?.[action.key]?.[spBladeStackResourceName] ?? "",
+	);
+	if (Number.isFinite(manualStacks)) {
+		state.spBladeStacks = clampSpBladeStacks(manualStacks);
+	}
+	let stacks = state.spBladeStacks ?? 0;
+	if (
+		isSpBladeAttack({
+			action,
+			attacker,
+			attackDisabled: input.attackDisabled,
+		})
+	)
+		stacks += 1;
+	if (action.isDomainAction && (action.skill === "EA" || action.skill === "EW"))
+		stacks += 1;
+	if (
+		getCharacterCid(attacker?.name ?? "") === "1407" &&
+		action.skill === "E" &&
+		states.some((s) => s.polluxOnField)
+	)
+		stacks += 1;
+	const memoryTrailblazer = getCharacterCid(attacker?.name ?? "") === "8008";
+	const memoryState = states.find((s) => s.character.id === action.characterId);
+	if (
+		memoryTrailblazer &&
+		isBasicAttackSkill(action.skill) &&
+		(memoryState?.epic ?? 0) > 0 &&
+		memoryState?.epicPendingA
+	)
+		stacks += 1;
+	state.spBladeStacks = stacks;
+	action.spBladeStacks = state.spBladeStacks;
+	action.spBladeInfiniteFury = state.spBladeInfiniteFury;
+	emitSpBladeExtraTurn({
+		owner: state,
+		source: action,
+		actions,
+		input: states.some((s) => s.domainState !== undefined)
+			? { ...input, spBladeExtraTurnToggles: { [action.key]: false } }
+			: input,
+		states,
+	});
+}

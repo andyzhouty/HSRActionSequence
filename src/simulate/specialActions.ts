@@ -1,19 +1,25 @@
 import {
 	handleAglaeaCountdownAction,
 	isAglaeaCountdownAction,
-} from "../mechanics/aglaeaGarmentmaker";
-import { handlePolluxAction } from "../mechanics/castoricePollux";
-import { emitSouldragonAction } from "../mechanics/danHengSouldragon";
-import { handleEveyAction } from "../mechanics/evernightEvey";
+} from "../mechanics/aglaea";
+import { handlePolluxAction } from "../mechanics/castorice";
+import { emitSouldragonAction } from "../mechanics/danHengPermansor";
+import { handleEveyAction } from "../mechanics/evernight";
 import {
 	handleFireflyCountdownAction,
 	isFireflyCountdownAction,
-} from "../mechanics/fireflyCombustion";
+} from "../mechanics/firefly";
 import { hasGilgamesh } from "../mechanics/gilgamesh";
+import { clearSpAventurineAhaSpeedBuff } from "../mechanics/spAventurine";
 import {
 	endSpBladeInfiniteFury,
 	isSpBladeCountdown,
 } from "../mechanics/spBlade";
+import {
+	endSpRobinFeverFromCountdown,
+	handleSongbirdsAction,
+	isSpRobinFeverCountdown,
+} from "../mechanics/spRobin";
 import type { GeneratedAction, SkillCode } from "../utils/actionSequence";
 import { emitMemeAdvanceAction } from "./effects";
 import { emitElationSkills } from "./interrupts";
@@ -143,8 +149,43 @@ export function handleSpecialAction({
 		emitGodmodeExtraAction(key, actionValue);
 		emitSparxieExtraAction(key, actionValue);
 		emitEvanesciaFuaAction(key, actionValue);
+		// 水砂：阿哈时刻结束后解除 +25 加速，下次行动按解除后的速度排定。
+		clearSpAventurineAhaSpeedBuff(states);
+		const nextAhaSpeed = calcAhaSpeed();
 		states[stateIndex].actionNo += 1;
-		states[stateIndex].nextActionValue = actionValue + 10000 / ahaSpeed;
+		states[stateIndex].currentSpeed = nextAhaSpeed;
+		states[stateIndex].nextActionValue = actionValue + 10000 / nextAhaSpeed;
+		return true;
+	}
+
+	// ── Fever减半倒计时：SP Robin Fever 结束 ──
+	if (isSpRobinFeverCountdown(states[stateIndex])) {
+		endSpRobinFeverFromCountdown(states, stateIndex, actions, key, actionValue);
+		return true;
+	}
+
+	// ── 晴空乐手（SP Robin 忆灵）行动 ──
+	if (states[stateIndex].isSongbirdsAction) {
+		const songbirdsInterrupts = input.ultInterrupts[key] ?? [];
+		for (let ai = 0; ai < songbirdsInterrupts.length; ai++) {
+			const int = songbirdsInterrupts[ai];
+			if (int.timing !== "before") continue;
+			emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, actionValue);
+		}
+		handleSongbirdsAction(states, stateIndex, actions, key, actionValue);
+		emitMemeAdvanceAction({
+			input,
+			actions,
+			states,
+			sourceKey: key,
+			actionValue,
+			activeOdes,
+		});
+		for (let ai = 0; ai < songbirdsInterrupts.length; ai++) {
+			const int = songbirdsInterrupts[ai];
+			if (int.timing !== "after") continue;
+			emitSpecialInterruptAction(`${key}-interrupt-${ai}`, int, actionValue);
+		}
 		return true;
 	}
 

@@ -4,7 +4,7 @@ import {
 	hasHyacineIca,
 	summonIca,
 	triggerIcaExtraTurn,
-} from "../../mechanics/hyacineIca";
+} from "../../mechanics/hyacine";
 import {
 	type CharacterConfig,
 	isCharacterTarget,

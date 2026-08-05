@@ -3,12 +3,12 @@ import {
 	hasPassive,
 	hasSkillEffect,
 } from "../data/characters";
-import { handleEveyAction } from "../mechanics/evernightEvey";
+import { handleEveyAction } from "../mechanics/evernight";
 import {
 	createIcaAction,
 	handleHyacineQ,
 	hasHyacineIca,
-} from "../mechanics/hyacineIca";
+} from "../mechanics/hyacine";
 import {
 	applyMydeiVendettaToggle,
 	emitMydeiGodslayerExtraAction,
@@ -18,11 +18,13 @@ import {
 	freezeAlliesForDomain,
 	getPhainonDomainEndIndex,
 	getPhainonDomainInterval,
-} from "../mechanics/phainonDomain";
+} from "../mechanics/phainon";
+import { hasSilverWolfGodmode, isInGodmode } from "../mechanics/silverWolf";
 import {
-	hasSilverWolfGodmode,
-	isInGodmode,
-} from "../mechanics/silverWolfGodmode";
+	hasSpAventurine,
+	isSpAventurineElationEnhanced,
+} from "../mechanics/spAventurine";
+import { consumeFeverAdvance, hasAllyAdvanceBlock } from "../mechanics/spRobin";
 import {
 	type GeneratedAction,
 	getCharacterCid,
@@ -246,21 +248,30 @@ export function emitSpecialInterruptAction(
 	});
 
 	// 舞舞舞 / 忘归人 全队拉条 + 风套（独立处理，因 qIsFront 语义不同）
+	// 被 SP Robin Q 标记的角色只能保留自身部分。
 	const teamAdvance = getTeamAdvanceOnUltimate(caster.character);
 	if (teamAdvance > 0) {
-		for (
-			let teammateIndex = 0;
-			teammateIndex < states.length;
-			teammateIndex++
-		) {
-			const teammate = states[teammateIndex];
-			if (!canBeAdvancedByDance(teammate.character.kind)) continue;
-			if (teammate.blockNextAdvance) continue;
-			const adv = teamAdvance / teammate.currentSpeed;
-			teammate.nextActionValue = Math.max(
+		if (hasAllyAdvanceBlock(caster)) {
+			caster.nextActionValue = Math.max(
 				actionValue,
-				teammate.nextActionValue - adv,
+				caster.nextActionValue - teamAdvance / caster.currentSpeed,
 			);
+		} else {
+			for (
+				let teammateIndex = 0;
+				teammateIndex < states.length;
+				teammateIndex++
+			) {
+				const teammate = states[teammateIndex];
+				if (!canBeAdvancedByDance(teammate.character.kind)) continue;
+				if (consumeFeverAdvance(teammate, teamAdvance)) continue;
+				if (teammate.blockNextAdvance) continue;
+				const adv = teamAdvance / teammate.currentSpeed;
+				teammate.nextActionValue = Math.max(
+					actionValue,
+					teammate.nextActionValue - adv,
+				);
+			}
 		}
 	}
 	if (isCharacterTarget(caster.character) && caster.character.hasWindSet) {
@@ -670,15 +681,21 @@ export function emitSingleElationSkill(
 	parentKey: string,
 	actionValue: number,
 	actions: GeneratedAction[],
+	options: { inAhaMoment?: boolean; keySuffix?: string } = {},
 ): void {
+	// 水砂：热意 >= 10 且处于阿哈时刻内（或 E6 全强化）时为强化欢愉技。
+	const enhanced =
+		hasSpAventurine(elationState.character) &&
+		isSpAventurineElationEnhanced(elationState, options.inAhaMoment ?? false);
 	actions.push({
-		key: `${parentKey}-elation-${elationState.character.id}`,
+		key: `${parentKey}-elation-${elationState.character.id}${options.keySuffix ?? ""}`,
 		characterId: elationState.character.id,
 		actionNo: 0,
 		actionValue,
 		skill: "ES" as SkillCode,
 		speed: 0,
 		isElationSkill: true,
+		...(enhanced ? { isEnhancedElationSkill: true } : {}),
 		elationSkillParentKey: parentKey,
 		lockedSkill: true,
 	});
@@ -693,7 +710,9 @@ export function emitElationSkills(
 ): void {
 	const elationChars = getElationParticipants(states);
 	for (const elationState of elationChars) {
-		emitSingleElationSkill(elationState, parentKey, actionValue, actions);
+		emitSingleElationSkill(elationState, parentKey, actionValue, actions, {
+			inAhaMoment: true,
+		});
 	}
 }
 

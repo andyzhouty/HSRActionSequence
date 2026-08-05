@@ -12,7 +12,11 @@ export function selectNextAction(
 	states: ActionState[],
 	input: SimulateActionsInput,
 ): ActionCandidate | undefined {
-	const candidates = states.map((state, stateIndex) => {
+	const candidates: ActionCandidate[] = [];
+	for (let stateIndex = 0; stateIndex < states.length; stateIndex++) {
+		const state = states[stateIndex];
+		// Fever 中的 SP Robin 无自身回合，不作为候选。
+		if (state.spRobinInFever) continue;
 		const key =
 			state.isMemeState && state.memeAdvanceSourceKey
 				? `${state.memeAdvanceSourceKey}-meme`
@@ -27,15 +31,15 @@ export function selectNextAction(
 								state.polluxGeneration > 1
 							? `${state.character.id}-${state.actionNo}-g${state.polluxGeneration}`
 							: `${state.character.id}-${state.actionNo}`;
-		return {
+		candidates.push({
 			stateIndex,
 			key,
 			actionValue: toNonNegativeNumber(
 				input.overrides[key],
 				state.nextActionValue,
 			),
-		};
-	});
+		});
+	}
 	candidates.sort((a, b) => {
 		if (a.actionValue !== b.actionValue) return a.actionValue - b.actionValue;
 		const aState = states[a.stateIndex];

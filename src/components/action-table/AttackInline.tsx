@@ -1,5 +1,5 @@
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
-import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
+import { hasSilverWolfGodmode } from "../../mechanics/silverWolf";
 import type { GeneratedAction } from "../../utils/actionSequence";
 import {
 	getCharacterCid,
@@ -59,6 +59,12 @@ export function AttackInline({ action }: { action: GeneratedAction }) {
 		return null;
 	if (
 		hasSkillEffect(attacker.name, "Q", "archerUltimate") &&
+		["A", "E", "Q"].includes(action.skill)
+	)
+		return null;
+	// 砂金·戏浪的 A/E/Q 均固定视为攻击，不显示开关。
+	if (
+		getCharacterCid(attacker.name) === "1513" &&
 		["A", "E", "Q"].includes(action.skill)
 	)
 		return null;

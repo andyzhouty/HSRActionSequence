@@ -17,6 +17,8 @@ export interface HyacineActionState {
 	icaOnField?: boolean;
 	afterRain?: number;
 	hyacineE2SpeedBonus?: number;
+	/** 晴空乐手忆灵速度由 SP Robin 派生，不吃直接百分比加速。 */
+	isSongbirdsAction?: boolean;
 }
 
 // ── 判断 ──
@@ -121,6 +123,8 @@ export function applyHyacineE2SpeedBuff(states: HyacineActionState[]) {
 	for (const state of states) {
 		const kind = state.character.kind;
 		if (kind !== "角色" && kind !== "忆灵") continue;
+		// 晴空乐手速度由 SP Robin 的百分比 buff 比例派生，不直接叠加。
+		if (state.isSongbirdsAction) continue;
 		const bonus = state.baseSpeed * 0.3;
 		const oldSpeed = state.currentSpeed;
 		state.currentSpeed += bonus;
@@ -145,7 +149,8 @@ export function applyActiveHyacineE2SpeedBuffToSummon(
 	if (
 		!hyacine ||
 		(hyacine.hyacineE2SpeedBonus ?? 0) <= 0 ||
-		summon.character.kind !== "忆灵"
+		summon.character.kind !== "忆灵" ||
+		summon.isSongbirdsAction
 	)
 		return;
 	const oldSpeed = summon.currentSpeed;

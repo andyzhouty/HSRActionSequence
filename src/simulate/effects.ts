@@ -3,8 +3,13 @@ import {
 	findGarmentmakerState,
 	getAglaeaStackLimit,
 	syncGarmentmakerStacksToAglaea,
-} from "../mechanics/aglaeaGarmentmaker";
-import { applyActiveHyacineE2SpeedBuffToSummon } from "../mechanics/hyacineIca";
+} from "../mechanics/aglaea";
+import { applyActiveHyacineE2SpeedBuffToSummon } from "../mechanics/hyacine";
+import {
+	consumeFeverAdvance,
+	consumeFeverFullPull,
+	hasAllyAdvanceBlock,
+} from "../mechanics/spRobin";
 import {
 	type CharacterConfig,
 	canUseSkillCode,
@@ -235,6 +240,8 @@ export function handleCyrenePostUltimate({
 	void activeOdes;
 	const cyreneRule = getCyreneUltimateRule(character.name);
 	const qCounter = incrementCyreneQCounter(states[casterIndex]);
+	// SP Robin Q debuff：被标记的昔涟只保留自身拉条部分。
+	const restrictToSelf = hasAllyAdvanceBlock(states[casterIndex]);
 
 	// 强化 Q：Q_counter = 3n+2 时德谬歌获得额外回合
 	if (shouldTriggerEnhancedQ(qCounter)) {
@@ -255,7 +262,12 @@ export function handleCyrenePostUltimate({
 		});
 		// E6：强化 Q 结束后 24% 全队拉条（Q_counter = 3k+2, k>0）
 		if (character.eidolon >= 6 && shouldTriggerE6TeamAdvance24(qCounter)) {
-			applyCyreneE6EnhancedQPull(states, actionValue);
+			applyCyreneE6EnhancedQPull(
+				states,
+				casterIndex,
+				actionValue,
+				restrictToSelf,
+			);
 		}
 	}
 	// E6 首次大：全队 100% 拉条（Q_counter = 1 时）
@@ -266,6 +278,7 @@ export function handleCyrenePostUltimate({
 			actionValue,
 			excludeSelf,
 			sortSelfByOriginalActionOrder,
+			restrictToSelf,
 		);
 	}
 }
@@ -277,6 +290,7 @@ export function applyCyreneE6FirstUltimatePull(
 	actionValue: number,
 	excludeSelf = false,
 	sortSelfByOriginalActionOrder = false,
+	restrictToSelf = false,
 ) {
 	// 昔涟自身回合的 Q 已完成本次行动，因此她应取得拉条后的第一动。
 	if (!excludeSelf && !sortSelfByOriginalActionOrder) {
@@ -285,6 +299,7 @@ export function applyCyreneE6FirstUltimatePull(
 			cyrene.nextActionValue = actionValue;
 		}
 	}
+	if (restrictToSelf) return;
 
 	// 外部插队 Q 将昔涟与其他我方角色、驻场忆灵一起按拉条前的相对 AV 排列。
 	const allyOrder = states
@@ -302,6 +317,7 @@ export function applyCyreneE6FirstUltimatePull(
 
 	for (let rank = 0; rank < allyOrder.length; rank++) {
 		const target = states[allyOrder[rank].index];
+		if (consumeFeverFullPull(target)) continue;
 		if (target.blockNextAdvance) continue;
 		const rankOffset = excludeSelf || sortSelfByOriginalActionOrder ? 0 : 1;
 		target.nextActionValue = actionValue + (rank + rankOffset) * 0.0001;
@@ -311,10 +327,15 @@ export function applyCyreneE6FirstUltimatePull(
 /** 触发 E6 24% 全队拉条（强化 Q 结束后），但不得越过德谬歌强化 Q 的 AV */
 export function applyCyreneE6EnhancedQPull(
 	states: ActionState[],
+	cyreneIndex: number,
 	actionValue: number,
+	restrictToSelf = false,
 ) {
-	for (const teammate of states) {
+	for (let index = 0; index < states.length; index++) {
+		const teammate = states[index];
+		if (restrictToSelf && index !== cyreneIndex) continue;
 		if (!isAllyTarget(teammate.character.kind)) continue;
+		if (consumeFeverAdvance(teammate, 2400)) continue;
 		if (teammate.blockNextAdvance) continue;
 		const advance = 2400 / teammate.currentSpeed;
 		teammate.nextActionValue = Math.max(
@@ -490,8 +511,12 @@ export function applyOdeSelection(
 		activeOdes.set(selection.targetId, [...filtered, effect]);
 	}
 
-	if (ode.effects?.includes("immediateTurn") && !target.blockNextAdvance) {
-		target.nextActionValue = actionValue;
+	if (ode.effects?.includes("immediateTurn")) {
+		if (consumeFeverFullPull(target)) {
+			// Fever 中：累计为被提前量。
+		} else if (!target.blockNextAdvance) {
+			target.nextActionValue = actionValue;
+		}
 	}
 	// 浪漫之诗：使阿格莱雅衣匠层数立刻达到上限
 	if (ode.effects?.includes("odeToRomance") && target) {
@@ -637,6 +662,14 @@ export function applyMemeAdvanceTarget(
 	if (!isAllyTarget(target.character.kind) || target.blockNextAdvance) return;
 	if (target.nextActionValue <= actionValue) return;
 	const rule = getMemeAdvanceRule(owner.character.name);
+	if (
+		consumeFeverAdvance(
+			target,
+			((target.spRobinFeverRemainingDistance ?? 0) * rule.advancePercent) / 100,
+		)
+	) {
+		return;
+	}
 	const remainingActionValue = target.nextActionValue - actionValue;
 	target.nextActionValue =
 		actionValue +

@@ -8,7 +8,7 @@ import {
 	checkBreakTrigger,
 	shouldActivateCombustion,
 	shouldCheckBreakTrigger,
-} from "../../mechanics/fireflyCombustion";
+} from "../../mechanics/firefly";
 import {
 	getCyreneUltimateRule,
 	isCharacterTarget,

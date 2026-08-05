@@ -77,6 +77,8 @@ export function createMockContext(
 		setMydeiVendettaToggles: vi.fn(),
 		mydeiGodslayerToggles: {},
 		setMydeiGodslayerToggles: vi.fn(),
+		spRobinFeverToggles: {},
+		setSpRobinFeverToggles: vi.fn(),
 		hyacineE2Active: true,
 		setHyacineE2Active: vi.fn(),
 		meritTarget: undefined,

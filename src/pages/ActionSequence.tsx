@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import ActionPanel from "../components/ActionPanel";
 import CharacterPanel from "../components/CharacterPanel";
 import { ActionSequenceCtx } from "../contexts/ActionSequenceContext";
-import { hasDanHengSouldragon } from "../mechanics/danHengSouldragon";
+import { hasDanHengSouldragon } from "../mechanics/danHengPermansor";
 import {
 	type CharacterConfig,
 	evernightResourceName,
@@ -137,6 +137,8 @@ export default function ActionSequence({
 		setMydeiVendettaToggles,
 		mydeiGodslayerToggles,
 		setMydeiGodslayerToggles,
+		spRobinFeverToggles,
+		setSpRobinFeverToggles,
 		sameAVOrder,
 		setSameAVOrder,
 		hyacineE2Active,
@@ -463,6 +465,8 @@ export default function ActionSequence({
 				setMydeiVendettaToggles,
 				mydeiGodslayerToggles: mydeiGodslayerToggles ?? {},
 				setMydeiGodslayerToggles,
+				spRobinFeverToggles: spRobinFeverToggles ?? {},
+				setSpRobinFeverToggles,
 				sameAVOrder: sameAVOrder ?? {},
 				setSameAVOrder,
 				hyacineE2Active,

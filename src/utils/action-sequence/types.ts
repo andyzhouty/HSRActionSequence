@@ -73,6 +73,7 @@ export type GeneratedAction = {
 	isSouldragonAction?: boolean;
 	souldragonOwnerId?: string;
 	isElationSkill?: boolean;
+	isEnhancedElationSkill?: boolean;
 	hasElationSkills?: boolean;
 	elationSkillParentKey?: string;
 	isFuaAction?: boolean;
@@ -83,6 +84,9 @@ export type GeneratedAction = {
 	isSpBladeCountdownAction?: boolean;
 	isSpBladeFuryActivation?: boolean;
 	isMydeiGodslayerAction?: boolean;
+	isSongbirdsAction?: boolean;
+	songbirdsOwnerId?: string;
+	isSpRobinFeverCountdownAction?: boolean;
 	interruptTiming?: "before" | "after";
 	isArcherExtraE?: boolean;
 	archerExtraEIndex?: number;
@@ -99,6 +103,8 @@ export type GeneratedAction = {
 	isGilgameshTechniqueAction?: boolean;
 	isTheHertaEnhancedE?: boolean;
 	theHertaInspiration?: number;
+	/** 砂金·戏浪：该行动时点的热意值。 */
+	spAventurineFervor?: number;
 };
 
 export type SpeedAdjustment = { value: string; mode: SpeedChangeMode };
@@ -176,6 +182,12 @@ export type EveyRule = {
 	dismissSkill: SkillCode;
 };
 
+export type SummerSongbirdsRule = {
+	memospriteName: string;
+	memospriteSkill: SkillCode;
+	memospriteSpeedRatio: number;
+};
+
 export type DomainRule = {
 	defaultBaseSpeed: number;
 	normalEquivalentSpeedCoefficient: number;
@@ -220,6 +232,7 @@ export type SavedData = {
 	mydeiVendettaToggles?: Record<string, boolean>;
 	mydeiGodslayerToggles?: Record<string, boolean>;
 	sameAVOrder?: Record<string, number>;
+	spRobinFeverToggles?: Record<string, boolean>;
 	hyacineE2Active?: boolean;
 	meritTarget?: string;
 	dancePartner?: string;

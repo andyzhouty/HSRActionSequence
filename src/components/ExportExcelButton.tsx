@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import * as XLSX from "xlsx";
 import { useActionSequence } from "../contexts/ActionSequenceContext";
-import { getEffectiveCharacterBaseSpeed } from "../mechanics/baseSpeed";
+import { getEffectiveCharacterBaseSpeed } from "../mechanics/lightconeEffects";
 import type { UltInterrupt } from "../utils/actionSequence";
 import {
 	ensureFileExtension,

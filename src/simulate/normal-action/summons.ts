@@ -3,8 +3,9 @@
  * 从 normalAction.ts 提取。龙灵同袍切换因依赖运行时可变状态保留在原文件。
  */
 import { hasSkillEffect } from "../../data/characters";
-import { handleAglaeaSkillEffects } from "../../mechanics/aglaeaGarmentmaker";
-import { hasEvernightEvey, summonEveyState } from "../../mechanics/evernightEvey";
+import { handleAglaeaSkillEffects } from "../../mechanics/aglaea";
+import { hasEvernightEvey, summonEveyState } from "../../mechanics/evernight";
+import { hasSpRobin, summonSongbirdsState } from "../../mechanics/spRobin";
 import { isCharacterTarget, type SkillCode } from "../../utils/actionSequence";
 import { summonMemeState } from "../effects";
 import type { ActionState } from "../types";
@@ -48,6 +49,16 @@ export function handleSummons(params: SummonsParams): void {
 			immediate: true,
 			sameActionPriority: -2,
 		});
+	}
+
+	// SP Robin E: summon Summer Songbirds
+	if (
+		isCharacterTarget(character) &&
+		hasSpRobin(character) &&
+		resolvedSkill.includes("E") &&
+		!states[stateIndex].songbirdsOnField
+	) {
+		summonSongbirdsState(states, character, actionValue);
 	}
 
 	// Aglaea E: summon Garmentmaker (Q case handled by unified function)

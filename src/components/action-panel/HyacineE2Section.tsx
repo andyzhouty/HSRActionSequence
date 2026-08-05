@@ -1,5 +1,5 @@
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
-import { hasHyacineIca } from "../../mechanics/hyacineIca";
+import { hasHyacineIca } from "../../mechanics/hyacine";
 
 export function HyacineE2Section() {
 	const ctx = useActionSequence();

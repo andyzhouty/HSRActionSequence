@@ -1,7 +1,7 @@
 import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
-import { hasHyacineIca } from "../../mechanics/hyacineIca";
-import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
+import { hasHyacineIca } from "../../mechanics/hyacine";
+import { hasSilverWolfGodmode } from "../../mechanics/silverWolf";
 import { getDisplayOrderedActions } from "../../utils/actionDisplayOrder";
 import type { SpeedChangeMode } from "../../utils/actionSequence";
 import {
@@ -23,6 +23,7 @@ import { isGodmodeActiveAtAction } from "./godmodeActivity";
 import { HyacineE2Section } from "./HyacineE2Section";
 import { MydeiVendettaSection } from "./MydeiVendettaSection";
 import { SpBladeExtraTurnSection } from "./SpBladeExtraTurnSection";
+import { SpRobinFeverSection } from "./SpRobinFeverSection";
 
 /** Sub-component: the floating context menu content */
 export function ActionMenuContent() {
@@ -160,6 +161,9 @@ export function ActionMenuContent() {
 
 			{/* Mydei vendetta and godslayer extra turn */}
 			<MydeiVendettaSection />
+
+			{/* SP Robin Fever switch */}
+			<SpRobinFeverSection />
 
 			{/* Hyacine E2 section */}
 			<HyacineE2Section />

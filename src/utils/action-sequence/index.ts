@@ -54,6 +54,7 @@ export type {
 	SkillCode,
 	SpeedAdjustment,
 	SpeedChangeMode,
+	SummerSongbirdsRule,
 	TargetKind,
 	UltInterrupt,
 } from "./types";
@@ -307,6 +308,8 @@ export const gilgameshInterestResourceName = "兴致";
 export const ashveilFuaResourceName = "不死途追击";
 export const kafkaFuaResourceName = "卡芙卡追击";
 export const spBladeStackResourceName = "sp刃叠层";
+export const spRobinFeverResourceName = "氛围值";
+export const spAventurineFervorResourceName = "热意";
 export const CURRENT_SAVEDATA_VERSION = 1;
 
 export function isCharacterTarget(character: CharacterConfig) {
@@ -359,6 +362,22 @@ export function hasSpBladeCharacter(characters: CharacterConfig[]) {
 	);
 }
 
+export function hasSpRobinCharacter(characters: CharacterConfig[]) {
+	return characters.some(
+		(character) =>
+			isCharacterTarget(character) &&
+			getCharacterCid(character.name) === "1512",
+	);
+}
+
+export function hasSpAventurineCharacter(characters: CharacterConfig[]) {
+	return characters.some(
+		(character) =>
+			isCharacterTarget(character) &&
+			getCharacterCid(character.name) === "1513",
+	);
+}
+
 export function normalizeResourcesForCharacters(
 	resources: string[],
 	characters: CharacterConfig[],
@@ -369,6 +388,8 @@ export function normalizeResourcesForCharacters(
 	const hasAshveil = hasAshveilCharacter(characters);
 	const hasKafka = hasKafkaCharacter(characters);
 	const hasSpBlade = hasSpBladeCharacter(characters);
+	const hasSpRobin = hasSpRobinCharacter(characters);
+	const hasSpAventurine = hasSpAventurineCharacter(characters);
 	const filtered = resources.filter(
 		(resource) =>
 			resource !== evernightResourceName &&
@@ -377,6 +398,8 @@ export function normalizeResourcesForCharacters(
 			resource !== ashveilFuaResourceName &&
 			resource !== kafkaFuaResourceName &&
 			resource !== spBladeStackResourceName &&
+			resource !== spRobinFeverResourceName &&
+			resource !== spAventurineFervorResourceName &&
 			(!hasArcher || resource !== defaultResources[0]),
 	);
 	const locked = [
@@ -386,6 +409,8 @@ export function normalizeResourcesForCharacters(
 		...(hasAshveil ? [ashveilFuaResourceName] : []),
 		...(hasKafka ? [kafkaFuaResourceName] : []),
 		...(hasSpBlade ? [spBladeStackResourceName] : []),
+		...(hasSpRobin ? [spRobinFeverResourceName] : []),
+		...(hasSpAventurine ? [spAventurineFervorResourceName] : []),
 	];
 	return [...locked, ...filtered].slice(0, maxResources);
 }
@@ -404,6 +429,10 @@ export function isLockedResourceNameForCharacters(
 		(hasKafkaCharacter(characters) && resourceName === kafkaFuaResourceName) ||
 		(hasSpBladeCharacter(characters) &&
 			resourceName === spBladeStackResourceName) ||
+		(hasSpRobinCharacter(characters) &&
+			resourceName === spRobinFeverResourceName) ||
+		(hasSpAventurineCharacter(characters) &&
+			resourceName === spAventurineFervorResourceName) ||
 		(hasArcherCharacter(characters) &&
 			(resourceName === defaultResources[0] ||
 				resourceName === archerFuaResourceName))
@@ -444,7 +473,8 @@ export function canSelectAllyForSkill(
 	const targetsWithQ =
 		skill === "Q" &&
 		(hasSkillEffect(character.name, "Q", "allyTargetSelectable") ||
-			hasSkillEffect(character.name, "Q", "elationTrailblazerUltimate"));
+			hasSkillEffect(character.name, "Q", "elationTrailblazerUltimate") ||
+			hasSkillEffect(character.name, "Q", "spRobinUltimate"));
 	return targetsWithE || targetsWithQ;
 }
 
@@ -462,13 +492,19 @@ export function isNonAttackSkill(
 	if (cid === "1014" && (skill === "A" || skill === "E" || skill === "Q")) {
 		return false;
 	}
+	// 砂金·戏浪的 A/E/Q 均固定视为攻击。
+	if (cid === "1513" && (skill === "A" || skill === "E" || skill === "Q")) {
+		return false;
+	}
 	// 缇宝 E 固定不攻击；Q 和 Z 保持攻击判定。
 	if (cid === "1403" && skill === "E") return true;
 	return (
 		canSelectAllyForSkill(character, skill) ||
 		((cid === "1303" || cid === "1309") && (skill === "E" || skill === "Q")) ||
 		(cid === "1408" && skill === "Q") ||
-		(cid === "1217" && skill === "E")
+		(cid === "1217" && skill === "E") ||
+		// 知更鸟·晴歌 E 固定非攻击（Q 因可选目标已固定非攻击）。
+		(cid === "1512" && (skill === "E" || skill === "Q"))
 	);
 }
 

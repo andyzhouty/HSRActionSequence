@@ -42,6 +42,7 @@ export type ActionSequenceContextType = {
 	spBladeExtraTurnToggles: Record<string, boolean>;
 	mydeiVendettaToggles: Record<string, boolean>;
 	mydeiGodslayerToggles: Record<string, boolean>;
+	spRobinFeverToggles: Record<string, boolean>;
 	hyacineE2Active: boolean;
 	meritTarget?: string;
 	dancePartner?: string;
@@ -146,6 +147,9 @@ export type ActionSequenceContextType = {
 		React.SetStateAction<Record<string, boolean>>
 	>;
 	setMydeiGodslayerToggles: React.Dispatch<
+		React.SetStateAction<Record<string, boolean>>
+	>;
+	setSpRobinFeverToggles: React.Dispatch<
 		React.SetStateAction<Record<string, boolean>>
 	>;
 	sameAVOrder: Record<string, number>;

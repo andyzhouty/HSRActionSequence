@@ -7,6 +7,12 @@ export function advanceNotPastCurrent(
 	currentActionValue: number,
 	advance: number,
 ): void {
+	// Fever 中的 SP Robin 无自身回合，被拉条时累计"被行动提前的量"，Fever 结束时结算。
+	if (state.spRobinInFever) {
+		state.spRobinFeverAdvancedDistance =
+			(state.spRobinFeverAdvancedDistance ?? 0) + advance * state.currentSpeed;
+		return;
+	}
 	if (state.blockNextAdvance) return;
 	state.nextActionValue = Math.max(
 		currentActionValue,
@@ -19,6 +25,11 @@ export function pullToCurrentAction(
 	state: ActionState,
 	currentActionValue: number,
 ): void {
+	if (state.spRobinInFever) {
+		state.spRobinFeverAdvancedDistance =
+			state.spRobinFeverRemainingDistance ?? 0;
+		return;
+	}
 	if (!state.blockNextAdvance) state.nextActionValue = currentActionValue;
 }
 

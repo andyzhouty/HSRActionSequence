@@ -1,5 +1,5 @@
 import { hasSkillEffect } from "../data/characters";
-import { expirePhainonDomainSpeedBonus } from "../mechanics/phainonDomain";
+import { expirePhainonDomainSpeedBonus } from "../mechanics/phainon";
 import type { GeneratedAction } from "../utils/actionSequence";
 import { getCharacterCid, type SkillCode } from "../utils/actionSequence";
 import {

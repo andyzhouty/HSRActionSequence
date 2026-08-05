@@ -1,4 +1,5 @@
 import { type Dispatch, type SetStateAction, useEffect, useMemo } from "react";
+import { getSummerSongbirdsRule } from "../../mechanics/spRobin";
 import type { SimulateActionsInput } from "../../simulate/actions";
 import { simulateActions } from "../../simulate/actions";
 import {
@@ -12,6 +13,7 @@ import {
 	getPolluxRule,
 	getTargetDefaultName,
 	hasSkillEffect,
+	toPositiveNumber,
 } from "../../utils/actionSequence";
 import type { NormalizedSavedData } from "./savedData";
 import { pruneRecord } from "./savedData";
@@ -63,6 +65,7 @@ function buildSimulationConfig(
 		spBladeExtraTurnToggles: savedData.spBladeExtraTurnToggles,
 		mydeiVendettaToggles: savedData.mydeiVendettaToggles,
 		mydeiGodslayerToggles: savedData.mydeiGodslayerToggles,
+		spRobinFeverToggles: savedData.spRobinFeverToggles,
 		sameAVOrder: savedData.sameAVOrder,
 	};
 }
@@ -147,6 +150,25 @@ function buildMemospriteTargets(characters: CharacterConfig[]) {
 				name: rule.memospriteName,
 				speed: String(rule.memospriteSpeed),
 				baseSpeed: String(rule.memospriteSpeed),
+				hasVonwacq: false,
+				hasWindSet: false,
+				hasDance: false,
+				eidolon: 0,
+				superimpose: 1,
+				lc_id: 0,
+			});
+		}
+		if (hasSkillEffect(character.name, "E", "summonSummerSongbirds")) {
+			const rule = getSummerSongbirdsRule(character.name);
+			const panelSpeed = toPositiveNumber(character.speed, 98);
+			const songbirdsSpeed = panelSpeed * rule.memospriteSpeedRatio;
+			memos.push({
+				...character,
+				id: `${character.id}-songbirds`,
+				kind: "忆灵",
+				name: rule.memospriteName,
+				speed: String(songbirdsSpeed),
+				baseSpeed: String(songbirdsSpeed),
 				hasVonwacq: false,
 				hasWindSet: false,
 				hasDance: false,
@@ -286,6 +308,7 @@ export function useGeneratedActions({
 			const nextMydeiGodslayerToggles = pruneToggleMap(
 				prev.mydeiGodslayerToggles,
 			);
+			const nextSpRobinFeverToggles = pruneToggleMap(prev.spRobinFeverToggles);
 			const nextSaberAdvanceToggles = pruneToggleMap(prev.saberAdvanceToggles);
 			changed =
 				changed ||
@@ -303,6 +326,7 @@ export function useGeneratedActions({
 				nextSpBladeExtraTurnToggles !== prev.spBladeExtraTurnToggles ||
 				nextMydeiVendettaToggles !== prev.mydeiVendettaToggles ||
 				nextMydeiGodslayerToggles !== prev.mydeiGodslayerToggles ||
+				nextSpRobinFeverToggles !== prev.spRobinFeverToggles ||
 				nextSaberAdvanceToggles !== prev.saberAdvanceToggles;
 
 			if (!changed) return prev;
@@ -324,6 +348,7 @@ export function useGeneratedActions({
 				spBladeExtraTurnToggles: nextSpBladeExtraTurnToggles,
 				mydeiVendettaToggles: nextMydeiVendettaToggles,
 				mydeiGodslayerToggles: nextMydeiGodslayerToggles,
+				spRobinFeverToggles: nextSpRobinFeverToggles,
 				saberAdvanceToggles: nextSaberAdvanceToggles,
 			};
 		});

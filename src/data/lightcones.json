@@ -529,6 +529,12 @@
 			"path": "Elation"
 		},
 		{
+			"id": 21066,
+			"name": "放个短假",
+			"rarity": 4,
+			"path": "Elation"
+		},
+		{
 			"id": 22000,
 			"name": "新手任务开始前",
 			"rarity": 4,
@@ -575,6 +581,12 @@
 			"name": "未来，有我们一起",
 			"rarity": 4,
 			"path": "Elation"
+		},
+		{
+			"id": 22008,
+			"name": "向着地平线的终点",
+			"rarity": 4,
+			"path": "Hunt"
 		},
 		{
 			"id": 23000,
@@ -947,6 +959,18 @@
 			"name": "所见即我",
 			"rarity": 5,
 			"path": "Destruction"
+		},
+		{
+			"id": 23063,
+			"name": "你将起身歌唱",
+			"rarity": 5,
+			"path": "Remembrance"
+		},
+		{
+			"id": 23064,
+			"name": "向浪花掷下盛夏",
+			"rarity": 5,
+			"path": "Elation"
 		},
 		{
 			"id": 24000,

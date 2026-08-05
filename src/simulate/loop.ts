@@ -55,6 +55,9 @@ export function runSimulationLoop(params: {
 
 		runPreActionChecks(runtime, context);
 
+		// 若在此行动点开启了 Fever（含 SP Robin 自己的回合），该行动被跳过。
+		if (states[stateIndex].spRobinInFever) continue;
+
 		if (
 			handleSpecialAction({
 				input,

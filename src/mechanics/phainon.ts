@@ -1,10 +1,12 @@
+import type { ActionState } from "../simulate/types";
 import {
 	type CharacterConfig,
 	type DomainRule,
 	getCounterWDomainRule,
 	type SkillCode,
 } from "../utils/actionSequence";
-import { getEffectiveCharacterBaseSpeed } from "./baseSpeed";
+import { getEffectiveCharacterBaseSpeed } from "./lightconeEffects";
+import { hasSpRobin, recordSpRobinPercentBuff } from "./spRobin";
 
 export type PhainonDomainState = {
 	keyPrefix: string;
@@ -24,6 +26,11 @@ type PhainonMutableState = {
 	blockNextAdvance?: boolean;
 	phainonDomainFrozenDistance?: number;
 	spBladeCountdownOwnerId?: string;
+	/** 晴空乐手忆灵：速度由 SP Robin 的百分比 buff 比例派生，不直接吃全队百分比加速。 */
+	isSongbirdsAction?: boolean;
+	spRobinMemospritePercentBuff?: number;
+	/** Fever减半倒计时：境界冻结期间同步停滞，避免 Fever 在境界内结束。 */
+	spRobinFeverCountdownOwnerId?: string;
 };
 
 function isAllyTarget(kind: string): boolean {
@@ -66,6 +73,28 @@ export function applyPhainonDomainPauseAndSpeedBonus(
 				domainEndActionValue + remainingDistance / state.currentSpeed;
 			continue;
 		}
+		// Fever减半倒计时：境界冻结期间同步停滞，境界结束后继续走完剩余距离。
+		if (state.spRobinFeverCountdownOwnerId) {
+			const remainingDistance =
+				state.phainonDomainFrozenDistance ??
+				Math.max(0, state.nextActionValue - startActionValue) *
+					state.currentSpeed;
+			state.phainonDomainFrozenDistance = undefined;
+			state.nextActionValue =
+				domainEndActionValue + remainingDistance / state.currentSpeed;
+			continue;
+		}
+		// 晴空乐手忆灵：速度由 SP Robin 的百分比 buff 比例派生，境界结束加速由其主人同步。
+		if (state.isSongbirdsAction) {
+			const remainingDistance =
+				state.phainonDomainFrozenDistance ??
+				Math.max(0, state.nextActionValue - startActionValue) *
+					state.currentSpeed;
+			state.phainonDomainFrozenDistance = undefined;
+			state.nextActionValue =
+				domainEndActionValue + remainingDistance / state.currentSpeed;
+			continue;
+		}
 		if (!isAllyTarget(state.character.kind)) continue;
 
 		// 不受加速/拉条影响的角色（如知更鸟大招期间）跳过速度 buff，纯平移 AV
@@ -91,6 +120,15 @@ export function applyPhainonDomainPauseAndSpeedBonus(
 			const speedBonus = baseSpeed * speedBonusBaseSpeedRatio;
 			state.phainonDomainSpeedBonus = speedBonus;
 			state.currentSpeed += speedBonus;
+			// SP Robin 忆灵速度公式：同步记录百分比 buff 比例。
+			if (hasSpRobin(state.character)) {
+				recordSpRobinPercentBuff(
+					states as unknown as ActionState[],
+					state.character.id,
+					speedBonusBaseSpeedRatio,
+					domainEndActionValue,
+				);
+			}
 		}
 		state.nextActionValue =
 			domainEndActionValue + remainingActionDistance / state.currentSpeed;
@@ -110,6 +148,14 @@ export function freezeAlliesForDomain(
 		if (index === casterIndex) continue;
 		const state = states[index];
 		if (state.spBladeCountdownOwnerId) {
+			state.phainonDomainFrozenDistance =
+				Math.max(0, state.nextActionValue - startActionValue) *
+				state.currentSpeed;
+			state.nextActionValue = startActionValue + 99999;
+			continue;
+		}
+		// Fever减半倒计时：境界期间同步停滞，避免 Fever 在境界内结束。
+		if (state.spRobinFeverCountdownOwnerId) {
 			state.phainonDomainFrozenDistance =
 				Math.max(0, state.nextActionValue - startActionValue) *
 				state.currentSpeed;

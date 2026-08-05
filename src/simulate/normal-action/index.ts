@@ -1,20 +1,27 @@
 import { hasPassive, hasSkillEffect } from "../../data/characters";
 import { archerMaxConsecutiveEs, hasArcher } from "../../mechanics/archer";
-import { hasCastoriceSummon } from "../../mechanics/castoricePollux";
+import { hasCastoriceSummon } from "../../mechanics/castorice";
 import {
 	summonSouldragonState,
 	updateSouldragonBondmate,
-} from "../../mechanics/danHengSouldragon";
-import { consumeEvernightSpeedBuff } from "../../mechanics/evernightEvey";
+} from "../../mechanics/danHengPermansor";
+import { consumeEvernightSpeedBuff } from "../../mechanics/evernight";
 import { hasGilgamesh } from "../../mechanics/gilgamesh";
-import { expirePhainonDomainSpeedBonus } from "../../mechanics/phainonDomain";
+import { consumeEntrySpeedBuff } from "../../mechanics/lightconeEffects";
+import { expirePhainonDomainSpeedBonus } from "../../mechanics/phainon";
 import { hasSaber } from "../../mechanics/saber";
 import {
 	consumeGodmodeAction,
 	getGodmodeSkill,
 	hasSilverWolfGodmode as hasSilverWolfGodmodeCheck,
 	isInGodmode,
-} from "../../mechanics/silverWolfGodmode";
+} from "../../mechanics/silverWolf";
+import { consumeSpAventurineSpeedBuff } from "../../mechanics/spAventurine";
+import {
+	consumeAllyAdvanceBlock,
+	hasAllyAdvanceBlock,
+	recordSpRobinPercentBuff,
+} from "../../mechanics/spRobin";
 import { hasTheHerta } from "../../mechanics/theHerta";
 import {
 	getCharacterPath,
@@ -393,6 +400,12 @@ export function handleNormalAction(
 						} else {
 							oldTarget.nextActionValue = actionValue + 10000 / newSpeed;
 						}
+						recordSpRobinPercentBuff(
+							states,
+							oldTarget.character.id,
+							-0.2,
+							actionValue,
+						);
 					}
 				}
 				// 添加新目标加速
@@ -409,6 +422,12 @@ export function handleNormalAction(
 						} else {
 							newTarget.nextActionValue = actionValue + 10000 / newSpeed;
 						}
+						recordSpRobinPercentBuff(
+							states,
+							newTarget.character.id,
+							0.2,
+							actionValue,
+						);
 					}
 				}
 				runtime.currentMeritTarget = eTarget;
@@ -534,9 +553,18 @@ export function handleNormalAction(
 		}
 
 		// 全队拉条（舞舞舞 = (14+2s)%, 忘归人 2魂 = 24%）。
+		// 被 SP Robin Q 标记的角色只能保留自身部分。
 		const teamAdvance3 = getTeamAdvanceOnUltimate(character);
 		if (teamAdvance3 > 0 && normalUsesUltimate && !qIsFront) {
-			advanceTeamByUltimate(states, actionValue, teamAdvance3);
+			if (hasAllyAdvanceBlock(states[stateIndex])) {
+				advanceNotPastCurrent(
+					states[stateIndex],
+					actionValue,
+					teamAdvance3 / states[stateIndex].currentSpeed,
+				);
+			} else {
+				advanceTeamByUltimate(states, actionValue, teamAdvance3);
+			}
 		}
 
 		// Bronya A: self advance 30%
@@ -642,6 +670,15 @@ export function handleNormalAction(
 		activeOdes,
 		key,
 	});
+
+	// SP Robin Q debuff：目标的 2 个正常回合在本行动后递减。
+	// 光锥 23063 全队加速：各目标自己的 2 个正常回合在本行动后递减。
+	// 迷迷/小伊卡等可能在本行动中被移除，需确认行动者仍在原位。
+	if (states[stateIndex]?.character.id === character.id) {
+		consumeAllyAdvanceBlock(states[stateIndex]);
+		consumeEntrySpeedBuff(states, stateIndex, actionValue);
+		consumeSpAventurineSpeedBuff(states, stateIndex, actionValue);
+	}
 
 	return {
 		skipAssistFollowUp,

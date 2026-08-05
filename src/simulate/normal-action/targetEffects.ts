@@ -3,6 +3,7 @@
  * 从 normalAction.ts 提取，保持原始顺序和逻辑不变。
  */
 import { hasSkillEffect } from "../../data/characters";
+import { consumeFeverAdvance } from "../../mechanics/spRobin";
 import {
 	getCharacterPath,
 	isCharacterTarget,
@@ -24,8 +25,17 @@ export interface TargetEffectsParams {
 export function handleTargetEffects(params: TargetEffectsParams): void {
 	const { character, skill, states, actionValue, input, key } = params;
 
+	// SP Robin Q 施加的 debuff：被标记的角色不能使其他我方目标行动提前。
+	const actingState = states.find(
+		(state) => state.character.id === character.id,
+	);
+	const blocksAllyAdvance = (actingState?.allyAdvanceBlockTurns ?? 0) > 0;
+
 	// Bronya/Sunday E: pull target to current action value
 	if (
+		!blocksAllyAdvance &&
+		isCharacterTarget(character) &&
+		skill.includes("E") &&
 		isCharacterTarget(character) &&
 		skill.includes("E") &&
 		(hasSkillEffect(character.name, "E", "allyPullToCurrent") ||
@@ -82,6 +92,7 @@ export function handleTargetEffects(params: TargetEffectsParams): void {
 
 	// Sparkle E: 50% advance, not past current action value
 	if (
+		!blocksAllyAdvance &&
 		isCharacterTarget(character) &&
 		hasSkillEffect(character.name, "E", "allyAdvance50NotPast") &&
 		skill.includes("E")
@@ -89,10 +100,16 @@ export function handleTargetEffects(params: TargetEffectsParams): void {
 		const targetId = getSkillTarget(input, key, character);
 		if (targetId) {
 			for (const teammate of states) {
+				if (teammate.character.id !== targetId) continue;
+				// Fever 中的 SP Robin：按剩余路程的 50% 累计被提前量。
 				if (
-					teammate.character.id === targetId &&
-					!teammate.blockNextAdvance
-				) {
+					consumeFeverAdvance(
+						teammate,
+						((teammate.spRobinFeverRemainingDistance ?? 0) * 50) / 100,
+					)
+				)
+					continue;
+				if (!teammate.blockNextAdvance) {
 					const advance = teammate.nextActionValue * 0.5;
 					advanceNotPastCurrent(teammate, actionValue, advance);
 				}

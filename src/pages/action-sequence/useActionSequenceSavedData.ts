@@ -62,6 +62,7 @@ type SavedDataFieldSetters = {
 	setSpBladeExtraTurnToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 	setMydeiVendettaToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 	setMydeiGodslayerToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
+	setSpRobinFeverToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 	setSameAVOrder: Dispatch<SetStateAction<Record<string, number>>>;
 	setHyacineE2Active: Dispatch<SetStateAction<boolean>>;
 	setMeritTarget: Dispatch<SetStateAction<string | undefined>>;
@@ -166,6 +167,8 @@ export function useActionSequenceSavedData() {
 				setSavedField("mydeiVendettaToggles", updater),
 			setMydeiGodslayerToggles: (updater) =>
 				setSavedField("mydeiGodslayerToggles", updater),
+			setSpRobinFeverToggles: (updater) =>
+				setSavedField("spRobinFeverToggles", updater),
 			setSameAVOrder: (updater) => setSavedField("sameAVOrder", updater),
 			setHyacineE2Active: (updater) =>
 				setSavedField("hyacineE2Active", updater),

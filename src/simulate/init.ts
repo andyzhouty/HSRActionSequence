@@ -1,22 +1,32 @@
 import { hasPassive, hasSkillEffect } from "../data/characters";
-import { summonGarmentmakerState } from "../mechanics/aglaeaGarmentmaker";
+import { summonGarmentmakerState } from "../mechanics/aglaea";
 import { clampArcherFuaCharge, hasArcher } from "../mechanics/archer";
-import { getEffectiveCharacterBaseSpeed } from "../mechanics/baseSpeed";
 import {
 	applyCastoriceE2Pull,
 	hasCastoriceSummon,
 	summonPollux,
-} from "../mechanics/castoricePollux";
+} from "../mechanics/castorice";
 import { hasAshveil, hasKafka } from "../mechanics/companionFollowUp";
 import {
 	hasDanHengSouldragon,
 	summonSouldragonState,
-} from "../mechanics/danHengSouldragon";
-import { hasEvernightEvey, summonEveyState } from "../mechanics/evernightEvey";
+} from "../mechanics/danHengPermansor";
+import { hasEvernightEvey, summonEveyState } from "../mechanics/evernight";
 import { hasGilgamesh } from "../mechanics/gilgamesh";
-import { applyHyacineE2SpeedBuff } from "../mechanics/hyacineIca";
+import { applyHyacineE2SpeedBuff } from "../mechanics/hyacine";
+import {
+	applyEntrySpeedBuff,
+	ENTRY_ADVANCE_PCT,
+	ENTRY_LIGHTCONE_ID,
+	getEffectiveCharacterBaseSpeed,
+} from "../mechanics/lightconeEffects";
 import { hasMydei } from "../mechanics/mydei";
+import {
+	applySpAventurineAhaSpeedBonus,
+	hasSpAventurine,
+} from "../mechanics/spAventurine";
 import { hasSpBlade } from "../mechanics/spBlade";
+import { hasSpRobin, recordSpRobinPercentBuff } from "../mechanics/spRobin";
 import {
 	getTheHertaInitialInspiration,
 	hasTheHerta,
@@ -42,10 +52,17 @@ export function buildInitialStates(
 			let advancePct = 0;
 			if (isCharacterTarget(character) && character.hasVonwacq)
 				advancePct += 0.4;
+			if (hasPassive(character.name, "firstActionAdvance20")) advancePct += 0.2;
 			if (hasPassive(character.name, "firstActionAdvance25"))
 				advancePct += 0.25;
 			if (hasPassive(character.name, "firstActionAdvance30")) advancePct += 0.3;
 			if (hasPassive(character.name, "firstActionAdvance40")) advancePct += 0.4;
+			// 光锥 23063 你将起身歌唱：进战装备者行动提前 40%
+			if (
+				isCharacterTarget(character) &&
+				character.lc_id === ENTRY_LIGHTCONE_ID
+			)
+				advancePct += ENTRY_ADVANCE_PCT;
 			const firstActionValue = (10000 * (1 - advancePct)) / speed;
 
 			return {
@@ -77,6 +94,22 @@ export function buildInitialStates(
 				spBladeInfiniteFury: hasSpBlade(character) ? false : undefined,
 				theHertaInspiration: hasTheHerta(character)
 					? getTheHertaInitialInspiration(character)
+					: undefined,
+				spRobinMemospritePercentBuff: hasSpRobin(character) ? 0 : undefined,
+				spAventurineFervor: hasSpAventurine(character)
+					? isTechniqueOn(character)
+						? 2
+						: 0
+					: undefined,
+				spAventurineTalentTriggersLeft: hasSpAventurine(character)
+					? 6
+					: undefined,
+				spAventurineElationSkillCount: hasSpAventurine(character)
+					? 0
+					: undefined,
+				spAventurineAllEnhanced: hasSpAventurine(character) ? false : undefined,
+				spAventurineAhaSpeedBuff: hasSpAventurine(character)
+					? false
 					: undefined,
 			};
 		});
@@ -133,7 +166,11 @@ export function setupAhaMoment(states: ActionState[]): AhaState {
 	const elationStates = states.filter(
 		(s) => getCharacterPath(s.character.name) === "Elation",
 	);
-	const calcAhaSpeedFn = () => calcAhaSpeedFromStates(elationStates);
+	const calcAhaSpeedFn = () =>
+		applySpAventurineAhaSpeedBonus(
+			elationStates,
+			calcAhaSpeedFromStates(elationStates),
+		);
 	let ahaState: ActionState | null = null;
 	if (elationStates.length > 0 && calcAhaSpeedFn() > 0) {
 		ahaState = {
@@ -273,6 +310,8 @@ export function applyTeamSpeedBuffs(
 				const oldSpeed = s.currentSpeed;
 				s.currentSpeed = s.currentSpeed + s.baseSpeed * 0.12;
 				s.nextActionValue = s.nextActionValue * (oldSpeed / s.currentSpeed);
+				// SP Robin 忆灵速度公式中的百分比 buff 比例
+				recordSpRobinPercentBuff(states, s.character.id, 0.12, 0);
 			}
 		}
 	}
@@ -292,6 +331,7 @@ export function applyTeamSpeedBuffs(
 					const oldSpeed = s.currentSpeed;
 					s.currentSpeed = s.currentSpeed + s.baseSpeed * 0.2;
 					s.nextActionValue = s.nextActionValue * (oldSpeed / s.currentSpeed);
+					recordSpRobinPercentBuff(states, s.character.id, 0.2, 0);
 				}
 			}
 		}
@@ -331,6 +371,17 @@ export function applyTeamSpeedBuffs(
 	// 风堇 E2：全队速度 +30%
 	if (input.hyacineE2Active) {
 		applyHyacineE2SpeedBuff(states);
+		for (const s of states) {
+			if (s.character.kind === "角色") {
+				recordSpRobinPercentBuff(states, s.character.id, 0.3, 0);
+			}
+		}
+	}
+	refreshAhaSchedule(0);
+
+	// 光锥 23063 你将起身歌唱：进战全队速度 +20%（持续 2 回合，各目标自己计时）
+	if (input.characters.some((c) => c.lc_id === ENTRY_LIGHTCONE_ID)) {
+		applyEntrySpeedBuff(states, 0);
 	}
 	refreshAhaSchedule(0);
 }

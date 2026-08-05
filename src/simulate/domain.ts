@@ -1,7 +1,7 @@
 import {
 	applyPhainonDomainPauseAndSpeedBonus,
 	hasPhainonEnemyTriggerSkill,
-} from "../mechanics/phainonDomain";
+} from "../mechanics/phainon";
 import { emitSpBladeExtraTurn, hasSpBlade } from "../mechanics/spBlade";
 import type { GeneratedAction, SkillCode } from "../utils/actionSequence";
 import { getActiveOdeLabels, toNonNegativeNumber } from "./effects";

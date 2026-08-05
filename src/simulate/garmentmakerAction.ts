@@ -1,4 +1,4 @@
-import { handleGarmentmakerAction } from "../mechanics/aglaeaGarmentmaker";
+import { handleGarmentmakerAction } from "../mechanics/aglaea";
 import type { ActionContext } from "./context";
 import { emitMemeAdvanceAction } from "./effects";
 import type { SimulationRuntime } from "./runtime";

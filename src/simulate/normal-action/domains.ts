@@ -7,7 +7,7 @@ import {
 	freezeAlliesForDomain,
 	getPhainonDomainEndIndex,
 	getPhainonDomainInterval,
-} from "../../mechanics/phainonDomain";
+} from "../../mechanics/phainon";
 import {
 	getCounterWDomainRule,
 	isCharacterTarget,

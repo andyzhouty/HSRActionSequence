@@ -1,4 +1,4 @@
-import { getEffectiveCharacterBaseSpeed } from "../../mechanics/baseSpeed";
+import { getEffectiveCharacterBaseSpeed } from "../../mechanics/lightconeEffects";
 import type { CharacterConfig } from "../../utils/actionSequence";
 import {
 	formatEditableNumber,

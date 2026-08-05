@@ -1207,6 +1207,51 @@
       "baseSpeed": 98
     },
     {
+      "cid": "1512",
+      "names": [
+        "知更鸟·晴歌",
+        "知更鸟•晴歌",
+        "sp知更鸟",
+        "sp鸟",
+        "水鸟",
+        "SP Robin",
+        "Robin Summeretto",
+        "Robin • Summeretto"
+      ],
+      "effects": {
+        "E": "summonSummerSongbirds",
+        "Q": "spRobinUltimate"
+      },
+      "effectRules": {
+        "summonSummerSongbirds": {
+          "memospriteName": "晴空乐手",
+          "memospriteSkill": "A",
+          "memospriteSpeedRatio": 1.8
+        }
+      },
+      "passives": [
+        "firstActionAdvance20"
+      ],
+      "path": "Remembrance",
+      "baseSpeed": 98
+    },
+    {
+      "cid": "1513",
+      "names": [
+        "砂金·戏浪",
+        "砂金•戏浪",
+        "sp砂金",
+        "水砂",
+        "Aventurine Waveflair",
+        "Aventurine•Waveflair",
+        "SP Aven",
+        "SP Aventurine"
+      ],
+      "path": "Elation",
+      "baseSpeed": 107,
+      "participantId": 156
+    },
+    {
       "cid": "8002",
       "names": [
         "开拓者·毁灭",

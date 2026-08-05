@@ -5,7 +5,7 @@ import type {
 	SkillCode,
 } from "../utils/actionSequence";
 import { getPolluxRule } from "../utils/actionSequence";
-import { applyActiveHyacineE2SpeedBuffToSummon } from "./hyacineIca";
+import { applyActiveHyacineE2SpeedBuffToSummon } from "./hyacine";
 
 // ── 类型 ──
 

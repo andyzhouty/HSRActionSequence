@@ -1,51 +1,42 @@
+import { handleArcherRecordedAction, hasArcher } from "../mechanics/archer";
 import {
-	archerFuaResourceName,
-	clampArcherFuaCharge,
-	hasArcher,
-} from "../mechanics/archer";
-import {
-	clampAshveilFuaCharge,
-	clampKafkaFuaCharge,
-	emitCompanionFollowUp,
+	handleCompanionFollowUpRecordedAction,
 	hasAshveil,
 	hasKafka,
 } from "../mechanics/companionFollowUp";
 import {
 	advanceSouldragon,
 	emitImmediateSouldragonAction,
-} from "../mechanics/danHengSouldragon";
+} from "../mechanics/danHengPermansor";
 import {
-	gilgameshInterestResourceName,
+	handleGilgameshRecordedAction,
 	hasGilgamesh,
 } from "../mechanics/gilgamesh";
+import {
+	applyElationLightconeSpeedBuff,
+	ELATION_LIGHTCONE_ID,
+} from "../mechanics/lightconeEffects";
 import { hasSaber } from "../mechanics/saber";
+import { hasSilverWolfGodmode, isInGodmode } from "../mechanics/silverWolf";
 import {
-	hasSilverWolfGodmode,
-	isInGodmode,
-} from "../mechanics/silverWolfGodmode";
+	handleSpAventurineRecordedAction,
+	hasSpAventurine,
+} from "../mechanics/spAventurine";
 import {
-	activateSpBladeInfiniteFury,
-	clampSpBladeStacks,
-	emitSpBladeExtraTurn,
+	handleSpBladeRecordedAction,
 	hasSpBlade,
-	isSpBladeAttack,
-	spBladeStackResourceName,
+	maybeActivateSpBladeFury,
 } from "../mechanics/spBlade";
 import {
-	clampTheHertaInspiration,
-	getTheHertaUltimateInspirationGain,
+	handleTheHertaRecordedAction,
 	hasTheHerta,
 } from "../mechanics/theHerta";
-import type { GeneratedAction } from "../utils/actionSequence";
+import type { GeneratedAction } from "../utils/action-sequence";
 import {
-	ashveilFuaResourceName,
-	getCharacterCid,
 	getCharacterPath,
 	isBasicAttackSkill,
 	isNonAttackSkill,
-	kafkaFuaResourceName,
-	toPositiveNumber,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 import {
 	applyTeamSpeedBuffs,
 	applyTechniqueSummons,
@@ -59,6 +50,7 @@ import {
 	emitEvernightSelfDestructAction as emitEvernightSelfDestruct,
 	emitExtraAhaAction as emitExtraAha,
 	emitGodmodeExtraAction as emitGodmodeExtra,
+	emitSingleElationSkill,
 	emitSparxieExtraAction as emitSparxieExtra,
 	emitSpecialInterruptAction as emitSpecialInterrupt,
 } from "./interrupts";
@@ -97,320 +89,117 @@ export function simulateActions(
 		gilgameshState !== undefined &&
 		states.some((state) => hasSaber(state.character));
 	let actions: GeneratedAction[];
+	const { calcAhaSpeed, refreshAhaSchedule } = setupAhaMoment(states);
+	const spAventurineState = states.find((state) =>
+		hasSpAventurine(state.character),
+	);
+	const elationCharacters = input.characters.filter(
+		(character) =>
+			character.kind === "角色" &&
+			getCharacterPath(character.name) === "Elation",
+	);
+	const isSoleElation =
+		elationCharacters.length === 1 && hasSpAventurine(elationCharacters[0]);
+	const emitSpAventurineImmediateElation = (
+		parentKey: string,
+		actionValue: number,
+		threshold: number,
+	) => {
+		if (!spAventurineState) return;
+		emitSingleElationSkill(spAventurineState, parentKey, actionValue, actions, {
+			keySuffix: `-fervor-${threshold}`,
+		});
+	};
 	const handleRecordedAction = (action: GeneratedAction) => {
 		const attacker = characterById.get(action.characterId);
-		if (
-			spBladeState &&
-			action.characterId === spBladeState.character.id &&
-			action.skill === "Q" &&
-			!spBladeState.spBladeInfiniteFury
-		) {
-			action.isSpBladeFuryActivation = true;
-			activateSpBladeInfiniteFury(states, spBladeState, action.actionValue);
-		}
+		if (spBladeState) maybeActivateSpBladeFury(spBladeState, action, states);
 		const attackerState = initialStateByCharacterId.get(action.characterId);
-		const isSilverWolfNonAttack =
+		const isSilverWolfNonAttack = Boolean(
 			hasSilverWolfGodmode(attacker?.name ?? "") &&
-			(action.skill === "Q" ||
-				(action.isElationSkill &&
-					(!attackerState || !isInGodmode(attackerState))));
+				(action.skill === "Q" ||
+					(action.isElationSkill &&
+						(!attackerState || !isInGodmode(attackerState)))),
+		);
 		if (theHertaState) {
-			const isTheHertaAction =
-				action.characterId === theHertaState.character.id;
-			let inspiration = theHertaState.theHertaInspiration ?? 0;
-			if (isTheHertaAction && action.skill === "Q") {
-				inspiration = clampTheHertaInspiration(
-					inspiration +
-						getTheHertaUltimateInspirationGain(theHertaState.character),
-				);
-			}
-			if (isTheHertaAction && action.skill === "E" && inspiration > 0) {
-				action.isTheHertaEnhancedE = true;
-				if (theHertaState.character.eidolon >= 2) inspiration -= 1;
-			}
-			theHertaState.theHertaInspiration = inspiration;
-			action.theHertaInspiration = inspiration;
+			handleTheHertaRecordedAction({ state: theHertaState, action });
 		}
 		if (gilgameshState) {
-			const isGilgameshAction =
-				action.characterId === gilgameshState.character.id;
-			const isAhaAction = action.isAhaInstant === true;
-			const isAhaActionDuringPhainonDomain =
-				isAhaAction && states.some((state) => state.domainState !== undefined);
-			const actorIsCounted =
-				attacker?.kind === "角色" ||
-				attacker?.kind === "忆灵" ||
-				attacker?.kind === "非忆灵";
-			const isPhainonEaOrEw =
-				action.isDomainAction &&
-				(action.skill === "EA" || action.skill === "EW");
-			const isCharacterUltimate =
-				attacker?.kind === "角色" && action.skill === "Q";
-			// 白厄的境界退场 Q 只是一段普通行动，不享受 Q 的额外兴致。
-			const hasUltimateInterestBonus =
-				isCharacterUltimate && action.isDomainFinalAction !== true;
-			let interest = gilgameshState.gilgameshInterest ?? 0;
-			if (action.characterId === "@av0") {
-				const initial = Number.parseFloat(
-					input.resourceValues?.[action.key]?.[gilgameshInterestResourceName] ??
-						"",
-				);
-				if (Number.isFinite(initial)) interest = Math.max(0, initial);
-			} else if (!action.isGilgameshComboAction) {
-				if (isGilgameshAction) {
-					if (action.skill === "E") interest = 0;
-				} else if (isAhaAction && !isAhaActionDuringPhainonDomain) {
-					interest += input.characters.filter(
-						(character) => getCharacterPath(character.name) === "Elation",
-					).length;
-				} else if (actorIsCounted && !action.isElationSkill)
-					interest += isPhainonEaOrEw ? 2 : 1;
-				if (hasUltimateInterestBonus) {
-					interest += 2;
-					if (isGilgameshAction && gilgameshState.character.eidolon >= 2)
-						interest += 5;
-				}
-				const manual = Number.parseFloat(
-					input.resourceValues?.[action.key]?.[gilgameshInterestResourceName] ??
-						"",
-				);
-				if (Number.isFinite(manual)) interest = Math.max(0, manual);
-			}
-			gilgameshState.gilgameshInterest = interest;
-			if (interest >= 10) gilgameshState.gilgameshEUnlocked = true;
-			action.gilgameshInterest = interest;
-
-			const oldGilgameshSpeed = gilgameshState.currentSpeed;
-			const nextGilgameshSpeed =
-				toPositiveNumber(
-					gilgameshState.character.speed,
-					gilgameshState.baseSpeed,
-				) +
-				gilgameshState.baseSpeed * 0.1 * interest;
-			if (nextGilgameshSpeed > 0) {
-				const remaining = gilgameshState.nextActionValue - action.actionValue;
-				if (!isGilgameshAction && remaining > 0)
-					gilgameshState.nextActionValue =
-						action.actionValue +
-						remaining * (oldGilgameshSpeed / nextGilgameshSpeed);
-				gilgameshState.currentSpeed = nextGilgameshSpeed;
-			}
-
-			const pairAttack =
-				(hasGilgamesh(attacker) || hasSaber(attacker)) &&
-				(action.isFuaAction === true ||
-					action.isAssistAction === true ||
-					isBasicAttackSkill(action.skill) ||
-					(attacker !== undefined &&
-						!isNonAttackSkill(attacker, action.skill) &&
-						input.attackDisabled?.[action.key] !== true));
-			if (pairAttack && gilgameshAndSaber) {
-				const count = (gilgameshState.gilgameshAttackCount ?? 0) + 1;
-				gilgameshState.gilgameshAttackCount = count;
-				if (count % 8 === 0) {
-					const speedBeforeComboBonus = gilgameshState.currentSpeed;
-					gilgameshState.gilgameshInterest += 3;
-					const speedAfterComboBonus =
-						toPositiveNumber(
-							gilgameshState.character.speed,
-							gilgameshState.baseSpeed,
-						) +
-						gilgameshState.baseSpeed * 0.1 * gilgameshState.gilgameshInterest;
-					const remaining = gilgameshState.nextActionValue - action.actionValue;
-					if (!isGilgameshAction && remaining > 0)
-						gilgameshState.nextActionValue =
-							action.actionValue +
-							remaining * (speedBeforeComboBonus / speedAfterComboBonus);
-					gilgameshState.currentSpeed = speedAfterComboBonus;
-					action.gilgameshInterest = gilgameshState.gilgameshInterest;
-					actions.push({
-						key: `${action.key}-gilgamesh-combo-fua`,
-						characterId: gilgameshState.character.id,
-						displayName: gilgameshState.character.name,
-						actionNo: 0,
-						actionValue: action.actionValue,
-						skill: "Z",
-						speed: gilgameshState.currentSpeed,
-						isFuaAction: true,
-						isGilgameshComboAction: true,
-						lockedSkill: true,
-						gilgameshInterest: gilgameshState.gilgameshInterest,
-					});
-				}
-			}
-		}
-		if (
-			archerState &&
-			action.characterId === archerState.character.id &&
-			action.skill === "Q"
-		) {
-			archerState.archerFuaCharge = clampArcherFuaCharge(
-				(archerState.archerFuaCharge ?? 0) + 2,
-			);
-		}
-		const manualCharge = Number.parseFloat(
-			input.resourceValues?.[action.key]?.[archerFuaResourceName] ?? "",
-		);
-		if (archerState && Number.isFinite(manualCharge)) {
-			archerState.archerFuaCharge = clampArcherFuaCharge(manualCharge);
-		}
-		if (archerState) action.archerFuaCharge = archerState.archerFuaCharge;
-		const ashveilManualCharge = Number.parseFloat(
-			input.resourceValues?.[action.key]?.[ashveilFuaResourceName] ?? "",
-		);
-		if (ashveilState && Number.isFinite(ashveilManualCharge)) {
-			ashveilState.ashveilFuaCharge =
-				clampAshveilFuaCharge(ashveilManualCharge);
-		}
-		const kafkaManualCharge = Number.parseFloat(
-			input.resourceValues?.[action.key]?.[kafkaFuaResourceName] ?? "",
-		);
-		if (kafkaState && Number.isFinite(kafkaManualCharge)) {
-			kafkaState.kafkaFuaCharge = clampKafkaFuaCharge(kafkaManualCharge);
-		}
-		const spBladeManualStacks = Number.parseFloat(
-			input.resourceValues?.[action.key]?.[spBladeStackResourceName] ?? "",
-		);
-		if (spBladeState && Number.isFinite(spBladeManualStacks)) {
-			spBladeState.spBladeStacks = clampSpBladeStacks(spBladeManualStacks);
+			handleGilgameshRecordedAction({
+				state: gilgameshState,
+				action,
+				attacker,
+				states,
+				actions,
+				input,
+				hasSaberInTeam: gilgameshAndSaber,
+			});
 		}
 		const isArcherFixedAttack =
 			hasArcher(attacker) && ["A", "E", "Q"].includes(action.skill);
+		const isSpAventurineFixedAttack =
+			hasSpAventurine(attacker) && ["A", "E", "Q"].includes(action.skill);
 		const isForcedAttack =
 			isBasicAttackSkill(action.skill) ||
 			action.isAssistAction === true ||
 			action.isGilgameshTechniqueAction === true ||
-			isArcherFixedAttack;
-		if (
-			archerState &&
-			!action.isArcherFua &&
-			!action.isDomainAction &&
-			!action.isSpBladeFuryActivation &&
-			(isForcedAttack || input.attackDisabled?.[action.key] !== true)
-		) {
-			if (
-				attacker?.kind === "角色" &&
-				action.characterId !== archerState.character.id &&
-				(isForcedAttack || !isNonAttackSkill(attacker, action.skill)) &&
-				!isSilverWolfNonAttack &&
-				(archerState.archerFuaCharge ?? 0) > 0
-			) {
-				archerState.archerFuaCharge = clampArcherFuaCharge(
-					(archerState.archerFuaCharge ?? 0) - 1,
-				);
-				action.archerFuaCharge = archerState.archerFuaCharge;
-				actions.push({
-					key: `${action.key}-archer-fua`,
-					characterId: archerState.character.id,
-					displayName: "红A",
-					actionNo: 0,
-					actionValue: action.actionValue,
-					skill: "Z",
-					speed: archerState.currentSpeed,
-					isFuaAction: true,
-					isArcherFua: true,
-					lockedSkill: true,
-					archerFuaCharge: archerState.archerFuaCharge,
-				});
-			}
-		}
-		const isCompanionFollowUpTrigger =
-			attacker?.kind === "角色" &&
-			!action.isFuaAction &&
-			!action.isDomainAction &&
-			!action.isSpBladeFuryActivation &&
-			(isForcedAttack || input.attackDisabled?.[action.key] !== true) &&
-			(isForcedAttack || !isNonAttackSkill(attacker, action.skill));
-		if (
-			ashveilState &&
-			isCompanionFollowUpTrigger &&
-			action.characterId !== ashveilState.character.id
-		) {
-			emitCompanionFollowUp({
-				owner: ashveilState,
-				source: action,
+			isArcherFixedAttack ||
+			isSpAventurineFixedAttack;
+		if (archerState) {
+			handleArcherRecordedAction({
+				state: archerState,
+				action,
+				attacker,
 				actions,
-				charge: "ashveil",
-				cancelled: input.ashveilFuaToggles?.[action.key] === false,
+				input,
+				isForcedAttack,
+				isSilverWolfNonAttack,
 			});
 		}
-		if (
-			kafkaState &&
-			isCompanionFollowUpTrigger &&
-			action.characterId !== kafkaState.character.id
-		) {
-			emitCompanionFollowUp({
-				owner: kafkaState,
-				source: action,
-				actions,
-				charge: "kafka",
-				cancelled: input.kafkaFuaToggles?.[action.key] === false,
-			});
-		}
-		if (
-			ashveilState &&
-			action.characterId === ashveilState.character.id &&
-			action.skill === "Q"
-		) {
-			ashveilState.ashveilFuaCharge = clampAshveilFuaCharge(
-				(ashveilState.ashveilFuaCharge ?? 0) + 3,
-			);
-		}
-		if (kafkaState && action.characterId === kafkaState.character.id) {
-			const isNormalKafkaAction = action.actionNo > 0 && !action.isFuaAction;
-			const isKafkaUltimate = action.skill === "Q";
-			if (isNormalKafkaAction || isKafkaUltimate) {
-				kafkaState.kafkaFuaCharge = clampKafkaFuaCharge(
-					(kafkaState.kafkaFuaCharge ?? 0) + 1,
-				);
-			}
-		}
+		handleCompanionFollowUpRecordedAction({
+			actions,
+			action,
+			attacker,
+			input,
+			isForcedAttack,
+			ashveilState,
+			kafkaState,
+		});
 		if (spBladeState) {
-			let stacks = spBladeState.spBladeStacks ?? 0;
-			if (
-				isSpBladeAttack({
-					action,
-					attacker,
-					attackDisabled: input.attackDisabled,
-				})
-			)
-				stacks += 1;
-			if (
-				action.isDomainAction &&
-				(action.skill === "EA" || action.skill === "EW")
-			)
-				stacks += 1;
-			if (
-				getCharacterCid(attacker?.name ?? "") === "1407" &&
-				action.skill === "E" &&
-				states.some((state) => state.polluxOnField)
-			)
-				stacks += 1;
-			const memoryTrailblazer =
-				getCharacterCid(attacker?.name ?? "") === "8008";
-			const memoryState = initialStateByCharacterId.get(action.characterId);
-			if (
-				memoryTrailblazer &&
-				isBasicAttackSkill(action.skill) &&
-				(memoryState?.epic ?? 0) > 0 &&
-				memoryState?.epicPendingA
-			)
-				stacks += 1;
-			spBladeState.spBladeStacks = stacks;
-			action.spBladeStacks = spBladeState.spBladeStacks;
-			action.spBladeInfiniteFury = spBladeState.spBladeInfiniteFury;
-			emitSpBladeExtraTurn({
-				owner: spBladeState,
-				source: action,
-				actions,
-				input: states.some((state) => state.domainState !== undefined)
-					? { ...input, spBladeExtraTurnToggles: { [action.key]: false } }
-					: input,
+			handleSpBladeRecordedAction({
+				state: spBladeState,
+				action,
+				attacker,
 				states,
+				actions,
+				input,
 			});
 		}
-		if (ashveilState) action.ashveilFuaCharge = ashveilState.ashveilFuaCharge;
-		if (kafkaState) action.kafkaFuaCharge = kafkaState.kafkaFuaCharge;
+
+		// ── 砂金·戏浪：热意积累、天赋、阈值触发与阿哈加速 ──
+		if (spAventurineState) {
+			handleSpAventurineRecordedAction({
+				state: spAventurineState,
+				action,
+				attacker,
+				actions,
+				input,
+				isForcedAttack,
+				resolveAttackerState: (characterId: string) =>
+					initialStateByCharacterId.get(characterId),
+				isSoleElation,
+				refreshAhaSchedule,
+				emitImmediateElation: emitSpAventurineImmediateElation,
+			});
+		}
+
+		// 光锥 23064「向浪花掷下盛夏」：装备者施放欢愉技时速度提高 20%。
+		if (action.isElationSkill && attacker?.lc_id === ELATION_LIGHTCONE_ID) {
+			const lcCasterState = initialStateByCharacterId.get(action.characterId);
+			if (lcCasterState) {
+				applyElationLightconeSpeedBuff(lcCasterState, action.actionValue);
+			}
+		}
+
 		if (!souldragonOwner || action.isSouldragonAction) return;
 
 		if (
@@ -508,8 +297,6 @@ export function simulateActions(
 		},
 	});
 	const activeOdes = new Map<string, ActiveOdeState[]>();
-
-	const { calcAhaSpeed, refreshAhaSchedule } = setupAhaMoment(states);
 
 	applyTechniqueSummons(states);
 

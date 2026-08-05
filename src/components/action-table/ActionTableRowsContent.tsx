@@ -8,7 +8,12 @@ import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import { archerFuaResourceName } from "../../mechanics/archer";
 import { gilgameshInterestResourceName } from "../../mechanics/gilgamesh";
-import { hasSilverWolfGodmode } from "../../mechanics/silverWolfGodmode";
+import { hasSilverWolfGodmode } from "../../mechanics/silverWolf";
+import {
+	hasSpAventurine,
+	isValidSpAventurineFervorValue,
+} from "../../mechanics/spAventurine";
+import { hasSpRobin, isValidSpRobinFeverValue } from "../../mechanics/spRobin";
 import type { GeneratedAction } from "../../utils/actionSequence";
 import {
 	ashveilFuaResourceName,
@@ -18,7 +23,9 @@ import {
 	isEnemyTarget,
 	isQFrontCombo,
 	kafkaFuaResourceName,
+	spAventurineFervorResourceName,
 	spBladeStackResourceName,
+	spRobinFeverResourceName,
 } from "../../utils/actionSequence";
 import {
 	CombustionBreakInline,
@@ -391,7 +398,9 @@ export function ActionRow({
 													? "额外"
 													: "阿哈"
 												: action.isElationSkill
-													? "欢愉技"
+													? action.isEnhancedElationSkill
+														? "强化欢愉技"
+														: "欢愉技"
 													: action.isSparxieExtraAction
 														? "额外"
 														: isDomain
@@ -516,6 +525,15 @@ export function ActionRow({
 				const isAshveilFua = resource === ashveilFuaResourceName;
 				const isKafkaFua = resource === kafkaFuaResourceName;
 				const isSpBladeStacks = resource === spBladeStackResourceName;
+				const isSpRobinFever = resource === spRobinFeverResourceName;
+				const spRobin = ctx.characters.find((character) =>
+					hasSpRobin(character),
+				);
+				const isSpAventurineFervor =
+					resource === spAventurineFervorResourceName;
+				const spAventurine = ctx.characters.find((character) =>
+					hasSpAventurine(character),
+				);
 				return (
 					<td key={`${action.key}-resource-${resource}`} className="px-2 py-3">
 						<input
@@ -525,7 +543,9 @@ export function ActionRow({
 								isGilgameshInterest ||
 								isAshveilFua ||
 								isKafkaFua ||
-								isSpBladeStacks
+								isSpBladeStacks ||
+								isSpRobinFever ||
+								isSpAventurineFervor
 									? "numeric"
 									: undefined
 							}
@@ -542,7 +562,10 @@ export function ActionRow({
 												? String(action.kafkaFuaCharge)
 												: isSpBladeStacks && action.spBladeStacks !== undefined
 													? String(action.spBladeStacks)
-													: "")
+													: isSpAventurineFervor &&
+															action.spAventurineFervor !== undefined
+														? String(action.spAventurineFervor)
+														: "")
 							}
 							onClick={(event) => event.stopPropagation()}
 							onContextMenu={(event) => event.stopPropagation()}
@@ -561,6 +584,21 @@ export function ActionRow({
 								if (isKafkaFua && value !== "" && !/^[0-2]$/.test(value))
 									return;
 								if (isSpBladeStacks && value !== "" && !/^\d+$/.test(value))
+									return;
+								if (
+									isSpRobinFever &&
+									value !== "" &&
+									!isValidSpRobinFeverValue(value, spRobin?.eidolon ?? 0)
+								)
+									return;
+								if (
+									isSpAventurineFervor &&
+									value !== "" &&
+									!isValidSpAventurineFervorValue(
+										value,
+										spAventurine?.eidolon ?? 0,
+									)
+								)
 									return;
 								ctx.updateResourceValue(action.key, resource, value);
 							}}

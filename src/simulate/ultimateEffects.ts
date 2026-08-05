@@ -7,22 +7,25 @@ import {
 	hasPassive,
 	hasSkillEffect,
 } from "../data/characters";
-import { handleAglaeaSkillEffects } from "../mechanics/aglaeaGarmentmaker";
+import { handleAglaeaSkillEffects } from "../mechanics/aglaea";
 import {
 	applyCastoriceE2Pull,
 	hasCastoriceSummon,
 	summonPollux,
-} from "../mechanics/castoricePollux";
-import { hasEvernightEvey, summonEveyState } from "../mechanics/evernightEvey";
+} from "../mechanics/castorice";
+import { hasEvernightEvey, summonEveyState } from "../mechanics/evernight";
 import {
 	activateCombustion,
 	shouldActivateCombustion,
-} from "../mechanics/fireflyCombustion";
+} from "../mechanics/firefly";
 import { hasSaber } from "../mechanics/saber";
+import { activateGodmode, hasSilverWolfGodmode } from "../mechanics/silverWolf";
 import {
-	activateGodmode,
-	hasSilverWolfGodmode,
-} from "../mechanics/silverWolfGodmode";
+	consumeFeverAdvance,
+	consumeFeverFullPull,
+	handleSpRobinUltimate,
+	hasAllyAdvanceBlock,
+} from "../mechanics/spRobin";
 import { emitTribbieUltimateFollowUp } from "../mechanics/tribbie";
 import type { GeneratedAction } from "../utils/actionSequence";
 import { isCharacterTarget } from "../utils/actionSequence";
@@ -90,23 +93,26 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 		activateCombustion(states, casterIndex, character, actionValue);
 	}
 
-	// 3. 知更鸟全队顶轴
+	// 3. 知更鸟全队顶轴（被 Q debuff 标记的角色仅保留自身部分）
 	if (hasSkillEffect(character.name, "Q", "robinUltimate")) {
 		caster.currentSpeed = 90;
 		caster.nextActionValue = actionValue + 10000 / caster.currentSpeed;
 		caster.blockNextAdvance = true;
-		const allyOrder = states
-			.map((s, i) => ({ index: i, value: s.nextActionValue }))
-			.filter(
-				({ index }) =>
-					index !== casterIndex && isAllyTarget(states[index].character.kind),
-			)
-			.sort((a, b) =>
-				a.value !== b.value ? a.value - b.value : a.index - b.index,
-			);
-		for (let rank = 0; rank < allyOrder.length; rank++) {
-			states[allyOrder[rank].index].nextActionValue =
-				actionValue + rank * 0.0001;
+		if (!hasAllyAdvanceBlock(caster)) {
+			const allyOrder = states
+				.map((s, i) => ({ index: i, value: s.nextActionValue }))
+				.filter(
+					({ index }) =>
+						index !== casterIndex && isAllyTarget(states[index].character.kind),
+				)
+				.sort((a, b) =>
+					a.value !== b.value ? a.value - b.value : a.index - b.index,
+				);
+			for (let rank = 0; rank < allyOrder.length; rank++) {
+				const target = states[allyOrder[rank].index];
+				if (consumeFeverFullPull(target)) continue;
+				target.nextActionValue = actionValue + rank * 0.0001;
+			}
 		}
 	}
 
@@ -171,20 +177,38 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 					getCharacterPath(targetState.character.name) === "Elation";
 				if (isElationTarget) {
 					emitSingleElationSkill(targetState, sourceKey, actionValue, actions);
-				} else {
+				} else if (
+					!consumeFeverAdvance(
+						targetState,
+						(targetState.spRobinFeverRemainingDistance ?? 0) * 0.5,
+					) &&
+					!targetState.blockNextAdvance
+				) {
 					const advance = targetState.nextActionValue * 0.5;
-					if (!targetState.blockNextAdvance) {
-						targetState.nextActionValue = Math.max(
-							actionValue,
-							targetState.nextActionValue - advance,
-						);
-					}
+					targetState.nextActionValue = Math.max(
+						actionValue,
+						targetState.nextActionValue - advance,
+					);
 				}
 			}
 		}
 	}
 
-	// 9. 丹恒 Q 击杀立即行动
+	// 9. SP Robin Q：指定我方单体立即行动 + 施加不可拉条其他我方的 debuff
+	if (
+		isCharacterTarget(character) &&
+		hasSkillEffect(character.name, "Q", "spRobinUltimate")
+	) {
+		handleSpRobinUltimate({
+			states,
+			casterIndex,
+			actionValue,
+			input,
+			sourceKey,
+		});
+	}
+
+	// 10. 丹恒 Q 击杀立即行动
 	if (
 		isCharacterTarget(character) &&
 		hasPassive(character.name, "killReset") &&

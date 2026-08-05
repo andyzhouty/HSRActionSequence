@@ -1,5 +1,6 @@
-import { hasHyacineIca, killIca } from "../mechanics/hyacineIca";
+import { hasHyacineIca, killIca } from "../mechanics/hyacine";
 import { applyMydeiVendettaToggle } from "../mechanics/mydei";
+import { applySpRobinFeverToggle } from "../mechanics/spRobin";
 import type { ActionContext } from "./context";
 import { killMeme } from "./effects";
 import type { SimulationRuntime } from "./runtime";
@@ -12,6 +13,7 @@ export function runPreActionChecks(
 	const { input, states } = runtime;
 	const { stateIndex, key, actionValue, character, actionNo } = context;
 	applyMydeiVendettaToggle(states, input, key, actionValue);
+	applySpRobinFeverToggle(states, input, key, actionValue);
 	if (
 		input.icaKillToggles?.[key] &&
 		character.id !== "@av0" &&
