@@ -5,7 +5,7 @@
  * in src/utils/backend.ts. They do NOT require Wails runtime — everything
  * is mocked.
  *
- * Run manually: npx vitest run tests/backend.test.ts
+ * Run manually: npx vitest run tests/infrastructure/backend.test.ts
  */
 
 import { describe, expect, it } from "vitest";

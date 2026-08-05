@@ -23,7 +23,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - name: Run backend bridge tests
-        run: sed -i 's/describe\.skip/describe/g' tests/backend.test.ts && npx vitest run tests/backend.test.ts
+        run: sed -i 's/describe\.skip/describe/g' tests/infrastructure/backend.test.ts && npx vitest run tests/infrastructure/backend.test.ts
 
   build:
     name: Build Windows
