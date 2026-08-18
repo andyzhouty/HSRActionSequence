@@ -1,18 +1,20 @@
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
+import { CHARACTER_IDS } from "../../domain/identity";
 import { hasSilverWolfGodmode } from "../../mechanics/silverWolf";
-import type { GeneratedAction } from "../../utils/actionSequence";
+import type { GeneratedAction } from "../../utils/action-sequence";
 import {
 	getCharacterCid,
 	hasSkillEffect,
 	isBasicAttackSkill,
 	isNonAttackSkill,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 
 export function AttackInline({ action }: { action: GeneratedAction }) {
 	const ctx = useActionSequence();
 	const attacker = ctx.charactersById[action.characterId];
 	const hasSouldragonOwner = ctx.characters.some(
-		(character) => getCharacterCid(character.name) === "1414",
+		(character) =>
+			getCharacterCid(character.name) === CHARACTER_IDS.danHengPermansor,
 	);
 	const hasArcherOwner = ctx.characters.some((character) =>
 		hasSkillEffect(character.name, "Q", "archerUltimate"),
@@ -64,11 +66,11 @@ export function AttackInline({ action }: { action: GeneratedAction }) {
 		return null;
 	// 砂金·戏浪的 A/E/Q 均固定视为攻击，不显示开关。
 	if (
-		getCharacterCid(attacker.name) === "1513" &&
+		getCharacterCid(attacker.name) === CHARACTER_IDS.spAventurine &&
 		["A", "E", "Q"].includes(action.skill)
 	)
 		return null;
-	if (getCharacterCid(attacker.name) === "1403") return null;
+	if (getCharacterCid(attacker.name) === CHARACTER_IDS.tribbie) return null;
 	if (isBasicAttackSkill(action.skill)) return null;
 	if (
 		hasSilverWolfGodmode(attacker.name) &&

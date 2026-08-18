@@ -3,6 +3,7 @@ import {
 	hasPassive,
 	hasSkillEffect,
 } from "../data/characters";
+import { CHARACTER_IDS } from "../domain/identity";
 import { handleEveyAction } from "../mechanics/evernight";
 import {
 	createIcaAction,
@@ -31,7 +32,7 @@ import {
 	getCounterWDomainRule,
 	isCharacterTarget,
 	type SkillCode,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 import {
 	canBeAdvancedByDance,
 	consumeActionOdes,
@@ -728,7 +729,7 @@ export function emitEvanesciaFuaAction(
 	const evanescia = states.find(
 		(s) =>
 			s.character.kind === "角色" &&
-			getCharacterCid(s.character.name) === "1505",
+			getCharacterCid(s.character.name) === CHARACTER_IDS.evanescia,
 	);
 	if (!evanescia) return;
 	const fuaKey = `${sourceKey}-fua`;

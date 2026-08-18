@@ -1,16 +1,17 @@
+import { CHARACTER_IDS } from "../domain/identity";
 import type { ActionState } from "../simulate/types";
 import {
 	type CharacterConfig,
 	type GeneratedAction,
 	getCharacterCid,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 
 export function hasAshveil(character: CharacterConfig | undefined): boolean {
-	return getCharacterCid(character?.name ?? "") === "1504";
+	return getCharacterCid(character?.name ?? "") === CHARACTER_IDS.ashveil;
 }
 
 export function hasKafka(character: CharacterConfig | undefined): boolean {
-	return getCharacterCid(character?.name ?? "") === "1005";
+	return getCharacterCid(character?.name ?? "") === CHARACTER_IDS.kafka;
 }
 
 export function clampAshveilFuaCharge(value: number): number {

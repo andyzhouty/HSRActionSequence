@@ -1,9 +1,9 @@
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
-import { getDisplayOrderedActions } from "../../utils/actionDisplayOrder";
+import { CHARACTER_IDS } from "../../domain/identity";
 import type {
 	CharacterConfig,
 	GeneratedAction,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 import {
 	canSelectAllyForSkill,
 	canSelectSkillTargetForAction,
@@ -17,7 +17,8 @@ import {
 	isCharacterTarget,
 	shouldRememberSkillTarget,
 	toPositiveNumber,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
+import { getDisplayOrderedActions } from "../../utils/actionDisplayOrder";
 import { SelectInput } from "../Controls";
 
 function getMemeTargetOptions(ctx: ReturnType<typeof useActionSequence>) {
@@ -245,7 +246,8 @@ export function SkillTargetInline({ action }: { action: GeneratedAction }) {
 	const ctx = useActionSequence();
 	const character = ctx.charactersById[action.characterId];
 	const isSouldragonOwner =
-		character && getCharacterCid(character.name) === "1414";
+		character &&
+		getCharacterCid(character.name) === CHARACTER_IDS.danHengPermansor;
 	const isSelfQInterrupt =
 		action.key.endsWith("-q") &&
 		action.actionNo === 0 &&

@@ -8,7 +8,7 @@ import {
 	type CharacterConfig,
 	hasGilgameshCharacter,
 	normalizeResourcesForCharacters,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
 function character(
 	id: string,

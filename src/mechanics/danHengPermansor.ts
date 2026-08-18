@@ -1,9 +1,10 @@
-import type {
-	CharacterConfig,
-	GeneratedAction,
-	SkillCode,
-} from "../utils/actionSequence";
-import { getCharacterCid } from "../utils/actionSequence";
+import { CHARACTER_IDS } from "../domain/identity";
+import {
+	type CharacterConfig,
+	type GeneratedAction,
+	getCharacterCid,
+	type SkillCode,
+} from "../utils/action-sequence";
 
 export const SOULDRAGON_SPEED = 165;
 
@@ -22,7 +23,7 @@ export interface SouldragonActionState {
 }
 
 export function hasDanHengSouldragon(characterName: string) {
-	return getCharacterCid(characterName) === "1414";
+	return getCharacterCid(characterName) === CHARACTER_IDS.danHengPermansor;
 }
 
 export function findSouldragonState(

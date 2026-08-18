@@ -10,7 +10,7 @@ import {
 	isLockedResourceNameForCharacters,
 	isNonAttackSkill,
 	normalizeResourcesForCharacters,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
 function c(
 	id: string,

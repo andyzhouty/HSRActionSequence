@@ -3,8 +3,12 @@ import { simulateActions } from "../../../src/simulate/actions";
 import {
 	ashveilFuaResourceName,
 	kafkaFuaResourceName,
-} from "../../../src/utils/actionSequence";
-import { character, input, skills } from "../../helpers/simulateActionTestUtils";
+} from "../../../src/utils/action-sequence";
+import {
+	character,
+	input,
+	skills,
+} from "../../helpers/simulateActionTestUtils";
 
 describe("不死途与卡芙卡追加攻击", () => {
 	it("不死途以 2 层初始充能追击，且可从右键来源取消", () => {

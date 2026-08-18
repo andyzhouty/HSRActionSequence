@@ -3,7 +3,7 @@ import { validateActionSkillInput } from "../../../src/pages/action-sequence/ski
 import type {
 	CharacterConfig,
 	GeneratedAction,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
 function character(
 	id: string,

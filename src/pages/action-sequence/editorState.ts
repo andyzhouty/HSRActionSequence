@@ -2,7 +2,7 @@ import {
 	type CharacterConfig,
 	createTarget,
 	type OdeSelection,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 
 export function updateCharacterList(
 	characters: CharacterConfig[],

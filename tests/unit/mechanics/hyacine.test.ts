@@ -6,7 +6,7 @@ import {
 import type {
 	CharacterConfig,
 	SkillCode,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
 function character(
 	id: string,
@@ -66,7 +66,7 @@ describe("Hyacine (风堇) Ica System", () => {
 				limit: 300,
 			}),
 		);
-		// E should not produce Ica extra turn (afterRain starts at 0)
+		// E 不应产生 Ica 额外回合（afterRain 初始为 0）。
 		const icaActions = actions.filter((a) => a.isIcaAction);
 		expect(icaActions.length).toBe(0);
 	});
@@ -76,9 +76,9 @@ describe("Hyacine (风堇) Ica System", () => {
 			input({
 				characters: [character("hyacine", "风堇", 100)],
 				skillOverrides: skills({
-					"hyacine-1": "E", // summon Ica first
-					"hyacine-2": "AQ", // A → trigger Ica, Q → afterRain=3
-					"hyacine-3": "A", // should trigger Ica again
+					"hyacine-1": "E", // 先召唤 Ica。
+					"hyacine-2": "AQ", // A → 触发 Ica，Q → afterRain=3。
+					"hyacine-3": "A", // 应再次触发 Ica。
 				}),
 				limit: 500,
 			}),
@@ -97,8 +97,8 @@ describe("Hyacine (风堇) Ica System", () => {
 			input({
 				characters: [character("hyacine", "风堇", 100)],
 				skillOverrides: skills({
-					"hyacine-1": "E", // summon
-					"hyacine-2": "QA", // Q→afterRain=3, A→trigger Ica
+					"hyacine-1": "E", // 召唤。
+					"hyacine-2": "QA", // Q→afterRain=3，A→触发 Ica。
 				}),
 				limit: 400,
 			}),
@@ -106,7 +106,7 @@ describe("Hyacine (风堇) Ica System", () => {
 
 		const icaAction = actions.find((a) => a.isIcaAction);
 		expect(icaAction).toBeDefined();
-		// Ica should be at same AV as hyacine's A action
+		// Ica 应与 hyacine 的 A 行动处于同一 AV。
 		const hyacineA = actions.find(
 			(a) =>
 				a.characterId === "hyacine" && a.key === "hyacine-2" && a.skill === "A",
@@ -122,18 +122,18 @@ describe("Hyacine (风堇) Ica System", () => {
 			input({
 				characters: [character("hyacine", "风堇", 100)],
 				skillOverrides: skills({
-					"hyacine-1": "E", // summon
-					"hyacine-2": "QA", // Q→3, A→trigger (-1=2)
-					"hyacine-3": "A", // trigger (-1=1)
-					"hyacine-4": "A", // trigger (-1=0)
-					"hyacine-5": "A", // NO trigger (afterRain=0)
+					"hyacine-1": "E", // 召唤。
+					"hyacine-2": "QA", // Q→3，A→触发（-1=2）。
+					"hyacine-3": "A", // 触发（-1=1）。
+					"hyacine-4": "A", // 触发（-1=0）。
+					"hyacine-5": "A", // 不触发（afterRain=0）。
 				}),
 				limit: 700,
 			}),
 		);
 
 		const icaActions = actions.filter((a) => a.isIcaAction);
-		// Q triggers Ica (no decrement) + 3 A triggers = 4 total
+		// Q 触发 Ica（不递减）+ 3 次 A 触发，共 4 次。
 		expect(icaActions.length).toBe(4);
 	});
 
@@ -142,23 +142,23 @@ describe("Hyacine (风堇) Ica System", () => {
 			input({
 				characters: [character("hyacine", "风堇", 100)],
 				skillOverrides: skills({
-					"hyacine-1": "E", // summon
-					"hyacine-2": "QA", // Q→3, A→trigger
+					"hyacine-1": "E", // 召唤。
+					"hyacine-2": "QA", // Q→3，A→触发。
 				}),
 				icaKillToggles: {
-					"hyacine-3": true, // kill Ica (hyacine-3 happens after Ica)
+					"hyacine-3": true, // 击杀 Ica（hyacine-3 在 Ica 之后行动）。
 				},
 				limit: 500,
 			}),
 		);
 
 		const icaActions = actions.filter((a) => a.isIcaAction);
-		// After Q→3, first A triggers Ica. Then hyacine-3 kills Ica.
-		// After that, hyacine-4 (next action) should NOT trigger Ica.
+		// Q→3 后第一次 A 触发 Ica，随后 hyacine-3 将 Ica 击杀。
+		// 此后 hyacine-4（下一次行动）不应再次触发 Ica。
 		expect(icaActions.length).toBeGreaterThanOrEqual(1);
 
-		// After Ica death + re-summon, Q should set afterRain=3
-		// and subsequent A should trigger Ica
+		// Ica 死亡并重新召唤后，Q 应将 afterRain 设为 3，
+		// 后续 A 应触发 Ica。
 	});
 
 	it("E2 全队速度 +30%（不可叠加）", () => {
@@ -176,10 +176,10 @@ describe("Hyacine (风堇) Ica System", () => {
 			}),
 		);
 
-		// ally should be faster due to E2
+		// 队友因二魂效果应获得更高速度。
 		const allyAction = actions.find((a) => a.characterId === "ally");
 		expect(allyAction).toBeDefined();
-		// 80 + 80*0.3 = 104 speed → AV ≈ 96.15
+		// 80 + 80*0.3 = 104 速度 → AV ≈ 96.15。
 		expect(allyAction?.speed).toBe(80 + 80 * 0.3);
 		expect(allyAction?.actionValue).toBeCloseTo(10000 / 104, 1);
 	});
@@ -189,12 +189,12 @@ describe("Hyacine (风堇) Ica System", () => {
 			input({
 				characters: [character("hyacine", "风堇", 100)],
 				skillOverrides: skills({
-					"hyacine-1": "QA", // Q: summon Ica + afterRain=3 + Ica turn; A: no trigger (after Q already triggered)
+					"hyacine-1": "QA", // Q：召唤 Ica + afterRain=3 + Ica 行动；A：不触发（Q 已经触发过）。
 				}),
 				limit: 300,
 			}),
 		);
-		// Q triggers Ica (no decrement) + A from QA (decrement to 2) + 2 more A turns = 4 total
+		// Q 触发 Ica（不递减）+ QA 中的 A（递减至 2）+ 另外 2 次 A，共 4 次。
 		const icaActions = actions.filter((a) => a.isIcaAction);
 		expect(icaActions.length).toBe(4);
 		expect(icaActions[0].skill).toBe("A");

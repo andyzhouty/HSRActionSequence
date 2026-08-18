@@ -1,12 +1,14 @@
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
-import { getCharacterCid } from "../../utils/actionSequence";
+import { CHARACTER_IDS } from "../../domain/identity";
+import { getCharacterCid } from "../../utils/action-sequence";
 
-/** Evanescia（绯英）专属的 Z 追击插入开关，不代表所有追击机制。 */
+/** 绯英专属的 Z 追击插入开关，不代表所有追击机制。 */
 export function EvanesciaFuaToggleSection() {
 	const ctx = useActionSequence();
 	if (
 		!ctx.characters.some(
-			(character) => getCharacterCid(character.name) === "1505",
+			(character) =>
+				getCharacterCid(character.name) === CHARACTER_IDS.evanescia,
 		)
 	)
 		return null;

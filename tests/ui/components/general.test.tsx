@@ -9,14 +9,14 @@ import {
 	TextInput,
 	Toggle,
 } from "../../../src/components/Controls";
-import type { GeneratedAction } from "../../../src/utils/actionSequence";
-import { defaultCharacters } from "../../../src/utils/actionSequence";
+import type { GeneratedAction } from "../../../src/utils/action-sequence";
+import { defaultCharacters } from "../../../src/utils/action-sequence";
 import {
 	createMockContext,
 	renderWithContext,
 } from "../../helpers/actionSequenceComponentTestUtils";
 
-// ───── Controls ─────
+// ───── 控制项 ─────
 
 describe("Toggle", () => {
 	it("renders with label and reflects checked state", () => {
@@ -77,12 +77,12 @@ describe("SelectInput", () => {
 	});
 });
 
-// ───── CharacterPanel rendering ─────
+// ───── CharacterPanel 渲染 ─────
 
 describe("CharacterPanel rendering", () => {
 	it("renders character cards for each target", () => {
 		renderWithContext(<CharacterPanel />);
-		// Each character has a name input with their name
+		// 每个角色都有一个填入自身名称的输入框。
 		const nameInputs = screen.getAllByDisplayValue("角色 1");
 		expect(nameInputs.length).toBeGreaterThanOrEqual(1);
 		expect(screen.getAllByDisplayValue("100").length).toBeGreaterThanOrEqual(4);
@@ -241,7 +241,7 @@ describe("CharacterPanel rendering", () => {
 	});
 
 	it("Harmony character has light cone dropdown instead of 舞舞舞 toggle", () => {
-		// 停云 is a Harmony character → 舞舞舞 toggle removed, light cone dropdown shown
+		// 停云属于同谐命途 → 移除舞舞舞开关，显示光锥下拉框。
 		const harmonyChar = defaultCharacters.map((c, i) => ({
 			...c,
 			id: `c${i + 1}`,
@@ -250,7 +250,7 @@ describe("CharacterPanel rendering", () => {
 			baseSpeed: "100",
 		}));
 		renderWithContext(<CharacterPanel />, { characters: harmonyChar });
-		// 舞舞舞 toggle should NOT appear
+		// 不应显示舞舞舞开关。
 		const danceToggles = screen.queryAllByText("舞舞舞");
 		expect(danceToggles.length).toBe(0);
 	});
@@ -314,12 +314,12 @@ describe("大黑塔强化战技显示", () => {
 	});
 });
 
-// ───── ActionPanel rendering ─────
+// ───── ActionPanel 渲染 ─────
 
 describe("ActionPanel rendering", () => {
 	it("renders action table header with correct columns", () => {
 		renderWithContext(<ActionPanel />);
-		// "行动序列" appears in title and action count - use getAllByText
+		// “行动序列”同时出现在标题和行动数量中，因此使用 getAllByText。
 		expect(screen.getAllByText("行动序列").length).toBeGreaterThanOrEqual(1);
 		expect(screen.getByText("序号")).toBeInTheDocument();
 		expect(screen.getAllByText("目标").length).toBeGreaterThanOrEqual(1);
@@ -865,7 +865,7 @@ describe("ActionPanel rendering", () => {
 	});
 });
 
-// ───── Action Sequence Context Integration ─────
+// ───── 行动序列上下文集成 ─────
 
 describe("Action Sequence Context integration", () => {
 	it("provides default character names", () => {
@@ -898,7 +898,7 @@ describe("Action Sequence Context integration", () => {
 	});
 });
 
-// ───── Skill input Enter key ─────
+// ───── 技能输入框 Enter 键 ─────
 
 describe("Skill input Enter key", () => {
 	it("Enter key triggers updateActionSkill", async () => {
@@ -1077,7 +1077,7 @@ describe("Skill input Enter key", () => {
 	});
 });
 
-// ───── Deimos Q → heart icon (romance ode) ─────
+// ───── 德谟斯 Q → 爱心图标（恋爱颂歌） ─────
 
 describe("Romance ode heart icon", () => {
 	it("shows heart label on Aglaea after romance ode applied", () => {

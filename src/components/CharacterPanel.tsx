@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useActionSequence } from "../contexts/ActionSequenceContext";
 import lightConeData from "../data/lightcones.json";
+import { CHARACTER_IDS } from "../domain/identity";
 import {
 	type defaultCharacters,
 	getCharacterCid,
@@ -12,7 +13,7 @@ import {
 	type TargetKind,
 	targetKinds,
 	withoutCharacterOnlyEffects,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 import {
 	CharacterNameInput,
 	NumberInput,
@@ -251,7 +252,7 @@ function CharacterCard({
 											oldPath !== newPath && !lcStillValid ? 0 : prev.lc_id,
 									};
 								});
-								if (getCharacterCid(value) === "1509") {
+								if (getCharacterCid(value) === CHARACTER_IDS.gilgamesh) {
 									setShowGilgameshInterestNotice(true);
 								}
 							}}

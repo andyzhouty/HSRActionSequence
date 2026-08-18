@@ -1,20 +1,21 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { useActionSequence } from "../contexts/ActionSequenceContext";
 import { getEffectiveCharacterBaseSpeed } from "../mechanics/lightconeEffects";
-import type { UltInterrupt } from "../utils/actionSequence";
+import type { UltInterrupt } from "../utils/action-sequence";
 import {
 	ensureFileExtension,
 	formatActionValue,
 	getCharacterPath,
 	getErrorMessage,
 	isAllyTarget,
-} from "../utils/actionSequence";
-import { invoke, save } from "../utils/backend";
+} from "../utils/action-sequence";
+import { getBackendPort } from "../utils/backend";
 
 export default function ExportExcelButton() {
 	const ctx = useActionSequence();
 	const [exporting, setExporting] = useState(false);
+	const backendPort = useMemo(() => getBackendPort(), []);
 
 	const doExport = useCallback(async () => {
 		if (ctx.actions.length === 0) {
@@ -24,7 +25,7 @@ export default function ExportExcelButton() {
 		try {
 			setExporting(true);
 
-			// 行动序列 sheet
+			// 行动序列工作表
 			const header = ["序号", "角色", "动数", "行动值", "技能"];
 			for (const r of ctx.resources) {
 				header.push(r || `资源`);
@@ -108,7 +109,7 @@ export default function ExportExcelButton() {
 				...ctx.resources.map(() => ({ wch: 10 })),
 			];
 
-			// ── 角色配置 sheet ──
+			// ── 角色配置工作表 ──
 			// 辅助：按角色 ID 前缀过滤覆盖表
 			const prefixFor = (charId: string) => `${charId}-`;
 			const filterEntries = <T,>(
@@ -118,7 +119,7 @@ export default function ExportExcelButton() {
 				Object.entries(rec)
 					.filter(([k]) => k.startsWith(prefix))
 					.sort(([a], [b]) => a.localeCompare(b));
-			// 从 action key 中提取动数显示文本
+			// 从行动 key 中提取动数显示文本。
 			const actionLabel = (key: string, charId: string): string => {
 				const tail = key.slice(prefixFor(charId).length);
 				const domainMatch = tail.match(/^domain-(\d+)/);
@@ -160,7 +161,7 @@ export default function ExportExcelButton() {
 			];
 			const charRows = ctx.characters.map((c, i) => {
 				const pf = prefixFor(c.id);
-				// 速度调整 key 也是 action key
+				// 速度调整 key 也是行动 key。
 				const speedAdjEntries = filterEntries(ctx.speedAdjustments, pf);
 				const skillOvEntries = filterEntries(ctx.skillOverrides, pf);
 				const ovEntries = filterEntries(ctx.overrides, pf);
@@ -249,7 +250,7 @@ export default function ExportExcelButton() {
 				return;
 			}
 
-			const selectedPath = await save({
+			const selectedPath = await backendPort.save({
 				title: "导出 Excel",
 				defaultPath: fileName,
 				filters: [{ name: "Excel", extensions: ["xlsx"] }],
@@ -259,7 +260,7 @@ export default function ExportExcelButton() {
 				return;
 			}
 			const filePath = ensureFileExtension(selectedPath, ".xlsx");
-			await invoke("write_base64_file", {
+			await backendPort.invoke("write_base64_file", {
 				path: filePath,
 				dataBase64: base64,
 			});
@@ -284,6 +285,7 @@ export default function ExportExcelButton() {
 		ctx.memeSelections,
 		ctx.ultInterrupts,
 		ctx.setMessage,
+		backendPort,
 		ctx.characterKinds,
 	]);
 

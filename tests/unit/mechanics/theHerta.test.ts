@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { simulateActions } from "../../../src/simulate/actions";
-import type { CharacterConfig } from "../../../src/utils/actionSequence";
+import type { CharacterConfig } from "../../../src/utils/action-sequence";
 
 function character(id: string, eidolon = 0): CharacterConfig {
 	return {

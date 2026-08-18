@@ -38,11 +38,11 @@ function checkDocPaths() {
 
 		for (const match of content.matchAll(PATH_RE)) {
 			const path = match[1];
-			// Skip URLs, node_modules, package names
+			// 跳过 URL、node_modules 和包名。
 			if (path.includes("://") || path.includes("node_modules")) continue;
 			if (path.startsWith("http") || path.startsWith("www")) continue;
 			if (path.startsWith(".") && path.length < 4) continue;
-			// Only check project-specific paths
+			// 仅检查项目路径。
 			if (!path.startsWith("src/") && !path.startsWith("tests/") &&
 			    path !== "main.go" && path !== "wails.json" && path !== "go.mod" &&
 			    path !== "go.sum" && path !== "appicon.png" && path !== "build/" &&
@@ -54,7 +54,7 @@ function checkDocPaths() {
 			}
 
 			const fullPath = resolve(ROOT, path);
-			// Accept directories (e.g., build/, docs-for-ai/)
+			// 接受目录路径（例如 build/、docs-for-ai/）。
 			if (path.endsWith("/")) continue;
 
 			if (!existsSync(fullPath)) {

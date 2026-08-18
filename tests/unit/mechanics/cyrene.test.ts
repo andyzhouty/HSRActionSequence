@@ -7,9 +7,9 @@ import type {
 	CharacterConfig,
 	SkillCode,
 	UltInterrupt,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
-/** Filter out the utility @av0 target from action arrays */
+/** 从行动数组中过滤掉工具用的 @av0 目标。 */
 const stripAv0 = (actions: { key: string; characterId: string }[]) =>
 	actions.filter((a) => a.characterId !== "@av0");
 
@@ -66,7 +66,7 @@ function interrupts(
 	return entries;
 }
 
-// ───── Cyrene (昔涟) ─────
+// ───── 昔涟 ─────
 
 describe("Cyrene (昔涟)", () => {
 	it("triggers memosprite action after ultimate", () => {
@@ -116,7 +116,7 @@ describe("Cyrene (昔涟)", () => {
 
 		const memosprite = actions.find((a) => a.key === "cyrene-1-memosprite-Q");
 		expect(memosprite).toBeDefined();
-		// ally (80 spd) acts at AV=125, after memosprite and Q (AV=100)
+		// ally（速度 80）在忆灵和 Q（AV=100）之后，于 AV=125 行动。
 		expect(
 			stripAv0(actions)
 				.map((a) => a.key)
@@ -144,8 +144,8 @@ describe("Cyrene (昔涟)", () => {
 			}),
 		);
 
-		// 理性之诗 immediateTurn pulls anaxa's next action to current AV
-		// anaxa's action at AV=100 should have activeOdeLabels containing "理性"
+		// 理性之诗的 immediateTurn 会将 anaxa 的下一次行动拉到当前 AV。
+		// anaxa 在 AV=100 的行动应包含 activeOdeLabels「理性」。
 		const anaxaAction = actions.find(
 			(a) =>
 				a.characterId === "anaxa" &&
@@ -176,7 +176,7 @@ describe("Cyrene (昔涟)", () => {
 			}),
 		);
 
-		// 纷争之诗 immediateEnhancedSkill: target gets an extra E at same AV
+		// 纷争之诗 immediateEnhancedSkill：目标在同一 AV 额外获得一次 E。
 		const extraAction = actions.find(
 			(a) => a.key === "cyrene-1-memosprite-Q-ode-strife",
 		);
@@ -206,7 +206,7 @@ describe("Cyrene (昔涟)", () => {
 			}),
 		);
 
-		// genesis ode only applies to RMC, not "其他人" - no extra action
+		// 创世颂歌只对 RMC 生效，不对“其他人”生效，因此不产生额外行动。
 		const extraAction = actions.find((a) => a.isOdeExtraAction);
 		expect(extraAction).toBeUndefined();
 	});

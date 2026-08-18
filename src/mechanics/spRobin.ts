@@ -1,4 +1,5 @@
 import { getCharacterCid, getEffectRule } from "../data/characters";
+import { CHARACTER_IDS } from "../domain/identity";
 import type { ActionState, SimulateActionsInput } from "../simulate/types";
 import type {
 	CharacterConfig,
@@ -6,10 +7,10 @@ import type {
 	SummerSongbirdsRule,
 } from "../utils/action-sequence";
 
-// ── 知更鸟·晴歌（SP Robin / Robin Summeretto） ──
+// ── 知更鸟·晴歌（晴歌） ──
 // 角色数据（CID/命途/基础速度）在 characters.json；本模块只保留行动调度机制。
 
-export const SP_ROBIN_CID = "1512";
+export const SP_ROBIN_CID = CHARACTER_IDS.spRobin;
 export const SP_ROBIN_BASE_SPEED = 95;
 
 const SONGBIRDS_SPEED_RATIO = 1.8;
@@ -50,8 +51,8 @@ export function getSummerSongbirdsRule(ownerName: string): SummerSongbirdsRule {
 }
 
 // ── 晴空乐手（忆灵） ──
-// 忆灵速度 =（sp鸟面板速度 + 95 × 局内百分比速度buff之和）× 1.8。
-// 百分比 buff 以基础速度 95 计算；绝对速度调整不参与忆灵速度。
+// 忆灵速度 =（sp鸟面板速度 + 95 × 局内百分比速度增益之和）× 1.8。
+// 百分比增益以基础速度 95 计算；绝对速度调整不参与忆灵速度。
 
 export function findSongbirdsState(states: ActionState[], ownerId: string) {
 	return states.find(
@@ -73,7 +74,7 @@ export function getSongbirdsSpeed(robin: ActionState): number {
 	);
 }
 
-/** 在 SP Robin 百分比速度 buff 变化后，同步晴空乐手的速度与下一次行动 AV。 */
+/** 在 SP Robin 百分比速度增益变化后，同步晴空乐手的速度与下一次行动 AV。 */
 export function syncSpRobinSongbirds(
 	states: ActionState[],
 	robin: ActionState,
@@ -94,7 +95,7 @@ export function syncSpRobinSongbirds(
 	}
 }
 
-/** 记录一个以基础速度计算的百分比速度 buff（如藿藿E1 +12% → deltaPct = 0.12）。 */
+/** 记录一个以基础速度计算的百分比速度增益（如藿藿 E1 +12% → deltaPct = 0.12）。 */
 export function recordSpRobinPercentBuff(
 	states: ActionState[],
 	robinId: string,
@@ -180,8 +181,8 @@ export function handleSongbirdsAction(
 }
 
 // ── Fever 状态 ──
-// 进入：SP Robin 无自身回合、不丢 buff，记录剩余路程并创建固定 140 速 Fever减半倒计时。
-// Fever 结束由右键开关控制；倒计时在 Fever 未结束期间持续以 140 速行动（不结束 Fever）。
+// 进入：SP Robin 无自身回合、不丢失增益，记录剩余路程并创建固定 140 速 Fever 减半倒计时。
+// Fever 结束由右键开关控制；倒计时在 Fever 未结束期间持续以 140 速度行动（不结束 Fever）。
 // 结束（手动关闭）：nextAV = 结束AV + max{0, 剩余路程 - 5000 - 被提前量}/速度。
 // 口径已确认：「剩余路程」= 到下一动的剩余距离 = (nextAV - 进入AV) × 当前速度（不是已行驶路程）。
 
@@ -368,7 +369,7 @@ export function hasAllyAdvanceBlock(state: ActionState | undefined): boolean {
 	return (state?.allyAdvanceBlockTurns ?? 0) > 0;
 }
 
-/** 目标的 2 个正常回合 debuff 在每次正常行动后递减。 */
+/** 目标的 2 个正常回合减益在每次正常行动后递减。 */
 export function consumeAllyAdvanceBlock(state: ActionState): void {
 	if ((state.allyAdvanceBlockTurns ?? 0) > 0) {
 		state.allyAdvanceBlockTurns = (state.allyAdvanceBlockTurns ?? 0) - 1;

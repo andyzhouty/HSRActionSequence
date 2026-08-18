@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import ActionPanel from "../components/ActionPanel";
 import CharacterPanel from "../components/CharacterPanel";
-import { ActionSequenceCtx } from "../contexts/ActionSequenceContext";
+import { ActionSequenceProviders } from "../contexts/ActionSequenceContext";
 import { hasDanHengSouldragon } from "../mechanics/danHengPermansor";
 import {
 	type CharacterConfig,
@@ -12,7 +12,7 @@ import {
 	normalizeResourcesForCharacters,
 	type SavedData,
 	type SkillCode,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 import {
 	addCharacterTarget,
 	addResourceName,
@@ -405,7 +405,7 @@ export default function ActionSequence({
 	const importFromFile = async () => importFromFileInternal(setMessage);
 
 	return (
-		<ActionSequenceCtx.Provider
+		<ActionSequenceProviders
 			value={{
 				characters,
 				setCharacters,
@@ -561,6 +561,6 @@ export default function ActionSequence({
 					<ActionPanel />
 				</div>
 			</div>
-		</ActionSequenceCtx.Provider>
+		</ActionSequenceProviders>
 	);
 }

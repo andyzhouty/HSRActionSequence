@@ -20,7 +20,7 @@ import {
 	handleSongbirdsAction,
 	isSpRobinFeverCountdown,
 } from "../mechanics/spRobin";
-import type { GeneratedAction, SkillCode } from "../utils/actionSequence";
+import type { GeneratedAction, SkillCode } from "../utils/action-sequence";
 import { emitMemeAdvanceAction } from "./effects";
 import { emitElationSkills } from "./interrupts";
 import type {

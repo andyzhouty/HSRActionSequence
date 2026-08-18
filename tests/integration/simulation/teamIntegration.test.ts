@@ -7,7 +7,7 @@ import type {
 	CharacterConfig,
 	SkillCode,
 	UltInterrupt,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
 const stripAv0 = (axs: { characterId: string }[]) =>
 	axs.filter((a) => a.characterId !== "@av0");
@@ -184,12 +184,12 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 		expect(finalDomain?.skill).toBe("Q");
 
 		// ── 验证境界持续时间 ──
-		// extraActionCount=8 + 1 final, E1 coeff=0.66, baseSpeed=106
-		// 境界应有 8 domain 行动（索引 0-7）+ 1 终结
+		// extraActionCount=8 加 1 个终结行动，E1 系数为 0.66，基础速度为 106。
+		// 境界应有 8 个领域行动（索引 0-7）+ 1 个终结行动。
 		expect(domainActions.filter((a) => !a.isDomainFinalAction).length).toBe(7);
 		expect(domainActions.filter((a) => a.isDomainFinalAction).length).toBe(1);
 
-		// ── 验证境界后加速 buff（allies pushed past final AV + speed bonus） ──
+		// ── 验证境界后加速增益（队友被推过最终 AV，并获得速度加成） ──
 		// 境界结束后，花火和鸭鸭的下一次行动应该被推后
 		const finalAV = finalDomain?.actionValue;
 		const alliesAfter = actions.filter(

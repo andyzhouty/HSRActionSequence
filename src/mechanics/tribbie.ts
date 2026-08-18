@@ -1,8 +1,12 @@
 import type { ActionState } from "../simulate/types";
-import { type GeneratedAction, getCharacterCid } from "../utils/actionSequence";
+import {
+	CHARACTER_IDS,
+	type GeneratedAction,
+	getCharacterCid,
+} from "../utils/action-sequence";
 
 export function hasTribbie(name: string): boolean {
-	return getCharacterCid(name) === "1403";
+	return getCharacterCid(name) === CHARACTER_IDS.tribbie;
 }
 
 /** 缇宝大招后的追加攻击：每名其他角色每轮一次；缇宝 Q 重置次数，E6 可触发自身。 */

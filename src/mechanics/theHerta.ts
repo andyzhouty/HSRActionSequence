@@ -1,10 +1,13 @@
 import { getCharacterCid } from "../data/characters";
+import { CHARACTER_IDS } from "../domain/identity";
 import type { ActionState } from "../simulate/types";
-import type { GeneratedAction } from "../utils/action-sequence";
-import type { CharacterConfig } from "../utils/actionSequence";
+import type {
+	CharacterConfig,
+	GeneratedAction,
+} from "../utils/action-sequence";
 
 export const theHertaMaxInspiration = 4;
-const theHertaCid = "1401";
+const theHertaCid = CHARACTER_IDS.theHerta;
 
 export function hasTheHerta(character: CharacterConfig | undefined): boolean {
 	return (

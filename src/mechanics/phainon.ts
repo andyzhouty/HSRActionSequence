@@ -12,7 +12,7 @@ import {
 	getCounterWDomainRule,
 	isCharacterTarget,
 	type SkillCode,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 import { getEffectiveCharacterBaseSpeed } from "./lightconeEffects";
 import { hasSpRobin, recordSpRobinPercentBuff } from "./spRobin";
 
@@ -34,7 +34,7 @@ type PhainonMutableState = {
 	blockNextAdvance?: boolean;
 	phainonDomainFrozenDistance?: number;
 	spBladeCountdownOwnerId?: string;
-	/** 晴空乐手忆灵：速度由 SP Robin 的百分比 buff 比例派生，不直接吃全队百分比加速。 */
+	/** 晴空乐手忆灵：速度由 SP Robin 的百分比增益比例派生，不直接吃全队百分比加速。 */
 	isSongbirdsAction?: boolean;
 	spRobinMemospritePercentBuff?: number;
 	/** Fever减半倒计时：境界冻结期间同步停滞，避免 Fever 在境界内结束。 */
@@ -92,7 +92,7 @@ export function applyPhainonDomainPauseAndSpeedBonus(
 				domainEndActionValue + remainingDistance / state.currentSpeed;
 			continue;
 		}
-		// 晴空乐手忆灵：速度由 SP Robin 的百分比 buff 比例派生，境界结束加速由其主人同步。
+		// 晴空乐手忆灵：速度由 SP Robin 的百分比增益比例派生，境界结束加速由其主人同步。
 		if (state.isSongbirdsAction) {
 			const remainingDistance =
 				state.phainonDomainFrozenDistance ??
@@ -105,7 +105,7 @@ export function applyPhainonDomainPauseAndSpeedBonus(
 		}
 		if (!isAllyTarget(state.character.kind)) continue;
 
-		// 不受加速/拉条影响的角色（如知更鸟大招期间）跳过速度 buff，纯平移 AV
+		// 不受加速/拉条影响的角色（如知更鸟大招期间）跳过速度增益，纯平移 AV。
 		if (state.blockNextAdvance) {
 			state.nextActionValue =
 				domainEndActionValue +
@@ -128,7 +128,7 @@ export function applyPhainonDomainPauseAndSpeedBonus(
 			const speedBonus = baseSpeed * speedBonusBaseSpeedRatio;
 			state.phainonDomainSpeedBonus = speedBonus;
 			state.currentSpeed += speedBonus;
-			// SP Robin 忆灵速度公式：同步记录百分比 buff 比例。
+			// SP Robin 忆灵速度公式：同步记录百分比增益比例。
 			if (hasSpRobin(state.character)) {
 				recordSpRobinPercentBuff(
 					states as unknown as ActionState[],

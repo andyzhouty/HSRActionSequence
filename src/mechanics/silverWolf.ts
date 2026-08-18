@@ -1,5 +1,6 @@
 import { getCharacterCid } from "../data/characters";
-import type { SkillCode } from "../utils/actionSequence";
+import { CHARACTER_IDS } from "../domain/identity";
+import type { SkillCode } from "../utils/action-sequence";
 
 export type GodmodeState = {
 	isInGodmode?: boolean;
@@ -7,7 +8,7 @@ export type GodmodeState = {
 };
 
 export function hasSilverWolfGodmode(characterName: string): boolean {
-	return getCharacterCid(characterName) === "1506";
+	return getCharacterCid(characterName) === CHARACTER_IDS.silverWolf;
 }
 
 export function isInGodmode(state: { isInGodmode?: boolean }): boolean {

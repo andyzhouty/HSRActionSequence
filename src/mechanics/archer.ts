@@ -3,12 +3,12 @@ import { emitHimekoNovaAssists } from "../simulate/assist";
 import { findHimekoNovaAssistState } from "../simulate/effects";
 import type { SimulationRuntime } from "../simulate/runtime";
 import type { ActionState, SimulateActionsInput } from "../simulate/types";
-import { isNonAttackSkill } from "../utils/action-sequence";
 import type {
 	CharacterConfig,
 	GeneratedAction,
 	SkillCode,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
+import { isNonAttackSkill } from "../utils/action-sequence";
 
 export const archerFuaResourceName = "红A追击";
 export const archerMaxFuaCharge = 4;
@@ -99,7 +99,7 @@ type ArcherExtraEParams = {
 	count: number;
 };
 
-/** 生成 Archer 数字 E 的额外箭；额外箭可改 A，并可在箭后触发姬子 F 刷新新箭段。 */
+/** 生成 Archer（红A）数字 E 的额外箭；额外箭可改 A，并可在箭后触发姬子 F 刷新新箭段。 */
 export function emitArcherExtraEs({
 	runtime,
 	stateIndex,

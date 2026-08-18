@@ -1,5 +1,5 @@
 /**
- * 模拟器性质测试 (Property Tests)
+ * 模拟器性质测试
  *
  * 验证通用不变量，确保核心排序与数据映射错误能被捕获，
  * 而非仅依赖单一角色用例。
@@ -7,6 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 import { simulateActions } from "../../src/simulate/actions";
+import { SimulationLoopLimitError } from "../../src/simulate/loop";
 import { character, input } from "../helpers/simulateActionTestUtils";
 
 // ─── 不变量 1: 行动 AV 非递减 ───────────────────────────────────────
@@ -219,17 +220,18 @@ describe("Property: unique action keys", () => {
 
 describe("Property: iteration safety", () => {
 	it("no more than 2000 actions generated", () => {
-		const actions = simulateActions(
-			input({
-				characters: [character("c1", "A", 200), character("c2", "B", 200)],
-				limit: 99999,
-			}),
-		);
-		expect(actions.length).toBeLessThanOrEqual(2000);
+		expect(() =>
+			simulateActions(
+				input({
+					characters: [character("c1", "A", 200), character("c2", "B", 200)],
+					limit: 99999,
+				}),
+			),
+		).toThrow(SimulationLoopLimitError);
 	});
 });
 
-// ─── 不变量 7: speed 始终为正 ───────────────────────────────────────
+// ─── 不变量 7：速度始终为正 ───────────────────────────────────────
 
 describe("Property: positive speed values", () => {
 	it("every action has speed > 0", () => {

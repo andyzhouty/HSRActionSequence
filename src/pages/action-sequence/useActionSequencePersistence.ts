@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { parseSavedDataJson } from "../../domain/saved-data";
 import {
 	ensureFileExtension,
 	getErrorMessage,
 	getTimestampedFileName,
 	type SavedData,
-} from "../../utils/actionSequence";
-import { invoke, open, save } from "../../utils/backend";
+} from "../../utils/action-sequence";
+import { type BackendPort, getBackendPort } from "../../utils/backend";
 import { toNormalizedSavedData } from "./savedData";
 
 const BROWSER_DRAFT_STORAGE_KEY = "hsr-action-sequence-browser-draft";
@@ -26,12 +27,15 @@ type ApplyImportedData = (
 type UseActionSequencePersistenceParams = {
 	exportData: SavedData;
 	applyImportedData: ApplyImportedData;
+	backend?: BackendPort;
 };
 
 export function useActionSequencePersistence({
 	exportData,
 	applyImportedData,
+	backend,
 }: UseActionSequencePersistenceParams) {
+	const backendPort = useMemo(() => backend ?? getBackendPort(), [backend]);
 	const [importText, setImportText] = useState("");
 	const autosavePathRef = useRef<string | null>(null);
 	const autosaveTimerRef = useRef<number | null>(null);
@@ -49,7 +53,7 @@ export function useActionSequencePersistence({
 				const text =
 					window.localStorage.getItem(BROWSER_DRAFT_STORAGE_KEY) ?? "";
 				if (text.trim()) {
-					const parsed = JSON.parse(text) as Partial<SavedData>;
+					const parsed = parseSavedDataJson(text);
 					if (
 						Array.isArray(parsed.characters) &&
 						parsed.characters.length > 0
@@ -71,15 +75,16 @@ export function useActionSequencePersistence({
 
 		void (async () => {
 			try {
-				const autosavePath = await invoke<string>("get_autosave_path");
+				const autosavePath =
+					await backendPort.invoke<string>("get_autosave_path");
 				autosavePathRef.current = autosavePath;
 
-				const text = await invoke<string>("read_text_file", {
+				const text = await backendPort.invoke<string>("read_text_file", {
 					path: autosavePath,
 				});
 				if (cancelled || !text.trim()) return;
 
-				const parsed = JSON.parse(text) as Partial<SavedData>;
+				const parsed = parseSavedDataJson(text);
 				if (
 					!Array.isArray(parsed.characters) ||
 					parsed.characters.length === 0
@@ -100,7 +105,7 @@ export function useActionSequencePersistence({
 		return () => {
 			cancelled = true;
 		};
-	}, [applyImportedData]);
+	}, [applyImportedData, backendPort]);
 
 	useEffect(() => {
 		const normalizedJson = JSON.stringify(toNormalizedSavedData(exportData));
@@ -131,12 +136,14 @@ export function useActionSequencePersistence({
 			const path = autosavePathRef.current;
 			if (!path) return;
 
-			invoke("write_text_file", {
-				path,
-				contents: JSON.stringify(exportData, null, 2),
-			}).catch(() => {
-				// 自动保存失败不影响用户操作
-			});
+			backendPort
+				.invoke("write_text_file", {
+					path,
+					contents: JSON.stringify(exportData, null, 2),
+				})
+				.catch(() => {
+					// 自动保存失败不影响用户操作
+				});
 		}, 800);
 
 		return () => {
@@ -144,7 +151,7 @@ export function useActionSequencePersistence({
 				window.clearTimeout(autosaveTimerRef.current);
 			}
 		};
-	}, [exportData, isInitialRestoreComplete]);
+	}, [backendPort, exportData, isInitialRestoreComplete]);
 
 	const exportJson = async (setMessage: (message: string) => void) => {
 		const json = JSON.stringify(exportData, null, 2);
@@ -162,7 +169,7 @@ export function useActionSequencePersistence({
 		}
 
 		try {
-			const selectedPath = await save({
+			const selectedPath = await backendPort.save({
 				title: "导出 JSON",
 				defaultPath: getTimestampedFileName("action-sequence", ".json"),
 				filters: [
@@ -178,7 +185,7 @@ export function useActionSequencePersistence({
 			}
 
 			const filePath = ensureFileExtension(selectedPath, ".json");
-			await invoke("write_text_file", {
+			await backendPort.invoke("write_text_file", {
 				path: filePath,
 				contents: json,
 			});
@@ -194,10 +201,7 @@ export function useActionSequencePersistence({
 		rawText = importText,
 	) => {
 		try {
-			const parsed = JSON.parse(rawText) as Partial<SavedData>;
-			if (!Array.isArray(parsed.characters)) {
-				throw new Error("characters 缺失");
-			}
+			const parsed = parseSavedDataJson(rawText);
 			lastImportedJsonRef.current = JSON.stringify(
 				toNormalizedSavedData(parsed),
 			);
@@ -214,7 +218,7 @@ export function useActionSequencePersistence({
 
 	const importFromFile = async (setMessage: (message: string) => void) => {
 		try {
-			const selectedPath = await open({
+			const selectedPath = await backendPort.open({
 				title: "导入 JSON",
 				multiple: false,
 				filters: [
@@ -229,7 +233,7 @@ export function useActionSequencePersistence({
 				return;
 			}
 
-			const text = await invoke<string>("read_text_file", {
+			const text = await backendPort.invoke<string>("read_text_file", {
 				path: selectedPath,
 			});
 			setImportText(text);
@@ -250,12 +254,14 @@ export function useActionSequencePersistence({
 		}
 		const path = autosavePathRef.current;
 		if (!path) return;
-		invoke("write_text_file", {
-			path,
-			contents: "{}",
-		}).catch(() => {
-			// 清空失败不影响用户操作
-		});
+		backendPort
+			.invoke("write_text_file", {
+				path,
+				contents: "{}",
+			})
+			.catch(() => {
+				// 清空失败不影响用户操作
+			});
 	};
 
 	return {

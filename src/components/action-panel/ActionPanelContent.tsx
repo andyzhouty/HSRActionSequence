@@ -1,18 +1,18 @@
 import { useMemo, useRef, useState } from "react";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
 import {
-	canExchangeActionOrder,
-	getActionValueBucket,
-	getDisplayOrderedActions,
-	getExtraTurnParentKey,
-} from "../../utils/actionDisplayOrder";
-import {
 	formatActionValue,
 	hasSkillEffect,
 	isLockedResourceNameForCharacters,
 	limitPresets,
 	maxResources,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
+import {
+	canExchangeActionOrder,
+	getActionValueBucket,
+	getDisplayOrderedActions,
+	getExtraTurnParentKey,
+} from "../../utils/actionDisplayOrder";
 import { SelectInput } from "../Controls";
 import ExportExcelButton from "../ExportExcelButton";
 import { ActionMenuContent } from "./ActionMenuContent";
@@ -484,7 +484,7 @@ export default function ActionPanel() {
 				</div>
 			</div>
 
-			{/* Action sequence controls */}
+			{/* 行动序列控制 */}
 			<div className="mb-3 flex flex-wrap items-center justify-between gap-3">
 				<div>
 					<h3 className="text-lg font-semibold text-white">行动序列</h3>
@@ -514,7 +514,7 @@ export default function ActionPanel() {
 				<ExportExcelButton />
 			</div>
 
-			{/* Floating menu */}
+			{/* 浮动菜单 */}
 			{ctx.actionMenuOpen && (
 				<>
 					{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
@@ -554,7 +554,7 @@ export default function ActionPanel() {
 				elationSkillsExportData={elationSkillsExportData}
 			/>
 
-			{/* Export/Import */}
+			{/* 导出/导入 */}
 			<div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
 				<textarea
 					value={ctx.importText}

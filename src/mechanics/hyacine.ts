@@ -4,8 +4,8 @@ import type {
 	CharacterConfig,
 	GeneratedAction,
 	SkillCode,
-} from "../utils/actionSequence";
-import { isCharacterTarget } from "../utils/actionSequence";
+} from "../utils/action-sequence";
+import { isCharacterTarget } from "../utils/action-sequence";
 
 // ── 类型 ──
 
@@ -125,7 +125,7 @@ export function applyHyacineE2SpeedBuff(states: HyacineActionState[]) {
 	for (const state of states) {
 		const kind = state.character.kind;
 		if (kind !== "角色" && kind !== "忆灵") continue;
-		// 晴空乐手速度由 SP Robin 的百分比 buff 比例派生，不直接叠加。
+		// 晴空乐手速度由 SP Robin 的百分比增益比例派生，不直接叠加。
 		if (state.isSongbirdsAction) continue;
 		const bonus = state.baseSpeed * 0.3;
 		const oldSpeed = state.currentSpeed;

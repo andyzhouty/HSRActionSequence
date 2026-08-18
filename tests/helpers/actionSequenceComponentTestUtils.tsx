@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 import { vi } from "vitest";
 import {
 	type ActionSequenceContextType,
-	ActionSequenceCtx,
+	ActionSequenceProviders,
 } from "../../src/contexts/ActionSequenceContext";
-import { defaultCharacters } from "../../src/utils/actionSequence";
+import { defaultCharacters } from "../../src/utils/action-sequence";
 
 export function createMockContext(
 	overrides: Partial<ActionSequenceContextType> = {},
@@ -158,6 +158,6 @@ export function renderWithContext(
 ) {
 	const ctx = createMockContext(ctxOverrides);
 	return render(
-		<ActionSequenceCtx.Provider value={ctx}>{ui}</ActionSequenceCtx.Provider>,
+		<ActionSequenceProviders value={ctx}>{ui}</ActionSequenceProviders>,
 	);
 }

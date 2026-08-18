@@ -27,8 +27,8 @@ import {
 	hasAllyAdvanceBlock,
 } from "../mechanics/spRobin";
 import { emitTribbieUltimateFollowUp } from "../mechanics/tribbie";
-import type { GeneratedAction } from "../utils/actionSequence";
-import { isCharacterTarget } from "../utils/actionSequence";
+import type { GeneratedAction } from "../utils/action-sequence";
+import { isCharacterTarget } from "../utils/action-sequence";
 import {
 	handleMemoryTrailblazerQ,
 	isAllyTarget,
@@ -48,7 +48,7 @@ interface PostUltimateParams {
 	actionValue: number;
 	input: SimulateActionsInput;
 	activeOdes: Map<string, ActiveOdeState[]>;
-	/** 用于 Ica 额外回合等附属 action 的 key 前缀 */
+	/** 用于 Ica 额外回合等附属行动的 key 前缀。 */
 	sourceKey: string;
 	/** Q 是否在技能最前面（QA/QE），此时部分效果（如自拉条）不适用 */
 	qIsFront?: boolean;
@@ -93,7 +93,7 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 		activateCombustion(states, casterIndex, character, actionValue);
 	}
 
-	// 3. 知更鸟全队顶轴（被 Q debuff 标记的角色仅保留自身部分）
+	// 3. 知更鸟全队顶轴（被 Q 减益标记的角色仅保留自身部分）。
 	if (hasSkillEffect(character.name, "Q", "robinUltimate")) {
 		caster.currentSpeed = 90;
 		caster.nextActionValue = actionValue + 10000 / caster.currentSpeed;
@@ -194,7 +194,7 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 		}
 	}
 
-	// 9. SP Robin Q：指定我方单体立即行动 + 施加不可拉条其他我方的 debuff
+	// 9. SP Robin Q：指定我方单体立即行动 + 施加“不可拉条其他我方”的减益。
 	if (
 		isCharacterTarget(character) &&
 		hasSkillEffect(character.name, "Q", "spRobinUltimate")

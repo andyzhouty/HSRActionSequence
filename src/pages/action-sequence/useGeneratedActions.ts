@@ -1,20 +1,14 @@
 import { type Dispatch, type SetStateAction, useEffect, useMemo } from "react";
-import { getSummerSongbirdsRule } from "../../mechanics/spRobin";
-import type { SimulateActionsInput } from "../../simulate/actions";
-import { simulateActions } from "../../simulate/actions";
 import {
-	type CharacterConfig,
+	buildCharacterSelectors,
+	buildMemospriteTargets,
+} from "../../contexts/action-sequence/selectors";
+import { simulateActions } from "../../simulate/actions";
+import type { SimulateActionsInput } from "../../simulate/types";
+import {
 	type GeneratedAction,
-	getCyreneUltimateRule,
 	getErrorMessage,
-	getEveyRule,
-	getGarmentmakerRule,
-	getMemeAdvanceRule,
-	getPolluxRule,
-	getTargetDefaultName,
-	hasSkillEffect,
-	toPositiveNumber,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 import type { NormalizedSavedData } from "./savedData";
 import { pruneRecord } from "./savedData";
 
@@ -68,133 +62,6 @@ function buildSimulationConfig(
 		spRobinFeverToggles: savedData.spRobinFeverToggles,
 		sameAVOrder: savedData.sameAVOrder,
 	};
-}
-
-function buildMemospriteTargets(characters: CharacterConfig[]) {
-	return characters.flatMap((character) => {
-		const memos: CharacterConfig[] = [];
-		if (hasSkillEffect(character.name, "E", "summonGarmentmaker")) {
-			const rule = getGarmentmakerRule(character.name);
-			memos.push({
-				...character,
-				id: `${character.id}-garmentmaker`,
-				kind: "忆灵",
-				name: rule.memospriteName,
-				speed: String(rule.memospriteSpeed),
-				baseSpeed: String(rule.memospriteSpeed),
-				hasVonwacq: false,
-				hasWindSet: false,
-				hasDance: false,
-				eidolon: 0,
-				superimpose: 1,
-				lc_id: 0,
-			});
-		}
-		if (hasSkillEffect(character.name, "E", "summonMeme")) {
-			const rule = getMemeAdvanceRule(character.name);
-			memos.push({
-				...character,
-				id: `${character.id}-meme`,
-				kind: "忆灵",
-				name: rule.memospriteName,
-				speed: String(rule.memospriteSpeed),
-				baseSpeed: String(rule.memospriteSpeed),
-				hasVonwacq: false,
-				hasWindSet: false,
-				hasDance: false,
-				eidolon: 0,
-				superimpose: 1,
-				lc_id: 0,
-			});
-		}
-		if (hasSkillEffect(character.name, "Q", "cyreneUltimate")) {
-			const rule = getCyreneUltimateRule(character.name);
-			memos.push({
-				...character,
-				id: `${character.id}-memosprite`,
-				kind: "忆灵",
-				name: rule.memospriteName,
-				speed: "0",
-				baseSpeed: "0",
-				hasVonwacq: false,
-				hasWindSet: false,
-				hasDance: false,
-				eidolon: 0,
-				superimpose: 1,
-				lc_id: 0,
-			});
-		}
-		if (hasSkillEffect(character.name, "Q", "summonPollux")) {
-			const rule = getPolluxRule(character.name);
-			memos.push({
-				...character,
-				id: `${character.id}-pollux`,
-				kind: "忆灵",
-				name: rule.memospriteName,
-				speed: String(rule.memospriteSpeed),
-				baseSpeed: String(rule.memospriteSpeed),
-				hasVonwacq: false,
-				hasWindSet: false,
-				hasDance: false,
-				eidolon: 0,
-				superimpose: 1,
-				lc_id: 0,
-			});
-		}
-		if (hasSkillEffect(character.name, "E", "summonEvey")) {
-			const rule = getEveyRule(character.name);
-			memos.push({
-				...character,
-				id: `${character.id}-evey`,
-				kind: "忆灵",
-				name: rule.memospriteName,
-				speed: String(rule.memospriteSpeed),
-				baseSpeed: String(rule.memospriteSpeed),
-				hasVonwacq: false,
-				hasWindSet: false,
-				hasDance: false,
-				eidolon: 0,
-				superimpose: 1,
-				lc_id: 0,
-			});
-		}
-		if (hasSkillEffect(character.name, "E", "summonSummerSongbirds")) {
-			const rule = getSummerSongbirdsRule(character.name);
-			const panelSpeed = toPositiveNumber(character.speed, 95);
-			const songbirdsSpeed = panelSpeed * rule.memospriteSpeedRatio;
-			memos.push({
-				...character,
-				id: `${character.id}-songbirds`,
-				kind: "忆灵",
-				name: rule.memospriteName,
-				speed: String(songbirdsSpeed),
-				baseSpeed: String(songbirdsSpeed),
-				hasVonwacq: false,
-				hasWindSet: false,
-				hasDance: false,
-				eidolon: 0,
-				superimpose: 1,
-				lc_id: 0,
-			});
-		}
-		if (hasSkillEffect(character.name, "E", "summonIca")) {
-			memos.push({
-				...character,
-				id: `${character.id}-ica`,
-				kind: "忆灵",
-				name: "小伊卡",
-				speed: "0",
-				baseSpeed: "0",
-				hasVonwacq: false,
-				hasWindSet: false,
-				hasDance: false,
-				eidolon: 0,
-				superimpose: 1,
-				lc_id: 0,
-			});
-		}
-		return memos;
-	});
 }
 
 export function useGeneratedActions({
@@ -366,50 +233,19 @@ export function useGeneratedActions({
 		});
 	}, [actionsResult.actions, setSelectedActionKeys, updateSavedData]);
 
-	const characterNames = useMemo(() => {
-		const names = Object.fromEntries(
-			savedData.characters.map((character, index) => [
-				character.id,
-				character.name.trim() || getTargetDefaultName(character.kind, index),
-			]),
-		);
-		for (const action of actionsResult.actions) {
-			if (action.displayName) names[action.characterId] = action.displayName;
-		}
-		return names;
-	}, [savedData.characters, actionsResult.actions]);
-
 	const memospriteTargets = useMemo(
 		() => buildMemospriteTargets(savedData.characters),
 		[savedData.characters],
 	);
 
-	const characterKinds = useMemo(() => {
-		const kinds = Object.fromEntries([
-			...savedData.characters.map(
-				(character) => [character.id, character.kind] as const,
-			),
-			...memospriteTargets.map(
-				(memosprite) => [memosprite.id, memosprite.kind] as const,
-			),
-		]);
-		for (const action of actionsResult.actions) {
-			if (action.targetKind) kinds[action.characterId] = action.targetKind;
-		}
-		return kinds;
-	}, [savedData.characters, memospriteTargets, actionsResult.actions]);
-
-	const charactersById = useMemo(
+	const { characterNames, characterKinds, charactersById } = useMemo(
 		() =>
-			Object.fromEntries([
-				...savedData.characters.map(
-					(character) => [character.id, character] as const,
-				),
-				...memospriteTargets.map(
-					(memosprite) => [memosprite.id, memosprite] as const,
-				),
-			]),
-		[savedData.characters, memospriteTargets],
+			buildCharacterSelectors(
+				savedData.characters,
+				memospriteTargets,
+				actionsResult.actions,
+			),
+		[savedData.characters, memospriteTargets, actionsResult.actions],
 	);
 
 	return {

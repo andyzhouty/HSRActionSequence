@@ -5,8 +5,9 @@ import {
 	getEffectRule,
 	hasSkillEffect,
 	normalizeName,
-	validSkillChars,
 } from "../../data/characters";
+import { CHARACTER_IDS } from "../../domain/identity";
+import { tryParseSkillCode } from "../../domain/skills";
 import { archerMaxConsecutiveEs } from "../../mechanics/archer";
 import { hasGilgamesh } from "../../mechanics/gilgamesh";
 import type {
@@ -38,6 +39,23 @@ export {
 	isQFrontCombo,
 	normalizeName,
 } from "../../data/characters";
+export {
+	CHARACTER_IDS,
+	type CharacterId,
+	isCharacterId,
+	type KnownCharacterId,
+	knownCharacterId,
+	toCharacterId,
+} from "../../domain/identity";
+export {
+	isSkillCode,
+	type ParsedSkillCode,
+	parseSkillCode,
+	SKILL_TOKENS,
+	SkillCodeParseError,
+	type SkillToken,
+	tryParseSkillCode,
+} from "../../domain/skills";
 export type {
 	CharacterConfig,
 	CyreneUltimateRule,
@@ -114,7 +132,7 @@ export function getCounterWDomainRule(characterName: string): DomainRule {
 }
 
 const defaultCyreneUltimateRule: CyreneUltimateRule =
-	// biome-ignore lint/style/noNonNullAssertion: defaults in characters.json
+	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
 	getDefaultEffectRule<CyreneUltimateRule>("cyreneUltimate")!;
 
 export function getCyreneUltimateRule(
@@ -136,7 +154,7 @@ export function getCyreneUltimateRule(
 }
 
 const defaultMemeAdvanceRule: MemeAdvanceRule =
-	// biome-ignore lint/style/noNonNullAssertion: defaults in characters.json
+	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
 	getDefaultEffectRule<MemeAdvanceRule>("memeAdvance")!;
 
 export function getMemeAdvanceRule(characterName: string): MemeAdvanceRule {
@@ -159,7 +177,7 @@ export function getMemeAdvanceRule(characterName: string): MemeAdvanceRule {
 }
 
 const defaultPolluxRule: PolluxRule =
-	// biome-ignore lint/style/noNonNullAssertion: defaults in characters.json
+	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
 	getDefaultEffectRule<PolluxRule>("summonPollux")!;
 
 export function getPolluxRule(characterName: string): PolluxRule {
@@ -181,7 +199,7 @@ export function getPolluxRule(characterName: string): PolluxRule {
 }
 
 const defaultEveyRule: EveyRule =
-	// biome-ignore lint/style/noNonNullAssertion: defaults in characters.json
+	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
 	getDefaultEffectRule<EveyRule>("summonEvey")!;
 
 export function getEveyRule(characterName: string): EveyRule {
@@ -202,7 +220,7 @@ export function getEveyRule(characterName: string): EveyRule {
 }
 
 const defaultGarmentmakerRule: GarmentmakerRule =
-	// biome-ignore lint/style/noNonNullAssertion: defaults in characters.json
+	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
 	getDefaultEffectRule<GarmentmakerRule>("summonGarmentmaker")!;
 
 export function getGarmentmakerRule(characterName: string): GarmentmakerRule {
@@ -239,7 +257,7 @@ export function getGarmentmakerRule(characterName: string): GarmentmakerRule {
 }
 
 const defaultFireflyCombustionRule: FireflyCombustionRule =
-	// biome-ignore lint/style/noNonNullAssertion: defaults in characters.json
+	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
 	getDefaultEffectRule<FireflyCombustionRule>("fireflyCombustion")!;
 
 export function getFireflyCombustionRule(
@@ -342,7 +360,7 @@ export function hasAshveilCharacter(characters: CharacterConfig[]) {
 	return characters.some(
 		(character) =>
 			isCharacterTarget(character) &&
-			getCharacterCid(character.name) === "1504",
+			getCharacterCid(character.name) === CHARACTER_IDS.ashveil,
 	);
 }
 
@@ -350,7 +368,7 @@ export function hasKafkaCharacter(characters: CharacterConfig[]) {
 	return characters.some(
 		(character) =>
 			isCharacterTarget(character) &&
-			getCharacterCid(character.name) === "1005",
+			getCharacterCid(character.name) === CHARACTER_IDS.kafka,
 	);
 }
 
@@ -358,7 +376,7 @@ export function hasSpBladeCharacter(characters: CharacterConfig[]) {
 	return characters.some(
 		(character) =>
 			isCharacterTarget(character) &&
-			getCharacterCid(character.name) === "1507",
+			getCharacterCid(character.name) === CHARACTER_IDS.spBlade,
 	);
 }
 
@@ -366,7 +384,7 @@ export function hasSpRobinCharacter(characters: CharacterConfig[]) {
 	return characters.some(
 		(character) =>
 			isCharacterTarget(character) &&
-			getCharacterCid(character.name) === "1512",
+			getCharacterCid(character.name) === CHARACTER_IDS.spRobin,
 	);
 }
 
@@ -374,7 +392,7 @@ export function hasSpAventurineCharacter(characters: CharacterConfig[]) {
 	return characters.some(
 		(character) =>
 			isCharacterTarget(character) &&
-			getCharacterCid(character.name) === "1513",
+			getCharacterCid(character.name) === CHARACTER_IDS.spAventurine,
 	);
 }
 
@@ -489,22 +507,29 @@ export function isNonAttackSkill(
 ): boolean {
 	const cid = getCharacterCid(character.name);
 	// Saber 的 A/E/Q 均固定视为攻击。
-	if (cid === "1014" && (skill === "A" || skill === "E" || skill === "Q")) {
+	if (
+		cid === CHARACTER_IDS.saber &&
+		(skill === "A" || skill === "E" || skill === "Q")
+	) {
 		return false;
 	}
 	// 砂金·戏浪的 A/E/Q 均固定视为攻击。
-	if (cid === "1513" && (skill === "A" || skill === "E" || skill === "Q")) {
+	if (
+		cid === CHARACTER_IDS.spAventurine &&
+		(skill === "A" || skill === "E" || skill === "Q")
+	) {
 		return false;
 	}
 	// 缇宝 E 固定不攻击；Q 和 Z 保持攻击判定。
-	if (cid === "1403" && skill === "E") return true;
+	if (cid === CHARACTER_IDS.tribbie && skill === "E") return true;
 	return (
 		canSelectAllyForSkill(character, skill) ||
-		((cid === "1303" || cid === "1309") && (skill === "E" || skill === "Q")) ||
-		(cid === "1408" && skill === "Q") ||
-		(cid === "1217" && skill === "E") ||
+		((cid === CHARACTER_IDS.ruanMei || cid === CHARACTER_IDS.robin) &&
+			(skill === "E" || skill === "Q")) ||
+		(cid === CHARACTER_IDS.phainon && skill === "Q") ||
+		(cid === CHARACTER_IDS.huohuo && skill === "E") ||
 		// 知更鸟·晴歌 E 固定非攻击（Q 因可选目标已固定非攻击）。
-		(cid === "1512" && (skill === "E" || skill === "Q"))
+		(cid === CHARACTER_IDS.spRobin && (skill === "E" || skill === "Q"))
 	);
 }
 
@@ -517,46 +542,49 @@ export function shouldRememberSkillTarget(characterName: string) {
 }
 
 export function canUseSkillCode(character: CharacterConfig, skill: SkillCode) {
-	if (skill === "") return true;
+	const parsed = tryParseSkillCode(skill);
+	if (!parsed) return false;
+	const normalizedSkill = parsed.raw;
+	if (normalizedSkill === "") return true;
 	if (!isCharacterTarget(character)) return false;
 
 	// 红A {n}E 支持：数字前缀 + E（如 5E、1E、E），最多连续 5 箭
 	if (
 		hasSkillEffect(character.name, "Q", "archerUltimate") &&
-		/^\d*E$/.test(skill) &&
-		(skill === "E" ||
-			(Number.parseInt(skill, 10) >= 1 &&
-				Number.parseInt(skill, 10) <= archerMaxConsecutiveEs))
+		parsed.archerExtraECount !== undefined &&
+		parsed.archerExtraECount >= 1 &&
+		parsed.archerExtraECount <= archerMaxConsecutiveEs
 	)
 		return true;
+	if (parsed.archerExtraECount !== undefined) return false;
 
-	const chars = [...skill];
+	const chars = parsed.tokens;
 	for (const c of chars) {
-		if (!validSkillChars.includes(c)) return false;
 		if (c === "W" && !hasSkillEffect(character.name, "W", "counterW"))
 			return false;
 	}
 
 	// AE/EA 不能组合（白厄 E2 以上境界内允许 EA/EW）
-	if (skill.includes("A") && skill.includes("E")) return false;
+	if (normalizedSkill.includes("A") && normalizedSkill.includes("E"))
+		return false;
 
 	// 非 E2 白厄境界外不可输入 EA/EW（E2 以上允许，引擎自动降级处理）
 	if (
 		characterHasSemanticFlag(character.name, "wOnlyInDomain") &&
 		character.eidolon < 2 &&
-		(skill === "EA" || skill === "EW")
+		(normalizedSkill === "EA" || normalizedSkill === "EW")
 	) {
 		return false;
 	}
 
 	// Q 不能单独出现（Q 始终是插队，必须与 A 或 E 搭配）
-	if (skill === "Q") return false;
+	if (normalizedSkill === "Q") return false;
 
 	// F（协战标记）必须在最前面，且最多带含 F 的两个字符
-	const firstNonF = [...skill].findIndex((c) => c !== "F");
-	const lastF = skill.lastIndexOf("F");
+	const firstNonF = chars.findIndex((c) => c !== "F");
+	const lastF = normalizedSkill.lastIndexOf("F");
 	if (lastF >= 0 && firstNonF >= 0 && lastF > firstNonF) return false;
-	if (skill.includes("F") && skill.length > 2) return false;
+	if (normalizedSkill.includes("F") && normalizedSkill.length > 2) return false;
 
 	return true;
 }

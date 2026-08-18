@@ -1,7 +1,7 @@
 import { hasSkillEffect } from "../data/characters";
 import { expirePhainonDomainSpeedBonus } from "../mechanics/phainon";
-import type { GeneratedAction } from "../utils/actionSequence";
-import { getCharacterCid, type SkillCode } from "../utils/actionSequence";
+import type { GeneratedAction } from "../utils/action-sequence";
+import { getCharacterCid, type SkillCode } from "../utils/action-sequence";
 import {
 	emitMemeAdvanceAction,
 	findHimekoNovaAssistState,

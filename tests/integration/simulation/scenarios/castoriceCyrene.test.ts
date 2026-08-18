@@ -4,7 +4,9 @@ import { simulateActions } from "../../../../src/simulate/actions";
 
 describe("example2", () => {
 	it("死龙回合后的昔涟 Q 会拉条遐蝶", () => {
-		const input = JSON.parse(readFileSync("tests/fixtures/cases/example2.json", "utf8"));
+		const input = JSON.parse(
+			readFileSync("tests/fixtures/cases/example2.json", "utf8"),
+		);
 		input.legacyUltOverrides = input.ultOverrides ?? {};
 		input.limit = Number(input.displayedLimit);
 		const actions = simulateActions(input);

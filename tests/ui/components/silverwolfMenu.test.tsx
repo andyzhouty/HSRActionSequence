@@ -5,7 +5,7 @@ import ActionPanel from "../../../src/components/ActionPanel";
 import {
 	defaultCharacters,
 	type GeneratedAction,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 import { renderWithContext } from "../../helpers/actionSequenceComponentTestUtils";
 
 describe("ActionPanel Silver Wolf", () => {

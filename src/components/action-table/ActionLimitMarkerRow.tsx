@@ -1,4 +1,4 @@
-import { formatActionValue } from "../../utils/actionSequence";
+import { formatActionValue } from "../../utils/action-sequence";
 
 export function ActionLimitMarkerRow({
 	colSpan,

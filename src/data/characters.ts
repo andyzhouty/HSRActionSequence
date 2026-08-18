@@ -1,7 +1,10 @@
+import type { CharacterId } from "../domain/identity";
+import { SKILL_TOKENS } from "../domain/skills";
+import { validateCharacterSchema } from "./characterSchema";
 import characterData from "./characters.json";
 
 type CharacterEntry = {
-	cid: string;
+	cid: CharacterId;
 	names: string[];
 	baseSpeed?: number;
 	effects?: Record<string, string>;
@@ -17,11 +20,13 @@ export type CharacterCatalogEntry = Pick<
 	"cid" | "names" | "path" | "baseSpeed"
 >;
 
-const data = characterData as {
+const data = characterData as unknown as {
 	characters: CharacterEntry[];
 	_defaults?: Record<string, unknown>;
 };
 const characters = data.characters;
+
+validateCharacterSchema();
 
 /** 面向 UI 的角色检索目录；返回副本，避免调用方修改角色配置。 */
 export function getCharacterCatalog(): CharacterCatalogEntry[] {
@@ -55,7 +60,7 @@ export function getCharacterDisplayName(name: string): string | null {
 	return entry ? entry.names[0] : null;
 }
 
-export function getCharacterCid(name: string): string | undefined {
+export function getCharacterCid(name: string): CharacterId | undefined {
 	const entry = findCharacterEntry(name);
 	return entry?.cid;
 }
@@ -124,7 +129,7 @@ export function getSpecialActionHint(name: string) {
 	return `已识别：${displayName}`;
 }
 
-export const validSkillChars = ["A", "E", "Q", "W", "F", "S", "Z"];
+export const validSkillChars = [...SKILL_TOKENS];
 
 export function getCharacterParticipantId(name: string): number | undefined {
 	const entry = findCharacterEntry(name);

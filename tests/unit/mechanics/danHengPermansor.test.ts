@@ -6,7 +6,7 @@ import {
 import type {
 	CharacterConfig,
 	SkillCode,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
 function character(
 	id: string,

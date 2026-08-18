@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import type { GeneratedAction } from "../../../src/utils/action-sequence";
 import {
 	canExchangeActionOrder,
 	getDisplayOrderedActions,
 	getExtraTurnParentKey,
 } from "../../../src/utils/actionDisplayOrder";
-import type { GeneratedAction } from "../../../src/utils/actionSequence";
 
 function normal(key: string, actionValue = 100): GeneratedAction {
 	return {

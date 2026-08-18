@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { simulateActions } from "../../../src/simulate/actions";
-import { character, input, skills } from "../../helpers/simulateActionTestUtils";
+import {
+	character,
+	input,
+	skills,
+} from "../../helpers/simulateActionTestUtils";
 
 describe("丹恒 Q 击杀再动", () => {
 	function actionsAtEidolon(eidolon: number) {

@@ -1,9 +1,9 @@
 import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
+import { CHARACTER_IDS } from "../../domain/identity";
 import { hasHyacineIca } from "../../mechanics/hyacine";
 import { hasSilverWolfGodmode } from "../../mechanics/silverWolf";
-import { getDisplayOrderedActions } from "../../utils/actionDisplayOrder";
-import type { SpeedChangeMode } from "../../utils/actionSequence";
+import type { SpeedChangeMode } from "../../utils/action-sequence";
 import {
 	canSelectAllyForSkill,
 	canSelectSkillTargetForAction,
@@ -15,7 +15,8 @@ import {
 	isCharacterTarget,
 	shouldRememberSkillTarget,
 	toPositiveNumber,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
+import { getDisplayOrderedActions } from "../../utils/actionDisplayOrder";
 import { SelectInput } from "../Controls";
 import { CompanionFuaToggleSection } from "./CompanionFuaToggleSection";
 import { EvanesciaFuaToggleSection } from "./EvanesciaFuaToggleSection";
@@ -25,7 +26,7 @@ import { MydeiVendettaSection } from "./MydeiVendettaSection";
 import { SpBladeExtraTurnSection } from "./SpBladeExtraTurnSection";
 import { SpRobinFeverSection } from "./SpRobinFeverSection";
 
-/** Sub-component: the floating context menu content */
+/** 子组件：浮动上下文菜单内容。 */
 export function ActionMenuContent() {
 	const ctx = useActionSequence();
 	const selectedActions = ctx.actions.filter((action) =>
@@ -133,48 +134,48 @@ export function ActionMenuContent() {
 				</div>
 			)}
 
-			{/* Skill target section */}
+			{/* 技能目标区域 */}
 			<SkillTargetSection />
 
-			{/* Phainon domain section */}
+			{/* 白厄境界区域 */}
 			<DomainEndSection />
 
-			{/* Himeko Nova assist section */}
+			{/* 姬子助战区域 */}
 			<AssistCancelSection />
 
-			{/* Memory Trailblazer memosprite advance section */}
+			{/* 流萤忆灵提前区域 */}
 			<MemeAdvanceSection />
 
-			{/* Saber manual advance section */}
+			{/* Saber（阿尔托莉雅）手动提前区域 */}
 			<SaberAdvanceSection />
 
-			{/* Interrupt section */}
+			{/* 插队区域 */}
 			<InterruptSection />
 
-			{/* Silver Wolf E2 godmode extra section */}
+			{/* 银狼二魂无敌玩家额外区域 */}
 			<GodmodeExtraSection />
 
-			{/* FUA toggle section */}
+			{/* 追击开关区域 */}
 			<EvanesciaFuaToggleSection />
 			<CompanionFuaToggleSection />
 			<SpBladeExtraTurnSection />
 
-			{/* Mydei vendetta and godslayer extra turn */}
+			{/* Mydei 背水与弑神额外回合 */}
 			<MydeiVendettaSection />
 
-			{/* SP Robin Fever switch */}
+			{/* SP 知更鸟狂热状态开关 */}
 			<SpRobinFeverSection />
 
-			{/* Hyacine E2 section */}
+			{/* 风堇二魂区域 */}
 			<HyacineE2Section />
 
-			{/* Ica kill section */}
+			{/* Ica 击杀区域 */}
 			<IcaKillSection />
 
-			{/* Meme kill section */}
+			{/* Meme 击杀区域 */}
 			<MemeKillSection />
 
-			{/* Evernight self-destruction section */}
+			{/* 遐蝶自毁区域 */}
 			<EvernightSelfDestructSection />
 		</>
 	);
@@ -194,7 +195,8 @@ function SkillTargetSection() {
 		: (ctx.skillOverrides[firstKey] ?? firstAction.skill);
 	const isEligible = canSelectAllyForSkill(character, skill);
 	if (!isEligible) return null;
-	const isSouldragonOwner = getCharacterCid(character.name) === "1414";
+	const isSouldragonOwner =
+		getCharacterCid(character.name) === CHARACTER_IDS.danHengPermansor;
 
 	const availableMemos = ctx.memospriteTargets.filter((m) =>
 		isMemospriteAvailableForAction(ctx, m, firstAction.key),
@@ -259,7 +261,7 @@ function SkillTargetSection() {
  */
 function isMemospriteAvailableForAction(
 	ctx: ReturnType<typeof useActionSequence>,
-	memosprite: import("../../utils/actionSequence").CharacterConfig,
+	memosprite: import("../../utils/action-sequence").CharacterConfig,
 	currentActionKey: string,
 ): boolean {
 	const orderedActions = getDisplayOrderedActions(ctx.actions, ctx.sameAVOrder);
@@ -573,7 +575,7 @@ function SaberAdvanceSection() {
 	const action = ctx.actions.find((item) => item.key === actionKey);
 	if (!action || action.characterId === "@av0") return null;
 	const saber = ctx.characters.find(
-		(character) => getCharacterCid(character.name) === "1014",
+		(character) => getCharacterCid(character.name) === CHARACTER_IDS.saber,
 	);
 	if (!saber) return null;
 	const isEnabled = ctx.saberAdvanceToggles[actionKey] === true;

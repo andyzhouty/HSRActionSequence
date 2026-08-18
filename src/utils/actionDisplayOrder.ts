@@ -1,4 +1,4 @@
-import type { GeneratedAction } from "./actionSequence";
+import type { GeneratedAction } from "./action-sequence";
 
 const DISPLAY_ACTION_VALUE_STEP = 0.0001;
 const FOLLOW_UP_KEY_SUFFIXES = [

@@ -4,8 +4,8 @@ import type {
 	GeneratedAction,
 	SpeedAdjustment,
 	SpeedChangeMode,
-} from "../../utils/actionSequence";
-import { toSignedNumber } from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
+import { toSignedNumber } from "../../utils/action-sequence";
 import {
 	getAdvanceCeilingValue,
 	getOpenedActionSelection,

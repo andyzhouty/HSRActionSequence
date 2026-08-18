@@ -1,18 +1,12 @@
 import { hasPassive, hasSkillEffect } from "../../data/characters";
-import {
-	archerMaxConsecutiveEs,
-	emitArcherExtraEs,
-	hasArcher,
-} from "../../mechanics/archer";
+import { archerMaxConsecutiveEs, hasArcher } from "../../mechanics/archer";
 import { hasCastoriceSummon } from "../../mechanics/castorice";
-import { handleCyreneNormalUltimate } from "../../mechanics/cyrene";
 import {
 	summonSouldragonState,
 	updateSouldragonBondmate,
 } from "../../mechanics/danHengPermansor";
 import { consumeEvernightSpeedBuff } from "../../mechanics/evernight";
 import { hasGilgamesh } from "../../mechanics/gilgamesh";
-import { handleHyacineNormalAction } from "../../mechanics/hyacine";
 import { consumeEntrySpeedBuff } from "../../mechanics/lightconeEffects";
 import {
 	expirePhainonDomainSpeedBonus,
@@ -36,7 +30,7 @@ import {
 	getCharacterPath,
 	isCharacterTarget,
 	type SkillCode,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 import { advanceNotPastCurrent, advanceTeamByUltimate } from "../advance";
 import { resolveHimekoNovaAssist } from "../assist";
 import type { ActionContext } from "../context";
@@ -53,6 +47,10 @@ import {
 } from "../effects";
 import type { SimulationRuntime } from "../runtime";
 import { handlePostUltimateEffects } from "../ultimateEffects";
+import {
+	type NormalActionMechanicContext,
+	runNormalActionMechanics,
+} from "./mechanics";
 import {
 	handleFireflyBreakCheck,
 	handleMemeDeathCheck,
@@ -189,7 +187,7 @@ export function handleNormalAction(
 			activeOdes,
 			input,
 		};
-		// inline emitHimekoNovaAssists to avoid circular issues
+		// 内联 emitHimekoNovaAssists，避免循环依赖。
 		const {
 			assist,
 			assistUseCount: auc,
@@ -250,13 +248,13 @@ export function handleNormalAction(
 		if (beforeInterrupts.length > 0) {
 			states[stateIndex].blockNextAdvance = true;
 		}
-		// Q 在前（如 QA、QE）→ 主行动前先推 Q 插队
+		// Q 在前（如 QA、QE）→ 主行动前先将 Q 插队。
 		if (hasSelfQ && qIsFront) {
 			emitSelfUltimate();
 		}
 	}
 
-	// E2 遐蝶 QE/QA（Q在前）：跳过 main action，保留技能给自拉条后的下一动
+	// 二魂遐蝶 QE/QA（Q 在前）：跳过主行动，将技能保留给自拉条后的下一动。
 	const shouldSkipMainForE2Pull =
 		!skipAssistFollowUp &&
 		isCharacterTarget(character) &&
@@ -346,35 +344,21 @@ export function handleNormalAction(
 			isArcherMultiE ? "E" : resolvedSkill,
 			true,
 		);
-		if (isArcherMultiE && archerECount > 1) {
-			actions[actions.length - 1].hasArcherExtraEs = true;
-		}
-
-		if (isArcherMultiE && archerECount > 1) {
-			emitArcherExtraEs({
-				runtime,
-				stateIndex,
-				key,
-				character,
-				actionValue,
-				actionSpeed,
-				count: archerECount,
-			});
-		}
-		if (
-			isCharacterTarget(character) &&
-			hasSkillEffect(character.name, "Q", "cyreneUltimate") &&
-			usesUltimate &&
-			!hasSelfQ
-		) {
-			handleCyreneNormalUltimate({
-				runtime,
-				stateIndex,
-				key,
-				character,
-				actionValue,
-			});
-		}
+		runNormalActionMechanics("actionGenerated", {
+			runtime,
+			stateIndex,
+			key,
+			character,
+			actionValue,
+			actionSpeed,
+			resolvedSkill,
+			normalUsesUltimate,
+			usesUltimate,
+			hasSelfQ,
+			qIsFront,
+			isArcherMultiE,
+			archerECount,
+		});
 	}
 
 	// ── 刻律军功目标切换 ──
@@ -475,7 +459,7 @@ export function handleNormalAction(
 		}
 	}
 
-	// domain establishment delegated to handlePhainonDomain
+	// 境界建立委托给 handlePhainonDomain。
 	const domainResult = handlePhainonDomain({
 		character,
 		normalUsesUltimate,
@@ -495,7 +479,7 @@ export function handleNormalAction(
 
 	// ── 正常下一动间隔（非境界分支） ──
 
-	// Apply speed adjustment
+	// 应用速度调整。
 	const oldActionSpeed = states[stateIndex].currentSpeed;
 	states[stateIndex].currentSpeed = getNextSpeed(
 		states[stateIndex].currentSpeed,
@@ -512,7 +496,7 @@ export function handleNormalAction(
 		expirePhainonDomainSpeedBonus(states, actionValue);
 	}
 
-	// combustion activation delegated to tryActivateCombustion
+	// 完全燃烧激活委托给 tryActivateCombustion。
 	const justActivatedCombustion = tryActivateCombustion({
 		character,
 		normalUsesUltimate,
@@ -573,7 +557,7 @@ export function handleNormalAction(
 			}
 		}
 
-		// Bronya A: self advance 30%
+		// 布洛妮娅 A：自身行动提前 30%。
 		if (
 			isCharacterTarget(character) &&
 			hasSkillEffect(character.name, "A", "selfAdvance30") &&
@@ -605,7 +589,7 @@ export function handleNormalAction(
 			actionValue,
 		});
 
-		// Memory Trailblazer Q: increment epic
+		// 流萤忆灵 Q：增加史诗计数。
 		if (
 			isCharacterTarget(character) &&
 			hasSkillEffect(character.name, "E", "summonMeme") &&
@@ -614,20 +598,25 @@ export function handleNormalAction(
 			handleMemoryTrailblazerQ(states[stateIndex]);
 		}
 
-		handleHyacineNormalAction({
+		const normalActionMechanicContext: NormalActionMechanicContext = {
 			runtime,
 			stateIndex,
 			key,
 			character,
 			actionValue,
+			actionSpeed,
 			resolvedSkill,
 			normalUsesUltimate,
 			usesUltimate,
+			hasSelfQ,
 			qIsFront,
-		});
+			isArcherMultiE,
+			archerECount,
+		};
+		runNormalActionMechanics("postSummonEffects", normalActionMechanicContext);
 
 		// ── 流萤 完全燃烧中击破触发 ──
-		// firefly break check delegated to handleFireflyBreakCheck
+		// 击破检查委托给 handleFireflyBreakCheck。
 		handleFireflyBreakCheck({
 			stateIndex,
 			normalUsesUltimate,
@@ -663,7 +652,7 @@ export function handleNormalAction(
 		}
 	}
 
-	// memory trailblazer epic consumption delegated to handleMemoryTrailblazerEpicConsumption
+	// 流萤忆灵史诗计数消耗委托给 handleMemoryTrailblazerEpicConsumption。
 	handleMemoryTrailblazerEpicConsumption({
 		character,
 		resolvedSkill,
@@ -677,7 +666,7 @@ export function handleNormalAction(
 		key,
 	});
 
-	// SP Robin Q debuff：目标的 2 个正常回合在本行动后递减。
+	// SP Robin Q 减益：目标的 2 个正常回合在本行动后递减。
 	// 光锥 23063 全队加速：各目标自己的 2 个正常回合在本行动后递减。
 	// 迷迷/小伊卡等可能在本行动中被移除，需确认行动者仍在原位。
 	if (states[stateIndex]?.character.id === character.id) {

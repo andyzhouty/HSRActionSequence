@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { simulateActions } from "../../../src/simulate/actions";
 import { getDisplayOrderedActions } from "../../../src/utils/actionDisplayOrder";
-import { character, input, skills } from "../../helpers/simulateActionTestUtils";
+import {
+	character,
+	input,
+	skills,
+} from "../../helpers/simulateActionTestUtils";
 
 describe("Himeko Nova Assist (姬子·启行 F)", () => {
 	it("队友 FE 行动触发协战", () => {

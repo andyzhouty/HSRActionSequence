@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { simulateActions } from "../../../src/simulate/actions";
-import { character, input, skills } from "../../helpers/simulateActionTestUtils";
+import {
+	character,
+	input,
+	skills,
+} from "../../helpers/simulateActionTestUtils";
 
 describe("Memory Trailblazer (开拓者·记忆)", () => {
 	it("Q 也会召唤迷迷", () => {

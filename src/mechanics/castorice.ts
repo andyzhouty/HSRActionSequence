@@ -3,8 +3,8 @@ import type {
 	CharacterConfig,
 	GeneratedAction,
 	SkillCode,
-} from "../utils/actionSequence";
-import { getPolluxRule } from "../utils/actionSequence";
+} from "../utils/action-sequence";
+import { getPolluxRule } from "../utils/action-sequence";
 import { applyActiveHyacineE2SpeedBuffToSummon } from "./hyacine";
 
 // ── 类型 ──
@@ -208,13 +208,13 @@ export function applyCastoriceE2Pull(
 	);
 	if (polluxIndex >= 0) {
 		if (options?.queuePolluxAtCurrentAction) {
-			// A normal Q queues two normal actions at the same AV: Castorice first,
-			// then Pollux, before unrelated normal turns.
+			// 普通 Q 会在同一 AV 排入两次普通行动：先是遐蝶，再是白厄，
+			// 然后才处理无关角色的普通回合。
 			castorice.sameActionPriority = -2;
 			states[polluxIndex].nextActionValue = actionValue;
 			states[polluxIndex].sameActionPriority = -1;
 		} else {
-			// Technique and interrupt Q keep their existing display offset.
+			// 秘技和插队 Q 保持原有的显示偏移。
 			states[polluxIndex].nextActionValue = actionValue + 0.0001;
 		}
 	}

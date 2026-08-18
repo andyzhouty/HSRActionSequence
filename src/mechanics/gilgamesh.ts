@@ -1,4 +1,5 @@
 import { getCharacterCid } from "../data/characters";
+import { CHARACTER_IDS } from "../domain/identity";
 import type { ActionState, SimulateActionsInput } from "../simulate/types";
 import {
 	type CharacterConfig,
@@ -14,7 +15,7 @@ import { hasSaber } from "./saber";
 export const gilgameshInterestResourceName = "兴致";
 
 export function hasGilgamesh(character: CharacterConfig | undefined): boolean {
-	return getCharacterCid(character?.name ?? "") === "1509";
+	return getCharacterCid(character?.name ?? "") === CHARACTER_IDS.gilgamesh;
 }
 
 export function getGilgameshBaseSpeed(character: CharacterConfig): number {

@@ -25,7 +25,7 @@ export interface Screen {
     height : number
 }
 
-// Environment information such as platform, buildtype, ...
+// 平台、构建类型等环境信息……
 export interface EnvironmentInfo {
     buildType: string;
     platform: string;
@@ -33,226 +33,226 @@ export interface EnvironmentInfo {
 }
 
 // [EventsEmit](https://wails.io/docs/reference/runtime/events#eventsemit)
-// emits the given event. Optional data may be passed with the event.
-// This will trigger any event listeners.
+// 发送指定事件，可随事件传递可选数据。
+// 这会触发所有事件监听器。
 export function EventsEmit(eventName: string, ...data: any): void;
 
-// [EventsOn](https://wails.io/docs/reference/runtime/events#eventson) sets up a listener for the given event name.
+// [EventsOn](https://wails.io/docs/reference/runtime/events#eventson) 为指定事件名设置监听器。
 export function EventsOn(eventName: string, callback: (...data: any) => void): () => void;
 
 // [EventsOnMultiple](https://wails.io/docs/reference/runtime/events#eventsonmultiple)
-// sets up a listener for the given event name, but will only trigger a given number times.
+// 为指定事件名设置监听器，但最多只触发指定次数。
 export function EventsOnMultiple(eventName: string, callback: (...data: any) => void, maxCallbacks: number): () => void;
 
 // [EventsOnce](https://wails.io/docs/reference/runtime/events#eventsonce)
-// sets up a listener for the given event name, but will only trigger once.
+// 为指定事件名设置监听器，但只触发一次。
 export function EventsOnce(eventName: string, callback: (...data: any) => void): () => void;
 
 // [EventsOff](https://wails.io/docs/reference/runtime/events#eventsoff)
-// unregisters the listener for the given event name.
+// 取消指定事件名的监听器。
 export function EventsOff(eventName: string, ...additionalEventNames: string[]): void;
 
 // [EventsOffAll](https://wails.io/docs/reference/runtime/events#eventsoffall)
-// unregisters all listeners.
+// 取消所有监听器。
 export function EventsOffAll(): void;
 
 // [LogPrint](https://wails.io/docs/reference/runtime/log#logprint)
-// logs the given message as a raw message
+// 将指定消息作为原始消息记录日志。
 export function LogPrint(message: string): void;
 
 // [LogTrace](https://wails.io/docs/reference/runtime/log#logtrace)
-// logs the given message at the `trace` log level.
+// 以 `trace` 日志级别记录指定消息。
 export function LogTrace(message: string): void;
 
 // [LogDebug](https://wails.io/docs/reference/runtime/log#logdebug)
-// logs the given message at the `debug` log level.
+// 以 `debug` 日志级别记录指定消息。
 export function LogDebug(message: string): void;
 
 // [LogError](https://wails.io/docs/reference/runtime/log#logerror)
-// logs the given message at the `error` log level.
+// 以 `error` 日志级别记录指定消息。
 export function LogError(message: string): void;
 
 // [LogFatal](https://wails.io/docs/reference/runtime/log#logfatal)
-// logs the given message at the `fatal` log level.
-// The application will quit after calling this method.
+// 以 `fatal` 日志级别记录指定消息。
+// 调用此方法后应用将退出。
 export function LogFatal(message: string): void;
 
 // [LogInfo](https://wails.io/docs/reference/runtime/log#loginfo)
-// logs the given message at the `info` log level.
+// 以 `info` 日志级别记录指定消息。
 export function LogInfo(message: string): void;
 
 // [LogWarning](https://wails.io/docs/reference/runtime/log#logwarning)
-// logs the given message at the `warning` log level.
+// 以 `warning` 日志级别记录指定消息。
 export function LogWarning(message: string): void;
 
 // [WindowReload](https://wails.io/docs/reference/runtime/window#windowreload)
-// Forces a reload by the main application as well as connected browsers.
+// 强制主应用和已连接的浏览器重新加载。
 export function WindowReload(): void;
 
 // [WindowReloadApp](https://wails.io/docs/reference/runtime/window#windowreloadapp)
-// Reloads the application frontend.
+// 重新加载应用前端。
 export function WindowReloadApp(): void;
 
 // [WindowSetAlwaysOnTop](https://wails.io/docs/reference/runtime/window#windowsetalwaysontop)
-// Sets the window AlwaysOnTop or not on top.
+// 设置窗口是否始终置顶。
 export function WindowSetAlwaysOnTop(b: boolean): void;
 
 // [WindowSetSystemDefaultTheme](https://wails.io/docs/next/reference/runtime/window#windowsetsystemdefaulttheme)
-// *Windows only*
-// Sets window theme to system default (dark/light).
+// *仅限 Windows*
+// 将窗口主题设置为系统默认主题（深色/浅色）。
 export function WindowSetSystemDefaultTheme(): void;
 
 // [WindowSetLightTheme](https://wails.io/docs/next/reference/runtime/window#windowsetlighttheme)
-// *Windows only*
-// Sets window to light theme.
+// *仅限 Windows*
+// 将窗口设置为浅色主题。
 export function WindowSetLightTheme(): void;
 
 // [WindowSetDarkTheme](https://wails.io/docs/next/reference/runtime/window#windowsetdarktheme)
-// *Windows only*
-// Sets window to dark theme.
+// *仅限 Windows*
+// 将窗口设置为深色主题。
 export function WindowSetDarkTheme(): void;
 
 // [WindowCenter](https://wails.io/docs/reference/runtime/window#windowcenter)
-// Centers the window on the monitor the window is currently on.
+// 将窗口置于当前所在显示器的中央。
 export function WindowCenter(): void;
 
 // [WindowSetTitle](https://wails.io/docs/reference/runtime/window#windowsettitle)
-// Sets the text in the window title bar.
+// 设置窗口标题栏文本。
 export function WindowSetTitle(title: string): void;
 
 // [WindowFullscreen](https://wails.io/docs/reference/runtime/window#windowfullscreen)
-// Makes the window full screen.
+// 将窗口设置为全屏。
 export function WindowFullscreen(): void;
 
 // [WindowUnfullscreen](https://wails.io/docs/reference/runtime/window#windowunfullscreen)
-// Restores the previous window dimensions and position prior to full screen.
+// 恢复进入全屏前的窗口尺寸和位置。
 export function WindowUnfullscreen(): void;
 
 // [WindowIsFullscreen](https://wails.io/docs/reference/runtime/window#windowisfullscreen)
-// Returns the state of the window, i.e. whether the window is in full screen mode or not.
+// 返回窗口状态，即窗口是否处于全屏模式。
 export function WindowIsFullscreen(): Promise<boolean>;
 
 // [WindowSetSize](https://wails.io/docs/reference/runtime/window#windowsetsize)
-// Sets the width and height of the window.
+// 设置窗口宽度和高度。
 export function WindowSetSize(width: number, height: number): void;
 
 // [WindowGetSize](https://wails.io/docs/reference/runtime/window#windowgetsize)
-// Gets the width and height of the window.
+// 获取窗口宽度和高度。
 export function WindowGetSize(): Promise<Size>;
 
 // [WindowSetMaxSize](https://wails.io/docs/reference/runtime/window#windowsetmaxsize)
-// Sets the maximum window size. Will resize the window if the window is currently larger than the given dimensions.
-// Setting a size of 0,0 will disable this constraint.
+// 设置窗口最大尺寸。如果窗口当前大于给定尺寸，则会调整窗口大小。
+// 设置尺寸为 0,0 将禁用此限制。
 export function WindowSetMaxSize(width: number, height: number): void;
 
 // [WindowSetMinSize](https://wails.io/docs/reference/runtime/window#windowsetminsize)
-// Sets the minimum window size. Will resize the window if the window is currently smaller than the given dimensions.
-// Setting a size of 0,0 will disable this constraint.
+// 设置窗口最小尺寸。如果窗口当前小于给定尺寸，则会调整窗口大小。
+// 设置尺寸为 0,0 将禁用此限制。
 export function WindowSetMinSize(width: number, height: number): void;
 
 // [WindowSetPosition](https://wails.io/docs/reference/runtime/window#windowsetposition)
-// Sets the window position relative to the monitor the window is currently on.
+// 设置窗口相对于当前所在显示器的位置。
 export function WindowSetPosition(x: number, y: number): void;
 
 // [WindowGetPosition](https://wails.io/docs/reference/runtime/window#windowgetposition)
-// Gets the window position relative to the monitor the window is currently on.
+// 获取窗口相对于当前所在显示器的位置。
 export function WindowGetPosition(): Promise<Position>;
 
 // [WindowHide](https://wails.io/docs/reference/runtime/window#windowhide)
-// Hides the window.
+// 隐藏窗口。
 export function WindowHide(): void;
 
 // [WindowShow](https://wails.io/docs/reference/runtime/window#windowshow)
-// Shows the window, if it is currently hidden.
+// 如果窗口当前处于隐藏状态，则显示窗口。
 export function WindowShow(): void;
 
 // [WindowMaximise](https://wails.io/docs/reference/runtime/window#windowmaximise)
-// Maximises the window to fill the screen.
+// 最大化窗口，使其填满屏幕。
 export function WindowMaximise(): void;
 
 // [WindowToggleMaximise](https://wails.io/docs/reference/runtime/window#windowtogglemaximise)
-// Toggles between Maximised and UnMaximised.
+// 在最大化和非最大化状态之间切换。
 export function WindowToggleMaximise(): void;
 
 // [WindowUnmaximise](https://wails.io/docs/reference/runtime/window#windowunmaximise)
-// Restores the window to the dimensions and position prior to maximising.
+// 恢复最大化前的窗口尺寸和位置。
 export function WindowUnmaximise(): void;
 
 // [WindowIsMaximised](https://wails.io/docs/reference/runtime/window#windowismaximised)
-// Returns the state of the window, i.e. whether the window is maximised or not.
+// 返回窗口状态，即窗口是否处于最大化状态。
 export function WindowIsMaximised(): Promise<boolean>;
 
 // [WindowMinimise](https://wails.io/docs/reference/runtime/window#windowminimise)
-// Minimises the window.
+// 最小化窗口。
 export function WindowMinimise(): void;
 
 // [WindowUnminimise](https://wails.io/docs/reference/runtime/window#windowunminimise)
-// Restores the window to the dimensions and position prior to minimising.
+// 恢复最小化前的窗口尺寸和位置。
 export function WindowUnminimise(): void;
 
 // [WindowIsMinimised](https://wails.io/docs/reference/runtime/window#windowisminimised)
-// Returns the state of the window, i.e. whether the window is minimised or not.
+// 返回窗口状态，即窗口是否处于最小化状态。
 export function WindowIsMinimised(): Promise<boolean>;
 
 // [WindowIsNormal](https://wails.io/docs/reference/runtime/window#windowisnormal)
-// Returns the state of the window, i.e. whether the window is normal or not.
+// 返回窗口状态，即窗口是否处于普通状态。
 export function WindowIsNormal(): Promise<boolean>;
 
 // [WindowSetBackgroundColour](https://wails.io/docs/reference/runtime/window#windowsetbackgroundcolour)
-// Sets the background colour of the window to the given RGBA colour definition. This colour will show through for all transparent pixels.
+// 将窗口背景色设置为指定的 RGBA 颜色定义。所有透明像素都会显示此颜色。
 export function WindowSetBackgroundColour(R: number, G: number, B: number, A: number): void;
 
 // [ScreenGetAll](https://wails.io/docs/reference/runtime/window#screengetall)
-// Gets the all screens. Call this anew each time you want to refresh data from the underlying windowing system.
+// 获取所有屏幕。每次需要从底层窗口系统刷新数据时都应重新调用此方法。
 export function ScreenGetAll(): Promise<Screen[]>;
 
 // [BrowserOpenURL](https://wails.io/docs/reference/runtime/browser#browseropenurl)
-// Opens the given URL in the system browser.
+// 在系统浏览器中打开指定 URL。
 export function BrowserOpenURL(url: string): void;
 
 // [Environment](https://wails.io/docs/reference/runtime/intro#environment)
-// Returns information about the environment
+// 返回环境信息。
 export function Environment(): Promise<EnvironmentInfo>;
 
 // [Quit](https://wails.io/docs/reference/runtime/intro#quit)
-// Quits the application.
+// 退出应用。
 export function Quit(): void;
 
 // [Hide](https://wails.io/docs/reference/runtime/intro#hide)
-// Hides the application.
+// 隐藏应用。
 export function Hide(): void;
 
 // [Show](https://wails.io/docs/reference/runtime/intro#show)
-// Shows the application.
+// 显示应用。
 export function Show(): void;
 
 // [ClipboardGetText](https://wails.io/docs/reference/runtime/clipboard#clipboardgettext)
-// Returns the current text stored on clipboard
+// 返回剪贴板中当前存储的文本。
 export function ClipboardGetText(): Promise<string>;
 
 // [ClipboardSetText](https://wails.io/docs/reference/runtime/clipboard#clipboardsettext)
-// Sets a text on the clipboard
+// 设置剪贴板文本。
 export function ClipboardSetText(text: string): Promise<boolean>;
 
 // [OnFileDrop](https://wails.io/docs/reference/runtime/draganddrop#onfiledrop)
-// OnFileDrop listens to drag and drop events and calls the callback with the coordinates of the drop and an array of path strings.
+// OnFileDrop 监听拖放事件，并将放置坐标和路径字符串数组传给回调函数。
 export function OnFileDrop(callback: (x: number, y: number ,paths: string[]) => void, useDropTarget: boolean) :void
 
 // [OnFileDropOff](https://wails.io/docs/reference/runtime/draganddrop#dragandddropoff)
-// OnFileDropOff removes the drag and drop listeners and handlers.
+// OnFileDropOff 移除拖放监听器和处理器。
 export function OnFileDropOff() :void
 
-// Check if the file path resolver is available
+// 检查文件路径解析器是否可用。
 export function CanResolveFilePaths(): boolean;
 
-// Resolves file paths for an array of files
+// 解析文件数组中的文件路径。
 export function ResolveFilePaths(files: File[]): void
 
-// Notification types
+// 通知类型。
 export interface NotificationOptions {
     id: string;
     title: string;
-    subtitle?: string; // macOS and Linux only
+    subtitle?: string; // 仅限 macOS 和 Linux
     body?: string;
     categoryId?: string;
     data?: { [key: string]: any };
@@ -261,7 +261,7 @@ export interface NotificationOptions {
 export interface NotificationAction {
     id?: string;
     title?: string;
-    destructive?: boolean; // macOS-specific
+    destructive?: boolean; // macOS 专属
 }
 
 export interface NotificationCategory {
@@ -273,58 +273,58 @@ export interface NotificationCategory {
 }
 
 // [InitializeNotifications](https://wails.io/docs/reference/runtime/notification#initializenotifications)
-// Initializes the notification service for the application.
-// This must be called before sending any notifications.
+// 初始化应用的通知服务。
+// 发送任何通知前都必须调用此方法。
 export function InitializeNotifications(): Promise<void>;
 
 // [CleanupNotifications](https://wails.io/docs/reference/runtime/notification#cleanupnotifications)
-// Cleans up notification resources and releases any held connections.
+// 清理通知资源并释放所有持有的连接。
 export function CleanupNotifications(): Promise<void>;
 
 // [IsNotificationAvailable](https://wails.io/docs/reference/runtime/notification#isnotificationavailable)
-// Checks if notifications are available on the current platform.
+// 检查当前平台是否支持通知。
 export function IsNotificationAvailable(): Promise<boolean>;
 
 // [RequestNotificationAuthorization](https://wails.io/docs/reference/runtime/notification#requestnotificationauthorization)
-// Requests notification authorization from the user (macOS only).
+// 请求用户授予通知权限（仅限 macOS）。
 export function RequestNotificationAuthorization(): Promise<boolean>;
 
 // [CheckNotificationAuthorization](https://wails.io/docs/reference/runtime/notification#checknotificationauthorization)
-// Checks the current notification authorization status (macOS only).
+// 检查当前通知权限状态（仅限 macOS）。
 export function CheckNotificationAuthorization(): Promise<boolean>;
 
 // [SendNotification](https://wails.io/docs/reference/runtime/notification#sendnotification)
-// Sends a basic notification with the given options.
+// 使用给定选项发送基本通知。
 export function SendNotification(options: NotificationOptions): Promise<void>;
 
 // [SendNotificationWithActions](https://wails.io/docs/reference/runtime/notification#sendnotificationwithactions)
-// Sends a notification with action buttons. Requires a registered category.
+// 发送带操作按钮的通知，需要已注册的通知类别。
 export function SendNotificationWithActions(options: NotificationOptions): Promise<void>;
 
 // [RegisterNotificationCategory](https://wails.io/docs/reference/runtime/notification#registernotificationcategory)
-// Registers a notification category that can be used with SendNotificationWithActions.
+// 注册可与 SendNotificationWithActions 一起使用的通知类别。
 export function RegisterNotificationCategory(category: NotificationCategory): Promise<void>;
 
 // [RemoveNotificationCategory](https://wails.io/docs/reference/runtime/notification#removenotificationcategory)
-// Removes a previously registered notification category.
+// 移除之前注册的通知类别。
 export function RemoveNotificationCategory(categoryId: string): Promise<void>;
 
 // [RemoveAllPendingNotifications](https://wails.io/docs/reference/runtime/notification#removeallpendingnotifications)
-// Removes all pending notifications from the notification center.
+// 从通知中心移除所有待处理通知。
 export function RemoveAllPendingNotifications(): Promise<void>;
 
 // [RemovePendingNotification](https://wails.io/docs/reference/runtime/notification#removependingnotification)
-// Removes a specific pending notification by its identifier.
+// 根据标识符移除指定的待处理通知。
 export function RemovePendingNotification(identifier: string): Promise<void>;
 
 // [RemoveAllDeliveredNotifications](https://wails.io/docs/reference/runtime/notification#removealldeliverednotifications)
-// Removes all delivered notifications from the notification center.
+// 从通知中心移除所有已送达通知。
 export function RemoveAllDeliveredNotifications(): Promise<void>;
 
 // [RemoveDeliveredNotification](https://wails.io/docs/reference/runtime/notification#removedeliverednotification)
-// Removes a specific delivered notification by its identifier.
+// 根据标识符移除指定的已送达通知。
 export function RemoveDeliveredNotification(identifier: string): Promise<void>;
 
 // [RemoveNotification](https://wails.io/docs/reference/runtime/notification#removenotification)
-// Removes a notification by its identifier (cross-platform convenience function).
+// 根据标识符移除通知（跨平台便捷函数）。
 export function RemoveNotification(identifier: string): Promise<void>;

@@ -4,7 +4,7 @@ import ActionPanel from "../../../src/components/ActionPanel";
 import type {
 	CharacterConfig,
 	GeneratedAction,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 import { renderWithContext } from "../../helpers/actionSequenceComponentTestUtils";
 
 function character(id: string, name: string): CharacterConfig {

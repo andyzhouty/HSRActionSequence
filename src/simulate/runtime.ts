@@ -1,4 +1,4 @@
-import type { GeneratedAction } from "../utils/actionSequence";
+import type { GeneratedAction } from "../utils/action-sequence";
 import type {
 	ActionState,
 	ActiveOdeState,

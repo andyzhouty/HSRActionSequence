@@ -8,7 +8,7 @@ import type {
 	OdeSelection,
 	SkillCode,
 	UltInterrupt,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
 function character(
 	id: string,
@@ -84,15 +84,15 @@ describe("Memory Trailblazer Epic System", () => {
 			}),
 		);
 
-		// rmc-1 (A) → rmc-1-q (Q, epic+1) → rmc-2 (A, consumes epic)
-		// rmc-2 should be a normal action (no extra memosprite since no genesis ode)
+		// rmc-1（A）→ rmc-1-q（Q，史诗 +1）→ rmc-2（A，消耗史诗）。
+		// rmc-2 应是普通行动（没有创世颂歌，因此不产生额外忆灵）。
 		const rmc1 = actions.find((a) => a.key === "rmc-1");
 		expect(rmc1).toBeDefined();
 		expect(rmc1?.skill).toBe("A");
 
 		const rmc2 = actions.find((a) => a.key === "rmc-2");
 		expect(rmc2).toBeDefined();
-		// No extra memosprite without genesis ode
+		// 没有创世颂歌时不应产生额外忆灵。
 		const epicMemosprite = actions.find((a) => a.isEpicTriggeredMemosprite);
 		expect(epicMemosprite).toBeUndefined();
 	});
@@ -110,9 +110,10 @@ describe("Memory Trailblazer Epic System", () => {
 			}),
 		);
 
-		// rmc-1 (A) → rmc-1-q (Q, epic=1) → rmc-2 (A) → rmc-2-q (Q, epic=1, not 2 since first A consumed)
-		// Actually: Q1 → epic=1 → A2 → consumed → Q2 → epic=1 → A3 → consumed
-		// The test just verifies no crash and actions exist
+		// rmc-1（A）→ rmc-1-q（Q，史诗=1）→ rmc-2（A）→ rmc-2-q（Q，史诗=1，
+		// 因为第一次 A 已消耗史诗，所以不是 2）。
+		// 实际流程：Q1 → 史诗=1 → A2 → 消耗 → Q2 → 史诗=1 → A3 → 消耗。
+		// 该测试只验证流程不崩溃且行动存在。
 		expect(actions.length).toBeGreaterThan(0);
 		const rmcActions = actions.filter((a) => a.characterId === "rmc");
 		expect(rmcActions.length).toBeGreaterThanOrEqual(3);
@@ -141,9 +142,9 @@ describe("Memory Trailblazer Epic System", () => {
 			}),
 		);
 
-		// cyrene-1 (A, AV=50) → cyrene-1-q (Q, AV=50, memosprite: genesis→rmc) →
-		// rmc-1 (A, AV=100) → rmc-1-q (Q, AV=100, epic=1) →
-		// rmc-2 (A, AV=200, consumes epic=0, triggers extra memosprite)
+		// cyrene-1（A，AV=50）→ cyrene-1-q（Q，AV=50，忆灵：创世颂歌→RMC）→
+		// rmc-1（A，AV=100）→ rmc-1-q（Q，AV=100，史诗=1）→
+		// rmc-2（A，AV=200，消耗史诗=0，触发额外忆灵）。
 		const epicMemosprite = actions.find((a) => a.isEpicTriggeredMemosprite);
 		expect(epicMemosprite).toBeDefined();
 		expect(epicMemosprite?.displayName).toBe("德谬歌");
@@ -168,8 +169,8 @@ describe("Cyrene Q_counter System", () => {
 			}),
 		);
 
-		// Q_counter: 0→1(cyrene-1-q), 1→2(cyrene-2-q, enhanced Q triggers)
-		// Enhanced Q should appear at cyrene-2's actionValue
+		// Q_counter：0→1（cyrene-1-q），1→2（cyrene-2-q，触发强化 Q）。
+		// 强化 Q 应出现在 cyrene-2 的 actionValue。
 		const enhancedQs = actions.filter((a) => a.isCyreneEnhancedQ);
 		expect(enhancedQs.length).toBe(1);
 		expect(enhancedQs[0].skill).toBe("Q");
@@ -193,7 +194,7 @@ describe("Cyrene Q_counter System", () => {
 			}),
 		);
 
-		// Q_counter: 1,2(enhanced),3,4,5(enhanced),6
+		// Q_counter：1、2（强化）、3、4、5（强化）、6。
 		const enhancedQs = actions.filter((a) => a.isCyreneEnhancedQ);
 		expect(enhancedQs.length).toBe(2);
 	});
@@ -217,7 +218,7 @@ describe("Cyrene E6 Effects", () => {
 		);
 
 		// 昔涟首动 AV = 10000/200 * (1-0) = 50（无首动提前被动）
-		// cyrene-1 (A, AV=50) → cyrene-1-q (Q, AV=50, Q_counter=1, E6 pull)
+		// cyrene-1（A，AV=50）→ cyrene-1-q（Q，AV=50，Q_counter=1，六魂拉条）。
 		// 队友被拉到 AV=50 附近
 		const allyAction = actions.find((a) => a.characterId === "ally");
 		expect(allyAction).toBeDefined();
@@ -260,11 +261,11 @@ describe("Cyrene E6 Effects", () => {
 					character("ally", "队友", 80),
 				],
 				skillOverrides: skills({
-					"cyrene-1": "AQ", // Q_counter=1 (E6 first ult: 100% pull)
-					"cyrene-2": "AQ", // Q_counter=2 (enhanced Q, no 24% for E6 since k=0)
-					"cyrene-3": "AQ", // Q_counter=3
-					"cyrene-4": "AQ", // Q_counter=4
-					"cyrene-5": "AQ", // Q_counter=5 (enhanced Q + 24% pull for E6)
+					"cyrene-1": "AQ", // Q_counter=1（六魂第一次终结技：100% 拉条）。
+					"cyrene-2": "AQ", // Q_counter=2（强化 Q；因 k=0，六魂不提供 24% 拉条）。
+					"cyrene-3": "AQ", // Q_counter=3。
+					"cyrene-4": "AQ", // Q_counter=4。
+					"cyrene-5": "AQ", // Q_counter=5（强化 Q + 六魂 24% 拉条）。
 				}),
 				limit: 400,
 			}),
@@ -272,11 +273,11 @@ describe("Cyrene E6 Effects", () => {
 
 		// Q_counter=5 时应有强化 Q
 		const enhancedQs = actions.filter((a) => a.isCyreneEnhancedQ);
-		expect(enhancedQs.length).toBe(2); // Q_counter=2 and Q_counter=5
+		expect(enhancedQs.length).toBe(2); // Q_counter=2 和 Q_counter=5。
 
 		// 队友在强化 Q 后应被拉条
 		const allyActions = actions.filter((a) => a.characterId === "ally");
-		const enhancedQ = enhancedQs[1]; // the second one (Q_counter=5)
+		const enhancedQ = enhancedQs[1]; // 第二个强化 Q（Q_counter=5）。
 		const alliesAfterEnhancedQ = allyActions.filter(
 			(a) => a.actionValue >= enhancedQ.actionValue,
 		);
@@ -311,8 +312,8 @@ describe("Cyrene + Memory Trailblazer Full Integration", () => {
 			}),
 		);
 
-		// rmc-1 (E) → cyrene-1 (A) → cyrene-1-q (Q, ode genesis to rmc) → ...
-		// rmc-2 (AQ, A + Q, epic+1 via Q) → rmc-3 (A, consumes epic, triggers extra memosprite)
+		// rmc-1（E）→ cyrene-1（A）→ cyrene-1-q（Q，将创世颂歌施加给 RMC）→ ……
+		// rmc-2（AQ，A + Q，Q 使史诗 +1）→ rmc-3（A，消耗史诗并触发额外忆灵）。
 		const epicMemosprite = actions.find((a) => a.isEpicTriggeredMemosprite);
 		expect(epicMemosprite).toBeDefined();
 		expect(epicMemosprite?.memospriteOwnerId).toBe("cyrene");
@@ -341,10 +342,10 @@ describe("Cyrene + Memory Trailblazer Full Integration", () => {
 			}),
 		);
 
-		// cyrene EQ (AV=50, Q_counter=1, E6 100% pull, genesis→rmc)
-		// rmc E (AV~50, summon Meme)
-		// cyrene E (AV~50)
-		// rmc QA (AV~112.5, Q→epic=1, A→consumes epic→emits epic memosprite)
+		// cyrene EQ（AV=50，Q_counter=1，六魂 100% 拉条，创世颂歌→RMC）。
+		// rmc E（AV 约为 50，召唤 Meme）。
+		// cyrene E（AV 约为 50）。
+		// rmc QA（AV 约为 112.5，Q→史诗=1，A→消耗史诗并生成史诗忆灵）。
 		const epicMemosprite = actions.find((a) => a.isEpicTriggeredMemosprite);
 		expect(epicMemosprite).toBeDefined();
 		expect(epicMemosprite?.lockedSkill).toBe(true);
@@ -371,9 +372,9 @@ describe("Cyrene + Memory Trailblazer Full Integration", () => {
 			}),
 		);
 
-		// cyrene-1 (A, AV=50) → cyrene-1-q (Q, AV=50, Q_counter=1) →
-		// a-1-interrupt-0 (Q, AV=100, Q_counter=2, enhanced Q triggers)
-		// b-1-interrupt-0 (Q, AV=100, Q_counter=3)
+		// cyrene-1（A，AV=50）→ cyrene-1-q（Q，AV=50，Q_counter=1）→
+		// a-1-interrupt-0（Q，AV=100，Q_counter=2，触发强化 Q）
+		// b-1-interrupt-0（Q，AV=100，Q_counter=3）。
 		const enhancedQs = actions.filter((a) => a.isCyreneEnhancedQ);
 		expect(enhancedQs.length).toBe(1);
 	});

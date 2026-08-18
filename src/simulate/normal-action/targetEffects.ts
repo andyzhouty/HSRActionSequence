@@ -8,7 +8,7 @@ import {
 	getCharacterPath,
 	isCharacterTarget,
 	type SkillCode,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 import { advanceNotPastCurrent, pullToCurrentAction } from "../advance";
 import { getSkillTarget } from "../effects";
 import type { ActionState, SimulateActionsInput } from "../types";
@@ -25,13 +25,13 @@ export interface TargetEffectsParams {
 export function handleTargetEffects(params: TargetEffectsParams): void {
 	const { character, skill, states, actionValue, input, key } = params;
 
-	// SP Robin Q 施加的 debuff：被标记的角色不能使其他我方目标行动提前。
+	// SP Robin Q 施加的减益：被标记的角色不能使其他我方目标行动提前。
 	const actingState = states.find(
 		(state) => state.character.id === character.id,
 	);
 	const blocksAllyAdvance = (actingState?.allyAdvanceBlockTurns ?? 0) > 0;
 
-	// Bronya/Sunday E: pull target to current action value
+	// 布洛妮娅/星期日 E：将目标拉到当前行动值。
 	if (
 		!blocksAllyAdvance &&
 		isCharacterTarget(character) &&
@@ -67,7 +67,7 @@ export function handleTargetEffects(params: TargetEffectsParams): void {
 						}
 					}
 				}
-				// Sunday additionally pulls the target's owned summons
+				// 星期日还会拉条目标拥有的召唤物。
 				if (hasSkillEffect(character.name, "E", "sundayPullWithMemosprite")) {
 					for (const entity of states) {
 						const isOwnedSummon =
@@ -90,7 +90,7 @@ export function handleTargetEffects(params: TargetEffectsParams): void {
 		}
 	}
 
-	// Sparkle E: 50% advance, not past current action value
+	// 花火 E：提前 50%，但不能超过当前行动值。
 	if (
 		!blocksAllyAdvance &&
 		isCharacterTarget(character) &&

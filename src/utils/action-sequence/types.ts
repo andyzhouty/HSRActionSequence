@@ -1,5 +1,8 @@
 /** 共享的行动序列数据模型；不依赖模拟或 UI 实现。 */
 
+import type { ActionIntent } from "../../domain/actions/models";
+import type { CharacterId } from "../../domain/identity";
+
 export type TargetKind =
 	| "角色"
 	| "忆灵"
@@ -31,15 +34,9 @@ export type CharacterConfig = {
 export type SkillCode = string;
 export type SpeedChangeMode = "absolute" | "relative";
 
-export type GeneratedAction = {
-	key: string;
-	characterId: string;
+export type GeneratedAction = ActionIntent & {
 	displayName?: string;
 	targetKind?: TargetKind;
-	actionNo: number;
-	actionValue: number;
-	skill: SkillCode;
-	speed: number;
 	isDomainAction?: boolean;
 	isDomainFinalAction?: boolean;
 	isAssistAction?: boolean;
@@ -115,7 +112,7 @@ export type OdeRule = {
 	code: string;
 	label: string;
 	fullName: string;
-	targetCid?: string;
+	targetCid?: CharacterId;
 	duration:
 		| "battle"
 		| "nextTurn"
@@ -201,7 +198,7 @@ export type DomainRule = {
 };
 
 export type SavedData = {
-	schemaVersion?: number;
+	schemaVersion: number;
 	limitPreset: string;
 	customLimit: string;
 	displayedLimit?: string;

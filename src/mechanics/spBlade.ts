@@ -1,3 +1,4 @@
+import { CHARACTER_IDS } from "../domain/identity";
 import type { ActionState, SimulateActionsInput } from "../simulate/types";
 import {
 	type CharacterConfig,
@@ -5,12 +6,12 @@ import {
 	getCharacterCid,
 	isBasicAttackSkill,
 	isNonAttackSkill,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 
 export const spBladeStackResourceName = "sp刃叠层";
-const SP_BLADE_CID = "1507";
-const CASTORICE_CID = "1407";
-const MEMORY_TRAILBLAZER_CID = "8008";
+const SP_BLADE_CID = CHARACTER_IDS.spBlade;
+const CASTORICE_CID = CHARACTER_IDS.castorice;
+const MEMORY_TRAILBLAZER_CID = CHARACTER_IDS.memoryTrailblazer;
 const countdownSpeed = 70;
 
 export function hasSpBlade(character: CharacterConfig | undefined): boolean {

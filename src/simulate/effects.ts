@@ -26,14 +26,14 @@ import {
 	type SpeedAdjustment,
 	shouldRememberSkillTarget,
 	toSignedNumber,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 import type {
 	ActionState,
 	ActiveOdeState,
 	SimulateActionsInput,
 } from "./types";
 
-// --- Internal helpers ---
+// --- 内部辅助函数 ---
 
 export function toNonNegativeNumber(
 	value: string | undefined,
@@ -240,7 +240,7 @@ export function handleCyrenePostUltimate({
 	void activeOdes;
 	const cyreneRule = getCyreneUltimateRule(character.name);
 	const qCounter = incrementCyreneQCounter(states[casterIndex]);
-	// SP Robin Q debuff：被标记的昔涟只保留自身拉条部分。
+	// SP Robin Q 减益：被标记的昔涟只保留自身拉条部分。
 	const restrictToSelf = hasAllyAdvanceBlock(states[casterIndex]);
 
 	// 强化 Q：Q_counter = 3n+2 时德谬歌获得额外回合
@@ -260,7 +260,7 @@ export function handleCyrenePostUltimate({
 			isCyreneEnhancedQ: true,
 			lockedSkill: true,
 		});
-		// E6：强化 Q 结束后 24% 全队拉条（Q_counter = 3k+2, k>0）
+		// E6：强化 Q 结束后 24% 全队拉条（Q_counter = 3k+2，k>0）。
 		if (character.eidolon >= 6 && shouldTriggerE6TeamAdvance24(qCounter)) {
 			applyCyreneE6EnhancedQPull(
 				states,
@@ -411,7 +411,7 @@ export function killMeme(states: ActionState[], actionValue: number) {
 	);
 }
 
-// --- Internal state ---
+// --- 内部状态 ---
 
 export function getActiveOdeLabels(
 	activeOdes: Map<string, ActiveOdeState[]>,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { simulateActions } from "../../../src/simulate/actions";
-import { isNonAttackSkill } from "../../../src/utils/actionSequence";
+import { isNonAttackSkill } from "../../../src/utils/action-sequence";
 import {
 	character,
 	input,

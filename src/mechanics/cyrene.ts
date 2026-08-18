@@ -3,7 +3,7 @@ import {
 	handleCyrenePostUltimate,
 } from "../simulate/effects";
 import type { SimulationRuntime } from "../simulate/runtime";
-import type { CharacterConfig } from "../utils/actionSequence";
+import type { CharacterConfig } from "../utils/action-sequence";
 
 type CyreneUltimateParams = {
 	runtime: SimulationRuntime;

@@ -6,6 +6,7 @@ import souldragonIcon from "../../assets/skillIcons/SkillIcon_1414_BP.webp";
 import swPassiveIcon from "../../assets/skillIcons/SkillIcon_1506_Passive.webp";
 import swRank2Icon from "../../assets/skillIcons/SkillIcon_1506_Rank2.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
+import { toActionViewModel } from "../../domain/actions";
 import { archerFuaResourceName } from "../../mechanics/archer";
 import { gilgameshInterestResourceName } from "../../mechanics/gilgamesh";
 import { hasSilverWolfGodmode } from "../../mechanics/silverWolf";
@@ -14,7 +15,7 @@ import {
 	isValidSpAventurineFervorValue,
 } from "../../mechanics/spAventurine";
 import { hasSpRobin, isValidSpRobinFeverValue } from "../../mechanics/spRobin";
-import type { GeneratedAction } from "../../utils/actionSequence";
+import type { GeneratedAction } from "../../utils/action-sequence";
 import {
 	ashveilFuaResourceName,
 	formatActionValue,
@@ -26,7 +27,7 @@ import {
 	spAventurineFervorResourceName,
 	spBladeStackResourceName,
 	spRobinFeverResourceName,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 import {
 	CombustionBreakInline,
 	MemeInline,
@@ -67,7 +68,7 @@ export type ActionRowDragProps = {
 	onDragEnd: () => void;
 };
 
-/** Sub-component: single action row in the table */
+/** 子组件：表格中的单条行动记录。 */
 export function ActionRow({
 	action,
 	index,
@@ -84,6 +85,10 @@ export function ActionRow({
 	dragProps?: ActionRowDragProps;
 }) {
 	const ctx = useActionSequence();
+	const actionViewModel = toActionViewModel(action);
+	const displayTargetKind =
+		actionViewModel.targetKind ??
+		ctx.characterKinds[actionViewModel.characterId];
 	const isInterrupt =
 		action.actionNo === 0 &&
 		!action.isSparxieExtraAction &&
@@ -94,10 +99,10 @@ export function ActionRow({
 		!action.isAssistAction;
 	const isAssist = action.isAssistAction;
 	const isDomain = action.isDomainAction;
-	const isEnemyAction = isEnemyTarget(ctx.characterKinds[action.characterId]);
+	const isEnemyAction = isEnemyTarget(displayTargetKind);
 	const isCombustionCountdown =
 		action.isCombustionAction &&
-		(action.targetKind === "非忆灵" || action.targetKind === "倒计时");
+		(displayTargetKind === "非忆灵" || displayTargetKind === "倒计时");
 	const isCyreneMemospriteAction = Boolean(
 		action.isMemospriteAction &&
 			action.memospriteOwnerId &&
@@ -238,6 +243,7 @@ export function ActionRow({
 		<tr
 			key={action.key}
 			data-action-key={action.key}
+			data-action-tags={actionViewModel.tags.join(",") || undefined}
 			data-exchange-group={dragProps?.groupNumber}
 			draggable={dragProps?.draggable || undefined}
 			onDragStart={dragProps?.draggable ? dragProps.onDragStart : undefined}

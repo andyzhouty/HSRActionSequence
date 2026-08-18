@@ -1,9 +1,10 @@
 import { getCharacterCid } from "../data/characters";
-import type { CharacterConfig } from "../utils/actionSequence";
+import { CHARACTER_IDS } from "../domain/identity";
+import type { CharacterConfig } from "../utils/action-sequence";
 
 /** Saber（阿尔托莉雅）的角色判定。 */
 export function hasSaber(character: CharacterConfig | undefined): boolean {
-	return getCharacterCid(character?.name ?? "") === "1014";
+	return getCharacterCid(character?.name ?? "") === CHARACTER_IDS.saber;
 }
 
 /** 将 Saber 的下一正常行动置于指定行动后，不受常规拉条屏蔽影响。 */

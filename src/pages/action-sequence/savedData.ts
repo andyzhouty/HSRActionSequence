@@ -1,4 +1,6 @@
+import { validateSavedDataInput } from "../../domain/saved-data";
 import {
+	CURRENT_SAVEDATA_VERSION,
 	createTarget,
 	defaultCharacters,
 	defaultResources,
@@ -15,7 +17,7 @@ import {
 	toPositiveNumber,
 	type UltInterrupt,
 	withoutCharacterOnlyEffects,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 import { migrateSavedData } from "../../utils/savedDataMigration";
 
 export function getSavedDisplayedLimitFallback(parsed: Partial<SavedData>) {
@@ -130,10 +132,12 @@ export type NormalizedSavedData = SavedData & {
 export function toNormalizedSavedData(
 	parsed: Partial<SavedData>,
 ): NormalizedSavedData {
+	validateSavedDataInput(parsed);
 	const migrated = migrateSavedData(parsed) as Partial<SavedData>;
 	const savedDisplayedActionLimit = getSavedDisplayedActionLimit(migrated);
 	const normalizedCharacters = toNormalizedCharacters(migrated);
 	return {
+		schemaVersion: CURRENT_SAVEDATA_VERSION,
 		limitPreset:
 			migrated.limitPreset && limitPresets.includes(migrated.limitPreset)
 				? migrated.limitPreset

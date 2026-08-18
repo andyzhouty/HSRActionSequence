@@ -4,7 +4,7 @@ import { hasAshveil, hasKafka } from "../../mechanics/companionFollowUp";
 import {
 	isBasicAttackSkill,
 	isNonAttackSkill,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 
 /** 不死途与卡芙卡的默认追加攻击可在触发来源的右键菜单中取消。 */
 export function CompanionFuaToggleSection() {

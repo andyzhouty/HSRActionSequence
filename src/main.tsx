@@ -4,7 +4,7 @@ import App from "./App";
 import "./index.css";
 import { validateCharacterSchema } from "./data/characterSchema";
 
-// Validate character data at startup in dev mode
+// 开发模式下启动时校验角色数据。
 if (import.meta.env.DEV) {
 	validateCharacterSchema();
 }

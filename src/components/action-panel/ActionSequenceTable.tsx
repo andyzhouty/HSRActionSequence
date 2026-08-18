@@ -1,7 +1,10 @@
 import { Fragment } from "react";
-import { useActionSequence } from "../../contexts/ActionSequenceContext";
-import type { GeneratedAction } from "../../utils/actionSequence";
-import { formatActionValue } from "../../utils/actionSequence";
+import {
+	useActionSequence,
+	useActionSequenceDerivedContext,
+} from "../../contexts/ActionSequenceContext";
+import type { GeneratedAction } from "../../utils/action-sequence";
+import { formatActionValue } from "../../utils/action-sequence";
 import {
 	ActionLimitMarkerRow,
 	ActionRow,
@@ -169,7 +172,8 @@ export function ActionSequenceTable({
 
 function ElationSkillRow({ action }: { action: GeneratedAction }) {
 	const ctx = useActionSequence();
-	const character = ctx.charactersById[action.characterId];
+	const { charactersById } = useActionSequenceDerivedContext();
+	const character = charactersById[action.characterId];
 	return (
 		<tr
 			data-action-key={action.key}

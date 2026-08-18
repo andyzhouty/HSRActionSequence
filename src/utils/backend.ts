@@ -1,4 +1,18 @@
-// Backend bridge for Wails
+// Wails 后端桥接。
+
+import type {
+	BackendDialogFilter,
+	BackendOpenOptions,
+	BackendPort,
+	BackendSaveOptions,
+} from "../infrastructure/backend/port";
+
+export type {
+	BackendDialogFilter,
+	BackendOpenOptions,
+	BackendPort,
+	BackendSaveOptions,
+} from "../infrastructure/backend/port";
 
 declare global {
 	interface Window {
@@ -19,21 +33,16 @@ declare global {
 	}
 }
 
-type DialogFilter = {
-	name: string;
-	extensions: string[];
-};
-
 type OpenDialogOptions = {
 	defaultPath?: string;
-	filters?: DialogFilter[];
+	filters?: BackendDialogFilter[];
 	multiple?: boolean;
 	title?: string;
 };
 
 type SaveDialogOptions = {
 	defaultPath?: string;
-	filters?: DialogFilter[];
+	filters?: BackendDialogFilter[];
 	title?: string;
 };
 
@@ -64,7 +73,7 @@ async function wailsInvoke(
 	return fn();
 }
 
-function wailsMethodToName(method: string): string {
+export function wailsMethodToName(method: string): string {
 	const map: Record<string, string> = {
 		greet: "Greet",
 		read_text_file: "ReadTextFile",
@@ -74,6 +83,33 @@ function wailsMethodToName(method: string): string {
 		get_autosave_path: "GetAutosavePath",
 	};
 	return map[method] ?? method;
+}
+
+export function serializeSaveDialogOptions(
+	options?: SaveDialogOptions,
+): string {
+	if (!options) return "";
+	return JSON.stringify({
+		title: options.title,
+		defaultFilename: options.defaultPath?.split("/").pop()?.split("\\").pop(),
+		filters: options.filters?.map((filter) => ({
+			displayName: filter.name,
+			pattern: filter.extensions.map((extension) => `*.${extension}`).join(";"),
+		})),
+	});
+}
+
+export function serializeOpenDialogOptions(
+	options?: OpenDialogOptions,
+): string {
+	if (!options) return "";
+	return JSON.stringify({
+		title: options.title,
+		filters: options.filters?.map((filter) => ({
+			displayName: filter.name,
+			pattern: filter.extensions.map((extension) => `*.${extension}`).join(";"),
+		})),
+	});
 }
 
 export async function invoke<T = string>(
@@ -88,21 +124,7 @@ export async function save(
 ): Promise<string | null> {
 	const app = window?.go?.main?.App;
 	if (!app?.SaveFileDialog) return null;
-	const json = options
-		? JSON.stringify({
-				title: options.title,
-				defaultFilename: options.defaultPath
-					?.split("/")
-					.pop()
-					?.split("\\")
-					.pop(),
-				filters: options.filters?.map((f) => ({
-					displayName: f.name,
-					pattern: f.extensions.map((e) => `*.${e}`).join(";"),
-				})),
-			})
-		: "";
-	return app.SaveFileDialog(json);
+	return app.SaveFileDialog(serializeSaveDialogOptions(options));
 }
 
 export async function open(
@@ -110,14 +132,14 @@ export async function open(
 ): Promise<string | null> {
 	const app = window?.go?.main?.App;
 	if (!app?.OpenFileDialog) return null;
-	const json = options
-		? JSON.stringify({
-				title: options.title,
-				filters: options.filters?.map((f) => ({
-					displayName: f.name,
-					pattern: f.extensions.map((e) => `*.${e}`).join(";"),
-				})),
-			})
-		: "";
-	return app.OpenFileDialog(json);
+	return app.OpenFileDialog(serializeOpenDialogOptions(options));
+}
+
+/** 返回 Wails 适配器，调用方可以在测试中替换为 BackendPort fake。 */
+export function getBackendPort(): BackendPort {
+	return {
+		invoke,
+		save: save as (options?: BackendSaveOptions) => Promise<string | null>,
+		open: open as (options?: BackendOpenOptions) => Promise<string | null>,
+	};
 }

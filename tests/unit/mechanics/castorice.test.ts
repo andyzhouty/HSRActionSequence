@@ -3,7 +3,10 @@ import {
 	type SimulateActionsInput,
 	simulateActions,
 } from "../../../src/simulate/actions";
-import type { CharacterConfig, SkillCode } from "../../../src/utils/actionSequence";
+import type {
+	CharacterConfig,
+	SkillCode,
+} from "../../../src/utils/action-sequence";
 
 function character(
 	id: string,
@@ -66,8 +69,8 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			}),
 		);
 
-		// castorice-1 (A, AV=100) → castorice-1-q (Q, AV=100, summon pollux)
-		// pollux-1 at AV=100
+		// castorice-1（A，AV=100）→ castorice-1-q（Q，AV=100，召唤白厄）。
+		// pollux-1 位于 AV=100。
 		const polluxActions = actions.filter((a) => a.isPolluxAction);
 		expect(polluxActions.length).toBeGreaterThanOrEqual(1);
 		expect(polluxActions[0].actionValue).toBeCloseTo(100, 1);
@@ -88,7 +91,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 
 		const polluxActions = actions.filter((a) => a.isPolluxAction);
 		expect(polluxActions.length).toBeGreaterThanOrEqual(2);
-		// First pollux action is EA (no despawn), second action follows
+		// 白厄第一次行动为 EA（不会退场），随后产生第二次行动。
 		expect(polluxActions[0].skill).toBe("EA");
 		expect(polluxActions[1].actionValue).toBeGreaterThan(
 			polluxActions[0].actionValue,
@@ -127,7 +130,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		);
 
 		const polluxActions = actions.filter((a) => a.isPolluxAction);
-		// After 3 A actions, pollux should despawn (3 actions = polluxCount=3)
+		// 3 次 A 行动后白厄应退场（3 次行动对应 polluxCount=3）。
 		expect(polluxActions.length).toBe(3);
 	});
 
@@ -144,7 +147,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			}),
 		);
 
-		// First Q → pollux → E despawn → second Q possible
+		// 第一个 Q → 白厄 → E 使其退场 → 可以施放第二个 Q。
 		const castoriceQ = actions.filter(
 			(a) => a.characterId === "castorice" && a.skill === "Q",
 		);
@@ -162,14 +165,14 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			}),
 		);
 
-		// E2: after Q, castorice self-advance 100% → castorice-2 before pollux-1
+		// 二魂：Q 后遐蝶自身提前 100%，因此 castorice-2 排在 pollux-1 前。
 		const castorice2 = actions.find(
 			(a) => a.characterId === "castorice" && a.actionNo === 2,
 		);
 		const pollux1 = actions.find((a) => a.isPolluxAction);
 		expect(castorice2).toBeDefined();
 		expect(pollux1).toBeDefined();
-		// castorice should act before pollux (both at ~100 AV)
+		// 遐蝶应在白厄前行动（两者都约在 AV=100）。
 		const castoriceIdx = actions.indexOf(castorice2!);
 		const polluxIdx = actions.indexOf(pollux1!);
 		expect(castoriceIdx).toBeLessThan(polluxIdx);
@@ -186,19 +189,19 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			}),
 		);
 
-		// QE with E2: only Q front action, no separate E main action
-		// Castorice actions: c1-1-q (Q, AV=100) → c1-2 (E, AV=100, pulled by E2)
+		// 二魂 QE：只有 Q 的前置行动，不产生单独的 E 主行动。
+		// 遐蝶行动：c1-1-q（Q，AV=100）→ c1-2（E，AV=100，被二魂拉条）。
 		const castoriceActions = actions.filter(
 			(a) => a.characterId === "castorice",
 		);
 
-		// Should NOT have a separate E action at the same AV as the Q
+		// 不应在与 Q 相同的 AV 产生单独的 E 行动。
 		const mainE = castoriceActions.find(
 			(a) => a.key === "castorice-1" && a.skill === "E",
 		);
 		expect(mainE).toBeUndefined();
 
-		// The pulled action should have skill E
+		// 被拉条的行动技能应为 E。
 		const pulledAction = castoriceActions.find((a) => a.actionNo === 2);
 		expect(pulledAction).toBeDefined();
 		expect(pulledAction?.skill).toBe("E");
@@ -219,13 +222,13 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			(a) => a.characterId === "castorice",
 		);
 
-		// Should NOT have A at same AV as Q
+		// 不应在与 Q 相同的 AV 产生 A。
 		const mainA = castoriceActions.find(
 			(a) => a.key === "castorice-1" && a.skill === "A",
 		);
 		expect(mainA).toBeUndefined();
 
-		// Pulled action should have skill A
+		// 被拉条的行动技能应为 A。
 		const pulledAction = castoriceActions.find((a) => a.actionNo === 2);
 		expect(pulledAction).toBeDefined();
 		expect(pulledAction?.skill).toBe("A");
@@ -246,7 +249,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			(a) => a.characterId === "castorice",
 		);
 
-		// E0 should have normal main E action at same AV as Q
+		// 零魂应在与 Q 相同的 AV 产生普通 E 主行动。
 		const mainE = castoriceActions.find(
 			(a) => a.key === "castorice-1" && a.skill === "E",
 		);
@@ -301,7 +304,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		const polluxActions = actions.filter((a) => a.isPolluxAction);
 		expect(polluxActions.length).toBeGreaterThanOrEqual(2);
 
-		// First pollux at AV 100, second at ~160.6
+		// 白厄第一次行动在 AV=100，第二次约在 AV=160.6。
 		expect(polluxActions[0].actionValue).toBeCloseTo(100, 1);
 		expect(polluxActions[1].actionValue).toBeCloseTo(100 + 10000 / 165, 1);
 	});
@@ -314,20 +317,20 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 					"castorice-1": "AQ",
 					"castorice-pollux-1": "EA",
 					"castorice-pollux-2": "EA",
-					"castorice-pollux-3": "EA", // 3rd → auto dismiss
+					"castorice-pollux-3": "EA", // 第 3 次 → 自动退场。
 				}),
 				limit: 500,
 			}),
 		);
 
-		// After 3 EA actions, pollux should despawn (no 4th action)
+		// 3 次 EA 行动后白厄应退场（不再产生第 4 次行动）。
 		const polluxActions = actions.filter((a) => a.isPolluxAction);
 		expect(polluxActions.length).toBe(3);
 		expect(polluxActions[0].skill).toBe("EA");
 		expect(polluxActions[1].skill).toBe("EA");
 		expect(polluxActions[2].skill).toBe("EA");
 
-		// Castorice can act again after dismiss
+		// 退场后遐蝶可以再次行动。
 		const castoriceAfter = actions.filter(
 			(a) =>
 				a.characterId === "castorice" &&
@@ -375,25 +378,25 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 	});
 
 	it("不在场的遐蝶不会重复召唤死龙", () => {
-		// polluxOnField prevents duplicate summon
+		// polluxOnField 会阻止重复召唤。
 		const actions = simulateActions(
 			input({
 				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
-					"castorice-pollux-1": "EA", // pollux stays
-					// castorice uses AQ again, but pollux still on field → no re-summon
+					"castorice-pollux-1": "EA", // 白厄留场。
+					// 遐蝶再次使用 AQ，但白厄仍在场，因此不会重新召唤。
 					"castorice-2": "Q",
 				}),
 				limit: 300,
 			}),
 		);
 
-		// Should have 1 continuous pollux, not 2
+		// 应只有 1 个持续在场的白厄，而不是 2 个。
 		const polluxActions = actions.filter((a) => a.isPolluxAction);
-		// First pollux summoned, then EA (stays), then castorice Q (no re-summon)
+		// 先召唤白厄，再使用 EA（留场），然后遐蝶 Q（不重新召唤）。
 		expect(polluxActions.length).toBeGreaterThanOrEqual(1);
-		// All pollux actions should share the same characterId
+		// 所有白厄行动都应使用相同的 characterId。
 		const polluxIds = new Set(polluxActions.map((a) => a.characterId));
 		expect(polluxIds.size).toBe(1);
 	});
@@ -404,7 +407,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
-					"castorice-pollux-1": "A", // plain A also keeps it
+					"castorice-pollux-1": "A", // 普通 A 也会使其留场。
 					"castorice-pollux-2": "EA",
 				}),
 				limit: 300,
@@ -427,7 +430,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			}),
 		);
 
-		// Order: Q → E2 self-pull → castorice pulled action → pollux first action
+		// 顺序：Q → 二魂自身拉条 → 遐蝶被拉条的行动 → 白厄第一次行动。
 		const castoricePulled = actions.find(
 			(a) => a.characterId === "castorice" && a.actionNo === 2,
 		);
@@ -446,20 +449,20 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
-					"castorice-pollux-1": "E", // dismiss
+					"castorice-pollux-1": "E", // 退场。
 				}),
 				limit: 300,
 			}),
 		);
 
-		// Only 1 pollux action (the dismiss itself)
+		// 只有 1 次白厄行动（即退场行动本身）。
 		const polluxActions = actions.filter((a) => a.isPolluxAction);
 		expect(polluxActions.length).toBe(1);
 		expect(polluxActions[0].skill).toBe("E");
 	});
 
 	it("纯 A 不下场，纯 E 下场", () => {
-		// EA → stays, E → gone
+		// EA → 留场，E → 退场。
 		const keepActions = simulateActions(
 			input({
 				characters: [character("castorice", "遐蝶", 100)],
@@ -500,33 +503,33 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			}),
 		);
 
-		// castorice at 100 speed: second action ~200 AV
-		// pollux at 165 speed: second action ~160.6 AV
+		// 遐蝶速度为 100：第二次行动约在 AV=200。
+		// 白厄速度为 165：第二次行动约在 AV=160.6。
 		const castorice2 = actions.find(
 			(a) => a.characterId === "castorice" && a.actionNo === 2,
 		);
 		const pollux2 = actions.find((a) => a.isPolluxAction && a.actionNo === 2);
 
 		if (castorice2 && pollux2) {
-			// pollux is faster, should act before castorice
+			// 白厄速度更快，应在遐蝶之前行动。
 			expect(pollux2.actionValue).toBeLessThan(castorice2.actionValue);
 		}
 	});
 
 	it("无序指定死龙技能时默认表现正常", () => {
-		// No skill override for pollux → default behavior should work
+		// 白厄没有技能覆盖值，因此应使用默认行为。
 		const actions = simulateActions(
 			input({
 				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
-					// pollux actions without explicit override
+					// 没有显式覆盖值的白厄行动。
 				}),
 				limit: 500,
 			}),
 		);
 
-		// Pollux should still render with skill="" (default)
+		// 白厄仍应以 skill=""（默认值）显示。
 		const polluxActions = actions.filter((a) => a.isPolluxAction);
 		expect(polluxActions.length).toBeGreaterThanOrEqual(1);
 		expect(polluxActions[0].displayName).toBe("死龙");
@@ -548,12 +551,12 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		);
 
 		const polluxActions = actions.filter((a) => a.isPolluxAction);
-		// Should NOT dismiss after E with kill
+		// 开启击杀开关后使用 E 不应退场。
 		expect(polluxActions.length).toBeGreaterThanOrEqual(2);
 		expect(polluxActions[0].skill).toBe("E");
-		expect(polluxActions[0].speed).toBe(165); // before speed change
+		expect(polluxActions[0].speed).toBe(165); // 速度改变前。
 
-		// Second action should exist at shorter interval (330 speed ≈ 30.3 AV gap)
+		// 第二次行动应以更短间隔出现（速度 330，间隔约 30.3 AV）。
 		expect(polluxActions[1].actionValue).toBeCloseTo(
 			polluxActions[0].actionValue + 10000 / 330,
 			1,
@@ -569,17 +572,17 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 					"castorice-pollux-1": "EA",
 				}),
 				castoriceKillToggles: {
-					"castorice-pollux-1": true, // kill on, but EA keeps it anyway
+					"castorice-pollux-1": true, // 开启击杀，但 EA 仍会使其留场。
 				},
 				limit: 500,
 			}),
 		);
 
 		const polluxActions = actions.filter((a) => a.isPolluxAction);
-		// EA always keeps pollux, kill toggle doesn't change speed for EA
+		// EA 始终使白厄留场，击杀开关不会改变 EA 的速度。
 		expect(polluxActions.length).toBeGreaterThanOrEqual(2);
 		expect(polluxActions[0].skill).toBe("EA");
-		// Normal EA speed: 165
+		// 普通 EA 速度为 165。
 		expect(polluxActions[1].actionValue).toBeCloseTo(
 			polluxActions[0].actionValue + 10000 / 165,
 			1,
@@ -592,10 +595,10 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 				characters: [character("castorice", "遐蝶", 100)],
 				skillOverrides: skills({
 					"castorice-1": "AQ",
-					"castorice-pollux-1": "E", // kill → stays at 330 speed
+					"castorice-pollux-1": "E", // 击杀 → 以速度 330 留场。
 					"castorice-pollux-2": "EA",
-					"castorice-pollux-3": "EA", // 3rd → auto dismiss
-					"castorice-2": "Q", // re-summon (after pollux gone)
+					"castorice-pollux-3": "EA", // 第 3 次 → 自动退场。
+					"castorice-2": "Q", // 重新召唤（白厄退场后）。
 				}),
 				castoriceKillToggles: {
 					"castorice-pollux-1": true,
@@ -604,7 +607,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 			}),
 		);
 
-		// First batch: 3 actions, first at 330 speed after kill
+		// 第一批包含 3 次行动，开启击杀后第一次行动速度为 330。
 		const firstBatch = actions.filter(
 			(a) =>
 				a.isPolluxAction &&
@@ -614,13 +617,13 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		);
 		expect(firstBatch.length).toBe(3);
 
-		// After kill, pollux-2 should come ~30.3 AV after pollux-1 (330 speed)
+		// 击杀后 pollux-2 应在 pollux-1 之后约 30.3 AV 出现（速度 330）。
 		expect(firstBatch[1].actionValue).toBeCloseTo(
 			firstBatch[0].actionValue + 10000 / 330,
 			1,
 		);
 
-		// Re-summoned pollux should be at 165 speed again
+		// 重新召唤的白厄速度应恢复为 165。
 		const newPollux = actions.find(
 			(a) => a.isPolluxAction && !firstBatch.includes(a),
 		);
@@ -1045,7 +1048,7 @@ describe("Castorice (遐蝶) Pollux Summon", () => {
 		});
 		const withoutTarget = simulateActions(baseInput);
 
-		// With target: Sunday pulls Castorice to current AV
+		// 指定目标时：星期日将遐蝶拉到当前 AV。
 
 		const sunday1WithTarget = withTarget.find((a) => a.key === "sunday-1");
 		const castorice3WithTarget = withTarget.find(

@@ -7,7 +7,7 @@ import type {
 	CharacterConfig,
 	SkillCode,
 	UltInterrupt,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
 const stripAv0 = (axs: { characterId: string }[]) =>
 	axs.filter((a) => a.characterId !== "@av0");
@@ -65,7 +65,7 @@ function interrupts(
 	return entries;
 }
 
-// ───── Firefly Complete Combustion Activation ─────
+// ───── 流萤完全燃烧激活 ─────
 
 describe("Firefly Complete Combustion activation", () => {
 	it("activates Complete Combustion from a normal ultimate", () => {
@@ -129,7 +129,7 @@ describe("Firefly Complete Combustion activation", () => {
 	});
 });
 
-// ───── Firefly Countdown Manual Advance ─────
+// ───── 流萤倒计时手动提前 ─────
 
 describe("Firefly countdown manual advance", () => {
 	it("countdown fires at normal AV without override", () => {
@@ -152,7 +152,7 @@ describe("Firefly countdown manual advance", () => {
 		);
 		expect(combustionActions.length).toBeGreaterThan(0);
 
-		// After countdown, no more combustion actions
+		// 倒计时结束后不再产生燃烧行动。
 		const afterCountdown = actions.filter(
 			(a) => a.isCombustionAction && a.actionValue > countdown?.actionValue,
 		);
@@ -243,7 +243,7 @@ describe("Firefly countdown manual advance", () => {
 	});
 });
 
-// ───── Firefly Combustion EE Split ─────
+// ───── 流萤燃烧 EE 拆分 ─────
 
 describe("Firefly combustion EE split", () => {
 	it("E2 break generates one extra turn at same AV", () => {
@@ -259,7 +259,7 @@ describe("Firefly combustion EE split", () => {
 			}),
 		);
 
-		// Normal turn with break ON → E2 generates extra turn at same AV
+		// 正常回合开启击破时，二魂会在同一 AV 生成额外回合。
 		const main = actions.find((a) => a.key === "firefly-2");
 		expect(main).toBeDefined();
 		expect(main?.skill).toBe("E");
@@ -284,7 +284,7 @@ describe("Firefly combustion EE split", () => {
 			}),
 		);
 
-		// Should have the normal E, no extra E generated
+		// 应只有普通 E，不应生成额外 E。
 		const extraE = actions.find((a) => a.key === "firefly-2");
 		expect(extraE).toBeDefined();
 		expect(extraE?.skill).toBe("E");
@@ -294,9 +294,9 @@ describe("Firefly combustion EE split", () => {
 	});
 
 	it("EE on non-combustion action is rejected by validation", () => {
-		// This is tested via the UI validation, not the simulation directly.
-		// The simulation itself doesn't validate skill codes.
-		// Just verify the simulation produces it as-is for non-combustion.
+		// 该行为通过 UI 校验测试，而不是直接测试模拟器。
+		// 模拟器本身不校验技能代码。
+		// 这里只验证非燃烧状态下模拟器会原样生成该技能代码。
 		const actions = simulateActions(
 			input({
 				characters: [character("firefly", "流萤", 100)],
@@ -309,17 +309,17 @@ describe("Firefly combustion EE split", () => {
 
 		const action = actions.find((a) => a.key === "firefly-1");
 		expect(action).toBeDefined();
-		// Simulation accepts EE but uses it as-is (not split, not combustion)
+		// 模拟器接受 EE 并原样使用（不拆分，也不进入燃烧）。
 		expect(action?.skill).toBe("EE");
 	});
 });
 
-// ───── Sunday (星期日) pulling Firefly ─────
+// ───── 星期日拉条流萤 ─────
 
 describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 	it("Sunday E pulls Firefly's next action to Sunday's current AV", () => {
-		// Sunday at speed 200 acts first; uses E on Firefly (speed 100)
-		// Firefly's next action should be pulled to Sunday's current AV
+		// 速度 200 的星期日先行动，并对流萤（速度 100）使用 E。
+		// 流萤的下一次行动应被拉到星期日的当前 AV。
 		const actions = simulateActions(
 			input({
 				characters: [
@@ -336,19 +336,19 @@ describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 			}),
 		);
 
-		// Sunday acts first at AV=50
+		// 星期日先在 AV=50 行动。
 		expect(stripAv0(actions)[0].key).toBe("sunday-1");
 		expect(stripAv0(actions)[0].actionValue).toBeCloseTo(50, 4);
 
-		// Firefly should be pulled to Sunday's AV=50
-		// So Firefly acts next at AV=50, then Sunday again at AV=100
+		// 流萤应被拉到星期日的 AV=50。
+		// 因此流萤接下来在 AV=50 行动，随后星期日在 AV=100 再次行动。
 		const fireflyAction = stripAv0(actions).find(
 			(a) => a.characterId === "firefly",
 		);
 		expect(fireflyAction).toBeDefined();
 		expect(fireflyAction?.actionValue).toBeCloseTo(50, 4);
 
-		// Action order: Sunday E → Firefly (pulled) → Sunday 2 → ...
+		// 行动顺序：星期日 E → 流萤（被拉条）→ 星期日第 2 次行动 → ……
 		expect(
 			stripAv0(actions)
 				.map((a) => a.characterId)
@@ -357,7 +357,7 @@ describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 	});
 
 	it("Sunday E pulls Firefly during Complete Combustion", () => {
-		// Firefly uses Q to enter Combustion, then Sunday pulls her
+		// 流萤使用 Q 进入燃烧，然后星期日将她拉条。
 		const actions = simulateActions(
 			input({
 				characters: [
@@ -375,17 +375,17 @@ describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 			}),
 		);
 
-		// Firefly Q at AV=100 → enters combustion
-		// Sunday uses E on Firefly at AV=50 → pulls Firefly
-		// Firefly should be pulled to Sunday's AV during combustion
+		// 流萤在 AV=100 使用 Q → 进入燃烧。
+		// 星期日在 AV=50 对流萤使用 E → 拉条流萤。
+		// 燃烧期间流萤应被拉到星期日的 AV。
 		const sundayEAction = actions.find((a) => a.key === "sunday-2");
 		expect(sundayEAction).toBeDefined();
 
-		// Firefly should act at the pulled AV
+		// 流萤应在被拉到的 AV 行动。
 		const fireflyActions = actions.filter(
 			(a) => a.characterId === "firefly" && a.isCombustionAction,
 		);
-		// There should be combustion actions after Sunday's pull
+		// 星期日拉条后应仍有燃烧行动。
 		const fireflyAfterPull = fireflyActions.filter(
 			(a) => a.actionValue >= (sundayEAction?.actionValue ?? 0),
 		);
@@ -411,25 +411,25 @@ describe("Sunday pulling Firefly with E (allyPullToCurrent)", () => {
 			}),
 		);
 
-		// Both Sunday actions use E on Firefly
-		// Firefly's AV should be pulled to match Sunday's AV each time
+		// 星期日的两次行动都对流萤使用 E。
+		// 每次流萤的 AV 都应被拉到与星期日相同。
 		const fireflyActions = actions.filter((a) => a.characterId === "firefly");
 
-		// Firefly should always act immediately after Sunday
+		// 流萤应始终紧接在星期日之后行动。
 		for (let i = 0; i < fireflyActions.length; i++) {
 			const fireflyAV = fireflyActions[i].actionValue;
 			const sundayAction = actions.find(
 				(a) => a.characterId === "sunday" && a.actionValue === fireflyAV,
 			);
 			if (sundayAction) {
-				// Firefly's AV should match the Sunday pull at this point
+				// 此时流萤的 AV 应与星期日拉条后的 AV 相同。
 				expect(fireflyAV).toBeCloseTo(sundayAction.actionValue, 4);
 			}
 		}
 	});
 });
 
-// ───── E2 Firefly + SP Himeko F assist in break-extra ─────
+// ───── 流萤二魂 + SP 姬子 F 在击破追加行动中的协战 ─────
 
 describe("E2 Firefly break-extra with SP Himeko assist", () => {
 	it("break-extra turn can trigger Himeko F assist", () => {
@@ -452,7 +452,7 @@ describe("E2 Firefly break-extra with SP Himeko assist", () => {
 			}),
 		);
 
-		// break-extra 回合用 F → 应生成 Himeko 助战
+		// 击破追加回合使用 F → 应生成姬子助战
 		const assistActions = actions.filter((a) => a.isAssistAction);
 		expect(assistActions.length).toBeGreaterThan(0);
 		expect(assistActions[0].characterId).toBe("himeko");
@@ -502,7 +502,7 @@ describe("E2 Firefly break-extra with SP Himeko assist", () => {
 			}),
 		);
 
-		// 只有一层 break-extra，不会递归生成更多（排除 himeko assist key 中的 -break-extra-）
+		// 只有一层击破追加，不会递归生成更多（排除姬子协战 key 中的追加标记）。
 		const breakExtras = actions.filter(
 			(a) => a.key.includes("-break-extra-") && a.characterId === "firefly",
 		);
@@ -529,7 +529,7 @@ describe("E2 Firefly break-extra with SP Himeko assist", () => {
 			}),
 		);
 
-		// E0 Himeko + F → break-extra 消失，仅保留姬子助战
+		// E0 姬子 + F → 击破追加消失，仅保留姬子助战
 		const assistActions = actions.filter((a) => a.isAssistAction);
 		expect(assistActions.length).toBe(1);
 		const breakExtra = actions.find((a) => a.key === "firefly-2-break-extra-1");
@@ -556,7 +556,7 @@ describe("E2 Firefly break-extra with SP Himeko assist", () => {
 			}),
 		);
 
-		// E2 Himeko + FF → 2 次助战，break-extra 消失
+		// E2 姬子 + FF → 2 次助战，击破追加消失
 		const assistActions = actions.filter((a) => a.isAssistAction);
 		expect(assistActions.length).toBe(2);
 		const breakExtra = actions.find((a) => a.key === "firefly-2-break-extra-1");

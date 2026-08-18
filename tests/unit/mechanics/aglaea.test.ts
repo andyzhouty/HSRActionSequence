@@ -7,7 +7,7 @@ import type {
 	CharacterConfig,
 	SkillCode,
 	UltInterrupt,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
 const stripAv0 = (axs: { characterId: string }[]) =>
 	axs.filter((a) => a.characterId !== "@av0");
@@ -70,7 +70,7 @@ function interrupts(
 describe("Aglaea Supreme Stance speed", () => {
 	it("速度 = currentSpeed + 角色数据基础速度 × 15% × 层数", () => {
 		// 阿格莱雅 E → 衣匠行动（层数=1）→ Q → 衣匠再行动（层数=2）
-		// 速度 160，基础速度 100，2 层：speed = 160 + 100 × 0.15 × 2 = 190
+		// 速度 160，基础速度 100，2 层：速度 = 160 + 100 × 0.15 × 2 = 190。
 		const actions = simulateActions(
 			input({
 				characters: [
@@ -88,7 +88,7 @@ describe("Aglaea Supreme Stance speed", () => {
 
 	it("忽略旧存档基础速度字段，使用角色数据基础速度", () => {
 		// 不设 baseSpeed，getAglaeaBaseSpeed 降级返回 currentSpeed
-		// 1 层：speed = 160 + 160 × 0.15 × 1 = 184
+		// 1 层：速度 = 160 + 160 × 0.15 × 1 = 184。
 		const actions = simulateActions(
 			input({
 				characters: [character("aglaea", "阿格莱雅", 160)],
@@ -117,7 +117,7 @@ describe("Aglaea Supreme Stance speed", () => {
 	});
 });
 
-// ───── Aglaea Supreme Stance Activation ─────
+// ───── 阿格莱雅至高姿态激活 ─────
 
 describe("Aglaea Supreme Stance activation", () => {
 	it("activates Supreme Stance from a normal ultimate", () => {
@@ -181,8 +181,8 @@ describe("Aglaea Supreme Stance activation", () => {
 		);
 		const countdown = actions.find((action) => action.isAglaeaCountdownAction);
 		expect(countdown).toBeDefined();
-		// The stale override should be ignored because the countdown was reset
-		// by the second Q, so the AV should reflect the reset, not the override
+		// 旧的覆盖值应被忽略，因为第二个 Q 重置了倒计时；
+		// AV 应反映重置后的结果，而不是旧覆盖值。
 		expect(countdown?.actionValue).toBeCloseTo(200, 4);
 	});
 
@@ -330,7 +330,7 @@ describe("Aglaea Supreme Stance activation", () => {
 	});
 });
 
-// ───── Aglaea Countdown Manual Advance ─────
+// ───── 阿格莱雅倒计时手动提前 ─────
 
 describe("Aglaea countdown manual advance", () => {
 	it("countdown fires at normal AV without override", () => {

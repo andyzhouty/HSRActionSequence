@@ -10,18 +10,22 @@ import {
 	shouldCheckBreakTrigger,
 } from "../../mechanics/firefly";
 import {
+	type GeneratedAction,
 	getCyreneUltimateRule,
 	isCharacterTarget,
-	type GeneratedAction,
 	type SkillCode,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 import {
 	consumeMemoryTrailblazerEpic,
 	findCyreneState,
 	hasActiveOde,
 	killMeme,
 } from "../effects";
-import type { ActionState, ActiveOdeState, SimulateActionsInput } from "../types";
+import type {
+	ActionState,
+	ActiveOdeState,
+	SimulateActionsInput,
+} from "../types";
 
 // ── 流萤完全燃烧 ──
 
@@ -166,7 +170,8 @@ export function handleMemoryTrailblazerEpicConsumption(
 	if (!consumed) return;
 
 	const cyreneState = findCyreneState(states);
-	if (!cyreneState || !hasActiveOde(activeOdes, character.id, "genesis")) return;
+	if (!cyreneState || !hasActiveOde(activeOdes, character.id, "genesis"))
+		return;
 
 	const cyreneRule = getCyreneUltimateRule(cyreneState.character.name);
 	actions.push({

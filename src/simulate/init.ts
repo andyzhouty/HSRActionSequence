@@ -38,7 +38,7 @@ import {
 	getCharacterPath,
 	isCharacterTarget,
 	toPositiveNumber,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 import type { ActionState, SimulateActionsInput } from "./types";
 
 /** 根据角色配置构建初始行动状态。 */
@@ -310,7 +310,7 @@ export function applyTeamSpeedBuffs(
 				const oldSpeed = s.currentSpeed;
 				s.currentSpeed = s.currentSpeed + s.baseSpeed * 0.12;
 				s.nextActionValue = s.nextActionValue * (oldSpeed / s.currentSpeed);
-				// SP Robin 忆灵速度公式中的百分比 buff 比例
+				// SP Robin 忆灵速度公式中的百分比增益比例。
 				recordSpRobinPercentBuff(states, s.character.id, 0.12, 0);
 			}
 		}

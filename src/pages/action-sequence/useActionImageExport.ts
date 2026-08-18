@@ -1,22 +1,25 @@
 import { domToPng } from "modern-screenshot";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
 	ensureFileExtension,
 	getErrorMessage,
 	getTimestampedFileName,
-} from "../../utils/actionSequence";
-import { invoke, save } from "../../utils/backend";
+} from "../../utils/action-sequence";
+import { type BackendPort, getBackendPort } from "../../utils/backend";
 
 type UseActionImageExportParams = {
 	actionCount: number;
 	resources: string[];
 	setMessage: (message: string) => void;
+	backend?: BackendPort;
 };
 
 export function useActionImageExport({
 	actionCount,
 	setMessage,
+	backend,
 }: UseActionImageExportParams) {
+	const backendPort = useMemo(() => backend ?? getBackendPort(), [backend]);
 	const [isExportingImage, setIsExportingImage] = useState(false);
 	const imageExportRef = useRef<HTMLDivElement>(null);
 
@@ -101,7 +104,7 @@ export function useActionImageExport({
 									});
 								});
 						} catch {
-							/* JSON parse error, skip */
+							/* JSON 解析失败，跳过。 */
 						}
 					}
 					// 导出宽度已扩展到完整表格，不能保留页面用的横向滚动容器。
@@ -204,7 +207,7 @@ export function useActionImageExport({
 				return;
 			}
 
-			const selectedPath = await save({
+			const selectedPath = await backendPort.save({
 				title: "导出行动序列图片",
 				defaultPath: fileName,
 				filters: [
@@ -220,7 +223,7 @@ export function useActionImageExport({
 			}
 
 			const filePath = ensureFileExtension(selectedPath, ".png");
-			await invoke("write_png_file", {
+			await backendPort.invoke("write_png_file", {
 				path: filePath,
 				dataUrl,
 			});

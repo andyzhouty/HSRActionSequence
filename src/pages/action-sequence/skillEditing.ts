@@ -14,7 +14,7 @@ import {
 	isCharacterTarget,
 	type SkillCode,
 	shouldRememberSkillTarget,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 
 export function getCanceledNovaAssistSkill(
 	currentSkill: SkillCode | string,
@@ -76,7 +76,8 @@ export function validateActionSkillInput(params: {
 	nextSkill: SkillCode;
 }) {
 	const { action, character, characters, nextSkill } = params;
-	const isArcherResetTurn = action.isArcherExtraE && action.key.endsWith("-reset");
+	const isArcherResetTurn =
+		action.isArcherExtraE && action.key.endsWith("-reset");
 	if (
 		action.isArcherExtraE &&
 		!["E", "A", "F", "FF"].includes(nextSkill) &&

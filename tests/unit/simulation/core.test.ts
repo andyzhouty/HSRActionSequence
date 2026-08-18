@@ -3,7 +3,7 @@ import { simulateActions } from "../../../src/simulate/actions";
 import {
 	type CharacterConfig,
 	canUseSkillCode,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 import {
 	character,
 	input,

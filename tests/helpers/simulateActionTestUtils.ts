@@ -4,7 +4,7 @@ import type {
 	SkillCode,
 	SpeedAdjustment,
 	UltInterrupt,
-} from "../../src/utils/actionSequence";
+} from "../../src/utils/action-sequence";
 
 export const stripAv0 = (axs: { characterId: string }[]) =>
 	axs.filter((a) => a.characterId !== "@av0");

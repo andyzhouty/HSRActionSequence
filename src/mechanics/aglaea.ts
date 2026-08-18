@@ -6,7 +6,7 @@ import {
 	getGarmentmakerRule,
 	isCharacterTarget,
 	type SkillCode,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 
 export type AglaeaActionState = {
 	character: CharacterConfig;

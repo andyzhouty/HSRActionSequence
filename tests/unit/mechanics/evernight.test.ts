@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { simulateActions } from "../../../src/simulate/actions";
-import { character, input, skills } from "../../helpers/simulateActionTestUtils";
+import {
+	character,
+	input,
+	skills,
+} from "../../helpers/simulateActionTestUtils";
 
 describe("Evernight (长夜月)", () => {
 	it("开场默认带长夜上场", () => {

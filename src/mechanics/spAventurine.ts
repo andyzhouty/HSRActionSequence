@@ -1,4 +1,5 @@
 import { getCharacterCid } from "../data/characters";
+import { CHARACTER_IDS } from "../domain/identity";
 import type { ActionState } from "../simulate/types";
 import {
 	type CharacterConfig,
@@ -7,11 +8,11 @@ import {
 	isNonAttackSkill,
 } from "../utils/action-sequence";
 
-// ── 砂金·戏浪（SP Aventurine Waveflair / 水砂）──
+// ── 砂金·戏浪（水砂）──
 // 欢愉命途。A/E/Q 均视作攻击；固定资源「热意（Fervor）」；
 // 队友攻击积累热意，达到阈值立即施放欢愉技；阿哈时刻内热意>=10 时欢愉技强化。
 
-export const SP_AVENTURINE_CID = "1513";
+export const SP_AVENTURINE_CID = CHARACTER_IDS.spAventurine;
 export const SP_AVENTURINE_BASE_SPEED = 107;
 export const FERVOR_ATTACK_GAIN = 1;
 export const FERVOR_TALENT_GAIN = 1;
@@ -120,7 +121,7 @@ export function isSpAventurineElationEnhanced(
 	return inAhaMoment && (state.spAventurineFervor ?? 0) >= 10;
 }
 
-/** 阿哈时刻速度 +25：仅队伍只有水砂一名欢愉角色且 buff 已触发时生效。 */
+/** 阿哈时刻速度 +25：仅队伍只有水砂一名欢愉角色且增益已触发时生效。 */
 export function applySpAventurineAhaSpeedBonus(
 	elationStates: ActionState[],
 	baseSpeed: number,

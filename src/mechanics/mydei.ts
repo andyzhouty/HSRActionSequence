@@ -1,9 +1,10 @@
+import { CHARACTER_IDS } from "../domain/identity";
 import type { ActionState, SimulateActionsInput } from "../simulate/types";
-import type { GeneratedAction } from "../utils/actionSequence";
-import { getCharacterCid } from "../utils/actionSequence";
+import type { GeneratedAction } from "../utils/action-sequence";
+import { getCharacterCid } from "../utils/action-sequence";
 
 export function hasMydei(name: string): boolean {
-	return getCharacterCid(name) === "1404";
+	return getCharacterCid(name) === CHARACTER_IDS.mydei;
 }
 
 /** 在一个行动点设置血仇；进入时将下一正常行动提前至当前 AV。 */

@@ -116,13 +116,13 @@ describe("知更鸟·晴歌 SP Robin", () => {
 				limit: 300,
 			}),
 		);
-		// robin(200速) 首动提前 20% 在 40，AQ 拉 bronya 到 40 并施加 debuff
+		// robin（速度 200）首动提前 20% 在 40，AQ 将 bronya 拉到 40 并施加减益。
 		// bronya(100速,舞舞舞) 被拉到 40 后 AQ：舞舞舞全队拉条 16% 只保留自身部分
 		const robinSecond = actions.find((action) => action.key === "robin-2");
 		const dpsFirst = actions.find((action) => action.key === "dps-1");
 		const bronyaSecond = actions.find((action) => action.key === "bronya-2");
-		// 若无 debuff：robin-2 会被拉到 max(50, 100-8)=92，dps-1 会被拉到 max(50,66.67-10.67)=56
-		// 有 debuff：只有 bronya 自己行动提前——A 自拉条 30%（150-30）+ 舞舞舞自身部分 16%（120-16）
+		// 若无减益：robin-2 会被拉到 max(50, 100-8)=92，dps-1 会被拉到 max(50,66.67-10.67)=56。
+		// 有减益：只有 bronya 自己行动提前——A 自拉条 30%（150-30）+ 舞舞舞自身部分 16%（120-16）。
 		expect(robinSecond!.actionValue).toBeCloseTo(90);
 		expect(dpsFirst!.actionValue).toBeCloseTo(66.667, 1);
 		expect(bronyaSecond!.actionValue).toBeCloseTo(94);
@@ -148,7 +148,7 @@ describe("知更鸟·晴歌 SP Robin", () => {
 				limit: 300,
 			}),
 		);
-		// bronya 被 debuff 后 E 拉 dps 无效，dps-1 仍在其原定 66.67
+		// bronya 被减益后，E 拉 dps 无效，dps-1 仍在其原定 66.67。
 		const dpsFirst = actions.find((action) => action.key === "dps-1");
 		expect(dpsFirst!.actionValue).toBeCloseTo(66.667, 1);
 	});

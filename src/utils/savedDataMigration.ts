@@ -5,8 +5,9 @@
  * 旧版 JSON 导入时会自动应用迁移链到最新版本。
  */
 
-import type { SavedData } from "./actionSequence";
-import { CURRENT_SAVEDATA_VERSION } from "./actionSequence";
+import { SavedDataValidationError } from "../domain/saved-data";
+import { CURRENT_SAVEDATA_VERSION } from "./action-sequence";
+import type { SavedData } from "./action-sequence/types";
 
 type SavedDataMigration = (data: SavedData) => SavedData;
 
@@ -28,15 +29,13 @@ const migrations: SavedDataMigration[] = [
 export function migrateSavedData(
 	parsed: Partial<SavedData>,
 ): Partial<SavedData> {
-	let data = parsed;
+	let data: Partial<SavedData> = { ...parsed };
 	const startVersion = data.schemaVersion ?? 0;
 
 	if (startVersion > CURRENT_SAVEDATA_VERSION) {
-		console.warn(
-			`SavedData version ${startVersion} is newer than current ${CURRENT_SAVEDATA_VERSION}. ` +
-				"Some fields may not be recognized.",
+		throw new SavedDataValidationError(
+			`保存数据版本 ${startVersion} 高于当前版本 ${CURRENT_SAVEDATA_VERSION}`,
 		);
-		return data;
 	}
 
 	for (let v = startVersion; v < CURRENT_SAVEDATA_VERSION; v++) {
@@ -46,6 +45,8 @@ export function migrateSavedData(
 		}
 	}
 
-	data.schemaVersion = CURRENT_SAVEDATA_VERSION;
-	return data;
+	return {
+		...data,
+		schemaVersion: CURRENT_SAVEDATA_VERSION,
+	};
 }

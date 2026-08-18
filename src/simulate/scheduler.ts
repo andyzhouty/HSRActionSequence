@@ -7,6 +7,33 @@ export type ActionCandidate = {
 	actionValue: number;
 };
 
+/** 用于避免浮点误差改变同 AV 行动顺序。 */
+export const ACTION_VALUE_EPSILON = 1e-9;
+
+export function compareActionCandidates(
+	a: ActionCandidate,
+	b: ActionCandidate,
+	states: ActionState[],
+): number {
+	const difference = a.actionValue - b.actionValue;
+	if (Math.abs(difference) > ACTION_VALUE_EPSILON) return difference;
+
+	const aState = states[a.stateIndex];
+	const bState = states[b.stateIndex];
+	if (aState.character.id === "@av0") return -1;
+	if (bState.character.id === "@av0") return 1;
+	const aPriority = aState.sameActionPriority ?? 0;
+	const bPriority = bState.sameActionPriority ?? 0;
+	if (aPriority !== bPriority) return aPriority - bPriority;
+	if (
+		Boolean(aState.isImmediatePolluxSummon) !==
+		Boolean(bState.isImmediatePolluxSummon)
+	) {
+		return aState.isImmediatePolluxSummon ? -1 : 1;
+	}
+	return a.stateIndex - b.stateIndex;
+}
+
 /** 构建候选行动并按行动值和同值优先级选择下一动。 */
 export function selectNextAction(
 	states: ActionState[],
@@ -40,22 +67,6 @@ export function selectNextAction(
 			),
 		});
 	}
-	candidates.sort((a, b) => {
-		if (a.actionValue !== b.actionValue) return a.actionValue - b.actionValue;
-		const aState = states[a.stateIndex];
-		const bState = states[b.stateIndex];
-		if (aState.character.id === "@av0") return -1;
-		if (bState.character.id === "@av0") return 1;
-		const aPriority = aState.sameActionPriority ?? 0;
-		const bPriority = bState.sameActionPriority ?? 0;
-		if (aPriority !== bPriority) return aPriority - bPriority;
-		if (
-			Boolean(aState.isImmediatePolluxSummon) !==
-			Boolean(bState.isImmediatePolluxSummon)
-		) {
-			return aState.isImmediatePolluxSummon ? -1 : 1;
-		}
-		return a.stateIndex - b.stateIndex;
-	});
+	candidates.sort((a, b) => compareActionCandidates(a, b, states));
 	return candidates[0];
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-// The export logic is embedded in a component with lots of context deps.
-// We test the pure filtering logic directly by replicating the algorithms.
+// 导出逻辑嵌在依赖多个上下文的组件中。
+// 这里复制算法，直接测试其中的纯过滤逻辑。
 
 interface MinimalAction {
 	key: string;
@@ -100,8 +100,8 @@ describe("Excel export: domain filtering", () => {
 			},
 		];
 		const ranges = buildDomainRanges(actions);
-		expect(isInsideDomain(actions[1], ranges, kinds)).toBe(false); // domain action kept
-		expect(isInsideDomain(actions[2], ranges, kinds)).toBe(false); // domain final kept
+		expect(isInsideDomain(actions[1], ranges, kinds)).toBe(false); // 保留境界行动。
+		expect(isInsideDomain(actions[2], ranges, kinds)).toBe(false); // 保留境界终结行动。
 	});
 
 	it("hides ally actions inside domain range", () => {
@@ -136,7 +136,7 @@ describe("Excel export: domain filtering", () => {
 				actionNo: 1,
 				actionValue: 150,
 				skill: "E",
-			}, // inside domain
+			}, // 境界内部。
 		];
 		const ranges = buildDomainRanges(actions);
 		expect(isInsideDomain(actions[3], ranges, kinds)).toBe(true);
@@ -251,18 +251,18 @@ describe("Excel export: domain filtering", () => {
 				actionNo: 1,
 				actionValue: 50,
 				skill: "E",
-			}, // before domain
+			}, // 境界之前。
 			{
 				key: "s-2",
 				characterId: "sparkle",
 				actionNo: 2,
 				actionValue: 250,
 				skill: "E",
-			}, // after domain
+			}, // 境界之后。
 		];
 		const ranges = buildDomainRanges(actions);
-		expect(isInsideDomain(actions[3], ranges, kinds)).toBe(false); // before
-		expect(isInsideDomain(actions[4], ranges, kinds)).toBe(false); // after
+		expect(isInsideDomain(actions[3], ranges, kinds)).toBe(false); // 之前。
+		expect(isInsideDomain(actions[4], ranges, kinds)).toBe(false); // 之后。
 	});
 
 	it("keeps domain caster's own actions", () => {
@@ -297,14 +297,14 @@ describe("Excel export: domain filtering", () => {
 				actionNo: 2,
 				actionValue: 150,
 				skill: "E",
-			}, // Phainon's own action inside his domain
+			}, // 白厄在自身境界内的行动。
 		];
 		const ranges = buildDomainRanges(actions);
 		expect(isInsideDomain(actions[3], ranges, kinds)).toBe(false);
 	});
 
 	it("handles multiple domain ranges", () => {
-		// Two Phainons each with domains
+		// 两个白厄各自拥有一个境界。
 		const actions: MinimalAction[] = [
 			{
 				key: "p1-1",
@@ -360,7 +360,7 @@ describe("Excel export: domain filtering", () => {
 				actionNo: 1,
 				actionValue: 150,
 				skill: "E",
-			}, // inside p1 domain, outside p2
+			}, // 位于 p1 境界内、p2 境界外。
 		];
 		const ranges = buildDomainRanges(actions);
 		expect(ranges.length).toBe(2);

@@ -206,28 +206,28 @@ export function ClipboardSetText(text) {
 }
 
 /**
- * Callback for OnFileDrop returns a slice of file path strings when a drop is finished.
+ * OnFileDrop 的回调会在拖放完成时接收文件路径字符串切片。
  *
  * @export
  * @callback OnFileDropCallback
- * @param {number} x - x coordinate of the drop
- * @param {number} y - y coordinate of the drop
- * @param {string[]} paths - A list of file paths.
+ * @param {number} x - 放置位置的横坐标。
+ * @param {number} y - 放置位置的纵坐标。
+ * @param {string[]} paths - 文件路径列表。
  */
 
 /**
- * OnFileDrop listens to drag and drop events and calls the callback with the coordinates of the drop and an array of path strings.
+ * OnFileDrop 监听拖放事件，并将放置坐标和路径字符串数组传给回调函数。
  *
  * @export
- * @param {OnFileDropCallback} callback - Callback for OnFileDrop returns a slice of file path strings when a drop is finished.
- * @param {boolean} [useDropTarget=true] - Only call the callback when the drop finished on an element that has the drop target style. (--wails-drop-target)
+ * @param {OnFileDropCallback} callback - 拖放完成时接收文件路径字符串切片的回调函数。
+ * @param {boolean} [useDropTarget=true] - 仅当拖放在带有目标样式的元素上完成时调用回调（--wails-drop-target）。
  */
 export function OnFileDrop(callback, useDropTarget) {
     return window.runtime.OnFileDrop(callback, useDropTarget);
 }
 
 /**
- * OnFileDropOff removes the drag and drop listeners and handlers.
+ * OnFileDropOff 移除拖放监听器和处理器。
  */
 export function OnFileDropOff() {
     return window.runtime.OnFileDropOff();

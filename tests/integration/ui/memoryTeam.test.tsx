@@ -69,8 +69,7 @@ describe("ActionSequence four-character front-end interaction", () => {
 			"JSON 导入 / 导出内容",
 		);
 		const importJson = {
-			// The interaction under test is complete by AV 100; avoid rendering
-			// unrelated long-tail summon actions.
+			// 被测交互在 AV 100 前已经完成，避免渲染无关的后续召唤行动。
 			limitPreset: "150",
 			customLimit: "",
 			displayedLimit: "150",

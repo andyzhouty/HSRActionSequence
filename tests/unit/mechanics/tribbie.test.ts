@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { simulateActions } from "../../../src/simulate/actions";
-import { isNonAttackSkill } from "../../../src/utils/actionSequence";
-import { character, input, skills } from "../../helpers/simulateActionTestUtils";
+import { isNonAttackSkill } from "../../../src/utils/action-sequence";
+import {
+	character,
+	input,
+	skills,
+} from "../../helpers/simulateActionTestUtils";
 
 describe("缇宝终结技追加攻击", () => {
 	it("其他角色 Q 各触发一次，缇宝 Q 重置其可触发次数", () => {

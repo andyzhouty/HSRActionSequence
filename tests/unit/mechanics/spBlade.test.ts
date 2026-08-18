@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { spBladeStackResourceName } from "../../../src/mechanics/spBlade";
 import { simulateActions } from "../../../src/simulate/actions";
-import { character, input, skills } from "../../helpers/simulateActionTestUtils";
+import {
+	character,
+	input,
+	skills,
+} from "../../helpers/simulateActionTestUtils";
 
 describe("千冶·刃", () => {
 	it("Q 开启无量忿怒、生成 70 速倒计时，并在阈值生成锁定 E", () => {

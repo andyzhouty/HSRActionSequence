@@ -6,6 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import { simulateActions } from "../../src/simulate/actions";
+import type { SimulateActionsInput } from "../../src/simulate/types";
 import { character, input } from "../helpers/simulateActionTestUtils";
 
 /**
@@ -21,10 +22,17 @@ const HEAVY_BUDGET_MS = 400;
 // 2000 AV 的复合连动用于压测吞吐量，不是编辑时的常规交互负载。
 const EXTREME_STRESS_BUDGET_MS = 2000;
 
+function measureSimulation(config: SimulateActionsInput) {
+	// 先预热模块和 JIT，再测量固定输入的第二次执行，减少首次运行噪声。
+	simulateActions(config);
+	const start = performance.now();
+	const actions = simulateActions(config);
+	return { actions, elapsed: performance.now() - start };
+}
+
 describe("Performance: standard scenarios", () => {
 	it("4-character team, 500 AV limit", () => {
-		const start = performance.now();
-		const actions = simulateActions(
+		const { actions, elapsed } = measureSimulation(
 			input({
 				characters: [
 					character("c1", "A", 100),
@@ -39,20 +47,17 @@ describe("Performance: standard scenarios", () => {
 				limit: 500,
 			}),
 		);
-		const elapsed = performance.now() - start;
 		expect(actions.length).toBeGreaterThan(0);
 		expect(elapsed).toBeLessThan(STANDARD_BUDGET_MS);
 	});
 
 	it("single character, 2000 AV limit", () => {
-		const start = performance.now();
-		const actions = simulateActions(
+		const { actions, elapsed } = measureSimulation(
 			input({
 				characters: [character("c1", "A", 200)],
 				limit: 2000,
 			}),
 		);
-		const elapsed = performance.now() - start;
 		expect(actions.length).toBeGreaterThan(10);
 		expect(elapsed).toBeLessThan(STANDARD_BUDGET_MS);
 	});
@@ -60,8 +65,7 @@ describe("Performance: standard scenarios", () => {
 
 describe("Performance: heavy scenarios", () => {
 	it("many interrupts with domain", () => {
-		const start = performance.now();
-		const actions = simulateActions(
+		const { actions, elapsed } = measureSimulation(
 			input({
 				characters: [
 					character("phainon", "白厄", 106),
@@ -89,14 +93,12 @@ describe("Performance: heavy scenarios", () => {
 				limit: 700,
 			}),
 		);
-		const elapsed = performance.now() - start;
 		expect(actions.length).toBeGreaterThan(0);
 		expect(elapsed).toBeLessThan(HEAVY_BUDGET_MS);
 	});
 
 	it("Phainon domain with Aha and Gilgamesh resource tracking", () => {
-		const start = performance.now();
-		const actions = simulateActions(
+		const { actions, elapsed } = measureSimulation(
 			input({
 				characters: [
 					character("gil", "吉尔伽美什", 150, {
@@ -115,14 +117,12 @@ describe("Performance: heavy scenarios", () => {
 				limit: 2000,
 			}),
 		);
-		const elapsed = performance.now() - start;
 		expect(actions.length).toBeGreaterThan(100);
 		expect(elapsed).toBeLessThan(EXTREME_STRESS_BUDGET_MS);
 	});
 
 	it("Archer arrow chains with Himeko assists and Saber/Gilgamesh combo tracking", () => {
-		const start = performance.now();
-		const actions = simulateActions(
+		const { actions, elapsed } = measureSimulation(
 			input({
 				characters: [
 					character("archer", "Archer", 200),
@@ -138,7 +138,6 @@ describe("Performance: heavy scenarios", () => {
 				limit: 2000,
 			}),
 		);
-		const elapsed = performance.now() - start;
 		expect(actions.length).toBeGreaterThan(100);
 		expect(elapsed).toBeLessThan(EXTREME_STRESS_BUDGET_MS);
 	});

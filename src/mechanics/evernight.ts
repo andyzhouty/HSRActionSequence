@@ -3,8 +3,8 @@ import type {
 	CharacterConfig,
 	GeneratedAction,
 	SkillCode,
-} from "../utils/actionSequence";
-import { getEveyRule } from "../utils/actionSequence";
+} from "../utils/action-sequence";
+import { getEveyRule } from "../utils/action-sequence";
 
 type EveyActionState = {
 	character: CharacterConfig;

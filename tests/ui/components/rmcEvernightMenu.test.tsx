@@ -2,7 +2,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import ActionPanel from "../../../src/components/ActionPanel";
-import type { GeneratedAction } from "../../../src/utils/actionSequence";
+import type { GeneratedAction } from "../../../src/utils/action-sequence";
 import { renderWithContext } from "../../helpers/actionSequenceComponentTestUtils";
 
 describe("ActionPanel RMC / Evernight", () => {

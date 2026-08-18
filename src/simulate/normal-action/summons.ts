@@ -6,7 +6,7 @@ import { hasSkillEffect } from "../../data/characters";
 import { handleAglaeaSkillEffects } from "../../mechanics/aglaea";
 import { hasEvernightEvey, summonEveyState } from "../../mechanics/evernight";
 import { hasSpRobin, summonSongbirdsState } from "../../mechanics/spRobin";
-import { isCharacterTarget, type SkillCode } from "../../utils/actionSequence";
+import { isCharacterTarget, type SkillCode } from "../../utils/action-sequence";
 import { summonMemeState } from "../effects";
 import type { ActionState } from "../types";
 
@@ -29,7 +29,7 @@ export function handleSummons(params: SummonsParams): void {
 		actionValue,
 	} = params;
 
-	// Memory Trailblazer E/Q: summon Meme as a 130-speed memosprite.
+	// 流萤忆灵 E/Q：召唤速度为 130 的 Meme 忆灵。
 	if (
 		isCharacterTarget(character) &&
 		hasSkillEffect(character.name, "E", "summonMeme") &&
@@ -38,7 +38,7 @@ export function handleSummons(params: SummonsParams): void {
 		summonMemeState(states, character, actionValue);
 	}
 
-	// Evernight E/Q: summon Evey
+	// 遐蝶 E/Q：召唤 Evey。
 	if (
 		isCharacterTarget(character) &&
 		hasEvernightEvey(character.name) &&
@@ -51,7 +51,7 @@ export function handleSummons(params: SummonsParams): void {
 		});
 	}
 
-	// SP Robin E: summon Summer Songbirds
+	// SP 知更鸟 E：召唤 Summer Songbirds。
 	if (
 		isCharacterTarget(character) &&
 		hasSpRobin(character) &&
@@ -61,7 +61,7 @@ export function handleSummons(params: SummonsParams): void {
 		summonSongbirdsState(states, character, actionValue);
 	}
 
-	// Aglaea E: summon Garmentmaker (Q case handled by unified function)
+	// 阿格莱雅 E：召唤衣匠（Q 的情况由统一函数处理）。
 	if (!normalUsesUltimate) {
 		handleAglaeaSkillEffects(states, stateIndex, resolvedSkill, actionValue);
 	}

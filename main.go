@@ -69,7 +69,7 @@ func (a *App) WriteBase64File(path string, dataBase64 string) error {
 	return os.WriteFile(path, contents, 0644)
 }
 
-// SaveFileDialog opens a save dialog
+// 打开保存文件对话框。
 func (a *App) SaveFileDialog(optionsJSON string) (string, error) {
 	var opts struct {
 		Title           string `json:"title"`
@@ -91,7 +91,7 @@ func (a *App) SaveFileDialog(optionsJSON string) (string, error) {
 	return runtime.SaveFileDialog(a.ctx, dialogOpts)
 }
 
-// OpenFileDialog opens an open dialog
+// 打开文件选择对话框。
 func (a *App) OpenFileDialog(optionsJSON string) (string, error) {
 	var opts struct {
 		Title   string `json:"title"`

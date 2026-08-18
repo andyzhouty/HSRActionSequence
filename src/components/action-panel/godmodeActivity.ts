@@ -1,4 +1,4 @@
-import type { GeneratedAction } from "../../utils/actionSequence";
+import type { GeneratedAction } from "../../utils/action-sequence";
 
 /** 根据已生成行动还原 SP 银狼在指定行动时是否处于无敌玩家状态。 */
 export function isGodmodeActiveAtAction(

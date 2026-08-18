@@ -4,9 +4,9 @@ import type {
 	CharacterConfig,
 	SkillCode,
 	UltInterrupt,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
-/** Helper: 创建角色配置 */
+/** 辅助函数：创建角色配置。 */
 function char(
 	id: string,
 	name: string,
@@ -36,21 +36,21 @@ function char(
 	};
 }
 
-/** Helper: 技能覆盖 */
+/** 辅助函数：设置技能覆盖。 */
 function skillOverrides(
 	entries: Record<string, string>,
 ): Record<string, SkillCode> {
 	return entries as Record<string, SkillCode>;
 }
 
-/** Helper: 插队配置 */
+/** 辅助函数：设置插队配置。 */
 function interrupts(
 	entries: Record<string, UltInterrupt[]>,
 ): Record<string, UltInterrupt[]> {
 	return entries;
 }
 
-/** Helper: 按轴步骤执行并校验 */
+/** 辅助函数：按排轴步骤执行并校验。 */
 function runWithSteps(
 	desc: string,
 	steps: {

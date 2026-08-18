@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CharacterConfig } from "../../utils/actionSequence";
+import { CHARACTER_IDS } from "../../domain/identity";
+import type { CharacterConfig } from "../../utils/action-sequence";
 import {
 	defaultResources,
 	formatEditableNumber,
@@ -16,7 +17,7 @@ import {
 	type SpeedAdjustment,
 	toPositiveNumber,
 	type UltInterrupt,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 import {
 	createDefaultSavedData,
 	type NormalizedSavedData,
@@ -220,7 +221,8 @@ export function useActionSequenceSavedData() {
 				hasSkillEffect(character.name, "Q", "cyreneUltimate"),
 			);
 			const silverWolfCharacter = prev.characters.find(
-				(character) => getCharacterCid(character.name) === "1506",
+				(character) =>
+					getCharacterCid(character.name) === CHARACTER_IDS.silverWolf,
 			);
 			const isUsingDefaultResources =
 				prev.resources.length === defaultResources.length &&

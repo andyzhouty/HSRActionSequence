@@ -6,7 +6,7 @@ import {
 import type {
 	CharacterConfig,
 	SkillCode,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 
 function character(
 	id: string,
@@ -37,9 +37,9 @@ function skills(entries: Record<string, string>): Record<string, SkillCode> {
 function interrupts(
 	entries: Record<
 		string,
-		import("../../../src/utils/actionSequence").UltInterrupt[]
+		import("../../../src/utils/action-sequence").UltInterrupt[]
 	>,
-): Record<string, import("../../../src/utils/actionSequence").UltInterrupt[]> {
+): Record<string, import("../../../src/utils/action-sequence").UltInterrupt[]> {
 	return entries;
 }
 

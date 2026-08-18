@@ -1,15 +1,8 @@
-import { emitMydeiGodslayerExtraAction } from "../mechanics/mydei";
-import { advanceSaberAfterAction } from "../mechanics/saber";
-import type { GeneratedAction } from "../utils/actionSequence";
+import type { GeneratedAction } from "../utils/action-sequence";
 import { createActionContext } from "./context";
-import { handleDomainAction } from "./domain";
-import { handleGarmentmakerActionTurn } from "./garmentmakerAction";
-import { handleNormalAction, type NormalActionResult } from "./normal-action";
-import { runPostActionCleanup } from "./postAction";
-import { runPreActionChecks } from "./preAction";
+import { runActionLifecycle } from "./lifecycle";
 import type { SimulationCallbacks, SimulationRuntime } from "./runtime";
 import { selectNextAction } from "./scheduler";
-import { handleSpecialAction } from "./specialActions";
 import type {
 	ActionState,
 	ActiveOdeState,
@@ -17,6 +10,23 @@ import type {
 } from "./types";
 
 export type SimulationLoopCallbacks = SimulationCallbacks;
+
+/** 保护模拟器不因非法状态或无限拉条进入不可控循环。 */
+export const MAX_SIMULATION_ITERATIONS = 2000;
+
+export class SimulationLoopLimitError extends Error {
+	readonly iterations: number;
+	readonly lastActionKey: string | undefined;
+
+	constructor(iterations: number, lastActionKey: string | undefined) {
+		super(
+			`模拟器超过最大行动数 ${iterations}，最近行动为 ${lastActionKey ?? "无"}；请检查行动值、拉条或召唤循环`,
+		);
+		this.name = "SimulationLoopLimitError";
+		this.iterations = iterations;
+		this.lastActionKey = lastActionKey;
+	}
+}
 
 /** 执行行动值调度主循环。 */
 export function runSimulationLoop(params: {
@@ -37,12 +47,11 @@ export function runSimulationLoop(params: {
 			value: string | null;
 		},
 	};
-	const { input, states, actions, activeOdes } = runtime;
-	const { emitSpecialInterruptAction } = runtime.callbacks;
+	const { input, states, actions } = runtime;
 
 	let guard = 0;
 
-	while (states.length > 0 && guard < 2000) {
+	while (states.length > 0 && guard < MAX_SIMULATION_ITERATIONS) {
 		guard += 1;
 
 		// 选择下一次行动。
@@ -51,95 +60,18 @@ export function runSimulationLoop(params: {
 		if (next.actionValue > input.limit) break;
 
 		const context = createActionContext(states, next);
-		const { stateIndex, key, actionValue, character, actionNo } = context;
 
-		runPreActionChecks(runtime, context);
+		runActionLifecycle(runtime, context);
+	}
 
-		// 若在此行动点开启了 Fever（含 SP Robin 自己的回合），该行动被跳过。
-		if (states[stateIndex].spRobinInFever) continue;
-
-		if (
-			handleSpecialAction({
-				input,
-				states,
-				actions,
-				activeOdes,
-				stateIndex,
-				key,
-				actionValue,
-				character,
-				actionNo,
-				calcAhaSpeed: runtime.calcAhaSpeed,
-				callbacks: runtime.callbacks,
-			})
-		) {
-			emitMydeiGodslayerExtraAction(key, actionValue, states, actions, input);
-			advanceSaberAfterAction(
-				states,
-				input.saberAdvanceToggles,
-				key,
-				actionValue,
+	if (guard >= MAX_SIMULATION_ITERATIONS && states.length > 0) {
+		const next = selectNextAction(states, input);
+		if (next && next.actionValue <= input.limit) {
+			throw new SimulationLoopLimitError(
+				MAX_SIMULATION_ITERATIONS,
+				actions[actions.length - 1]?.key,
 			);
-			continue;
 		}
-
-		if (handleGarmentmakerActionTurn(runtime, context)) {
-			emitMydeiGodslayerExtraAction(key, actionValue, states, actions, input);
-			advanceSaberAfterAction(
-				states,
-				input.saberAdvanceToggles,
-				key,
-				actionValue,
-			);
-			continue;
-		}
-
-		// ── 境界内连动 ──
-		if (
-			handleDomainAction(
-				states,
-				stateIndex,
-				actions,
-				character,
-				activeOdes,
-				input,
-			)
-		) {
-			emitMydeiGodslayerExtraAction(key, actionValue, states, actions, input);
-			advanceSaberAfterAction(
-				states,
-				input.saberAdvanceToggles,
-				key,
-				actionValue,
-			);
-			continue;
-		}
-
-		// ── 普通行动处理（含境界激活） ──
-		const normalResult: NormalActionResult = handleNormalAction(
-			runtime,
-			context,
-		);
-		const { skipAssistFollowUp, clearAdvanceBlockAfterAction } = normalResult;
-
-		// ── 行动后收尾 ──
-		const keyInterrupts = input.ultInterrupts[key] ?? [];
-		const afterInterrupts = keyInterrupts.filter((i) => i.timing === "after");
-		runPostActionCleanup(runtime, context, {
-			skipAssistFollowUp,
-			clearAdvanceBlockAfterAction,
-			afterInterrupts,
-			emitInterrupt: (interrupt) => {
-				const idx = keyInterrupts.indexOf(interrupt);
-				if (idx >= 0) {
-					emitSpecialInterruptAction(
-						`${key}-interrupt-${idx}`,
-						interrupt,
-						actionValue,
-					);
-				}
-			},
-		});
 	}
 
 	return actions;

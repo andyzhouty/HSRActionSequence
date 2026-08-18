@@ -4,15 +4,29 @@
 
 Wails 桌面图标以根目录 `appicon.png` 为源文件，并在构建前自动同步到 `build/appicon.png`。
 
+## 开发检查与 Wails 绑定
+
+`pnpm check` 是提交前的统一检查入口，包含 TypeScript、角色数据、文档路径、Wails 绑定、架构依赖、Go 格式/测试/vet、lint、格式和全量测试。
+
+测试按运行环境和职责拆分：`pnpm run test:node` 执行领域、数据、模拟器和集成测试，`pnpm run test:ui` 执行 jsdom 组件测试，`pnpm run test:quality` 执行稳定的性质与契约测试，`pnpm run test:performance` 单独执行性能基准。性能基准使用固定场景，不属于普通 `pnpm check` 门禁；若修改模拟器核心，应在本地单独运行并记录结果。
+
+新增角色时，先在 `src/data/characters.json` 增加角色数据并通过 `pnpm run check:data`，再在 `src/mechanics/` 增加机制实现，必要时通过 `src/simulate/mechanics/registry.ts` 注册生命周期钩子，最后在 `tests/unit/mechanics/` 或 `tests/integration/simulation/` 增加行为测试。角色身份和 CID 统一从 `src/domain/identity/characterId.ts` 查询，技能输入统一经过 `src/domain/skills/skillCode.ts` 解析。
+
+模拟器代码位于 `src/simulate/`，不依赖 React 或 Wails；UI 通过 `src/infrastructure/backend/port.ts` 定义的后端端口访问桌面能力，测试可注入 fake。保存数据必须经过版本迁移、归一化和 schema 校验后才能进入模拟器。
+
+修改 `main.go` 中 `App` 的公开方法后，使用 Wails 重新生成 `frontend/wailsjs`：
+
+```text
+wails generate module
+```
+
+生成目录只允许由 Wails 生成流程更新；`pnpm run check:bindings` 会检查 `main.go` 与 `App.d.ts`、`App.js` 的方法集合是否一致。
+
 ## 项目
 
 - 图标：
   ![图标](https://andyzhouty.github.io/hsrlab/favicon.jpg)
-- 参与项目的AI工具
-  - DeepSeek V4 Flash
-  - DeepSeek V4 Pro
-  - GPT 5.6 Terra
-  - GPT 5.4
+- 项目当前用来Vibe Coding的AI: GPT 5.6 Luna XHigh
 
 ## 目前支持的特殊逻辑
 

@@ -3,7 +3,7 @@ import {
 	hasPhainonEnemyTriggerSkill,
 } from "../mechanics/phainon";
 import { emitSpBladeExtraTurn, hasSpBlade } from "../mechanics/spBlade";
-import type { GeneratedAction, SkillCode } from "../utils/actionSequence";
+import type { GeneratedAction, SkillCode } from "../utils/action-sequence";
 import { getActiveOdeLabels, toNonNegativeNumber } from "./effects";
 import type {
 	ActionState,
@@ -12,8 +12,8 @@ import type {
 } from "./types";
 
 /**
- * Handle a domain-linked action iteration (白厄境界内连动).
- * Returns true if this was a domain action and iteration was handled.
+ * 处理一次与境界关联的行动迭代（白厄境界内连动）。
+ * 如果本次是境界行动且已完成迭代，则返回 true。
  */
 export function handleDomainAction(
 	states: ActionState[],

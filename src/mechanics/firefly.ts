@@ -5,15 +5,14 @@ import type {
 	CharacterConfig,
 	GeneratedAction,
 	SkillCode,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 import {
 	getFireflyCombustionRule,
 	isCharacterTarget,
-} from "../utils/actionSequence";
+} from "../utils/action-sequence";
 
-// ── Firefly Complete Combustion ──
-// Character-specific numbers live in characters.json; this module keeps only
-// the action scheduling mechanics.
+// ── 流萤完全燃烧 ──
+// 角色专属数值存放在 characters.json 中；本模块只处理行动排程机制。
 
 type FireflyActionState = {
 	character: CharacterConfig;

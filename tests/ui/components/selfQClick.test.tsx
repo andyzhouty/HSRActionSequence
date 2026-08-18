@@ -7,7 +7,7 @@ import { simulateActions } from "../../../src/simulate/actions";
 import type {
 	CharacterConfig,
 	GeneratedAction,
-} from "../../../src/utils/actionSequence";
+} from "../../../src/utils/action-sequence";
 import { renderWithContext } from "../../helpers/actionSequenceComponentTestUtils";
 
 function c(id: string, name: string, speed: number): CharacterConfig {
@@ -105,7 +105,7 @@ describe("self-Q interrupt click stability", () => {
 
 		const qRow = document.querySelector('[data-action-key="emc-1-q"]')!;
 
-		// 5 rapid clicks
+		// 5 次快速点击。
 		for (let i = 0; i < 5; i++) {
 			await userEvent.click(qRow);
 			await waitFor(() => {

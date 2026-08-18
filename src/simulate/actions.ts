@@ -1,42 +1,10 @@
-import { handleArcherRecordedAction, hasArcher } from "../mechanics/archer";
-import {
-	handleCompanionFollowUpRecordedAction,
-	hasAshveil,
-	hasKafka,
-} from "../mechanics/companionFollowUp";
 import {
 	advanceSouldragon,
 	emitImmediateSouldragonAction,
 } from "../mechanics/danHengPermansor";
-import {
-	handleGilgameshRecordedAction,
-	hasGilgamesh,
-} from "../mechanics/gilgamesh";
-import {
-	applyElationLightconeSpeedBuff,
-	ELATION_LIGHTCONE_ID,
-} from "../mechanics/lightconeEffects";
-import { hasSaber } from "../mechanics/saber";
 import { hasSilverWolfGodmode, isInGodmode } from "../mechanics/silverWolf";
-import {
-	handleSpAventurineRecordedAction,
-	hasSpAventurine,
-} from "../mechanics/spAventurine";
-import {
-	handleSpBladeRecordedAction,
-	hasSpBlade,
-	maybeActivateSpBladeFury,
-} from "../mechanics/spBlade";
-import {
-	handleTheHertaRecordedAction,
-	hasTheHerta,
-} from "../mechanics/theHerta";
 import type { GeneratedAction } from "../utils/action-sequence";
-import {
-	getCharacterPath,
-	isBasicAttackSkill,
-	isNonAttackSkill,
-} from "../utils/action-sequence";
+import { getCharacterPath, isNonAttackSkill } from "../utils/action-sequence";
 import {
 	applyTeamSpeedBuffs,
 	applyTechniqueSummons,
@@ -55,12 +23,14 @@ import {
 	emitSpecialInterruptAction as emitSpecialInterrupt,
 } from "./interrupts";
 import { runSimulationLoop } from "./loop";
+import {
+	findRegisteredCharacterState,
+	isRegisteredCharacterMechanic,
+	runRecordedActionMechanics,
+} from "./mechanics/registry";
 import type { ActiveOdeState, SimulateActionsInput } from "./types";
 
-// Re-export for backward compatibility
-export type { SimulateActionsInput } from "./types";
-
-// --- Main simulation ---
+// --- 主模拟流程 ---
 
 export function simulateActions(
 	input: SimulateActionsInput,
@@ -79,19 +49,22 @@ export function simulateActions(
 	const initialStateByCharacterId = new Map(
 		states.map((state) => [state.character.id, state]),
 	);
-	const gilgameshState = states.find((state) => hasGilgamesh(state.character));
-	const archerState = states.find((state) => hasArcher(state.character));
-	const ashveilState = states.find((state) => hasAshveil(state.character));
-	const kafkaState = states.find((state) => hasKafka(state.character));
-	const spBladeState = states.find((state) => hasSpBlade(state.character));
-	const theHertaState = states.find((state) => hasTheHerta(state.character));
+	const gilgameshState = findRegisteredCharacterState(states, "gilgamesh");
+	const archerState = findRegisteredCharacterState(states, "archer");
+	const ashveilState = findRegisteredCharacterState(states, "ashveil");
+	const kafkaState = findRegisteredCharacterState(states, "kafka");
+	const spBladeState = findRegisteredCharacterState(states, "spBlade");
+	const theHertaState = findRegisteredCharacterState(states, "theHerta");
 	const gilgameshAndSaber =
 		gilgameshState !== undefined &&
-		states.some((state) => hasSaber(state.character));
+		states.some((state) =>
+			isRegisteredCharacterMechanic(state.character, "saber"),
+		);
 	let actions: GeneratedAction[];
 	const { calcAhaSpeed, refreshAhaSchedule } = setupAhaMoment(states);
-	const spAventurineState = states.find((state) =>
-		hasSpAventurine(state.character),
+	const spAventurineState = findRegisteredCharacterState(
+		states,
+		"spAventurine",
 	);
 	const elationCharacters = input.characters.filter(
 		(character) =>
@@ -99,7 +72,8 @@ export function simulateActions(
 			getCharacterPath(character.name) === "Elation",
 	);
 	const isSoleElation =
-		elationCharacters.length === 1 && hasSpAventurine(elationCharacters[0]);
+		elationCharacters.length === 1 &&
+		isRegisteredCharacterMechanic(elationCharacters[0], "spAventurine");
 	const emitSpAventurineImmediateElation = (
 		parentKey: string,
 		actionValue: number,
@@ -112,94 +86,28 @@ export function simulateActions(
 	};
 	const handleRecordedAction = (action: GeneratedAction) => {
 		const attacker = characterById.get(action.characterId);
-		if (spBladeState) maybeActivateSpBladeFury(spBladeState, action, states);
 		const attackerState = initialStateByCharacterId.get(action.characterId);
-		const isSilverWolfNonAttack = Boolean(
-			hasSilverWolfGodmode(attacker?.name ?? "") &&
-				(action.skill === "Q" ||
-					(action.isElationSkill &&
-						(!attackerState || !isInGodmode(attackerState)))),
-		);
-		if (theHertaState) {
-			handleTheHertaRecordedAction({ state: theHertaState, action });
-		}
-		if (gilgameshState) {
-			handleGilgameshRecordedAction({
-				state: gilgameshState,
+		const { isForcedAttack, isSilverWolfNonAttack } =
+			runRecordedActionMechanics({
 				action,
 				attacker,
+				attackerState,
 				states,
 				actions,
 				input,
+				archerState,
+				spBladeState,
+				theHertaState,
+				spAventurineState,
+				gilgameshState,
 				hasSaberInTeam: gilgameshAndSaber,
-			});
-		}
-		const isArcherFixedAttack =
-			hasArcher(attacker) && ["A", "E", "Q"].includes(action.skill);
-		const isSpAventurineFixedAttack =
-			hasSpAventurine(attacker) && ["A", "E", "Q"].includes(action.skill);
-		const isForcedAttack =
-			isBasicAttackSkill(action.skill) ||
-			action.isAssistAction === true ||
-			action.isGilgameshTechniqueAction === true ||
-			isArcherFixedAttack ||
-			isSpAventurineFixedAttack;
-		if (archerState) {
-			handleArcherRecordedAction({
-				state: archerState,
-				action,
-				attacker,
-				actions,
-				input,
-				isForcedAttack,
-				isSilverWolfNonAttack,
-			});
-		}
-		handleCompanionFollowUpRecordedAction({
-			actions,
-			action,
-			attacker,
-			input,
-			isForcedAttack,
-			ashveilState,
-			kafkaState,
-		});
-		if (spBladeState) {
-			handleSpBladeRecordedAction({
-				state: spBladeState,
-				action,
-				attacker,
-				states,
-				actions,
-				input,
-				isForcedAttack,
-			});
-		}
-
-		// ── 砂金·戏浪：热意积累、天赋、阈值触发与阿哈加速 ──
-		if (spAventurineState) {
-			handleSpAventurineRecordedAction({
-				state: spAventurineState,
-				action,
-				attacker,
-				actions,
-				input,
-				isForcedAttack,
-				resolveAttackerState: (characterId: string) =>
-					initialStateByCharacterId.get(characterId),
+				ashveilState,
+				kafkaState,
 				isSoleElation,
+				initialStateByCharacterId,
 				refreshAhaSchedule,
 				emitImmediateElation: emitSpAventurineImmediateElation,
 			});
-		}
-
-		// 光锥 23064「向浪花掷下盛夏」：装备者施放欢愉技时速度提高 20%。
-		if (action.isElationSkill && attacker?.lc_id === ELATION_LIGHTCONE_ID) {
-			const lcCasterState = initialStateByCharacterId.get(action.characterId);
-			if (lcCasterState) {
-				applyElationLightconeSpeedBuff(lcCasterState, action.actionValue);
-			}
-		}
 
 		if (!souldragonOwner || action.isSouldragonAction) return;
 

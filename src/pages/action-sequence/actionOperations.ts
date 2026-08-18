@@ -1,12 +1,12 @@
 import { getEffectiveCharacterBaseSpeed } from "../../mechanics/lightconeEffects";
-import type { CharacterConfig } from "../../utils/actionSequence";
+import type { CharacterConfig } from "../../utils/action-sequence";
 import {
 	formatEditableNumber,
 	type GeneratedAction,
 	getCounterWDomainRule,
 	type SpeedAdjustment,
 	type SpeedChangeMode,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 
 type CharacterLookup = Record<string, CharacterConfig>;
 

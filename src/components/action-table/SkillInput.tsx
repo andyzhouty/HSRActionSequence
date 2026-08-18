@@ -1,11 +1,11 @@
 import { useState } from "react";
 import ahaIcon from "../../assets/aha/aha.webp";
 import { useActionSequence } from "../../contexts/ActionSequenceContext";
-import type { GeneratedAction } from "../../utils/actionSequence";
+import type { GeneratedAction } from "../../utils/action-sequence";
 import {
 	getCounterWDomainRule,
 	hasSemanticFlag,
-} from "../../utils/actionSequence";
+} from "../../utils/action-sequence";
 
 export function SkillInput({ action }: { action: GeneratedAction }) {
 	const ctx = useActionSequence();

@@ -69,7 +69,7 @@ describe("ActionSequence front-end interaction", () => {
 			"JSON 导入 / 导出内容",
 		);
 		const importJson = {
-			// Assertions only inspect the sequence through AV 212.77.
+			// 断言只检查 AV 212.77 之前的行动序列。
 			limitPreset: "250",
 			customLimit: "",
 			displayedLimit: "250",
