@@ -56,7 +56,7 @@ describe("知更鸟·晴歌 SP Robin", () => {
 		);
 	});
 
-	it("晴空乐手速度包含 98 × 局内百分比速度buff（藿藿E1 +12%）", () => {
+	it("晴空乐手速度包含 95 × 局内百分比速度buff（藿藿E1 +12%）", () => {
 		const actions = simulateActions(
 			input({
 				characters: [
@@ -70,8 +70,8 @@ describe("知更鸟·晴歌 SP Robin", () => {
 		);
 		const songbirds = actions.find((action) => action.isSongbirdsAction);
 		expect(songbirds).toBeDefined();
-		// (120 + 98 × 0.12) × 1.8 = 131.76 × 1.8 = 237.168
-		expect(songbirds!.speed).toBeCloseTo((120 + 98 * 0.12) * 1.8, 5);
+		// (120 + 95 × 0.12) × 1.8 = 131.4 × 1.8 = 236.52
+		expect(songbirds!.speed).toBeCloseTo((120 + 95 * 0.12) * 1.8, 5);
 	});
 
 	it("Q 使指定我方单体立即行动", () => {

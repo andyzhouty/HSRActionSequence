@@ -160,7 +160,7 @@ function buildMemospriteTargets(characters: CharacterConfig[]) {
 		}
 		if (hasSkillEffect(character.name, "E", "summonSummerSongbirds")) {
 			const rule = getSummerSongbirdsRule(character.name);
-			const panelSpeed = toPositiveNumber(character.speed, 98);
+			const panelSpeed = toPositiveNumber(character.speed, 95);
 			const songbirdsSpeed = panelSpeed * rule.memospriteSpeedRatio;
 			memos.push({
 				...character,

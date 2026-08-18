@@ -19,9 +19,13 @@ export const ENTRY_ADVANCE_PCT = 0.4;
 export const ENTRY_SPEED_BUFF_PCT = 0.2;
 export const ENTRY_SPEED_BUFF_TURNS = 2;
 
-/** 向浪花掷下盛夏（欢愉）：装备者施放欢愉技时速度提高 20%（基于基础速度，一次性）。 */
+/** 向浪花掷下盛夏（欢愉）：装备者施放欢愉技时速度提高（基于基础速度，一次性）。 */
 export const ELATION_LIGHTCONE_ID = 23064;
-export const ELATION_LIGHTCONE_SPEED_PCT = 0.2;
+
+/** 光锥 23064 的加速百分比：叠影 1-5 分别 24%/28%/32%/36%/40%。 */
+export function getElationLightconeSpeedPct(superimpose: number): number {
+	return 0.24 + (Math.max(1, superimpose) - 1) * 0.04;
+}
 
 /** 角色基础速度，优先使用角色数据；仅未登记的运行时实体回退其自身字段。 */
 export function getCharacterBaseSpeedValue(character: CharacterConfig): number {
@@ -111,14 +115,16 @@ export function consumeEntrySpeedBuff(
 	}
 }
 
-/** 光锥 23064：装备者施放欢愉技后的一次性 +20% 速度（基于基础速度）。 */
+/** 光锥 23064：装备者施放欢愉技后的一次性速度提高（基于基础速度，按叠影）。 */
 export function applyElationLightconeSpeedBuff(
 	state: ActionState,
 	actionValue: number,
 ): void {
 	if (state.elationLightconeSpeedBuffed) return;
 	const oldSpeed = state.currentSpeed;
-	const nextSpeed = oldSpeed + state.baseSpeed * ELATION_LIGHTCONE_SPEED_PCT;
+	const nextSpeed =
+		oldSpeed +
+		state.baseSpeed * getElationLightconeSpeedPct(state.character.superimpose);
 	if (nextSpeed <= 0) return;
 	const remaining = state.nextActionValue - actionValue;
 	if (remaining > 0) {

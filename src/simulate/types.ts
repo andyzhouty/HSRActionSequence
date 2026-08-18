@@ -137,7 +137,7 @@ export interface ActionState extends AglaeaActionState {
 	spRobinFeverCountdownOwnerId?: string;
 	/** SP Robin Q 施加：目标在 2 个正常回合内无法使其他我方目标行动提前。 */
 	allyAdvanceBlockTurns?: number;
-	/** SP Robin 忆灵速度公式中「98 × 局内百分比速度buff」的 buff 比例之和。 */
+	/** SP Robin 忆灵速度公式中「95 × 局内百分比速度buff」的 buff 比例之和。 */
 	spRobinMemospritePercentBuff?: number;
 	songbirdsOnField?: boolean;
 	/** 是否为晴空乐手忆灵状态。 */
@@ -161,7 +161,7 @@ export interface ActionState extends AglaeaActionState {
 	spAventurineSpeedBuffTurns?: number;
 	/** 水砂本行动施放过 Q：应用速度 buff 但本正常回合不消耗回合数。 */
 	spAventurineQBuffPending?: boolean;
-	/** 光锥 23064：装备者已获得施放欢愉技的 +20% 速度。 */
+	/** 光锥 23064：装备者已获得施放欢愉技的按叠影速度加成。 */
 	elationLightconeSpeedBuffed?: boolean;
 }
 

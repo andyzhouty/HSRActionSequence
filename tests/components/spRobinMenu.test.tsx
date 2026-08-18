@@ -10,7 +10,7 @@ const robinChar = {
 	name: "sp知更鸟",
 	kind: "角色" as const,
 	speed: "100",
-	baseSpeed: "98",
+	baseSpeed: "95",
 	hasVonwacq: false,
 	hasWindSet: false,
 	hasDance: false,

@@ -10,7 +10,7 @@ import type {
 // 角色数据（CID/命途/基础速度）在 characters.json；本模块只保留行动调度机制。
 
 export const SP_ROBIN_CID = "1512";
-export const SP_ROBIN_BASE_SPEED = 98;
+export const SP_ROBIN_BASE_SPEED = 95;
 
 const SONGBIRDS_SPEED_RATIO = 1.8;
 const FEVER_COUNTDOWN_SPEED = 140;
@@ -50,8 +50,8 @@ export function getSummerSongbirdsRule(ownerName: string): SummerSongbirdsRule {
 }
 
 // ── 晴空乐手（忆灵） ──
-// 忆灵速度 =（sp鸟面板速度 + 98 × 局内百分比速度buff之和）× 1.8。
-// 百分比 buff 以基础速度 98 计算；绝对速度调整不参与忆灵速度。
+// 忆灵速度 =（sp鸟面板速度 + 95 × 局内百分比速度buff之和）× 1.8。
+// 百分比 buff 以基础速度 95 计算；绝对速度调整不参与忆灵速度。
 
 export function findSongbirdsState(states: ActionState[], ownerId: string) {
 	return states.find(
