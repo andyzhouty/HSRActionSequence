@@ -1,14 +1,23 @@
 import { hasPassive, hasSkillEffect } from "../../data/characters";
-import { archerMaxConsecutiveEs, hasArcher } from "../../mechanics/archer";
+import {
+	archerMaxConsecutiveEs,
+	emitArcherExtraEs,
+	hasArcher,
+} from "../../mechanics/archer";
 import { hasCastoriceSummon } from "../../mechanics/castorice";
+import { handleCyreneNormalUltimate } from "../../mechanics/cyrene";
 import {
 	summonSouldragonState,
 	updateSouldragonBondmate,
 } from "../../mechanics/danHengPermansor";
 import { consumeEvernightSpeedBuff } from "../../mechanics/evernight";
 import { hasGilgamesh } from "../../mechanics/gilgamesh";
+import { handleHyacineNormalAction } from "../../mechanics/hyacine";
 import { consumeEntrySpeedBuff } from "../../mechanics/lightconeEffects";
-import { expirePhainonDomainSpeedBonus } from "../../mechanics/phainon";
+import {
+	expirePhainonDomainSpeedBonus,
+	handlePhainonDomain,
+} from "../../mechanics/phainon";
 import { hasSaber } from "../../mechanics/saber";
 import {
 	consumeGodmodeAction,
@@ -44,9 +53,6 @@ import {
 } from "../effects";
 import type { SimulationRuntime } from "../runtime";
 import { handlePostUltimateEffects } from "../ultimateEffects";
-import { emitArcherExtraEs, handleCyreneNormalUltimate } from "./archerCyrene";
-import { handlePhainonDomain } from "./domains";
-import { handleHyacineNormalAction } from "./hyacine";
 import {
 	handleFireflyBreakCheck,
 	handleMemeDeathCheck,

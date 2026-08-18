@@ -172,6 +172,7 @@ export function simulateActions(
 				states,
 				actions,
 				input,
+				isForcedAttack,
 			});
 		}
 

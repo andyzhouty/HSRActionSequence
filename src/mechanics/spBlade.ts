@@ -8,10 +8,13 @@ import {
 } from "../utils/actionSequence";
 
 export const spBladeStackResourceName = "sp刃叠层";
+const SP_BLADE_CID = "1507";
+const CASTORICE_CID = "1407";
+const MEMORY_TRAILBLAZER_CID = "8008";
 const countdownSpeed = 70;
 
 export function hasSpBlade(character: CharacterConfig | undefined): boolean {
-	return getCharacterCid(character?.name ?? "") === "1507";
+	return getCharacterCid(character?.name ?? "") === SP_BLADE_CID;
 }
 
 export function getSpBladeExtraTurnThreshold(eidolon: number): number {
@@ -93,19 +96,17 @@ export function isSpBladeAttack(params: {
 	action: GeneratedAction;
 	attacker: CharacterConfig | undefined;
 	attackDisabled: Record<string, boolean> | undefined;
+	isForcedAttack: boolean;
 }): boolean {
-	const { action, attacker, attackDisabled } = params;
+	const { action, attacker, attackDisabled, isForcedAttack } = params;
 	if (action.isSpBladeFuryActivation || action.isSpBladeCountdownAction)
 		return false;
 	if (attacker?.kind === "敌人" || action.targetKind === "敌人") return true;
-	const isArcherFixedAttack =
-		getCharacterCid(attacker?.name ?? "") === "1301" &&
-		["A", "E", "Q"].includes(action.skill);
 	const forced =
+		isForcedAttack ||
 		isBasicAttackSkill(action.skill) ||
 		action.isAssistAction === true ||
-		action.isGilgameshTechniqueAction === true ||
-		isArcherFixedAttack;
+		action.isGilgameshTechniqueAction === true;
 	if (!forced && attackDisabled?.[action.key] === true) return false;
 	if (forced) return true;
 	if (attacker) return !isNonAttackSkill(attacker, action.skill);
@@ -172,8 +173,10 @@ export function handleSpBladeRecordedAction(params: {
 	states: ActionState[];
 	actions: GeneratedAction[];
 	input: SimulateActionsInput;
+	isForcedAttack: boolean;
 }): void {
-	const { state, action, attacker, states, actions, input } = params;
+	const { state, action, attacker, states, actions, input, isForcedAttack } =
+		params;
 	const manualStacks = Number.parseFloat(
 		input.resourceValues?.[action.key]?.[spBladeStackResourceName] ?? "",
 	);
@@ -186,18 +189,20 @@ export function handleSpBladeRecordedAction(params: {
 			action,
 			attacker,
 			attackDisabled: input.attackDisabled,
+			isForcedAttack,
 		})
 	)
 		stacks += 1;
 	if (action.isDomainAction && (action.skill === "EA" || action.skill === "EW"))
 		stacks += 1;
 	if (
-		getCharacterCid(attacker?.name ?? "") === "1407" &&
+		getCharacterCid(attacker?.name ?? "") === CASTORICE_CID &&
 		action.skill === "E" &&
 		states.some((s) => s.polluxOnField)
 	)
 		stacks += 1;
-	const memoryTrailblazer = getCharacterCid(attacker?.name ?? "") === "8008";
+	const memoryTrailblazer =
+		getCharacterCid(attacker?.name ?? "") === MEMORY_TRAILBLAZER_CID;
 	const memoryState = states.find((s) => s.character.id === action.characterId);
 	if (
 		memoryTrailblazer &&

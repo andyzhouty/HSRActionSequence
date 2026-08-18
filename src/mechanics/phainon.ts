@@ -1,8 +1,16 @@
-import type { ActionState } from "../simulate/types";
+import { hasSkillEffect } from "../data/characters";
+import { hasActiveOdeEffect } from "../simulate/effects";
+import type { NormalActionResult } from "../simulate/normal-action";
+import type {
+	ActionState,
+	ActiveOdeState,
+	SimulateActionsInput,
+} from "../simulate/types";
 import {
 	type CharacterConfig,
 	type DomainRule,
 	getCounterWDomainRule,
+	isCharacterTarget,
 	type SkillCode,
 } from "../utils/actionSequence";
 import { getEffectiveCharacterBaseSpeed } from "./lightconeEffects";
@@ -207,4 +215,90 @@ export function hasPhainonEnemyTriggerSkill(
 	return (
 		rule.enemyTriggerSkills?.some((trigger) => skill.includes(trigger)) ?? false
 	);
+}
+
+export interface PhainonDomainParams {
+	character: ActionState["character"];
+	normalUsesUltimate: boolean;
+	actionSpeed: number;
+	actionValue: number;
+	key: string;
+	stateIndex: number;
+	states: ActionState[];
+	input: SimulateActionsInput;
+	activeOdes: Map<string, ActiveOdeState[]>;
+	skipAssistFollowUp: boolean;
+	beforeInterruptIndices: number[];
+	afterInterruptIndices: number[];
+	clearAdvanceBlockAfterAction: boolean;
+}
+
+/**
+ * 检查是否为白厄 Q 境界建立，若是则设置领域状态并返回 ActionResult。
+ * 返回 null 表示未触发领域建立，调用方应继续正常流程。
+ */
+export function handlePhainonDomain(
+	params: PhainonDomainParams,
+): NormalActionResult | null {
+	const {
+		character,
+		normalUsesUltimate,
+		actionSpeed,
+		actionValue,
+		key,
+		stateIndex,
+		states,
+		input,
+		activeOdes,
+		skipAssistFollowUp,
+		beforeInterruptIndices,
+		afterInterruptIndices,
+		clearAdvanceBlockAfterAction,
+	} = params;
+
+	if (
+		!isCharacterTarget(character) ||
+		!hasSkillEffect(character.name, "W", "counterW") ||
+		!normalUsesUltimate
+	) {
+		return null;
+	}
+
+	const domainRule = getCounterWDomainRule(character.name);
+	const domainInterval = getPhainonDomainInterval(character, actionSpeed);
+	const startAV = actionValue;
+	const isEndlessDomain = hasActiveOdeEffect(
+		activeOdes,
+		character.id,
+		"endlessCounterWDomain",
+	);
+	const maxDomainActionIndex = isEndlessDomain
+		? Math.max(0, Math.ceil((input.limit - startAV) / domainInterval))
+		: Math.max(0, domainRule.extraActionCount - 1);
+	const domainEndIndex = getPhainonDomainEndIndex(
+		key,
+		input.domainEndOverrides,
+		maxDomainActionIndex,
+	);
+
+	if (domainEndIndex >= 0) {
+		states[stateIndex].domainState = {
+			keyPrefix: key,
+			startAV,
+			interval: domainInterval,
+			currentIndex: 0,
+			maxIndex: domainEndIndex,
+			rule: domainRule,
+		};
+		freezeAlliesForDomain(states, stateIndex, startAV);
+		states[stateIndex].nextActionValue = startAV;
+	}
+
+	return {
+		skipAssistFollowUp,
+		beforeInterruptIndices,
+		afterInterruptIndices,
+		skippedMainAction: false,
+		clearAdvanceBlockAfterAction,
+	};
 }
