@@ -383,19 +383,21 @@ describe("Cyrene (昔涟)", () => {
 				limit: 450,
 			}),
 		);
-
 		// 第一次 Deimos Q 后：aglaea-1 应有电池
 		const first = actions.find((a) => a.key === "aglaea-1");
 		expect(first?.isRomanceAction).toBe(true);
 
-		// 第二次 Deimos Q 后：下一个阿格莱雅非 Q 行动应有电池
-		const secondMemosprite = actions.find(
+		// 第二次 Deimos Q 后：下一个阿格莱雅/衣匠非 Q 行动应有电池
+		const secondMemospriteIndex = actions.findIndex(
 			(a) => a.key === "cyrene-2-memosprite-Q",
 		);
-		expect(secondMemosprite).toBeDefined();
+		expect(secondMemospriteIndex).toBeGreaterThanOrEqual(0);
 		const afterSecond = actions
-			.slice(actions.indexOf(secondMemosprite!) + 1)
-			.filter((a) => a.characterId === "aglaea");
+			.slice(secondMemospriteIndex + 1)
+			.filter(
+				(a) =>
+					a.characterId === "aglaea" || a.characterId === "aglaea-garmentmaker",
+			);
 		const recharged = afterSecond.find(
 			(a) => a.skill !== "Q" && !a.key.includes("-q") && a.isRomanceAction,
 		);

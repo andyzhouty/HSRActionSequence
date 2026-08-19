@@ -11,12 +11,12 @@ import {
 	getOpenedActionSelection,
 	shouldToggleActionMenu,
 	toggleSelectedAction,
-} from "./actionMenuState";
+} from "./menuState";
 import {
 	buildAdvanceOverrides,
 	buildSpeedAdjustments,
 	hasMissingRelativeBaseSpeed,
-} from "./actionOperations";
+} from "./operations";
 
 type UseActionMenuOperationsParams = {
 	actions: GeneratedAction[];
@@ -41,7 +41,7 @@ type UseActionMenuOperationsParams = {
 	setMessage: (message: string) => void;
 };
 
-export function useActionMenuOperations({
+export function useMenuOperations({
 	actions,
 	charactersById,
 	displayedActionLimit,

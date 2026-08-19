@@ -40,11 +40,11 @@ import {
 	updateSkillOverrideRecord,
 	validateActionSkillInput,
 } from "./action-sequence/skillEditing";
-import { useActionImageExport } from "./action-sequence/useActionImageExport";
-import { useActionMenuOperations } from "./action-sequence/useActionMenuOperations";
-import { useActionSequencePersistence } from "./action-sequence/useActionSequencePersistence";
-import { useActionSequenceSavedData } from "./action-sequence/useActionSequenceSavedData";
 import { useGeneratedActions } from "./action-sequence/useGeneratedActions";
+import { useImageExport } from "./action-sequence/useImageExport";
+import { useMenuOperations } from "./action-sequence/useMenuOperations";
+import { usePersistence } from "./action-sequence/usePersistence";
+import { useSavedData } from "./action-sequence/useSavedData";
 
 export default function ActionSequence({
 	onOpenGuide = () => {},
@@ -153,7 +153,7 @@ export default function ActionSequence({
 		setAttackDisabled,
 		saberAdvanceToggles,
 		setSaberAdvanceToggles,
-	} = useActionSequenceSavedData();
+	} = useSavedData();
 
 	// 长夜月在队伍时自动锁死"忆质"资源列
 	useEffect(() => {
@@ -219,7 +219,7 @@ export default function ActionSequence({
 		importJson: importJsonInternal,
 		importFromFile: importFromFileInternal,
 		clearAutosaveFile,
-	} = useActionSequencePersistence({
+	} = usePersistence({
 		exportData,
 		applyImportedData: applySavedData,
 	});
@@ -229,7 +229,7 @@ export default function ActionSequence({
 		openActionMenu,
 		closeActionMenu,
 		applyActionOperation,
-	} = useActionMenuOperations({
+	} = useMenuOperations({
 		actions,
 		charactersById,
 		displayedActionLimit,
@@ -251,7 +251,7 @@ export default function ActionSequence({
 	});
 
 	const { imageExportRef, isExportingImage, setIsExportingImage, exportImage } =
-		useActionImageExport({
+		useImageExport({
 			actionCount: actions.length,
 			resources,
 			setMessage,

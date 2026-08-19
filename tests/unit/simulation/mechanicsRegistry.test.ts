@@ -4,6 +4,7 @@ import { getNormalActionMechanicNames } from "../../../src/simulate/normal-actio
 describe("模拟器机制注册表", () => {
 	it("按生命周期阶段登记低耦合角色机制", () => {
 		expect(getNormalActionMechanicNames()).toEqual([
+			"aglaeaGarmentmaker",
 			"archerExtraE",
 			"cyreneUltimate",
 			"hyacine",

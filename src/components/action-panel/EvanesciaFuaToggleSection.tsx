@@ -23,7 +23,7 @@ export function EvanesciaFuaToggleSection() {
 		action.isSouldragonAction ||
 		action.isPolluxAction ||
 		action.isEveyAction ||
-		action.isAglaeaGarmentmakerAction ||
+		action.isMemospriteAction ||
 		action.isOdeExtraAction
 	)
 		return null;

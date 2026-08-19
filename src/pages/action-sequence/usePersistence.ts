@@ -30,7 +30,7 @@ type UseActionSequencePersistenceParams = {
 	backend?: BackendPort;
 };
 
-export function useActionSequencePersistence({
+export function usePersistence({
 	exportData,
 	applyImportedData,
 	backend,

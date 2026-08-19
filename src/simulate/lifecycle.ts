@@ -2,7 +2,6 @@ import { emitMydeiGodslayerExtraAction } from "../mechanics/mydei";
 import { advanceSaberAfterAction } from "../mechanics/saber";
 import type { ActionContext } from "./context";
 import { handleDomainAction } from "./domain";
-import { handleGarmentmakerActionTurn } from "./garmentmakerAction";
 import { handleNormalAction } from "./normal-action";
 import { runPostActionCleanup } from "./postAction";
 import { runPreActionChecks } from "./preAction";
@@ -13,7 +12,6 @@ import { handleSpecialAction } from "./specialActions";
 export const ACTION_LIFECYCLE_PHASES = [
 	"preActionChecks",
 	"specialAction",
-	"garmentmakerAction",
 	"domainAction",
 	"normalAction",
 	"postActionCleanup",
@@ -78,11 +76,6 @@ export function runActionLifecycle(
 	) {
 		finishSpecialAction(runtime, context);
 		return { status: "completed", completedPhase: "specialAction" };
-	}
-
-	if (handleGarmentmakerActionTurn(runtime, context)) {
-		finishSpecialAction(runtime, context);
-		return { status: "completed", completedPhase: "garmentmakerAction" };
 	}
 
 	if (

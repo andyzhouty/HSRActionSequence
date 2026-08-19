@@ -151,7 +151,6 @@ export function getExtraTurnParentKey(action: GeneratedAction): string | null {
 		action.isDomainAction ||
 		action.isEveyAction ||
 		action.isPolluxAction ||
-		action.isAglaeaGarmentmakerAction ||
 		action.isSouldragonAction ||
 		action.isAssistAction
 	) {

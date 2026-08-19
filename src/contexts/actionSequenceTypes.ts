@@ -9,7 +9,7 @@ import type {
 	SpeedChangeMode,
 	TargetKind,
 	UltInterrupt,
-} from "../../utils/action-sequence";
+} from "../utils/action-sequence";
 
 /** 保存数据状态和其更新器。 */
 export type SavedDataContext = {

@@ -2,7 +2,7 @@ import { type Dispatch, type SetStateAction, useEffect, useMemo } from "react";
 import {
 	buildCharacterSelectors,
 	buildMemospriteTargets,
-} from "../../contexts/action-sequence/selectors";
+} from "../../contexts/actionSequenceSelectors";
 import { simulateActions } from "../../simulate/actions";
 import type { SimulateActionsInput } from "../../simulate/types";
 import {

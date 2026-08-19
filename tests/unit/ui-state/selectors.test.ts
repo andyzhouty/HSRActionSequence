@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	buildCharacterSelectors,
 	buildMemospriteTargets,
-} from "../../../src/contexts/action-sequence/selectors";
+} from "../../../src/contexts/actionSequenceSelectors";
 import type {
 	CharacterConfig,
 	GeneratedAction,

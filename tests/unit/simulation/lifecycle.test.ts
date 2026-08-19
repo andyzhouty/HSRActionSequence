@@ -7,7 +7,6 @@ describe("模拟行动生命周期", () => {
 		expect(ACTION_LIFECYCLE_PHASES).toEqual([
 			"preActionChecks",
 			"specialAction",
-			"garmentmakerAction",
 			"domainAction",
 			"normalAction",
 			"postActionCleanup",

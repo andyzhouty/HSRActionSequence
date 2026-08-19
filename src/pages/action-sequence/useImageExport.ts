@@ -14,7 +14,7 @@ type UseActionImageExportParams = {
 	backend?: BackendPort;
 };
 
-export function useActionImageExport({
+export function useImageExport({
 	actionCount,
 	setMessage,
 	backend,

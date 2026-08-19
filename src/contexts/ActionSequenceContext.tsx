@@ -5,9 +5,9 @@ import type {
 	ActionSequenceDerivedState,
 	ActionSequenceUiContextValue,
 	SavedDataContextValue,
-} from "./action-sequence/types";
+} from "./actionSequenceTypes";
 
-export type { ActionSequenceContextType } from "./action-sequence/types";
+export type { ActionSequenceContextType } from "./actionSequenceTypes";
 
 export const SavedDataCtx = createContext<SavedDataContextValue | null>(null);
 export const ActionSequenceUiCtx =

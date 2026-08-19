@@ -472,6 +472,35 @@ describe("Aglaea countdown manual advance", () => {
 // ───── 全队综合测试 ─────
 
 describe("Aglaea team integration", () => {
+	it("衣匠走普通行动流程并使用锁定的忆灵技能", () => {
+		const actions = simulateActions(
+			input({
+				characters: [character("aglaea", "阿格莱雅", 100)],
+				skillOverrides: skills({
+					"aglaea-1": "E",
+					"aglaea-garmentmaker-g1-1": "Q",
+				}),
+				limit: 130,
+			}),
+		);
+
+		const garmentmaker = actions.find(
+			(action) =>
+				action.isMemospriteAction &&
+				action.memospriteOwnerId === "aglaea" &&
+				action.characterId === "aglaea-garmentmaker",
+		);
+		expect(garmentmaker).toMatchObject({
+			characterId: "aglaea-garmentmaker",
+			displayName: "衣匠",
+			targetKind: "忆灵",
+			skill: "A",
+			isMemospriteAction: true,
+			memospriteOwnerId: "aglaea",
+			lockedSkill: true,
+		});
+	});
+
 	it("Aglaea+Robin+Sunday+Huohuo: Robin E 起手, 衣匠行动后 Robin Q 插队 (after aglaea-garmentmaker-g1-1)", () => {
 		const actions = simulateActions(
 			input({

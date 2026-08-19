@@ -7,6 +7,26 @@ export type ActionCandidate = {
 	actionValue: number;
 };
 
+function getActionKey(state: ActionState): string {
+	if (state.isMemeState && state.memeAdvanceSourceKey) {
+		return `${state.memeAdvanceSourceKey}-meme`;
+	}
+	if (state.character.kind === "忆灵" && state.memospriteGeneration) {
+		return `${state.character.id}-g${state.memospriteGeneration}-${state.actionNo}`;
+	}
+	if (state.isEveyAction && state.eveyGeneration && state.eveyGeneration > 1) {
+		return `${state.character.id}-${state.actionNo}-g${state.eveyGeneration}`;
+	}
+	if (
+		state.isPolluxAction &&
+		state.polluxGeneration &&
+		state.polluxGeneration > 1
+	) {
+		return `${state.character.id}-${state.actionNo}-g${state.polluxGeneration}`;
+	}
+	return `${state.character.id}-${state.actionNo}`;
+}
+
 /** 用于避免浮点误差改变同 AV 行动顺序。 */
 export const ACTION_VALUE_EPSILON = 1e-9;
 
@@ -44,20 +64,7 @@ export function selectNextAction(
 		const state = states[stateIndex];
 		// Fever 中的 SP Robin 无自身回合，不作为候选。
 		if (state.spRobinInFever) continue;
-		const key =
-			state.isMemeState && state.memeAdvanceSourceKey
-				? `${state.memeAdvanceSourceKey}-meme`
-				: state.isGarmentmakerState && state.garmentmakerGeneration
-					? `${state.character.id}-g${state.garmentmakerGeneration}-${state.actionNo}`
-					: state.isEveyAction &&
-							state.eveyGeneration &&
-							state.eveyGeneration > 1
-						? `${state.character.id}-${state.actionNo}-g${state.eveyGeneration}`
-						: state.isPolluxAction &&
-								state.polluxGeneration &&
-								state.polluxGeneration > 1
-							? `${state.character.id}-${state.actionNo}-g${state.polluxGeneration}`
-							: `${state.character.id}-${state.actionNo}`;
+		const key = getActionKey(state);
 		candidates.push({
 			stateIndex,
 			key,

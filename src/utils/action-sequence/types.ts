@@ -53,6 +53,7 @@ export type GeneratedAction = ActionIntent & {
 	isCombustionAction?: boolean;
 	isAglaeaSupremeAction?: boolean;
 	isAglaeaCountdownAction?: boolean;
+	/** 阿格莱雅专属展示标记，不决定行动生命周期。 */
 	isAglaeaGarmentmakerAction?: boolean;
 	isAhaInstant?: boolean;
 	lockedSkill?: boolean;

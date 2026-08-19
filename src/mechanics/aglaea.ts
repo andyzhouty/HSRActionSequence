@@ -16,6 +16,9 @@ export type AglaeaActionState = {
 	actionNo: number;
 	nextActionValue: number;
 	blockNextAdvance: boolean;
+	/** 普通忆灵流程使用的主人和生成代次信息。 */
+	memospriteOwnerId?: string;
+	memospriteGeneration?: number;
 	isGarmentmakerState?: boolean;
 	garmentmakerOwnerId?: string;
 	garmentmakerStacks?: number;
@@ -68,7 +71,8 @@ export function findGarmentmakerState(
 ) {
 	return states.find(
 		(state) =>
-			state.isGarmentmakerState && state.garmentmakerOwnerId === ownerId,
+			state.isGarmentmakerState &&
+			(state.memospriteOwnerId ?? state.garmentmakerOwnerId) === ownerId,
 	);
 }
 
@@ -194,6 +198,8 @@ export function summonGarmentmakerState(
 		existing.garmentmakerBaseSpeed = baseGarmentmakerSpeed;
 		existing.currentSpeed = currentSpeed;
 		existing.actionNo = 1;
+		existing.memospriteOwnerId = owner.id;
+		existing.memospriteGeneration = generation;
 		existing.garmentmakerGeneration = generation;
 		existing.nextActionValue = Math.min(existing.nextActionValue, actionValue);
 		return existing;
@@ -219,6 +225,8 @@ export function summonGarmentmakerState(
 		actionNo: 1,
 		nextActionValue: actionValue,
 		blockNextAdvance: false,
+		memospriteOwnerId: owner.id,
+		memospriteGeneration: generation,
 		isGarmentmakerState: true,
 		garmentmakerOwnerId: owner.id,
 		garmentmakerStacks: initialStacks,
@@ -293,10 +301,10 @@ export function handleAglaeaCountdownAction(
 	const ownerId = states[stateIndex].aglaeaOwnerId;
 	if (!ownerId) return;
 	const aglaea = findAglaeaState(states, ownerId);
-	const garmentmakerIndex = states.findIndex(
-		(state) =>
-			state.isGarmentmakerState && state.garmentmakerOwnerId === ownerId,
-	);
+	const garmentmaker = ownerId
+		? findGarmentmakerState(states, ownerId)
+		: undefined;
+	const garmentmakerIndex = garmentmaker ? states.indexOf(garmentmaker) : -1;
 
 	actions.push({
 		key,
@@ -327,41 +335,13 @@ export function handleAglaeaCountdownAction(
 	states.splice(stateIndex, 1);
 }
 
-export function handleGarmentmakerAction(
+export function applyGarmentmakerActionEffects(
 	states: AglaeaActionState[],
 	stateIndex: number,
-	actions: GeneratedAction[],
-	key: string,
-	character: CharacterConfig,
-	actionNo: number,
 	actionValue: number,
 ) {
 	const ownerId = states[stateIndex].garmentmakerOwnerId;
-	const owner = ownerId ? findAglaeaState(states, ownerId) : undefined;
-	const rule = owner
-		? getGarmentmakerRule(owner.character.name)
-		: getGarmentmakerRule("");
-
-	actions.push({
-		key,
-		characterId: character.id,
-		displayName: rule.memospriteName,
-		targetKind: "忆灵",
-		actionNo,
-		actionValue,
-		skill: rule.memospriteSkill,
-		speed: states[stateIndex].currentSpeed,
-		isMemospriteAction: true,
-		memospriteOwnerId: ownerId,
-		isAglaeaGarmentmakerAction: true,
-		lockedSkill: true,
-	});
-
 	if (ownerId) increaseGarmentmakerStacks(states, ownerId, actionValue);
-	states[stateIndex].actionNo += 1;
-	states[stateIndex].nextActionValue =
-		actionValue + 10000 / states[stateIndex].currentSpeed;
-	states[stateIndex].blockNextAdvance = false;
 }
 
 export function handleAglaeaSkillEffects(

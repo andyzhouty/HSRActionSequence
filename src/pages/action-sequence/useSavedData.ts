@@ -73,7 +73,7 @@ type SavedDataFieldSetters = {
 	setSaberAdvanceToggles: Dispatch<SetStateAction<Record<string, boolean>>>;
 };
 
-export function useActionSequenceSavedData() {
+export function useSavedData() {
 	const [savedData, setSavedData] = useState<NormalizedSavedData>(
 		createDefaultSavedData,
 	);

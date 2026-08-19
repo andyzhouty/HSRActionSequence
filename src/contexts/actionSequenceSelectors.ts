@@ -1,8 +1,8 @@
-import { getSummerSongbirdsRule } from "../../mechanics/spRobin";
+import { getSummerSongbirdsRule } from "../mechanics/spRobin";
 import type {
 	CharacterConfig,
 	GeneratedAction,
-} from "../../utils/action-sequence";
+} from "../utils/action-sequence";
 import {
 	getCyreneUltimateRule,
 	getEveyRule,
@@ -12,7 +12,7 @@ import {
 	getTargetDefaultName,
 	hasSkillEffect,
 	toPositiveNumber,
-} from "../../utils/action-sequence";
+} from "../utils/action-sequence";
 
 /** 根据队伍配置生成可供 UI 选择的忆灵目标。 */
 export function buildMemospriteTargets(

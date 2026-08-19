@@ -37,7 +37,6 @@ import type { ActionContext } from "../context";
 import {
 	applyMemeAdvanceTarget,
 	consumeActionOdes,
-	getActionSkill,
 	getActiveOdeLabels,
 	getNextSpeed,
 	getSkillTarget,
@@ -47,6 +46,7 @@ import {
 } from "../effects";
 import type { SimulationRuntime } from "../runtime";
 import { handlePostUltimateEffects } from "../ultimateEffects";
+import { resolveNormalActionProfile } from "./actionProfile";
 import {
 	type NormalActionMechanicContext,
 	runNormalActionMechanics,
@@ -74,7 +74,7 @@ export type NormalActionResult = {
 };
 
 /**
- * 执行普通角色的完整行动处理：插队大招分发、主行动生成、行动后效果结算。
+ * 执行普通角色或忆灵的完整行动处理：插队大招分发、主行动生成、行动后效果结算。
  *
  * 该函数负责原 loop.ts 中 else 块的全部逻辑（白厄境界走另一分支），
  * 包括状态修改、速度调整、召唤物管理、拉条效果等。
@@ -86,30 +86,36 @@ export function handleNormalAction(
 	const { input, states, actions, activeOdes, souldragonOwner, callbacks } =
 		runtime;
 	const { stateIndex, key, actionValue, character, actionNo } = context;
-	const isMemeAdvanceAction = Boolean(states[stateIndex].memeAdvanceSourceKey);
-	const { emitSpecialInterruptAction } = callbacks;
-
-	const configuredSkill = getActionSkill(
+	const actionProfile = resolveNormalActionProfile({
+		states,
+		stateIndex,
 		character,
 		actionNo,
 		key,
-		input.skillOverrides,
-		input.legacyUltOverrides,
-	);
+		input,
+	});
+	const isMemeAdvanceAction = Boolean(states[stateIndex].memeAdvanceSourceKey);
+	const { emitSpecialInterruptAction } = callbacks;
+
 	const savedSkill = states[stateIndex].e2SavedActionSkill;
 	states[stateIndex].e2SavedActionSkill = undefined;
 	const isSaberForcedBasicAttack =
 		hasSaber(character) && states[stateIndex].saberForceBasicAttack === true;
 	const isGilgameshLockedSkill = hasGilgamesh(character);
-	const rawSkill = isGilgameshLockedSkill
-		? states[stateIndex].gilgameshEUnlocked
-			? ("E" as SkillCode)
-			: ("A" as SkillCode)
-		: isSaberForcedBasicAttack
-			? ("A" as SkillCode)
-			: hasSilverWolfGodmodeCheck(character.name)
-				? getGodmodeSkill(states[stateIndex], savedSkill ?? configuredSkill)
-				: ((savedSkill ?? configuredSkill) as SkillCode);
+	const rawSkill = actionProfile.isGarmentmakerAction
+		? actionProfile.skill
+		: isGilgameshLockedSkill
+			? states[stateIndex].gilgameshEUnlocked
+				? ("E" as SkillCode)
+				: ("A" as SkillCode)
+			: isSaberForcedBasicAttack
+				? ("A" as SkillCode)
+				: hasSilverWolfGodmodeCheck(character.name)
+					? getGodmodeSkill(
+							states[stateIndex],
+							savedSkill ?? actionProfile.skill,
+						)
+					: ((savedSkill ?? actionProfile.skill) as SkillCode);
 	if (isSaberForcedBasicAttack) {
 		states[stateIndex].saberForceBasicAttack = false;
 	}
@@ -282,8 +288,10 @@ export function handleNormalAction(
 		actions.push({
 			key,
 			characterId: character.id,
-			displayName: states[stateIndex].isMemeState ? character.name : undefined,
-			targetKind: states[stateIndex].isMemeState ? "忆灵" : undefined,
+			displayName: actionProfile.isMemospriteAction
+				? character.name
+				: undefined,
+			targetKind: actionProfile.isMemospriteAction ? "忆灵" : undefined,
 			isCombustionAction: states[stateIndex].isInCompleteCombustion,
 			isAglaeaSupremeAction: states[stateIndex].aglaeaSupremeActive,
 			actionNo,
@@ -291,14 +299,24 @@ export function handleNormalAction(
 			skill: (isArcherMultiE ? "E" : resolvedSkill) as SkillCode,
 			speed: actionSpeed,
 			isTheHertaEnhancedE,
-			...(isSaberForcedBasicAttack || isGilgameshLockedSkill
+			...(actionProfile.lockedSkill ||
+			isSaberForcedBasicAttack ||
+			isGilgameshLockedSkill
 				? { lockedSkill: true }
 				: {}),
 			isAssistFollowUp: himekoNovaAssist !== undefined,
-			isMemospriteAction: states[stateIndex].isMemeState,
+			isMemospriteAction: actionProfile.isMemospriteAction,
 			isMemeAdvanceAction,
-			memospriteOwnerId: states[stateIndex].memeOwnerId,
-			activeOdeLabels: getActiveOdeLabels(activeOdes, character.id),
+			memospriteOwnerId: actionProfile.memospriteOwnerId,
+			...(actionProfile.isGarmentmakerAction
+				? { isAglaeaGarmentmakerAction: true }
+				: {}),
+			activeOdeLabels: getActiveOdeLabels(
+				activeOdes,
+				actionProfile.isGarmentmakerAction
+					? (actionProfile.memospriteOwnerId ?? character.id)
+					: character.id,
+			),
 			archerFuaCharge: states[stateIndex].archerFuaCharge,
 		});
 		if (isMemeAdvanceAction) {
@@ -311,8 +329,8 @@ export function handleNormalAction(
 			);
 		}
 		// 浪漫之诗：阿格莱雅/衣匠非 Q 行动消耗充能
-		const romanceOwnerId = states[stateIndex].isGarmentmakerState
-			? states[stateIndex].garmentmakerOwnerId
+		const romanceOwnerId = actionProfile.isGarmentmakerAction
+			? actionProfile.memospriteOwnerId
 			: character.id;
 		if (!(isArcherMultiE ? "E" : resolvedSkill).includes("Q")) {
 			const romanceOdes = activeOdes.get(romanceOwnerId ?? "");
@@ -481,11 +499,13 @@ export function handleNormalAction(
 
 	// 应用速度调整。
 	const oldActionSpeed = states[stateIndex].currentSpeed;
-	states[stateIndex].currentSpeed = getNextSpeed(
-		states[stateIndex].currentSpeed,
-		states[stateIndex].baseSpeed,
-		input.speedAdjustments[key],
-	);
+	if (actionProfile.usesSpeedAdjustment) {
+		states[stateIndex].currentSpeed = getNextSpeed(
+			states[stateIndex].currentSpeed,
+			states[stateIndex].baseSpeed,
+			input.speedAdjustments[key],
+		);
+	}
 	if (
 		oldActionSpeed !== states[stateIndex].currentSpeed &&
 		getCharacterPath(character.name) === "Elation"

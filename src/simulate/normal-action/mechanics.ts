@@ -1,3 +1,4 @@
+import { applyGarmentmakerActionEffects } from "../../mechanics/aglaea";
 import {
 	archerMaxConsecutiveEs,
 	emitArcherExtraEs,
@@ -34,6 +35,15 @@ type NormalActionMechanic = {
 };
 
 const normalActionMechanics: NormalActionMechanic[] = [
+	{
+		name: "aglaeaGarmentmaker",
+		phase: "actionGenerated",
+		enabled: ({ runtime, stateIndex }) =>
+			Boolean(runtime.states[stateIndex].isGarmentmakerState),
+		run: ({ runtime, stateIndex, actionValue }) => {
+			applyGarmentmakerActionEffects(runtime.states, stateIndex, actionValue);
+		},
+	},
 	{
 		name: "archerExtraE",
 		phase: "actionGenerated",
