@@ -9,13 +9,7 @@
         "March 7th",
         "盾三"
       ],
-      "semantics": [
-        "ambiguousBaseName"
-      ],
       "path": "Preservation",
-      "effects": {
-        "E": "allyTargetSelectable"
-      },
       "baseSpeed": 101
     },
     {
@@ -24,22 +18,13 @@
         "丹恒",
         "Dan Heng"
       ],
-      "semantics": [
-        "ambiguousBaseName"
-      ],
       "path": "Hunt",
-      "passives": [
-        "killReset"
-      ],
       "baseSpeed": 110
     },
     {
       "cid": "1003",
       "names": [
         "姬子"
-      ],
-      "semantics": [
-        "ambiguousBaseName"
       ],
       "path": "Erudition",
       "baseSpeed": 96
@@ -71,9 +56,6 @@
         "银狼",
         "Silver Wolf"
       ],
-      "semantics": [
-        "ambiguousBaseName"
-      ],
       "path": "Nihility",
       "baseSpeed": 107
     },
@@ -103,9 +85,6 @@
         "Herta",
         "小黑塔"
       ],
-      "semantics": [
-        "ambiguousBaseName"
-      ],
       "path": "Erudition",
       "baseSpeed": 100
     },
@@ -124,9 +103,6 @@
         "Archer",
         "红A"
       ],
-      "effects": {
-        "Q": "archerUltimate"
-      },
       "path": "Hunt",
       "baseSpeed": 105
     },
@@ -138,10 +114,6 @@
         "鸭鸭",
         "Bronya"
       ],
-      "effects": {
-        "A": "selfAdvance30",
-        "E": "allyPullToCurrent"
-      },
       "path": "Harmony",
       "baseSpeed": 99
     },
@@ -181,9 +153,6 @@
         "Natasha"
       ],
       "path": "Abundance",
-      "effects": {
-        "E": "allyTargetSelectable"
-      },
       "baseSpeed": 98
     },
     {
@@ -273,10 +242,6 @@
         "停"
       ],
       "path": "Harmony",
-      "effects": {
-        "E": "allyTargetSelectable",
-        "Q": "allyTargetSelectable"
-      },
       "baseSpeed": 112
     },
     {
@@ -287,9 +252,6 @@
         "罗"
       ],
       "path": "Abundance",
-      "effects": {
-        "E": "allyTargetSelectable"
-      },
       "baseSpeed": 101
     },
     {
@@ -309,9 +271,6 @@
         "刃",
         "Blade",
         "风刃"
-      ],
-      "semantics": [
-        "ambiguousBaseName"
       ],
       "path": "Destruction",
       "baseSpeed": 97
@@ -418,9 +377,6 @@
         "鸦"
       ],
       "path": "Harmony",
-      "effects": {
-        "Q": "allyTargetSelectable"
-      },
       "baseSpeed": 110
     },
     {
@@ -432,9 +388,6 @@
         "霍霍"
       ],
       "path": "Abundance",
-      "passives": [
-        "teamSpeedBuff12"
-      ],
       "baseSpeed": 98
     },
     {
@@ -501,9 +454,6 @@
         "Hunt March 7th"
       ],
       "path": "Hunt",
-      "effects": {
-        "E": "allyTargetSelectable"
-      },
       "baseSpeed": 102
     },
     {
@@ -514,10 +464,6 @@
         "sp停云",
         "大停云"
       ],
-      "effects": {
-        "Q": "teamAdvance24",
-        "E": "allyTargetSelectable"
-      },
       "path": "Nihility",
       "baseSpeed": 102
     },
@@ -529,9 +475,6 @@
         "加"
       ],
       "path": "Abundance",
-      "effects": {
-        "E": "allyTargetSelectable"
-      },
       "baseSpeed": 98
     },
     {
@@ -580,9 +523,6 @@
         "花火",
         "Sparkle"
       ],
-      "effects": {
-        "E": "allyAdvance50NotPast"
-      },
       "path": "Harmony",
       "baseSpeed": 101
     },
@@ -614,12 +554,6 @@
         "鸟",
         "Robin"
       ],
-      "effects": {
-        "Q": "robinUltimate"
-      },
-      "passives": [
-        "firstActionAdvance25"
-      ],
       "path": "Harmony",
       "baseSpeed": 102
     },
@@ -630,25 +564,6 @@
         "Firefly",
         "萤"
       ],
-      "effects": {
-        "Q": "fireflyCombustion"
-      },
-      "effectRules": {
-        "fireflyCombustion": {
-          "countdownName": "完全燃烧倒计时",
-          "countdownSpeed": 70,
-          "speedBonus": 60,
-          "allowedSkills": [
-            "",
-            "A",
-            "E"
-          ],
-          "breakLabel": "击破",
-          "breakDelayPercent": 10,
-          "maxBreakDelayTriggers": 3,
-          "eidolonExtraTurn": 2
-        }
-      },
       "path": "Destruction",
       "baseSpeed": 104
     },
@@ -669,10 +584,6 @@
         "Sunday",
         "日"
       ],
-      "effects": {
-        "E": "sundayPullWithMemosprite",
-        "Q": "allyTargetSelectable"
-      },
       "path": "Harmony",
       "baseSpeed": 96
     },
@@ -684,9 +595,6 @@
         "翡"
       ],
       "path": "Erudition",
-      "effects": {
-        "E": "allyTargetSelectable"
-      },
       "baseSpeed": 103
     },
     {
@@ -718,9 +626,6 @@
         "康士坦丝",
         "康"
       ],
-      "passives": [
-        "dancePartnerSpeedBuff30"
-      ],
       "path": "Nihility",
       "baseSpeed": 96
     },
@@ -730,9 +635,6 @@
         "大黑塔",
         "The Herta"
       ],
-      "effects": {
-        "Q": "selfAdvance100"
-      },
       "path": "Erudition",
       "baseSpeed": 99
     },
@@ -745,24 +647,6 @@
         "阿格",
         "雅"
       ],
-      "effects": {
-        "E": "summonGarmentmaker",
-        "Q": "aglaeaSupreme"
-      },
-      "effectRules": {
-        "summonGarmentmaker": {
-          "memospriteName": "衣匠",
-          "memospriteSkill": "A",
-          "memospriteSpeed": 35,
-          "countdownName": "至高之姿倒计时",
-          "countdownSpeed": 100,
-          "stackSpeedBonus": 55,
-          "maxStacks": 6,
-          "eidolon4MaxStacks": 7,
-          "aglaeaSpeedBonusRatioPerStack": 0.15,
-          "retainedStacksAfterDismiss": 1
-        }
-      },
       "path": "Remembrance",
       "baseSpeed": 102
     },
@@ -814,9 +698,6 @@
         "Castorice",
         "蝶"
       ],
-      "effects": {
-        "Q": "summonPollux"
-      },
       "path": "Remembrance",
       "baseSpeed": 95
     },
@@ -825,40 +706,6 @@
       "names": [
         "白厄",
         "Phainon"
-      ],
-      "effects": {
-        "W": "counterW"
-      },
-      "effectRules": {
-        "counterW": {
-          "domain": {
-            "defaultBaseSpeed": 106,
-            "normalEquivalentSpeedCoefficient": 0.6,
-            "eidolon1EquivalentSpeedCoefficient": 0.66,
-            "extraActionCount": 8,
-            "endSpeedBonusBaseSpeedRatio": 0.15,
-            "defaultResources": [
-              "火种",
-              "毁伤"
-            ],
-            "allowedSkills": [
-              "",
-              "E",
-              "EW",
-              "EA",
-              "A",
-              "W"
-            ],
-            "finalSkill": "Q",
-            "enemyTriggerSkills": [
-              "W",
-              "EW"
-            ]
-          }
-        }
-      },
-      "semantics": [
-        "wOnlyInDomain"
       ],
       "path": "Destruction",
       "baseSpeed": 94
@@ -871,9 +718,6 @@
         "风",
         "堇"
       ],
-      "effects": {
-        "E": "summonIca"
-      },
       "path": "Remembrance",
       "baseSpeed": 110
     },
@@ -895,12 +739,6 @@
         "Cerydra",
         "刻"
       ],
-      "effects": {
-        "E": "allyTargetSelectable"
-      },
-      "passives": [
-        "meritSpeedBuff20"
-      ],
       "path": "Harmony",
       "baseSpeed": 99
     },
@@ -912,10 +750,6 @@
         "长",
         "Evernight"
       ],
-      "effects": {
-        "E": "summonEvey",
-        "Q": "summonEvey"
-      },
       "path": "Remembrance",
       "baseSpeed": 99
     },
@@ -928,14 +762,7 @@
         "DHPT",
         "Dan Heng • Permansor Terrae"
       ],
-      "passives": [
-        "firstActionAdvance40",
-        "souldragonBondmate"
-      ],
       "path": "Preservation",
-      "effects": {
-        "E": "allyTargetSelectable"
-      },
       "baseSpeed": 97
     },
     {
@@ -946,134 +773,6 @@
         "昔",
         "涟"
       ],
-      "effects": {
-        "Q": "cyreneUltimate"
-      },
-      "effectRules": {
-        "cyreneUltimate": {
-          "memospriteName": "德谬歌",
-          "memospriteSkill": "Q",
-          "defaultResources": [
-            "追忆"
-          ],
-          "genericOde": {
-            "code": "generic",
-            "label": "诗篇",
-            "fullName": "诗篇",
-            "duration": "turns",
-            "turns": 2
-          },
-          "odes": [
-            {
-              "code": "genesis",
-              "label": "创世",
-              "fullName": "创世之诗",
-              "targetCid": "8008",
-              "duration": "battle"
-            },
-            {
-              "code": "passage",
-              "label": "门径",
-              "fullName": "门径之诗",
-              "targetCid": "1403",
-              "duration": "battle"
-            },
-            {
-              "code": "lifeDeath",
-              "label": "生死",
-              "fullName": "生死之诗",
-              "targetCid": "1407",
-              "duration": "battle"
-            },
-            {
-              "code": "trickery",
-              "label": "诡计",
-              "fullName": "诡计之诗",
-              "targetCid": "1406",
-              "duration": "battle"
-            },
-            {
-              "code": "worldbearing",
-              "label": "负世",
-              "fullName": "负世之诗",
-              "targetCid": "1408",
-              "duration": "battle",
-              "effects": [
-                "endlessCounterWDomain"
-              ]
-            },
-            {
-              "code": "law",
-              "label": "律法",
-              "fullName": "律法之诗",
-              "targetCid": "1412",
-              "duration": "battle"
-            },
-            {
-              "code": "time",
-              "label": "岁月",
-              "fullName": "岁月之诗",
-              "targetCid": "1413",
-              "duration": "battle"
-            },
-            {
-              "code": "earth",
-              "label": "大地",
-              "fullName": "大地之诗",
-              "targetCid": "1414",
-              "duration": "battle"
-            },
-            {
-              "code": "reason",
-              "label": "理性",
-              "fullName": "理性之诗",
-              "targetCid": "1405",
-              "duration": "nextTurn",
-              "effects": [
-                "immediateTurn"
-              ]
-            },
-            {
-              "code": "strife",
-              "label": "纷争",
-              "fullName": "纷争之诗",
-              "targetCid": "1404",
-              "duration": "extraTurn",
-              "effects": [
-                "immediateEnhancedSkill"
-              ]
-            },
-            {
-              "code": "ocean",
-              "label": "海洋",
-              "fullName": "海洋之诗",
-              "targetCid": "1410",
-              "duration": "nextAttack"
-            },
-            {
-              "code": "sky",
-              "label": "天空",
-              "fullName": "天空之诗",
-              "targetCid": "1409",
-              "duration": "stacks",
-              "stacks": 2
-            },
-            {
-              "code": "romance",
-              "label": "浪漫",
-              "fullName": "浪漫之诗",
-              "targetCid": "1402",
-              "duration": "battle",
-              "effects": [
-                "odeToRomance"
-              ]
-            }
-          ]
-        }
-      },
-      "semantics": [
-        "noDefaultSkillTarget"
-      ],
       "path": "Remembrance",
       "baseSpeed": 101
     },
@@ -1083,11 +782,7 @@
         "火花",
         "Sparxie"
       ],
-      "passives": [
-        "ahaExtraTurnAtE2"
-      ],
       "path": "Elation",
-      "participantId": 144,
       "baseSpeed": 107
     },
     {
@@ -1098,11 +793,7 @@
         "Yaoguang",
         "爻"
       ],
-      "effects": {
-        "Q": "extraAhaAfterUltimate"
-      },
       "path": "Elation",
-      "participantId": 116,
       "baseSpeed": 101
     },
     {
@@ -1124,7 +815,6 @@
         "绯"
       ],
       "path": "Elation",
-      "participantId": 146,
       "baseSpeed": 104
     },
     {
@@ -1139,11 +829,7 @@
         "9狼",
         "狼尊"
       ],
-      "effects": {
-        "Q": "selfAdvance100"
-      },
       "path": "Elation",
-      "participantId": 999,
       "baseSpeed": 110
     },
     {
@@ -1191,18 +877,6 @@
         "sp姬",
         "Himeko Nova"
       ],
-      "effects": {
-        "F": "himekoNovaAssist"
-      },
-      "effectRules": {
-        "himekoNovaAssist": {
-          "trigger": "allyTurn",
-          "excludeSelf": true,
-          "generatedActionSkill": "F",
-          "generatedActionOrder": "beforeTargetBeforeInterrupts",
-          "targetActionTreatment": "sameActionValueExtraTurn"
-        }
-      },
       "path": "Erudition",
       "baseSpeed": 98
     },
@@ -1217,20 +891,6 @@
         "SP Robin",
         "Robin Summeretto",
         "Robin • Summeretto"
-      ],
-      "effects": {
-        "E": "summonSummerSongbirds",
-        "Q": "spRobinUltimate"
-      },
-      "effectRules": {
-        "summonSummerSongbirds": {
-          "memospriteName": "晴空乐手",
-          "memospriteSkill": "A",
-          "memospriteSpeedRatio": 1.8
-        }
-      },
-      "passives": [
-        "firstActionAdvance20"
       ],
       "path": "Remembrance",
       "baseSpeed": 95
@@ -1248,8 +908,19 @@
         "SP Aventurine"
       ],
       "path": "Elation",
-      "baseSpeed": 107,
-      "participantId": 156
+      "baseSpeed": 107
+    },
+    {
+      "cid": "8001",
+      "names": [
+        "开拓者·毁灭（男）",
+        "穹·毁灭",
+        "毁灭主（男）",
+        "DMC Male",
+        "Male Destruction Trailblazer"
+      ],
+      "path": "Destruction",
+      "baseSpeed": 100
     },
     {
       "cid": "8002",
@@ -1264,6 +935,18 @@
       "baseSpeed": 100
     },
     {
+      "cid": "8003",
+      "names": [
+        "开拓者·存护（男）",
+        "穹·存护",
+        "存护主（男）",
+        "PMC Male",
+        "Male Preservation Trailblazer"
+      ],
+      "path": "Preservation",
+      "baseSpeed": 95
+    },
+    {
       "cid": "8004",
       "names": [
         "开拓者·存护",
@@ -1274,6 +957,18 @@
       ],
       "path": "Preservation",
       "baseSpeed": 95
+    },
+    {
+      "cid": "8005",
+      "names": [
+        "开拓者·同谐（男）",
+        "穹·同谐",
+        "同谐主（男）",
+        "HMC Male",
+        "Male Harmony Trailblazer"
+      ],
+      "path": "Harmony",
+      "baseSpeed": 105
     },
     {
       "cid": "8006",
@@ -1287,6 +982,18 @@
       "baseSpeed": 105
     },
     {
+      "cid": "8007",
+      "names": [
+        "开拓者·记忆（男）",
+        "穹·记忆",
+        "记忆主（男）",
+        "RMC Male",
+        "Male Memory Trailblazer"
+      ],
+      "path": "Remembrance",
+      "baseSpeed": 103
+    },
+    {
       "cid": "8008",
       "names": [
         "开拓者·记忆",
@@ -1294,23 +1001,20 @@
         "RMC",
         "Memory Trailblazer"
       ],
-      "effects": {
-        "E": "summonMeme",
-        "M": "memeAdvance"
-      },
-      "effectRules": {
-        "memeAdvance": {
-          "memospriteName": "迷迷",
-          "memospriteSkill": "拉条",
-          "memospriteSpeed": 130,
-          "advancePercent": 100
-        }
-      },
-      "passives": [
-        "firstActionAdvance30"
-      ],
       "path": "Remembrance",
       "baseSpeed": 103
+    },
+    {
+      "cid": "8009",
+      "names": [
+        "开拓者·欢愉（男）",
+        "穹·欢愉",
+        "欢愉主（男）",
+        "EMC Male",
+        "Male Elation Trailblazer"
+      ],
+      "path": "Elation",
+      "baseSpeed": 106
     },
     {
       "cid": "8010",
@@ -1320,100 +1024,8 @@
         "EMC",
         "Elation Trailblazer"
       ],
-      "effects": {
-        "Q": "elationTrailblazerUltimate"
-      },
       "path": "Elation",
-      "participantId": 120,
       "baseSpeed": 106
     }
-  ],
-  "_defaults": {
-    "counterW": {
-      "domain": {
-        "defaultBaseSpeed": 106,
-        "normalEquivalentSpeedCoefficient": 0.6,
-        "eidolon1EquivalentSpeedCoefficient": 0.66,
-        "extraActionCount": 8,
-        "endSpeedBonusBaseSpeedRatio": 0.15,
-        "defaultResources": [
-          "火种",
-          "毁伤"
-        ],
-        "allowedSkills": [
-          "",
-          "E",
-          "EW",
-          "EA",
-          "A",
-          "W"
-        ],
-        "finalSkill": "Q",
-        "enemyTriggerSkills": [
-          "W",
-          "EW"
-        ]
-      }
-    },
-    "cyreneUltimate": {
-      "memospriteName": "德谬歌",
-      "memospriteSkill": "Q",
-      "defaultResources": [
-        "追忆"
-      ],
-      "genericOde": {
-        "code": "generic",
-        "label": "诗篇",
-        "fullName": "诗篇",
-        "duration": "turns",
-        "turns": 2
-      },
-      "odes": []
-    },
-    "memeAdvance": {
-      "memospriteName": "迷迷",
-      "memospriteSkill": "拉条",
-      "memospriteSpeed": 130,
-      "advancePercent": 100
-    },
-    "summonGarmentmaker": {
-      "memospriteName": "衣匠",
-      "memospriteSkill": "A",
-      "memospriteSpeed": 35,
-      "countdownName": "至高之姿倒计时",
-      "countdownSpeed": 100,
-      "stackSpeedBonus": 55,
-      "maxStacks": 6,
-      "eidolon4MaxStacks": 7,
-      "aglaeaSpeedBonusRatioPerStack": 0.15,
-      "retainedStacksAfterDismiss": 1
-    },
-    "summonEvey": {
-      "memospriteName": "长夜",
-      "memospriteSpeed": 160,
-      "keepSkill": "A",
-      "dismissSkill": "E"
-    },
-    "fireflyCombustion": {
-      "countdownName": "完全燃烧倒计时",
-      "countdownSpeed": 70,
-      "speedBonus": 60,
-      "allowedSkills": [
-        "",
-        "A",
-        "E"
-      ],
-      "breakLabel": "击破",
-      "breakDelayPercent": 10,
-      "maxBreakDelayTriggers": 3,
-      "eidolonExtraTurn": 2
-    },
-    "summonPollux": {
-      "memospriteName": "死龙",
-      "memospriteSpeed": 165,
-      "maxActions": 3,
-      "keepSkill": "EA",
-      "dismissSkill": "E"
-    }
-  }
+  ]
 }

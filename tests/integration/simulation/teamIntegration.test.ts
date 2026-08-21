@@ -87,7 +87,7 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 						baseSpeed: "106",
 						eidolon: 1,
 					}),
-					// 知更鸟: 120速 翁瓦克（首动25%拉条被动在 characters.json 中）
+					// 知更鸟: 120速 翁瓦克（首动25%拉条被动在角色机制数据中）
 					character("robin", "知更鸟", 120, {
 						hasVonwacq: true,
 					}),

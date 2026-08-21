@@ -12,7 +12,7 @@ import {
 } from "../utils/action-sequence";
 
 // ── 流萤完全燃烧 ──
-// 角色专属数值存放在 characters.json 中；本模块只处理行动排程机制。
+// 角色专属技能机制配置存放在 characterMechanics.json 中；本模块只处理行动排程机制。
 
 type FireflyActionState = {
 	character: CharacterConfig;

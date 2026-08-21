@@ -6,7 +6,10 @@ import {
 	hasSkillEffect,
 	normalizeName,
 } from "../../data/characters";
-import { CHARACTER_IDS } from "../../domain/identity";
+import {
+	areEquivalentCharacterCids,
+	CHARACTER_IDS,
+} from "../../domain/identity";
 import { tryParseSkillCode } from "../../domain/skills";
 import { archerMaxConsecutiveEs } from "../../mechanics/archer";
 import { hasGilgamesh } from "../../mechanics/gilgamesh";
@@ -27,6 +30,7 @@ export {
 	getCharacterBaseSpeed,
 	getCharacterCid,
 	getCharacterDisplayName,
+	getCharacterNameByCid,
 	getCharacterParticipantId,
 	getCharacterPath,
 	getDefaultEffectRule,
@@ -40,6 +44,7 @@ export {
 	normalizeName,
 } from "../../data/characters";
 export {
+	areEquivalentCharacterCids,
 	CHARACTER_IDS,
 	type CharacterId,
 	isCharacterId,
@@ -132,7 +137,7 @@ export function getCounterWDomainRule(characterName: string): DomainRule {
 }
 
 const defaultCyreneUltimateRule: CyreneUltimateRule =
-	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
+	// biome-ignore lint/style/noNonNullAssertion: characterMechanics.json 中的默认值
 	getDefaultEffectRule<CyreneUltimateRule>("cyreneUltimate")!;
 
 export function getCyreneUltimateRule(
@@ -154,7 +159,7 @@ export function getCyreneUltimateRule(
 }
 
 const defaultMemeAdvanceRule: MemeAdvanceRule =
-	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
+	// biome-ignore lint/style/noNonNullAssertion: characterMechanics.json 中的默认值
 	getDefaultEffectRule<MemeAdvanceRule>("memeAdvance")!;
 
 export function getMemeAdvanceRule(characterName: string): MemeAdvanceRule {
@@ -177,7 +182,7 @@ export function getMemeAdvanceRule(characterName: string): MemeAdvanceRule {
 }
 
 const defaultPolluxRule: PolluxRule =
-	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
+	// biome-ignore lint/style/noNonNullAssertion: characterMechanics.json 中的默认值
 	getDefaultEffectRule<PolluxRule>("summonPollux")!;
 
 export function getPolluxRule(characterName: string): PolluxRule {
@@ -199,7 +204,7 @@ export function getPolluxRule(characterName: string): PolluxRule {
 }
 
 const defaultEveyRule: EveyRule =
-	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
+	// biome-ignore lint/style/noNonNullAssertion: characterMechanics.json 中的默认值
 	getDefaultEffectRule<EveyRule>("summonEvey")!;
 
 export function getEveyRule(characterName: string): EveyRule {
@@ -220,7 +225,7 @@ export function getEveyRule(characterName: string): EveyRule {
 }
 
 const defaultGarmentmakerRule: GarmentmakerRule =
-	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
+	// biome-ignore lint/style/noNonNullAssertion: characterMechanics.json 中的默认值
 	getDefaultEffectRule<GarmentmakerRule>("summonGarmentmaker")!;
 
 export function getGarmentmakerRule(characterName: string): GarmentmakerRule {
@@ -257,7 +262,7 @@ export function getGarmentmakerRule(characterName: string): GarmentmakerRule {
 }
 
 const defaultFireflyCombustionRule: FireflyCombustionRule =
-	// biome-ignore lint/style/noNonNullAssertion: characters.json 中的默认值
+	// biome-ignore lint/style/noNonNullAssertion: characterMechanics.json 中的默认值
 	getDefaultEffectRule<FireflyCombustionRule>("fireflyCombustion")!;
 
 export function getFireflyCombustionRule(
@@ -297,7 +302,9 @@ export function getOdeRuleForTarget(
 	targetCid: string | undefined,
 ) {
 	return (
-		rule.odes.find((ode) => ode.targetCid === targetCid) ?? rule.genericOde
+		rule.odes.find((ode) =>
+			areEquivalentCharacterCids(ode.targetCid, targetCid),
+		) ?? rule.genericOde
 	);
 }
 

@@ -20,6 +20,7 @@ import {
 	ashveilFuaResourceName,
 	formatActionValue,
 	formatEditableNumber,
+	getCharacterCid,
 	hasSkillEffect,
 	isEnemyTarget,
 	isQFrontCombo,
@@ -28,6 +29,7 @@ import {
 	spBladeStackResourceName,
 	spRobinFeverResourceName,
 } from "../../utils/action-sequence";
+import { CharacterAvatar } from "../CharacterAvatar";
 import {
 	CombustionBreakInline,
 	MemeInline,
@@ -117,6 +119,8 @@ export function ActionRow({
 		action.displayName ??
 		ctx.characterNames[action.characterId] ??
 		action.characterId;
+	const actionCharacterName = ctx.charactersById[action.characterId]?.name;
+	const actionCharacterCid = getCharacterCid(actionCharacterName ?? "");
 	const isSelected = ctx.selectedActionKeys.has(action.key);
 	const speedAdjustment = ctx.speedAdjustments[action.key];
 	const exchangeGroupTheme = dragProps
@@ -378,11 +382,18 @@ export function ActionRow({
 				)}
 			</td>
 			<td className="w-[1%] max-w-32 whitespace-nowrap px-3 py-4">
-				<div
-					className="truncate font-medium leading-5 text-white"
-					title={displayName}
-				>
-					{displayName}
+				<div className="flex min-w-0 items-center gap-2">
+					<CharacterAvatar
+						cid={actionCharacterCid}
+						alt={displayName}
+						className="h-7 w-7 shrink-0"
+					/>
+					<div
+						className="min-w-0 truncate font-medium leading-5 text-white"
+						title={displayName}
+					>
+						{displayName}
+					</div>
 				</div>
 				{!action.isAglaeaCountdownAction &&
 					!isCombustionCountdown &&

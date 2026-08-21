@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { useActionSequence } from "../contexts/ActionSequenceContext";
 import lightConeData from "../data/lightcones.json";
-import { CHARACTER_IDS } from "../domain/identity";
+import {
+	CHARACTER_IDS,
+	getTrailblazerCid,
+	getTrailblazerGender,
+	type TrailblazerGender,
+} from "../domain/identity";
 import {
 	type defaultCharacters,
 	getCharacterCid,
+	getCharacterNameByCid,
 	getCharacterPath,
 	getTargetDefaultName,
 	hasPassive,
@@ -14,6 +20,7 @@ import {
 	targetKinds,
 	withoutCharacterOnlyEffects,
 } from "../utils/action-sequence";
+import { CharacterAvatar } from "./CharacterAvatar";
 import {
 	CharacterNameInput,
 	NumberInput,
@@ -188,87 +195,132 @@ function CharacterCard({
 	const ctx = useActionSequence();
 	const [showGilgameshInterestNotice, setShowGilgameshInterestNotice] =
 		useState(false);
+	const trailblazerGender = getTrailblazerGender(
+		getCharacterCid(character.name),
+	);
+
+	const switchTrailblazerGender = (gender: TrailblazerGender) => {
+		ctx.updateCharacter(character.id, (prev) => {
+			const currentCid = getCharacterCid(prev.name);
+			const nextCid = currentCid
+				? getTrailblazerCid(currentCid, gender)
+				: undefined;
+			const nextName = nextCid ? getCharacterNameByCid(nextCid) : undefined;
+			return nextName ? { ...prev, name: nextName } : prev;
+		});
+	};
 
 	return (
 		<>
 			<div className="rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow">
-				<div className="mb-4 grid grid-cols-[112px_minmax(0,1fr)] gap-3">
-					<SelectInput
-						value={character.kind}
-						options={targetKinds.map((kind) => ({
-							value: kind,
-							label: kind,
-						}))}
-						onChange={(value) =>
-							ctx.updateCharacter(character.id, (prev) => {
-								const nextKind = value as TargetKind;
-								const previousDefaultName = getTargetDefaultName(
-									prev.kind,
-									index,
-								);
-								const shouldUseNextDefaultName =
-									prev.name.trim() === "" ||
-									prev.name.trim() === previousDefaultName;
-								return withoutCharacterOnlyEffects({
-									...prev,
-									kind: nextKind,
-									name: shouldUseNextDefaultName
-										? getTargetDefaultName(nextKind, index)
-										: prev.name,
-								});
-							})
-						}
+				<div className="mb-4 flex items-start gap-3">
+					<CharacterAvatar
+						name={character.name}
+						alt={character.name || "角色头像"}
+						className="h-12 w-12 shrink-0"
 					/>
-					{isCharacterTarget(character) ? (
-						<CharacterNameInput
-							value={character.name}
-							placeholder={getTargetDefaultName(character.kind, index)}
-							onChange={(value) => {
-								ctx.updateCharacter(character.id, (prev) => {
-									const oldPath = getCharacterPath(prev.name);
-									const newPath = getCharacterPath(value);
-									const allLcs =
-										(
-											lightConeData as {
-												lightcones: {
-													id: number;
-													name: string;
-													rarity: number;
-													path: string;
-												}[];
-											}
-										).lightcones ?? [];
-									const lcStillValid =
-										prev.lc_id === 0 ||
-										(newPath
-											? allLcs.some(
-													(lc) => lc.path === newPath && lc.id === prev.lc_id,
-												)
-											: false);
-									return {
-										...prev,
-										name: value,
-										lc_id:
-											oldPath !== newPath && !lcStillValid ? 0 : prev.lc_id,
-									};
-								});
-								if (getCharacterCid(value) === CHARACTER_IDS.gilgamesh) {
-									setShowGilgameshInterestNotice(true);
+					<div className="min-w-0 flex-1 space-y-2">
+						<div className="grid grid-cols-[112px_minmax(0,1fr)] gap-3">
+							<SelectInput
+								value={character.kind}
+								options={targetKinds.map((kind) => ({
+									value: kind,
+									label: kind,
+								}))}
+								onChange={(value) =>
+									ctx.updateCharacter(character.id, (prev) => {
+										const nextKind = value as TargetKind;
+										const previousDefaultName = getTargetDefaultName(
+											prev.kind,
+											index,
+										);
+										const shouldUseNextDefaultName =
+											prev.name.trim() === "" ||
+											prev.name.trim() === previousDefaultName;
+										return withoutCharacterOnlyEffects({
+											...prev,
+											kind: nextKind,
+											name: shouldUseNextDefaultName
+												? getTargetDefaultName(nextKind, index)
+												: prev.name,
+										});
+									})
 								}
-							}}
-						/>
-					) : (
-						<TextInput
-							value={character.name}
-							placeholder={getTargetDefaultName(character.kind, index)}
-							onChange={(value) =>
-								ctx.updateCharacter(character.id, (prev) => ({
-									...prev,
-									name: value,
-								}))
-							}
-						/>
-					)}
+							/>
+							{isCharacterTarget(character) ? (
+								<CharacterNameInput
+									value={character.name}
+									placeholder={getTargetDefaultName(character.kind, index)}
+									onChange={(value) => {
+										ctx.updateCharacter(character.id, (prev) => {
+											const oldPath = getCharacterPath(prev.name);
+											const newPath = getCharacterPath(value);
+											const allLcs =
+												(
+													lightConeData as {
+														lightcones: {
+															id: number;
+															name: string;
+															rarity: number;
+															path: string;
+														}[];
+													}
+												).lightcones ?? [];
+											const lcStillValid =
+												prev.lc_id === 0 ||
+												(newPath
+													? allLcs.some(
+															(lc) =>
+																lc.path === newPath && lc.id === prev.lc_id,
+														)
+													: false);
+											return {
+												...prev,
+												name: value,
+												lc_id:
+													oldPath !== newPath && !lcStillValid ? 0 : prev.lc_id,
+											};
+										});
+										if (getCharacterCid(value) === CHARACTER_IDS.gilgamesh) {
+											setShowGilgameshInterestNotice(true);
+										}
+									}}
+								/>
+							) : (
+								<TextInput
+									value={character.name}
+									placeholder={getTargetDefaultName(character.kind, index)}
+									onChange={(value) =>
+										ctx.updateCharacter(character.id, (prev) => ({
+											...prev,
+											name: value,
+										}))
+									}
+								/>
+							)}
+						</div>
+						{trailblazerGender && (
+							<div className="flex items-center gap-2 text-xs text-gray-300">
+								<span>主角性别</span>
+								<fieldset
+									className="inline-flex rounded-lg border border-gray-600 bg-gray-900 p-0.5"
+									aria-label="开拓者性别"
+								>
+									{(["female", "male"] as const).map((gender) => (
+										<button
+											key={gender}
+											type="button"
+											aria-pressed={trailblazerGender === gender}
+											onClick={() => switchTrailblazerGender(gender)}
+											className={`rounded-md px-2 py-1 transition-colors ${trailblazerGender === gender ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-700 hover:text-gray-200"}`}
+										>
+											{gender === "female" ? "女" : "男"}
+										</button>
+									))}
+								</fieldset>
+							</div>
+						)}
+					</div>
 				</div>
 
 				<div className="grid gap-3">

@@ -23,6 +23,7 @@
 		"check:static": "pnpm exec tsc --noEmit && pnpm run check:data && pnpm run check:docs && pnpm run check:bindings && pnpm run check:architecture && pnpm run check:go && pnpm lint && pnpm format:check",
 		"check:go": "node scripts/checkGo.mjs",
 		"check:data": "node scripts/validateData.mjs",
+		"download:favicons": "node scripts/downloadFavicons.mjs",
 		"check:bindings": "node scripts/checkGeneratedBindings.mjs",
 		"check:architecture": "node scripts/checkArchitecture.mjs",
     "check:docs": "node scripts/checkDocPaths.mjs",

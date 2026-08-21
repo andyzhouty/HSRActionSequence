@@ -1,4 +1,5 @@
 import { getCharacterPath, hasSkillEffect } from "../data/characters";
+import { areEquivalentCharacterCids } from "../domain/identity";
 import {
 	findGarmentmakerState,
 	getAglaeaStackLimit,
@@ -490,7 +491,10 @@ export function applyOdeSelection(
 		getOdeRuleForTarget(rule, getCharacterCid(target.character.name));
 	if (
 		ode.targetCid !== undefined &&
-		ode.targetCid !== getCharacterCid(target.character.name)
+		!areEquivalentCharacterCids(
+			ode.targetCid,
+			getCharacterCid(target.character.name),
+		)
 	) {
 		return;
 	}
@@ -597,7 +601,10 @@ export function emitCyreneMemospriteAction({
 	if (selection && selectedOde?.effects?.includes("immediateEnhancedSkill")) {
 		if (
 			selectedTarget &&
-			selectedOde.targetCid === getCharacterCid(selectedTarget.character.name)
+			areEquivalentCharacterCids(
+				selectedOde.targetCid,
+				getCharacterCid(selectedTarget.character.name),
+			)
 		) {
 			actions.push({
 				key: `${memospriteKey}-ode-${selectedOde.code}`,

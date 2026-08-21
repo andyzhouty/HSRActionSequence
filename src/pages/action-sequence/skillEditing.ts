@@ -1,3 +1,4 @@
+import { TRAILBLAZER_CIDS } from "../../domain/identity";
 import {
 	type CharacterConfig,
 	canSelectSkillTargetForAction,
@@ -170,11 +171,7 @@ export function validateActionSkillInput(params: {
 				"1224",
 				"1413",
 				"1004",
-				"8002",
-				"8004",
-				"8006",
-				"8008",
-				"8010",
+				...TRAILBLAZER_CIDS,
 				"1313",
 				"1003",
 			]);

@@ -288,7 +288,7 @@ describe("canUseSkillCode", () => {
 		});
 	});
 
-	it("W 需要角色有 counterW 效果（由 characters.json 控制）", () => {
+	it("W 需要角色有 counterW 效果（由角色机制数据控制）", () => {
 		// 无 counterW 的角色不能使用 W
 		expect(canUseSkillCode(char("任意角色"), "W")).toBe(false);
 	});

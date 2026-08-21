@@ -1,4 +1,10 @@
 import { describe, expect, it } from "vitest";
+import {
+	buildExportNameMap,
+	CHARACTER_EXPORT_HEADERS,
+	getExportDisplayName,
+	getLightConeDisplayName,
+} from "../../../src/utils/excelExport";
 
 // 导出逻辑嵌在依赖多个上下文的组件中。
 // 这里复制算法，直接测试其中的纯过滤逻辑。
@@ -368,34 +374,38 @@ describe("Excel export: domain filtering", () => {
 	});
 });
 
-describe("Excel export: action label formatting", () => {
-	const prefixFor = (charId: string) => `${charId}-`;
-
-	function actionLabel(key: string, charId: string): string {
-		const tail = key.slice(prefixFor(charId).length);
-		const domainMatch = tail.match(/^domain-(\d+)/);
-		if (domainMatch) return `境界${Number(domainMatch[1]) + 1}`;
-		const interruptMatch = tail.match(/^interrupt-(\d+)/);
-		if (interruptMatch) return `插队#${Number(interruptMatch[1]) + 1}`;
-		const no = Number.parseInt(tail, 10);
-		return Number.isFinite(no) && no > 0 ? `第${no}动` : tail;
-	}
-
-	it("formats normal action", () => {
-		expect(actionLabel("c1-1", "c1")).toBe("第1动");
-		expect(actionLabel("c1-3", "c1")).toBe("第3动");
+describe("Excel export: display names", () => {
+	it("角色配置只保留网页需要的六列", () => {
+		expect(CHARACTER_EXPORT_HEADERS).toEqual([
+			"角色",
+			"速度",
+			"基础速度",
+			"光锥",
+			"翁瓦克",
+			"风套",
+		]);
 	});
 
-	it("formats domain action", () => {
-		expect(actionLabel("c1-domain-0", "c1")).toBe("境界1");
-		expect(actionLabel("c1-domain-5", "c1")).toBe("境界6");
+	it("uses names for characters, memosprites, and generated actions", () => {
+		const names = buildExportNameMap(
+			[{ id: "aglaea", name: "阿格莱雅" }],
+			[{ id: "aglaea-garmentmaker", name: "衣匠" }],
+			[{ characterId: "@aha", displayName: "阿哈时刻" }],
+		);
+
+		expect(getExportDisplayName(names, "aglaea", "未知角色")).toBe("阿格莱雅");
+		expect(getExportDisplayName(names, "aglaea-garmentmaker", "未知目标")).toBe(
+			"衣匠",
+		);
+		expect(getExportDisplayName(names, "@aha", "未知角色")).toBe("阿哈时刻");
+		expect(getExportDisplayName(names, "unknown-id", "未知目标")).toBe(
+			"未知目标",
+		);
 	});
 
-	it("formats interrupt action", () => {
-		expect(actionLabel("c1-interrupt-0", "c1")).toBe("插队#1");
-	});
-
-	it("falls back to tail for unrecognized", () => {
-		expect(actionLabel("c1-q", "c1")).toBe("q");
+	it("formats lightcone names without exposing IDs", () => {
+		expect(getLightConeDisplayName(0)).toBe("无光锥");
+		expect(getLightConeDisplayName(21018)).toBe("舞！舞！舞！");
+		expect(getLightConeDisplayName(99999)).toBe("未知光锥");
 	});
 });

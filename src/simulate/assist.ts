@@ -1,4 +1,5 @@
 import { hasSkillEffect } from "../data/characters";
+import { TRAILBLAZER_CIDS } from "../domain/identity";
 import { expirePhainonDomainSpeedBonus } from "../mechanics/phainon";
 import type { GeneratedAction } from "../utils/action-sequence";
 import { getCharacterCid, type SkillCode } from "../utils/action-sequence";
@@ -21,11 +22,7 @@ const novaFFCidWhitelist = new Set([
 	"1224",
 	"1413",
 	"1004",
-	"8002",
-	"8004",
-	"8006",
-	"8008",
-	"8010",
+	...TRAILBLAZER_CIDS,
 	"1313",
 	"1003",
 ]);

@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { getCharacterCatalog, normalizeName } from "../data/characters";
 import { getSpecialActionHint } from "../utils/action-sequence";
+import { CharacterAvatar } from "./CharacterAvatar";
+
+const characterOptions = getCharacterCatalog();
 
 export type SelectOption = {
 	value: string;
@@ -147,34 +151,78 @@ export function CharacterNameInput({
 	onChange: (value: string) => void;
 }) {
 	const inputRef = useRef<HTMLInputElement>(null);
+	const [draftValue, setDraftValue] = useState(value);
 	const [draftHint, setDraftHint] = useState(() => getSpecialActionHint(value));
+	const [isOpen, setIsOpen] = useState(false);
+	const [activeIndex, setActiveIndex] = useState(0);
+
+	const suggestions = characterOptions
+		.filter((character) => {
+			const query = normalizeName(draftValue);
+			return (
+				query === "" ||
+				character.names.some((name) => normalizeName(name).includes(query))
+			);
+		})
+		.slice(0, 12);
 
 	useEffect(() => {
-		if (inputRef.current) {
-			inputRef.current.value = value;
-			setDraftHint(getSpecialActionHint(value));
-		}
+		setDraftValue(value);
+		setDraftHint(getSpecialActionHint(value));
 	}, [value]);
 
-	const commitValue = () => {
-		const nextValue = inputRef.current?.value ?? "";
+	const updateDraftValue = (nextValue: string) => {
+		setDraftValue(nextValue);
 		setDraftHint(getSpecialActionHint(nextValue));
-		if (nextValue !== value) {
-			onChange(nextValue);
+		setActiveIndex(0);
+		setIsOpen(true);
+	};
+
+	const commitValue = () => {
+		setDraftHint(getSpecialActionHint(draftValue));
+		setIsOpen(false);
+		if (draftValue !== value) {
+			onChange(draftValue);
 		}
 	};
 
+	const selectSuggestion = (name: string) => {
+		setDraftValue(name);
+		setDraftHint(getSpecialActionHint(name));
+		setIsOpen(false);
+		if (name !== value) onChange(name);
+	};
+
 	return (
-		<div>
+		<div className="relative">
 			<div className="grid grid-cols-[minmax(0,1fr)_64px] gap-2">
 				<input
 					ref={inputRef}
 					type="text"
-					defaultValue={value}
+					value={draftValue}
 					placeholder={placeholder}
+					autoComplete="off"
+					onFocus={() => setIsOpen(true)}
+					onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}
+					onChange={(event) => updateDraftValue(event.target.value)}
 					onKeyDown={(event) => {
-						if (event.key === "Enter") {
-							commitValue();
+						if (event.key === "ArrowDown" && suggestions.length > 0) {
+							event.preventDefault();
+							setActiveIndex((index) =>
+								Math.min(index + 1, suggestions.length - 1),
+							);
+						} else if (event.key === "ArrowUp" && suggestions.length > 0) {
+							event.preventDefault();
+							setActiveIndex((index) => Math.max(index - 1, 0));
+						} else if (event.key === "Enter") {
+							event.preventDefault();
+							if (isOpen && suggestions[activeIndex]) {
+								selectSuggestion(suggestions[activeIndex].names[0]);
+							} else {
+								commitValue();
+							}
+						} else if (event.key === "Escape") {
+							setIsOpen(false);
 						}
 					}}
 					className={`h-10 w-full rounded-lg border px-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 ${
@@ -191,6 +239,42 @@ export function CharacterNameInput({
 					确定
 				</button>
 			</div>
+			{isOpen && suggestions.length > 0 && (
+				<div
+					className="absolute left-0 right-[68px] top-12 z-40 max-h-72 overflow-y-auto rounded-lg border border-gray-600 bg-gray-900 p-1 shadow-2xl"
+					role="listbox"
+					aria-label="角色候选"
+				>
+					{suggestions.map((character, index) => (
+						<button
+							key={character.cid}
+							type="button"
+							role="option"
+							aria-selected={index === activeIndex}
+							onMouseDown={(event) => event.preventDefault()}
+							onMouseEnter={() => setActiveIndex(index)}
+							onClick={() => selectSuggestion(character.names[0])}
+							className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${index === activeIndex ? "bg-blue-700/70 text-white" : "text-gray-200 hover:bg-gray-700"}`}
+						>
+							<CharacterAvatar
+								cid={character.cid}
+								alt={character.names[0]}
+								className="h-8 w-8 shrink-0"
+							/>
+							<span className="min-w-0 flex-1">
+								<span className="block truncate text-sm font-medium">
+									{character.names[0]}
+								</span>
+								{character.names.length > 1 && (
+									<span className="block truncate text-xs text-gray-400">
+										{character.names.slice(1, 3).join("、")}
+									</span>
+								)}
+							</span>
+						</button>
+					))}
+				</div>
+			)}
 			{draftHint && (
 				<div className="mt-1 truncate text-xs text-amber-100" title={draftHint}>
 					{draftHint}

@@ -3,7 +3,7 @@ import {
 	hasPassive,
 	hasSkillEffect,
 } from "../data/characters";
-import { CHARACTER_IDS } from "../domain/identity";
+import { CHARACTER_IDS, TRAILBLAZER_CIDS } from "../domain/identity";
 import { handleEveyAction } from "../mechanics/evernight";
 import {
 	createIcaAction,
@@ -413,11 +413,7 @@ export function emitSparxieExtraAction(
 		"1224",
 		"1413",
 		"1004",
-		"8002",
-		"8004",
-		"8006",
-		"8008",
-		"8010",
+		...TRAILBLAZER_CIDS,
 		"1313",
 		"1003",
 	]);

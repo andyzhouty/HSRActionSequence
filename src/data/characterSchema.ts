@@ -10,7 +10,12 @@
 
 import { isCharacterId, toCharacterId } from "../domain/identity";
 import { isSkillCode, SKILL_TOKENS } from "../domain/skills";
-import characterData from "./characters.json";
+import {
+	type CharacterEntry,
+	characterBasicsData,
+	characterData,
+	characterMechanicsData,
+} from "./characterData";
 
 export class CharacterValidationError extends Error {
 	constructor(message: string) {
@@ -18,22 +23,6 @@ export class CharacterValidationError extends Error {
 		this.name = "CharacterValidationError";
 	}
 }
-
-type CharacterEntry = {
-	cid: string;
-	names: string[];
-	baseSpeed?: number;
-	effects?: Record<string, string>;
-	effectRules?: Record<string, unknown>;
-	passives?: string[];
-	semantics?: string[];
-	path?: string;
-};
-
-type CharacterDataFile = {
-	characters: CharacterEntry[];
-	_defaults?: Record<string, unknown>;
-};
 
 const skillTokenSet = new Set<string>(SKILL_TOKENS);
 
@@ -53,10 +42,12 @@ const validPaths = new Set([
 
 /** 运行全部校验，抛出第一个错误。 */
 export function validateCharacterSchema(): void {
-	const data = characterData as unknown as CharacterDataFile;
+	const data = characterData;
 	if (!data.characters || !Array.isArray(data.characters)) {
 		throw new CharacterValidationError("characters.json 缺少 characters 数组");
 	}
+	validateBasicCharacterEntries();
+	validateMechanicsEntries();
 
 	allCids.clear();
 
@@ -95,6 +86,51 @@ export function validateCharacterSchema(): void {
 			}
 		}
 		validateRuleSkillFields("_defaults", data._defaults);
+	}
+}
+
+function validateBasicCharacterEntries(): void {
+	const allowedKeys = new Set(["cid", "names", "path", "baseSpeed"]);
+	const basicCids = new Set<string>();
+	for (const character of characterBasicsData.characters) {
+		for (const key of Object.keys(character)) {
+			if (!allowedKeys.has(key)) {
+				throw new CharacterValidationError(
+					`characters.json 中的角色 ${character.cid} 包含非基础字段 "${key}"`,
+				);
+			}
+		}
+		if (basicCids.has(character.cid)) {
+			throw new CharacterValidationError(
+				`characters.json 中 CID 重复: ${character.cid}`,
+			);
+		}
+		basicCids.add(character.cid);
+	}
+}
+
+function validateMechanicsEntries(): void {
+	const basicCids = new Set(
+		characterBasicsData.characters.map((character) => character.cid),
+	);
+	const mechanicsCids = new Set<string>();
+	for (const character of characterMechanicsData.characters) {
+		if (!isCharacterId(character.cid)) {
+			throw new CharacterValidationError(
+				`characterMechanics.json 中的 CID 无效: ${character.cid}`,
+			);
+		}
+		if (mechanicsCids.has(character.cid)) {
+			throw new CharacterValidationError(
+				`characterMechanics.json 中 CID 重复: ${character.cid}`,
+			);
+		}
+		if (!basicCids.has(character.cid)) {
+			throw new CharacterValidationError(
+				`characterMechanics.json 中的 CID ${character.cid} 不存在于 characters.json`,
+			);
+		}
+		mechanicsCids.add(character.cid);
 	}
 }
 

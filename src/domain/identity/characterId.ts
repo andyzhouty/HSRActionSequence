@@ -41,6 +41,53 @@ export const CHARACTER_IDS = {
 	memoryTrailblazer: "8008",
 } as const satisfies Record<string, string>;
 
+export const TRAILBLAZER_GENDER_PAIRS = [
+	{ female: "8002", male: "8001" },
+	{ female: "8004", male: "8003" },
+	{ female: "8006", male: "8005" },
+	{ female: "8008", male: "8007" },
+	{ female: "8010", male: "8009" },
+] as const;
+
+export const TRAILBLAZER_CIDS = TRAILBLAZER_GENDER_PAIRS.flatMap((pair) => [
+	pair.female,
+	pair.male,
+]);
+
+export type TrailblazerGender = "female" | "male";
+
+function findTrailblazerPair(cid: string) {
+	return TRAILBLAZER_GENDER_PAIRS.find(
+		(pair) => pair.female === cid || pair.male === cid,
+	);
+}
+
+export function getTrailblazerGender(
+	cid: string | undefined,
+): TrailblazerGender | undefined {
+	const pair = cid ? findTrailblazerPair(cid) : undefined;
+	if (!pair) return undefined;
+	return pair.male === cid ? "male" : "female";
+}
+
+export function getTrailblazerCid(
+	cid: string,
+	gender: TrailblazerGender,
+): string | undefined {
+	const pair = findTrailblazerPair(cid);
+	return pair?.[gender];
+}
+
+export function areEquivalentCharacterCids(
+	first: string | undefined,
+	second: string | undefined,
+): boolean {
+	if (!first || !second) return false;
+	if (first === second) return true;
+	const pair = findTrailblazerPair(first);
+	return pair?.female === second || pair?.male === second;
+}
+
 export type KnownCharacterId =
 	(typeof CHARACTER_IDS)[keyof typeof CHARACTER_IDS] extends infer T
 		? T extends string

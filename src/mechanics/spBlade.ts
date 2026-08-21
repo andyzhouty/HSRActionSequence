@@ -1,4 +1,4 @@
-import { CHARACTER_IDS } from "../domain/identity";
+import { areEquivalentCharacterCids, CHARACTER_IDS } from "../domain/identity";
 import type { ActionState, SimulateActionsInput } from "../simulate/types";
 import {
 	type CharacterConfig,
@@ -202,8 +202,10 @@ export function handleSpBladeRecordedAction(params: {
 		states.some((s) => s.polluxOnField)
 	)
 		stacks += 1;
-	const memoryTrailblazer =
-		getCharacterCid(attacker?.name ?? "") === MEMORY_TRAILBLAZER_CID;
+	const memoryTrailblazer = areEquivalentCharacterCids(
+		getCharacterCid(attacker?.name ?? ""),
+		MEMORY_TRAILBLAZER_CID,
+	);
 	const memoryState = states.find((s) => s.character.id === action.characterId);
 	if (
 		memoryTrailblazer &&

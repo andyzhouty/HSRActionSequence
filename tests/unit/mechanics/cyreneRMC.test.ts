@@ -9,6 +9,10 @@ import type {
 	SkillCode,
 	UltInterrupt,
 } from "../../../src/utils/action-sequence";
+import {
+	getCyreneUltimateRule,
+	getOdeRuleForTarget,
+} from "../../../src/utils/action-sequence";
 
 function character(
 	id: string,
@@ -52,6 +56,13 @@ function input(
 		...overrides,
 	};
 }
+
+describe("男性记忆开拓者身份映射", () => {
+	it("男性记忆主同样匹配创世之诗", () => {
+		const rule = getCyreneUltimateRule("昔涟");
+		expect(getOdeRuleForTarget(rule, "8007").code).toBe("genesis");
+	});
+});
 
 function skills(entries: Record<string, string>): Record<string, SkillCode> {
 	return entries;

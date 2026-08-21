@@ -1,29 +1,15 @@
 import type { CharacterId } from "../domain/identity";
+import { toCharacterId } from "../domain/identity";
 import { SKILL_TOKENS } from "../domain/skills";
+import { type CharacterEntry, characterData } from "./characterData";
 import { validateCharacterSchema } from "./characterSchema";
-import characterData from "./characters.json";
 
-type CharacterEntry = {
-	cid: CharacterId;
-	names: string[];
-	baseSpeed?: number;
-	effects?: Record<string, string>;
-	effectRules?: Record<string, unknown>;
-	passives?: string[];
-	semantics?: string[];
-	path?: string;
-	participantId?: number;
-};
+export type CharacterCatalogEntry = Omit<
+	Pick<CharacterEntry, "cid" | "names" | "path" | "baseSpeed">,
+	"cid"
+> & { cid: CharacterId };
 
-export type CharacterCatalogEntry = Pick<
-	CharacterEntry,
-	"cid" | "names" | "path" | "baseSpeed"
->;
-
-const data = characterData as unknown as {
-	characters: CharacterEntry[];
-	_defaults?: Record<string, unknown>;
-};
+const data = characterData;
 const characters = data.characters;
 
 validateCharacterSchema();
@@ -31,7 +17,7 @@ validateCharacterSchema();
 /** 面向 UI 的角色检索目录；返回副本，避免调用方修改角色配置。 */
 export function getCharacterCatalog(): CharacterCatalogEntry[] {
 	return characters.map(({ cid, names, path, baseSpeed }) => ({
-		cid,
+		cid: toCharacterId(cid),
 		names: [...names],
 		path,
 		baseSpeed,
@@ -60,9 +46,13 @@ export function getCharacterDisplayName(name: string): string | null {
 	return entry ? entry.names[0] : null;
 }
 
+export function getCharacterNameByCid(cid: string): string | undefined {
+	return characters.find((entry) => entry.cid === cid)?.names[0];
+}
+
 export function getCharacterCid(name: string): CharacterId | undefined {
 	const entry = findCharacterEntry(name);
-	return entry?.cid;
+	return entry ? toCharacterId(entry.cid) : undefined;
 }
 
 export function getCharacterPath(name: string): string | undefined {

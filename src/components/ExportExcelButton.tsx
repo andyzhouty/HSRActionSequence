@@ -2,15 +2,19 @@ import { useCallback, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { useActionSequence } from "../contexts/ActionSequenceContext";
 import { getEffectiveCharacterBaseSpeed } from "../mechanics/lightconeEffects";
-import type { UltInterrupt } from "../utils/action-sequence";
 import {
 	ensureFileExtension,
 	formatActionValue,
-	getCharacterPath,
 	getErrorMessage,
 	isAllyTarget,
 } from "../utils/action-sequence";
 import { getBackendPort } from "../utils/backend";
+import {
+	buildExportNameMap,
+	CHARACTER_EXPORT_HEADERS,
+	getExportDisplayName,
+	getLightConeDisplayName,
+} from "../utils/excelExport";
 
 export default function ExportExcelButton() {
 	const ctx = useActionSequence();
@@ -24,6 +28,11 @@ export default function ExportExcelButton() {
 		}
 		try {
 			setExporting(true);
+			const exportNames = buildExportNameMap(
+				ctx.characters,
+				ctx.memospriteTargets,
+				ctx.actions,
+			);
 
 			// 行动序列工作表
 			const header = ["序号", "角色", "动数", "行动值", "技能"];
@@ -79,17 +88,29 @@ export default function ExportExcelButton() {
 				const memeTargetId = ctx.memeSelections[a.key];
 				let skillDisplay = a.skill;
 				if (odeSelection) {
-					const odeTargetName =
-						ctx.characterNames[odeSelection.targetId] ?? odeSelection.targetId;
+					const odeTargetName = getExportDisplayName(
+						exportNames,
+						odeSelection.targetId,
+						"未知目标",
+					);
 					skillDisplay = `${a.skill}→${odeTargetName}`;
 				} else if (skillTargetId) {
-					skillDisplay = `${a.skill}→${ctx.characterNames[skillTargetId] ?? skillTargetId}`;
+					skillDisplay = `${a.skill}→${getExportDisplayName(
+						exportNames,
+						skillTargetId,
+						"未知目标",
+					)}`;
 				} else if (memeTargetId) {
-					skillDisplay = `${a.skill}→${ctx.characterNames[memeTargetId] ?? memeTargetId}`;
+					skillDisplay = `${a.skill}→${getExportDisplayName(
+						exportNames,
+						memeTargetId,
+						"未知目标",
+					)}`;
 				}
 				const row: (string | number)[] = [
 					i + 1,
-					a.displayName ?? ctx.characterNames[a.characterId] ?? a.characterId,
+					a.displayName?.trim() ||
+						getExportDisplayName(exportNames, a.characterId, "未知角色"),
 					a.isDomainAction ? `境界${a.actionNo}` : `第${a.actionNo}动`,
 					Number.parseFloat(formatActionValue(a.actionValue)),
 					skillDisplay,
@@ -109,119 +130,24 @@ export default function ExportExcelButton() {
 				...ctx.resources.map(() => ({ wch: 10 })),
 			];
 
-			// ── 角色配置工作表 ──
-			// 辅助：按角色 ID 前缀过滤覆盖表
-			const prefixFor = (charId: string) => `${charId}-`;
-			const filterEntries = <T,>(
-				rec: Record<string, T>,
-				prefix: string,
-			): [string, T][] =>
-				Object.entries(rec)
-					.filter(([k]) => k.startsWith(prefix))
-					.sort(([a], [b]) => a.localeCompare(b));
-			// 从行动 key 中提取动数显示文本。
-			const actionLabel = (key: string, charId: string): string => {
-				const tail = key.slice(prefixFor(charId).length);
-				const domainMatch = tail.match(/^domain-(\d+)/);
-				if (domainMatch) return `境界${Number(domainMatch[1]) + 1}`;
-				const interruptMatch = tail.match(/^interrupt-(\d+)/);
-				if (interruptMatch) return `插队#${Number(interruptMatch[1]) + 1}`;
-				const no = Number.parseInt(tail, 10);
-				return Number.isFinite(no) && no > 0 ? `第${no}动` : tail;
-			};
-			// 格式化覆盖项列表为可读文本
-			const formatEntries = <T,>(
-				entries: [string, T][],
-				charId: string,
-				format: (v: T) => string,
-			) =>
-				entries
-					.map(([k, v]) => `${actionLabel(k, charId)}:${format(v)}`)
-					.join("; ");
-
-			const charHeader = [
-				"序号",
-				"角色",
-				"类型",
-				"速度",
-				"基础速度",
-				"翁瓦克",
-				"风套",
-				"舞舞舞",
-				"一魂",
-				"命途",
-				"速度调整",
-				"技能覆盖",
-				"行动值覆盖",
-				"技能目标",
-				"默认技能目标",
-				"诗篇选择",
-				"迷迷拉条",
-				"插队大招",
-			];
-			const charRows = ctx.characters.map((c, i) => {
-				const pf = prefixFor(c.id);
-				// 速度调整 key 也是行动 key。
-				const speedAdjEntries = filterEntries(ctx.speedAdjustments, pf);
-				const skillOvEntries = filterEntries(ctx.skillOverrides, pf);
-				const ovEntries = filterEntries(ctx.overrides, pf);
-				const svEntries = filterEntries(ctx.skillTargets, pf);
-				const odeEntries = filterEntries(ctx.odeSelections, pf);
-				const memeEntries = filterEntries(ctx.memeSelections, pf);
-				const interruptEntries = filterEntries(ctx.ultInterrupts, pf);
-				return [
-					i + 1,
-					c.name,
-					c.kind,
-					c.speed,
-					getEffectiveCharacterBaseSpeed(c),
-					c.hasVonwacq ? "是" : "否",
-					c.hasWindSet ? "是" : "否",
-					c.hasDance ? "是" : "否",
-					c.eidolon >= 1 ? "是" : "否",
-					getCharacterPath(c.name) ?? "",
-					formatEntries(speedAdjEntries, c.id, (v) =>
-						v.mode === "absolute" ? `${v.value}` : `${v.value}%`,
-					),
-					formatEntries(skillOvEntries, c.id, (v) => v),
-					formatEntries(ovEntries, c.id, (v) => v),
-					formatEntries(svEntries, c.id, (v) => ctx.characterNames[v] ?? v),
-					ctx.defaultSkillTargets[c.id] ?? "",
-					formatEntries(odeEntries, c.id, (v) =>
-						v.odeCode === "generic"
-							? `通用→${ctx.characterNames[v.targetId] ?? v.targetId}`
-							: `${v.odeCode}→${ctx.characterNames[v.targetId] ?? v.targetId}`,
-					),
-					formatEntries(memeEntries, c.id, (v) => ctx.characterNames[v] ?? v),
-					formatEntries(interruptEntries, c.id, (arr) =>
-						(arr as UltInterrupt[])
-							.map(
-								(u) => `${u.casterId}(${u.timing === "before" ? "前" : "后"})`,
-							)
-							.join(","),
-					),
-				];
-			});
+			// ── 角色配置工作表：与当前网页角色卡保持一致 ──
+			const charHeader = [...CHARACTER_EXPORT_HEADERS];
+			const charRows = ctx.characters.map((c) => [
+				c.name.trim() || "未命名角色",
+				c.speed,
+				getEffectiveCharacterBaseSpeed(c),
+				getLightConeDisplayName(c.lc_id),
+				c.hasVonwacq ? "是" : "否",
+				c.hasWindSet ? "是" : "否",
+			]);
 			const charWs = XLSX.utils.aoa_to_sheet([charHeader, ...charRows]);
 			charWs["!cols"] = [
-				{ wch: 6 },
 				{ wch: 12 },
-				{ wch: 6 },
 				{ wch: 8 },
 				{ wch: 8 },
-				{ wch: 6 },
-				{ wch: 6 },
-				{ wch: 6 },
-				{ wch: 6 },
-				{ wch: 10 },
-				{ wch: 24 },
-				{ wch: 24 },
-				{ wch: 24 },
-				{ wch: 24 },
 				{ wch: 16 },
-				{ wch: 24 },
-				{ wch: 20 },
-				{ wch: 24 },
+				{ wch: 6 },
+				{ wch: 6 },
 			];
 
 			const wb = XLSX.utils.book_new();
@@ -272,21 +198,16 @@ export default function ExportExcelButton() {
 		}
 	}, [
 		ctx.actions,
-		ctx.characterNames,
 		ctx.resources,
 		ctx.resourceValues,
 		ctx.characters,
-		ctx.speedAdjustments,
-		ctx.skillOverrides,
-		ctx.overrides,
 		ctx.skillTargets,
-		ctx.defaultSkillTargets,
 		ctx.odeSelections,
 		ctx.memeSelections,
-		ctx.ultInterrupts,
 		ctx.setMessage,
 		backendPort,
 		ctx.characterKinds,
+		ctx.memospriteTargets,
 	]);
 
 	return (

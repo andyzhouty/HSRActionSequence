@@ -7,10 +7,13 @@ import {
 } from "../../helpers/simulateActionTestUtils";
 
 describe("Memory Trailblazer (开拓者·记忆)", () => {
-	it("Q 也会召唤迷迷", () => {
+	it.each([
+		"开拓者·记忆",
+		"开拓者·记忆（男）",
+	])("%s 的 Q 也会召唤迷迷", (name) => {
 		const actions = simulateActions(
 			input({
-				characters: [character("rmc", "开拓者·记忆", 100)],
+				characters: [character("rmc", name, 100)],
 				skillOverrides: skills({
 					"rmc-1": "AQ",
 				}),
