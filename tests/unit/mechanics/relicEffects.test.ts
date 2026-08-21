@@ -37,6 +37,7 @@ describe("信使套", () => {
 		expect(shouldTriggerMessengerUltimate(attacker, "角色")).toBe(true);
 		expect(shouldTriggerMessengerUltimate(attacker, "忆灵")).toBe(true);
 		expect(shouldTriggerMessengerUltimate(attacker, "敌人")).toBe(false);
+		expect(shouldTriggerMessengerUltimate(attacker, "敌人", true)).toBe(true);
 	});
 
 	it("对我方目标施放攻击型终结技后，全队速度提高 12% 并持续一回合", () => {
@@ -83,6 +84,27 @@ describe("信使套", () => {
 			(action) => action.characterId === "ally",
 		);
 		expect(allyActions[0]?.speed).toBeCloseTo(100, 4);
+	});
+
+	it("Q 选择不攻击时即使目标为敌人也触发", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					attackingCharacter("attacker"),
+					character("ally", "队友", 100),
+					character("enemy", "敌人", 300, { kind: "敌人" }),
+				],
+				skillOverrides: skills({ "attacker-1": "AQ" }),
+				skillTargets: { "attacker-1": "enemy" },
+				attackDisabled: { "attacker-1-q": true },
+				limit: 220,
+			}),
+		);
+
+		const allyActions = actions.filter(
+			(action) => action.characterId === "ally",
+		);
+		expect(allyActions[0]?.speed).toBeCloseTo(112, 4);
 	});
 
 	it("多个信使套同时触发也不会叠加速度", () => {

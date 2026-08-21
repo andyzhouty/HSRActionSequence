@@ -1,3 +1,4 @@
+import { hasSkillEffect } from "../data/characters";
 import type { ActionState } from "../simulate/types";
 import {
 	type CharacterConfig,
@@ -8,7 +9,7 @@ import {
 } from "../utils/action-sequence";
 import { recordSpRobinPercentBuff } from "./spRobin";
 
-/** 信使套：装备者对我方目标施放终结技时，我方全体速度提高 12%。 */
+/** 信使套：装备者对我方目标施放终结技时，我方全体速度提高 12%；Q 选择不攻击时也触发。 */
 export const MESSENGER_SPEED_PCT = 0.12;
 export const MESSENGER_SPEED_BUFF_TURNS = 1;
 
@@ -16,8 +17,12 @@ export const MESSENGER_SPEED_BUFF_TURNS = 1;
 export function shouldTriggerMessengerUltimate(
 	character: CharacterConfig,
 	targetKind: TargetKind | undefined,
+	attackDisabled = false,
 ): boolean {
 	if (!isCharacterTarget(character) || !character.hasMessengerSet) return false;
+	if (attackDisabled) return true;
+	// 昔涟的 Q 是否攻击由德谬歌的行动决定，但信使套对昔涟 Q 均触发。
+	if (hasSkillEffect(character.name, "Q", "cyreneUltimate")) return true;
 	// 非攻击型终结技不需要额外选择目标，直接视为满足条件。
 	return isNonAttackSkill(character, "Q") || isAllyTarget(targetKind);
 }

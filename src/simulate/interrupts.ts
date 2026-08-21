@@ -245,6 +245,7 @@ export function emitSpecialInterruptAction(
 		input,
 		activeOdes,
 		sourceKey: effectSourceKey,
+		qActionKey: interruptKey,
 		qIsFront,
 	});
 

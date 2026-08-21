@@ -668,6 +668,7 @@ export function handleNormalAction(
 				input,
 				activeOdes,
 				sourceKey: key,
+				qActionKey: key,
 				qIsFront,
 			});
 		}

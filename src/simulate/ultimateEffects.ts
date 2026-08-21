@@ -55,6 +55,8 @@ interface PostUltimateParams {
 	activeOdes: Map<string, ActiveOdeState[]>;
 	/** 用于 Ica 额外回合等附属行动的 key 前缀。 */
 	sourceKey: string;
+	/** 实际 Q 行动的 key，用于读取“不攻击”等 Q 行动设置。 */
+	qActionKey?: string;
 	/** Q 是否在技能最前面（QA/QE），此时部分效果（如自拉条）不适用 */
 	qIsFront?: boolean;
 }
@@ -71,6 +73,7 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 		actionValue,
 		input,
 		sourceKey,
+		qActionKey,
 		qIsFront = false,
 	} = params;
 	const caster = states[casterIndex];
@@ -79,7 +82,13 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 	const skillTargetKind = states.find(
 		(state) => state.character.id === skillTargetId,
 	)?.character.kind;
-	if (shouldTriggerMessengerUltimate(character, skillTargetKind)) {
+	if (
+		shouldTriggerMessengerUltimate(
+			character,
+			skillTargetKind,
+			qActionKey !== undefined && input.attackDisabled?.[qActionKey] === true,
+		)
+	) {
 		applyMessengerSpeedBuff(states, character.id, actionValue);
 	}
 	emitTribbieUltimateFollowUp({

@@ -124,6 +124,48 @@ describe("Cyrene (昔涟)", () => {
 		).toEqual(["cyrene-1", "cyrene-1-q", "cyrene-1-memosprite-Q", "ally-1"]);
 	});
 
+	it("信使套对昔涟 Q 始终触发", () => {
+		const attackActions = simulateActions(
+			input({
+				characters: [
+					character("cyrene", "昔涟", 100, { hasMessengerSet: true }),
+					character("ally", "队友", 100),
+				],
+				skillOverrides: skills({
+					"cyrene-1": "AQ",
+				}),
+				limit: 220,
+			}),
+		);
+		const allyAttackAction = attackActions.find(
+			(action) => action.characterId === "ally",
+		);
+		expect(allyAttackAction?.speed).toBeCloseTo(112, 4);
+
+		const allySkillActions = simulateActions(
+			input({
+				characters: [
+					character("cyrene", "昔涟", 100, { hasMessengerSet: true }),
+					character("ally", "队友", 100),
+				],
+				skillOverrides: skills({
+					"cyrene-1": "AQ",
+				}),
+				odeSelections: {
+					"cyrene-1-memosprite-Q": {
+						odeCode: "generic",
+						targetId: "ally",
+					},
+				},
+				limit: 220,
+			}),
+		);
+		const allySkillAction = allySkillActions.find(
+			(action) => action.characterId === "ally",
+		);
+		expect(allySkillAction?.speed).toBeCloseTo(112, 4);
+	});
+
 	it("applies immediateTurn ode effect (reason - Anaxa)", () => {
 		const actions = simulateActions(
 			input({
