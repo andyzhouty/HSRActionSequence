@@ -1,9 +1,5 @@
-# Windows-only repository:
-# keep checked-out text files as CRLF to reduce line-ending churn/warnings.
-* text=auto eol=crlf
-
-# Go 工具链要求源文件使用 LF，避免 Linux CI 的 gofmt 因 CRLF 失败。
-*.go text eol=lf
+# 文本文件统一使用 LF，避免本地与 Linux CI 的格式化工具产生差异。
+* text=auto eol=lf
 
 # Common binary assets
 *.png binary
