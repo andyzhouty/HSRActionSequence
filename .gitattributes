@@ -2,6 +2,9 @@
 # keep checked-out text files as CRLF to reduce line-ending churn/warnings.
 * text=auto eol=crlf
 
+# Go 工具链要求源文件使用 LF，避免 Linux CI 的 gofmt 因 CRLF 失败。
+*.go text eol=lf
+
 # Common binary assets
 *.png binary
 *.jpg binary
