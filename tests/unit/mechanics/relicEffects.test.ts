@@ -38,6 +38,12 @@ describe("信使套", () => {
 		expect(shouldTriggerMessengerUltimate(attacker, "忆灵")).toBe(true);
 		expect(shouldTriggerMessengerUltimate(attacker, "敌人")).toBe(false);
 		expect(shouldTriggerMessengerUltimate(attacker, "敌人", true)).toBe(true);
+		expect(
+			shouldTriggerMessengerUltimate(
+				attackingCharacter("both", { hasWindSet: true }),
+				"角色",
+			),
+		).toBe(false);
 	});
 
 	it("对我方目标施放攻击型终结技后，全队速度提高 12% 并持续一回合", () => {

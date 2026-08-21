@@ -7,6 +7,7 @@ import {
 	formatEditableNumber,
 	limitPresets,
 	maxResources,
+	normalizeRelicSets,
 	normalizeResourcesForCharacters,
 	type OdeSelection,
 	type SavedData,
@@ -78,23 +79,25 @@ export function pruneRecord<T>(
 export function toNormalizedCharacters(parsed: Partial<SavedData>) {
 	if (!Array.isArray(parsed.characters)) return [];
 	return parsed.characters.map((character, index) =>
-		withoutCharacterOnlyEffects({
-			...createTarget(
-				String(character.id ?? `target-${index + 1}`),
-				index,
-				(targetKinds.includes(character.kind as TargetKind)
+		normalizeRelicSets(
+			withoutCharacterOnlyEffects({
+				...createTarget(
+					String(character.id ?? `target-${index + 1}`),
+					index,
+					(targetKinds.includes(character.kind as TargetKind)
+						? character.kind
+						: "角色") as TargetKind,
+				),
+				...character,
+				id: String(character.id ?? `target-${index + 1}`),
+				kind: (targetKinds.includes(character.kind as TargetKind)
 					? character.kind
 					: "角色") as TargetKind,
-			),
-			...character,
-			id: String(character.id ?? `target-${index + 1}`),
-			kind: (targetKinds.includes(character.kind as TargetKind)
-				? character.kind
-				: "角色") as TargetKind,
-			name: String(character.name ?? ""),
-			speed: String(character.speed ?? ""),
-			baseSpeed: String(character.baseSpeed ?? ""),
-		}),
+				name: String(character.name ?? ""),
+				speed: String(character.speed ?? ""),
+				baseSpeed: String(character.baseSpeed ?? ""),
+			}),
+		),
 	);
 }
 

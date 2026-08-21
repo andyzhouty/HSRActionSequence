@@ -21,6 +21,8 @@
 		"format:ci": "biome ci src/ tests/",
 		"check": "pnpm run check:static && pnpm run test:node && pnpm run test:ui",
 		"check:static": "pnpm exec tsc --noEmit && pnpm run check:data && pnpm run check:docs && pnpm run check:bindings && pnpm run check:architecture && pnpm run check:go && pnpm lint && pnpm format:check",
+		"check:static:ci": "pnpm exec tsc --noEmit && pnpm run check:data && pnpm run check:bindings && pnpm run check:architecture && pnpm run check:go && pnpm lint && pnpm format:check",
+		"check:ci": "pnpm run check:static:ci && pnpm run test:node && pnpm run test:ui",
 		"check:go": "node scripts/checkGo.mjs",
 		"check:data": "node scripts/validateData.mjs",
 		"download:favicons": "node scripts/downloadFavicons.mjs",

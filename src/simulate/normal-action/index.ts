@@ -29,6 +29,7 @@ import {
 import { hasTheHerta } from "../../mechanics/theHerta";
 import {
 	getCharacterPath,
+	hasActiveWindSet,
 	isCharacterTarget,
 	type SkillCode,
 } from "../../utils/action-sequence";
@@ -551,7 +552,7 @@ export function handleNormalAction(
 		// 风套：Q 后行动提前 25%
 		if (
 			isCharacterTarget(character) &&
-			character.hasWindSet &&
+			hasActiveWindSet(character) &&
 			normalUsesUltimate &&
 			!qIsFront &&
 			!justActivatedCombustion

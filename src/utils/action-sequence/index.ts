@@ -341,6 +341,55 @@ export function isCharacterTarget(character: CharacterConfig) {
 	return character.kind === "角色";
 }
 
+export type RelicSet = "wind" | "messenger";
+
+/** 判断风套是否处于唯一有效的激活状态。 */
+export function hasActiveWindSet(character: CharacterConfig) {
+	return (
+		isCharacterTarget(character) &&
+		character.hasWindSet &&
+		!character.hasMessengerSet
+	);
+}
+
+/** 判断信使套是否处于唯一有效的激活状态。 */
+export function hasActiveMessengerSet(character: CharacterConfig) {
+	return (
+		isCharacterTarget(character) &&
+		Boolean(character.hasMessengerSet) &&
+		!character.hasWindSet
+	);
+}
+
+/** 清理旧数据中同时激活风套与信使套的非法状态。 */
+export function normalizeRelicSets(character: CharacterConfig) {
+	if (character.hasWindSet && character.hasMessengerSet) {
+		return { ...character, hasWindSet: false, hasMessengerSet: false };
+	}
+	return character;
+}
+
+/** 切换套装时关闭另一套；再次点击当前套装则允许两套都不激活。 */
+export function toggleRelicSet(
+	character: CharacterConfig,
+	relicSet: RelicSet,
+): CharacterConfig {
+	if (relicSet === "wind") {
+		const enabled = !character.hasWindSet;
+		return {
+			...character,
+			hasWindSet: enabled,
+			hasMessengerSet: false,
+		};
+	}
+	const enabled = !character.hasMessengerSet;
+	return {
+		...character,
+		hasWindSet: false,
+		hasMessengerSet: enabled,
+	};
+}
+
 export function hasEvernightCharacter(characters: CharacterConfig[]) {
 	return characters.some(
 		(character) =>

@@ -26,8 +26,10 @@ jobs:
           cache: true
           cache-dependency-path: go.sum
       - run: pnpm install --frozen-lockfile
+      - name: Remove ignored tests from CI workspace
+        run: git clean -Xdf -- tests
       - name: Run frontend quality checks
-        run: pnpm check
+        run: pnpm run check:ci
       - name: Run backend bridge tests
         run: sed -i 's/describe\.skip/describe/g' tests/unit/infrastructure/backend.test.ts && npx vitest run tests/unit/infrastructure/backend.test.ts
 

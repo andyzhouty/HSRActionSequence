@@ -2,8 +2,8 @@ import { hasSkillEffect } from "../data/characters";
 import type { ActionState } from "../simulate/types";
 import {
 	type CharacterConfig,
+	hasActiveMessengerSet,
 	isAllyTarget,
-	isCharacterTarget,
 	isNonAttackSkill,
 	type TargetKind,
 } from "../utils/action-sequence";
@@ -19,7 +19,7 @@ export function shouldTriggerMessengerUltimate(
 	targetKind: TargetKind | undefined,
 	attackDisabled = false,
 ): boolean {
-	if (!isCharacterTarget(character) || !character.hasMessengerSet) return false;
+	if (!hasActiveMessengerSet(character)) return false;
 	if (attackDisabled) return true;
 	// 昔涟的 Q 是否攻击由德谬歌的行动决定，但信使套对昔涟 Q 均触发。
 	if (hasSkillEffect(character.name, "Q", "cyreneUltimate")) return true;

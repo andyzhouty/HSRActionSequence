@@ -473,6 +473,23 @@ describe("wind set", () => {
 		// 无风套：a-2 在 100 + 100 = 200 AV
 		expect(a2?.actionValue).toBeCloseTo(200, 2);
 	});
+
+	it("风套与信使套同时配置时两者都不激活", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("a", "行动角色", 100, {
+						hasWindSet: true,
+						hasMessengerSet: true,
+					}),
+				],
+				skillOverrides: skills({ "a-1": "AQ" }),
+				limit: 250,
+			}),
+		);
+		const a2 = actions.find((a) => a.key === "a-2");
+		expect(a2?.actionValue).toBeCloseTo(200, 2);
+	});
 });
 
 describe("The Herta", () => {

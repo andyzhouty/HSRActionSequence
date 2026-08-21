@@ -30,6 +30,7 @@ import {
 	type GeneratedAction,
 	getCharacterCid,
 	getCounterWDomainRule,
+	hasActiveWindSet,
 	isCharacterTarget,
 	type SkillCode,
 } from "../utils/action-sequence";
@@ -276,7 +277,7 @@ export function emitSpecialInterruptAction(
 			}
 		}
 	}
-	if (isCharacterTarget(caster.character) && caster.character.hasWindSet) {
+	if (hasActiveWindSet(caster.character)) {
 		const windAdvance = 2500 / casterSpeed;
 		if (!caster.blockNextAdvance) {
 			caster.nextActionValue = Math.max(

@@ -13,11 +13,14 @@ import {
 	getCharacterNameByCid,
 	getCharacterPath,
 	getTargetDefaultName,
+	hasActiveMessengerSet,
+	hasActiveWindSet,
 	hasPassive,
 	hasSkillEffect,
 	isCharacterTarget,
 	type TargetKind,
 	targetKinds,
+	toggleRelicSet,
 	withoutCharacterOnlyEffects,
 } from "../utils/action-sequence";
 import { CharacterAvatar } from "./CharacterAvatar";
@@ -354,23 +357,21 @@ function CharacterCard({
 							<Toggle
 								className="flex-1"
 								label="风套"
-								checked={character.hasWindSet}
+								checked={hasActiveWindSet(character)}
 								onChange={() =>
-									ctx.updateCharacter(character.id, (prev) => ({
-										...prev,
-										hasWindSet: !prev.hasWindSet,
-									}))
+									ctx.updateCharacter(character.id, (prev) =>
+										toggleRelicSet(prev, "wind"),
+									)
 								}
 							/>
 							<Toggle
 								className="flex-1"
 								label="信使套"
-								checked={character.hasMessengerSet ?? false}
+								checked={hasActiveMessengerSet(character)}
 								onChange={() =>
-									ctx.updateCharacter(character.id, (prev) => ({
-										...prev,
-										hasMessengerSet: !prev.hasMessengerSet,
-									}))
+									ctx.updateCharacter(character.id, (prev) =>
+										toggleRelicSet(prev, "messenger"),
+									)
 								}
 							/>
 							<Toggle
