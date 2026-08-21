@@ -115,6 +115,7 @@ describe("CharacterPanel rendering", () => {
 		renderWithContext(<CharacterPanel />);
 		expect(screen.getAllByText("翁瓦克").length).toBeGreaterThanOrEqual(4);
 		expect(screen.getAllByText("风套").length).toBeGreaterThanOrEqual(4);
+		expect(screen.getAllByText("信使套").length).toBeGreaterThanOrEqual(4);
 	});
 
 	it("shows an enabled technique toggle for every character", () => {
@@ -892,6 +893,7 @@ describe("Action Sequence Context integration", () => {
 		ctx.characters.forEach((c) => {
 			expect(c.hasVonwacq).toBe(false);
 			expect(c.hasWindSet).toBe(false);
+			expect(c.hasMessengerSet).toBe(false);
 			expect(c.hasDance).toBe(false);
 			expect(c.eidolon).toBe(0);
 		});

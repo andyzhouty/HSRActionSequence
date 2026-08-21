@@ -24,7 +24,8 @@ describe("角色名称输入", () => {
 		expect(
 			screen.getByRole("listbox", { name: "角色候选" }),
 		).toBeInTheDocument();
-		const femaleAvatar = screen.getByAltText("开拓者·毁灭");
+		expect(screen.getByAltText("开拓者·毁灭（男）")).toBeInTheDocument();
+		const femaleAvatar = screen.getByAltText("开拓者·毁灭（女）");
 		expect(femaleAvatar).toHaveAttribute(
 			"src",
 			expect.stringContaining("favicon/8002.webp"),
@@ -33,7 +34,7 @@ describe("角色名称输入", () => {
 		if (!femaleOption) throw new Error("未找到女性开拓者候选按钮");
 
 		await userEvent.click(femaleOption);
-		expect(onChange).toHaveBeenCalledWith("开拓者·毁灭");
+		expect(onChange).toHaveBeenCalledWith("开拓者·毁灭（女）");
 	});
 
 	it("开拓者角色卡可切换为男性 CID", () => {

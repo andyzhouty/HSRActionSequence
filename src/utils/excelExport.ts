@@ -14,6 +14,7 @@ export const CHARACTER_EXPORT_HEADERS = [
 	"光锥",
 	"翁瓦克",
 	"风套",
+	"信使套",
 ] as const;
 
 /** 汇总角色、忆灵目标和行动展示名，供 Excel 导出统一使用。 */

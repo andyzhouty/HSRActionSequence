@@ -210,6 +210,14 @@ export type LightconeMechanicState = {
 	elationLightconeSpeedBuffed?: boolean;
 };
 
+/** 信使套等遗器效果的临时状态。 */
+export type RelicMechanicState = {
+	/** 信使套速度增益的剩余正常回合数（每个目标分别计时）。 */
+	messengerSpeedBuffTurns?: number;
+	/** 终结技刚触发的增益不消耗施法者当前正常回合。 */
+	messengerSpeedBuffPending?: boolean;
+};
+
 /**
  * 运行时状态的组合根。
  * 新机制应归入对应的状态分组，不能直接向此类型添加无归属字段。
@@ -229,7 +237,8 @@ export type ActionState = SimulationCoreState &
 	SpecialCharacterMechanicState &
 	SpRobinMechanicState &
 	SpAventurineMechanicState &
-	LightconeMechanicState;
+	LightconeMechanicState &
+	RelicMechanicState;
 
 export type ActiveOdeState = {
 	ode: OdeRule;

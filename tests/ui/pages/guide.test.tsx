@@ -61,6 +61,14 @@ describe("使用指南", () => {
 		);
 	});
 
+	it("指南中的水鸟基础速度与角色数据一致", () => {
+		const spRobinGuide = characterGuides["1512"];
+		expect(JSON.stringify(spRobinGuide)).toContain(
+			"95 × 局内百分比速度buff之和）× 1.8，基础为 171",
+		);
+		expect(JSON.stringify(spRobinGuide)).not.toContain("98 × 局内百分比");
+	});
+
 	it("可通过角色别名搜索并展示对应操作说明", async () => {
 		render(<Guide onBack={vi.fn()} />);
 		const search = screen.getByLabelText("搜索角色");

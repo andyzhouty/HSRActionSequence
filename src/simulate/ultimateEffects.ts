@@ -18,6 +18,10 @@ import {
 	activateCombustion,
 	shouldActivateCombustion,
 } from "../mechanics/firefly";
+import {
+	applyMessengerSpeedBuff,
+	shouldTriggerMessengerUltimate,
+} from "../mechanics/relicEffects";
 import { hasSaber } from "../mechanics/saber";
 import { activateGodmode, hasSilverWolfGodmode } from "../mechanics/silverWolf";
 import {
@@ -30,6 +34,7 @@ import { emitTribbieUltimateFollowUp } from "../mechanics/tribbie";
 import type { GeneratedAction } from "../utils/action-sequence";
 import { isCharacterTarget } from "../utils/action-sequence";
 import {
+	getSkillTarget,
 	handleMemoryTrailblazerQ,
 	isAllyTarget,
 	summonMemeState,
@@ -70,6 +75,13 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 	} = params;
 	const caster = states[casterIndex];
 	const character = caster.character;
+	const skillTargetId = getSkillTarget(input, sourceKey, character);
+	const skillTargetKind = states.find(
+		(state) => state.character.id === skillTargetId,
+	)?.character.kind;
+	if (shouldTriggerMessengerUltimate(character, skillTargetKind)) {
+		applyMessengerSpeedBuff(states, character.id, actionValue);
+	}
 	emitTribbieUltimateFollowUp({
 		states,
 		actions,

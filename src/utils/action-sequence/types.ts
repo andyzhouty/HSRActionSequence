@@ -19,6 +19,8 @@ export type CharacterConfig = {
 	baseSpeed: string;
 	hasVonwacq: boolean;
 	hasWindSet: boolean;
+	/** 信使套：装备者对我方目标施放终结技时，为我方全体提供临时速度加成。 */
+	hasMessengerSet?: boolean;
 	hasDance: boolean;
 	/** @deprecated 使用 techniqueOn 替代，保留以兼容旧数据 */
 	hasCastoriceTechnique?: boolean;

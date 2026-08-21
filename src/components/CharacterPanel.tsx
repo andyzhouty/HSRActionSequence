@@ -364,6 +364,17 @@ function CharacterCard({
 							/>
 							<Toggle
 								className="flex-1"
+								label="信使套"
+								checked={character.hasMessengerSet ?? false}
+								onChange={() =>
+									ctx.updateCharacter(character.id, (prev) => ({
+										...prev,
+										hasMessengerSet: !prev.hasMessengerSet,
+									}))
+								}
+							/>
+							<Toggle
+								className="flex-1"
 								label="秘技"
 								checked={
 									character.techniqueOn ??

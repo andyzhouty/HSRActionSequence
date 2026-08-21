@@ -23,6 +23,7 @@ export function character(
 		baseSpeed: String(speed),
 		hasVonwacq: false,
 		hasWindSet: false,
+		hasMessengerSet: false,
 		hasDance: false,
 		eidolon: 0,
 		superimpose: 1,

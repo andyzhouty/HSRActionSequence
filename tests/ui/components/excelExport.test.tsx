@@ -375,7 +375,7 @@ describe("Excel export: domain filtering", () => {
 });
 
 describe("Excel export: display names", () => {
-	it("角色配置只保留网页需要的六列", () => {
+	it("角色配置只保留网页需要的七列", () => {
 		expect(CHARACTER_EXPORT_HEADERS).toEqual([
 			"角色",
 			"速度",
@@ -383,6 +383,7 @@ describe("Excel export: display names", () => {
 			"光锥",
 			"翁瓦克",
 			"风套",
+			"信使套",
 		]);
 	});
 

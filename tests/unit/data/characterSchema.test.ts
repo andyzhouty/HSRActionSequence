@@ -55,6 +55,11 @@ describe("角色数据 schema", () => {
 		const maleElation = characterData.characters.find(
 			(character) => character.cid === "8009",
 		);
+		const femaleMemory = characterData.characters.find(
+			(character) => character.cid === "8008",
+		);
+		expect(femaleMemory?.names[0]).toBe("开拓者·记忆（女）");
+		expect(maleMemory?.names[0]).toBe("开拓者·记忆（男）");
 		expect(maleMemory?.effects?.E).toBe("summonMeme");
 		expect(maleElation?.effects?.Q).toBe("elationTrailblazerUltimate");
 	});

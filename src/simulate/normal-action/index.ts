@@ -12,6 +12,7 @@ import {
 	expirePhainonDomainSpeedBonus,
 	handlePhainonDomain,
 } from "../../mechanics/phainon";
+import { consumeMessengerSpeedBuff } from "../../mechanics/relicEffects";
 import { hasSaber } from "../../mechanics/saber";
 import {
 	consumeGodmodeAction,
@@ -692,6 +693,7 @@ export function handleNormalAction(
 	if (states[stateIndex]?.character.id === character.id) {
 		consumeAllyAdvanceBlock(states[stateIndex]);
 		consumeEntrySpeedBuff(states, stateIndex, actionValue);
+		consumeMessengerSpeedBuff(states, stateIndex, actionValue);
 		consumeSpAventurineSpeedBuff(states, stateIndex, actionValue);
 	}
 

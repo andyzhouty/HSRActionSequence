@@ -139,6 +139,7 @@ export default function ExportExcelButton() {
 				getLightConeDisplayName(c.lc_id),
 				c.hasVonwacq ? "是" : "否",
 				c.hasWindSet ? "是" : "否",
+				c.hasMessengerSet ? "是" : "否",
 			]);
 			const charWs = XLSX.utils.aoa_to_sheet([charHeader, ...charRows]);
 			charWs["!cols"] = [
@@ -148,6 +149,7 @@ export default function ExportExcelButton() {
 				{ wch: 16 },
 				{ wch: 6 },
 				{ wch: 6 },
+				{ wch: 8 },
 			];
 
 			const wb = XLSX.utils.book_new();
