@@ -26,6 +26,8 @@ jobs:
           cache: true
           cache-dependency-path: go.sum
       - run: pnpm install --frozen-lockfile
+      - name: Build frontend assets for Go checks
+        run: pnpm run build
       - name: Remove ignored tests from CI workspace
         run: git clean -Xdf -- tests
       - name: Run frontend quality checks
