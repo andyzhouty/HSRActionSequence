@@ -370,6 +370,24 @@ describe("Archer (红A)", () => {
 		expect(acts.filter((action) => action.isArcherFua)).toHaveLength(0);
 	});
 
+	it("手动输入的 Archer 充能表示当前行动结束后的最终值", () => {
+		const acts = simulateActions(
+			inp({
+				characters: [c("archer", "红A", 100), c("ally", "停云", 200)],
+				resourceValues: { "ally-1": { 红A追击: "4" } },
+				limit: 60,
+			}),
+		);
+		expect(acts.find((action) => action.key === "ally-1")).toMatchObject({
+			archerFuaCharge: 4,
+		});
+		expect(
+			acts.find((action) => action.key === "ally-1-archer-fua"),
+		).toMatchObject({
+			archerFuaCharge: 0,
+		});
+	});
+
 	it("Archer extra E supports before and after inserted Q", () => {
 		const acts = simulateActions(
 			inp({

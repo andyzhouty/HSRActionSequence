@@ -95,6 +95,10 @@ export type SpBladeMechanicState = {
 	spBladeInfiniteFury?: boolean;
 	spBladeCountdownId?: string;
 	spBladeCountdownOwnerId?: string;
+	spBladePendingExtraTurn?: {
+		sourceKey: string;
+		actionValue: number;
+	};
 };
 
 /** 完全燃烧状态及其倒计时信息。 */

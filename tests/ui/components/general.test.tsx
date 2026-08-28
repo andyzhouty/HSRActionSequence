@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import ActionPanel from "../../../src/components/ActionPanel";
@@ -839,6 +839,85 @@ describe("ActionPanel rendering", () => {
 	it("renders resource column header", () => {
 		renderWithContext(<ActionPanel />);
 		expect(screen.getByText("战技点")).toBeInTheDocument();
+	});
+
+	it("阿哈时刻展开的欢愉技默认填入 SP 刃层数", async () => {
+		const actions: GeneratedAction[] = [
+			{
+				key: "@aha-1",
+				characterId: "@aha",
+				actionNo: 1,
+				actionValue: 60,
+				skill: "",
+				speed: 100,
+				isAhaInstant: true,
+				hasElationSkills: true,
+				spBladeStacks: 4,
+			},
+			{
+				key: "@aha-1-elation-c1",
+				characterId: "c1",
+				actionNo: 0,
+				actionValue: 60,
+				skill: "ES",
+				speed: 0,
+				isElationSkill: true,
+				elationSkillParentKey: "@aha-1",
+				spBladeStacks: 4,
+			},
+			{
+				key: "@aha-1-elation-c2",
+				characterId: "c2",
+				actionNo: 0,
+				actionValue: 60,
+				skill: "ES",
+				speed: 0,
+				isElationSkill: true,
+				elationSkillParentKey: "@aha-1",
+				spBladeStacks: 7,
+			},
+		];
+		const characters = [
+			{
+				...defaultCharacters[0],
+				id: "c1",
+				name: "真珠",
+			},
+			{
+				...defaultCharacters[1],
+				id: "c2",
+				name: "爻光",
+			},
+		];
+
+		renderWithContext(<ActionPanel />, {
+			characters,
+			characterNames: { c1: "真珠", c2: "爻光" },
+			characterKinds: { c1: "角色", c2: "角色" },
+			charactersById: Object.fromEntries(
+				characters.map((character) => [character.id, character]),
+			),
+			actions,
+			resources: ["sp刃叠层"],
+			resourceValues: {
+				"@aha-1-elation-c1": { sp刃叠层: "" },
+				"@aha-1-elation-c2": { sp刃叠层: "6" },
+			},
+		});
+
+		await userEvent.click(screen.getByTitle("点击折叠/展开欢愉技列表"));
+		const defaultRow = document.querySelector(
+			'tr[data-action-key="@aha-1-elation-c1"]',
+		);
+		const overriddenRow = document.querySelector(
+			'tr[data-action-key="@aha-1-elation-c2"]',
+		);
+		if (!(defaultRow instanceof HTMLElement))
+			throw new Error("默认层数行未渲染");
+		if (!(overriddenRow instanceof HTMLElement))
+			throw new Error("手动覆盖行未渲染");
+		expect(within(defaultRow).getByDisplayValue("4")).toBeInTheDocument();
+		expect(within(overriddenRow).getByDisplayValue("6")).toBeInTheDocument();
 	});
 
 	it("locks 忆质 resource editing while 长夜月 is in team", () => {

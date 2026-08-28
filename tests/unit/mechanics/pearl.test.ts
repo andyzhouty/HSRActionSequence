@@ -48,9 +48,7 @@ describe("真珠行动轴机制", () => {
 	});
 
 	it("战技和欢愉技不视为攻击", () => {
-		expect(isNonAttackSkill(character("pearl", "真珠", 100), "E")).toBe(
-			true,
-		);
+		expect(isNonAttackSkill(character("pearl", "真珠", 100), "E")).toBe(true);
 		expect(isNonAttackSkill(character("pearl", "真珠", 100), "ES")).toBe(true);
 	});
 

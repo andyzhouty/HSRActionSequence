@@ -13,6 +13,8 @@ import { hasGilgamesh } from "../mechanics/gilgamesh";
 import { clearSpAventurineAhaSpeedBuff } from "../mechanics/spAventurine";
 import {
 	endSpBladeInfiniteFury,
+	flushSpBladeExtraTurn,
+	hasSpBlade,
 	isSpBladeCountdown,
 } from "../mechanics/spBlade";
 import {
@@ -138,6 +140,15 @@ export function handleSpecialAction({
 		});
 		// 欢愉技：所有欢愉角色按参演编号依次释放 ES
 		emitElationSkills(key, actionValue, states, actions);
+		const spBlade = states.find((state) => hasSpBlade(state.character));
+		if (spBlade) {
+			flushSpBladeExtraTurn({
+				owner: spBlade,
+				actions,
+				input,
+				states,
+			});
+		}
 		// 阿哈时刻支持 after 插队（不支持 before），必须复用统一 Q 处理以结算角色效果。
 		const ahaInterrupts = input.ultInterrupts[key] ?? [];
 		for (let ai = 0; ai < ahaInterrupts.length; ai++) {

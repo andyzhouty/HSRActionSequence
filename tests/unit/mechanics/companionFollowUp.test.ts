@@ -55,7 +55,7 @@ describe("不死途与卡芙卡追加攻击", () => {
 		).toBe(3);
 	});
 
-	it("卡芙卡普通回合与 Q 分别回充，充能为 0 的 EQ 回到 2", () => {
+	it("卡芙卡普通回合与 Q 分别回充，手动终值按行动结束后处理", () => {
 		const actions = simulateActions(
 			input({
 				characters: [character("kafka", "卡芙卡", 100)],
@@ -66,10 +66,48 @@ describe("不死途与卡芙卡追加攻击", () => {
 		);
 		expect(
 			actions.find((action) => action.key === "kafka-1")?.kafkaFuaCharge,
-		).toBe(1);
+		).toBe(0);
 		expect(
 			actions.find((action) => action.key === "kafka-1-q")?.kafkaFuaCharge,
-		).toBe(2);
+		).toBe(1);
+	});
+
+	it("手动输入的追击充能表示当前行动结束后的最终值", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("kafka", "卡芙卡", 100),
+					character("ally", "丹恒", 200),
+				],
+				resourceValues: { "ally-1": { [kafkaFuaResourceName]: "0" } },
+				limit: 60,
+			}),
+		);
+		expect(
+			actions.find((action) => action.key === "ally-1-kafka-fua"),
+		).toBeDefined();
+		expect(
+			actions.find((action) => action.key === "ally-1")?.kafkaFuaCharge,
+		).toBe(0);
+	});
+
+	it("不死途手动输入的追击充能表示当前行动结束后的最终值", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("ashveil", "不死途", 100),
+					character("ally", "丹恒", 200),
+				],
+				resourceValues: { "ally-1": { [ashveilFuaResourceName]: "0" } },
+				limit: 60,
+			}),
+		);
+		expect(
+			actions.find((action) => action.key === "ally-1-ashveil-fua"),
+		).toBeDefined();
+		expect(
+			actions.find((action) => action.key === "ally-1")?.ashveilFuaCharge,
+		).toBe(0);
 	});
 
 	it("卡芙卡对其他角色攻击发动 Z 并消耗 1 层", () => {

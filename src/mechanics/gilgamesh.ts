@@ -48,6 +48,9 @@ export function handleGilgameshRecordedAction(params: {
 	// 白厄的境界退场 Q 只是一段普通行动，不享受 Q 的额外兴致。
 	const hasUltimateInterestBonus =
 		isCharacterUltimate && action.isDomainFinalAction !== true;
+	const manualInterest = Number.parseFloat(
+		input.resourceValues?.[action.key]?.[gilgameshInterestResourceName] ?? "",
+	);
 	let interest = state.gilgameshInterest ?? 0;
 	if (action.characterId === "@av0") {
 		const initial = Number.parseFloat(
@@ -67,13 +70,8 @@ export function handleGilgameshRecordedAction(params: {
 			interest += 2;
 			if (isGilgameshAction && state.character.eidolon >= 2) interest += 5;
 		}
-		const manual = Number.parseFloat(
-			input.resourceValues?.[action.key]?.[gilgameshInterestResourceName] ?? "",
-		);
-		if (Number.isFinite(manual)) interest = Math.max(0, manual);
 	}
 	state.gilgameshInterest = interest;
-	if (interest >= 10) state.gilgameshEUnlocked = true;
 	action.gilgameshInterest = interest;
 
 	const oldGilgameshSpeed = state.currentSpeed;
@@ -127,5 +125,26 @@ export function handleGilgameshRecordedAction(params: {
 				gilgameshInterest: state.gilgameshInterest,
 			});
 		}
+	}
+	// 手动输入值表示当前行动结算后的最终兴致，覆盖本次行动的自动结算结果。
+	if (Number.isFinite(manualInterest)) {
+		const nextInterest = Math.max(0, manualInterest);
+		const oldSpeed = state.currentSpeed;
+		state.gilgameshInterest = nextInterest;
+		if (nextInterest >= 10) state.gilgameshEUnlocked = true;
+		action.gilgameshInterest = nextInterest;
+		const nextSpeed =
+			toPositiveNumber(state.character.speed, state.baseSpeed) +
+			state.baseSpeed * 0.1 * nextInterest;
+		if (nextSpeed > 0) {
+			const remaining = state.nextActionValue - action.actionValue;
+			if (!isGilgameshAction && remaining > 0)
+				state.nextActionValue =
+					action.actionValue + remaining * (oldSpeed / nextSpeed);
+			state.currentSpeed = nextSpeed;
+		}
+	}
+	if ((state.gilgameshInterest ?? 0) >= 10) {
+		state.gilgameshEUnlocked = true;
 	}
 }

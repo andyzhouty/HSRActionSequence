@@ -258,13 +258,11 @@ export function handleSpAventurineRecordedAction(params: {
 	} = params;
 	const eidolon = state.character.eidolon;
 	const isSpAventurineSelf = action.characterId === state.character.id;
-	// 手动资源覆盖（热意列填写值成为该行基准，同 sp刃叠层口径）。
+	// 手动资源覆盖：热意列填写值表示该行动结算后的最终热意。
 	const manualFervor = Number.parseFloat(
 		input.resourceValues?.[action.key]?.[spAventurineFervorResourceName] ?? "",
 	);
-	const prevFervor = Number.isFinite(manualFervor)
-		? clampSpAventurineFervor(manualFervor, eidolon)
-		: (state.spAventurineFervor ?? 0);
+	const previousFervor = state.spAventurineFervor ?? 0;
 	// 水砂施放战技时重置天赋可触发次数（精确匹配 E，欢愉技 ES 不触发）。
 	if (isSpAventurineSelf && action.skill === "E") {
 		state.spAventurineTalentTriggersLeft = TALENT_MAX_TRIGGERS;
@@ -291,7 +289,10 @@ export function handleSpAventurineRecordedAction(params: {
 		state.spAventurineAhaSpeedBuff = true;
 		refreshAhaSchedule(action.actionValue);
 	}
-	let fervor = clampSpAventurineFervor(prevFervor + gainResult.gain, eidolon);
+	let fervor = clampSpAventurineFervor(
+		previousFervor + gainResult.gain,
+		eidolon,
+	);
 	// 水砂自身 E/Q 获得额外热意；Q 同时触发自身 +30% 速度。
 	if (isSpAventurineSelf) {
 		if (action.skill === "E") {
@@ -330,12 +331,18 @@ export function handleSpAventurineRecordedAction(params: {
 			);
 		}
 	}
+	if (Number.isFinite(manualFervor)) {
+		fervor = clampSpAventurineFervor(manualFervor, eidolon);
+	}
 	state.spAventurineFervor = fervor;
 	action.spAventurineFervor = fervor;
-	// 热意达到阈值：立即施放一次普通欢愉技。
-	for (const threshold of getFervorThresholds(eidolon)) {
-		if (prevFervor < threshold && fervor >= threshold) {
-			emitImmediateElation(action.key, action.actionValue, threshold);
+	// 热意达到阈值：立即施放一次普通欢愉技。阿哈本身没有热意收益，
+	// 其手动终值只用于决定随后欢愉技是否强化，不应在阿哈内部再触发一次普通欢愉技。
+	if (!action.isAhaInstant && action.characterId !== "@av0") {
+		for (const threshold of getFervorThresholds(eidolon)) {
+			if (previousFervor < threshold && fervor >= threshold) {
+				emitImmediateElation(action.key, action.actionValue, threshold);
+			}
 		}
 	}
 }

@@ -98,11 +98,19 @@ export function isSpBladeAttack(params: {
 	attacker: CharacterConfig | undefined;
 	attackDisabled: Record<string, boolean> | undefined;
 	isForcedAttack: boolean;
+	isSilverWolfNonAttack?: boolean;
 }): boolean {
-	const { action, attacker, attackDisabled, isForcedAttack } = params;
+	const {
+		action,
+		attacker,
+		attackDisabled,
+		isForcedAttack,
+		isSilverWolfNonAttack,
+	} = params;
 	if (action.isSpBladeFuryActivation || action.isSpBladeCountdownAction)
 		return false;
 	if (action.isAhaInstant && isBasicAttackSkill(action.skill)) return false;
+	if (isSilverWolfNonAttack) return false;
 	if (attacker?.kind === "敌人" || action.targetKind === "敌人") return true;
 	const forced =
 		isForcedAttack ||
@@ -117,7 +125,7 @@ export function isSpBladeAttack(params: {
 
 export function emitSpBladeExtraTurn(params: {
 	owner: ActionState;
-	source: GeneratedAction;
+	source: Pick<GeneratedAction, "key" | "actionValue">;
 	actions: GeneratedAction[];
 	input: SimulateActionsInput;
 	states: ActionState[];
@@ -151,6 +159,39 @@ export function emitSpBladeExtraTurn(params: {
 	return true;
 }
 
+export function deferSpBladeExtraTurn(
+	owner: ActionState,
+	source: Pick<GeneratedAction, "key" | "actionValue">,
+): void {
+	if (owner.spBladePendingExtraTurn) return;
+	owner.spBladePendingExtraTurn = {
+		sourceKey: source.key,
+		actionValue: source.actionValue,
+	};
+}
+
+export function flushSpBladeExtraTurn(params: {
+	owner: ActionState;
+	actions: GeneratedAction[];
+	input: SimulateActionsInput;
+	states: ActionState[];
+}): void {
+	const { owner, actions, input, states } = params;
+	const pending = owner.spBladePendingExtraTurn;
+	if (!pending) return;
+	owner.spBladePendingExtraTurn = undefined;
+	emitSpBladeExtraTurn({
+		owner,
+		source: {
+			key: pending.sourceKey,
+			actionValue: pending.actionValue,
+		},
+		actions,
+		input,
+		states,
+	});
+}
+
 /** sp刃 Q 激活无量忿怒（需在其它角色结算前先打标记）。 */
 export function maybeActivateSpBladeFury(
 	state: ActionState,
@@ -176,18 +217,24 @@ export function handleSpBladeRecordedAction(params: {
 	actions: GeneratedAction[];
 	input: SimulateActionsInput;
 	isForcedAttack: boolean;
+	isSilverWolfNonAttack?: boolean;
 }): void {
-	const { state, action, attacker, states, actions, input, isForcedAttack } =
-		params;
+	const {
+		state,
+		action,
+		attacker,
+		states,
+		actions,
+		input,
+		isForcedAttack,
+		isSilverWolfNonAttack,
+	} = params;
 	const manualStacks = Number.parseFloat(
 		input.resourceValues?.[action.key]?.[spBladeStackResourceName] ?? "",
 	);
-	if (Number.isFinite(manualStacks)) {
-		state.spBladeStacks = clampSpBladeStacks(manualStacks);
-	}
 	let stacks = state.spBladeStacks ?? 0;
 	// 只有无量忿怒期间的有效攻击及其特殊加层才会自动增加叠层；
-	// 非无量忿怒期间仅保留用户手动输入的基准值。
+	// 非无量忿怒期间不会自动增加叠层。
 	if (state.spBladeInfiniteFury) {
 		if (
 			isSpBladeAttack({
@@ -195,6 +242,7 @@ export function handleSpBladeRecordedAction(params: {
 				attacker,
 				attackDisabled: input.attackDisabled,
 				isForcedAttack,
+				isSilverWolfNonAttack,
 			})
 		)
 			stacks += 1;
@@ -224,16 +272,38 @@ export function handleSpBladeRecordedAction(params: {
 		)
 			stacks += 1;
 	}
+	// 手动输入值表示当前行动结算后的最终层数，覆盖本次行动的自动结算结果。
+	if (Number.isFinite(manualStacks)) stacks = clampSpBladeStacks(manualStacks);
 	state.spBladeStacks = stacks;
 	action.spBladeStacks = state.spBladeStacks;
 	action.spBladeInfiniteFury = state.spBladeInfiniteFury;
-	emitSpBladeExtraTurn({
-		owner: state,
-		source: action,
-		actions,
-		input: states.some((s) => s.domainState !== undefined)
-			? { ...input, spBladeExtraTurnToggles: { [action.key]: false } }
-			: input,
-		states,
-	});
+	const isAhaElationSkill =
+		action.isElationSkill === true &&
+		action.elationSkillParentKey !== undefined &&
+		actions.some(
+			(candidate) =>
+				candidate.key === action.elationSkillParentKey &&
+				candidate.isAhaInstant === true,
+		);
+	const hasActiveDomain = states.some((s) => s.domainState !== undefined);
+	const extraTurnInput = hasActiveDomain
+		? { ...input, spBladeExtraTurnToggles: { [action.key]: false } }
+		: input;
+	if (
+		isAhaElationSkill &&
+		!hasActiveDomain &&
+		(state.spBladeStacks ?? 0) >=
+			getSpBladeExtraTurnThreshold(state.character.eidolon) &&
+		input.spBladeExtraTurnToggles?.[action.key] !== false
+	) {
+		deferSpBladeExtraTurn(state, action);
+	} else {
+		emitSpBladeExtraTurn({
+			owner: state,
+			source: action,
+			actions,
+			input: extraTurnInput,
+			states,
+		});
+	}
 }

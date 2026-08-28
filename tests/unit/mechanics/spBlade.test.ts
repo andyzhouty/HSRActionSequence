@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	flushSpBladeExtraTurn,
 	handleSpBladeRecordedAction,
 	isSpBladeAttack,
 	spBladeStackResourceName,
@@ -81,6 +82,41 @@ describe("千冶·刃", () => {
 		).toBe(false);
 	});
 
+	it("手动输入的 SP 刃层数表示当前行动结束后的最终值", () => {
+		const blade = actionState(
+			character("blade", "千冶·刃", 100, { eidolon: 2 }),
+		);
+		blade.spBladeInfiniteFury = true;
+		blade.spBladeStacks = 4;
+		const action: GeneratedAction = {
+			key: "ally-1",
+			characterId: "ally",
+			actionNo: 1,
+			actionValue: 50,
+			skill: "A",
+			speed: 100,
+		};
+		const ally = character("ally", "停云", 100);
+
+		handleSpBladeRecordedAction({
+			state: blade,
+			action,
+			attacker: ally,
+			states: [blade],
+			actions: [],
+			input: input({
+				characters: [blade.character, ally],
+				resourceValues: {
+					[action.key]: { [spBladeStackResourceName]: "6" },
+				},
+			}),
+			isForcedAttack: false,
+		});
+
+		expect(blade.spBladeStacks).toBe(6);
+		expect(action.spBladeStacks).toBe(6);
+	});
+
 	it("男性记忆主的普攻同样会触发史诗额外叠层", () => {
 		const blade = actionState(character("blade", "千冶·刃", 100));
 		blade.spBladeInfiniteFury = true;
@@ -142,5 +178,110 @@ describe("千冶·刃", () => {
 		});
 
 		expect(blade.spBladeStacks).toBe(0);
+	});
+
+	it("银狼非无敌状态的欢愉技不叠层", () => {
+		const blade = actionState(character("blade", "千冶·刃", 100));
+		blade.spBladeInfiniteFury = true;
+		const silverWolf = character("sw", "银狼LV.999", 100);
+		const action: GeneratedAction = {
+			key: "@aha-1-elation-sw",
+			characterId: "sw",
+			actionNo: 0,
+			actionValue: 50,
+			skill: "ES",
+			speed: 0,
+			isElationSkill: true,
+			elationSkillParentKey: "@aha-1",
+		};
+
+		handleSpBladeRecordedAction({
+			state: blade,
+			action,
+			attacker: silverWolf,
+			states: [blade],
+			actions: [
+				{
+					key: "@aha-1",
+					characterId: "@aha",
+					actionNo: 1,
+					actionValue: 50,
+					skill: "",
+					speed: 100,
+					isAhaInstant: true,
+				},
+				action,
+			],
+			input: input({ characters: [blade.character, silverWolf] }),
+			isForcedAttack: false,
+			isSilverWolfNonAttack: true,
+		});
+
+		expect(blade.spBladeStacks).toBe(0);
+	});
+
+	it("阿哈欢愉技期间达到阈值后延后释放额外 E", () => {
+		const blade = actionState(
+			character("blade", "千冶·刃", 100, { eidolon: 2 }),
+		);
+		blade.spBladeInfiniteFury = true;
+		blade.spBladeStacks = 6;
+		const elationAction: GeneratedAction = {
+			key: "@aha-1-elation-yaoguang",
+			characterId: "yaoguang",
+			actionNo: 0,
+			actionValue: 50,
+			skill: "ES",
+			speed: 0,
+			isElationSkill: true,
+			elationSkillParentKey: "@aha-1",
+		};
+		const actions: GeneratedAction[] = [
+			{
+				key: "@aha-1",
+				characterId: "@aha",
+				actionNo: 1,
+				actionValue: 50,
+				skill: "",
+				speed: 100,
+				isAhaInstant: true,
+			},
+			elationAction,
+		];
+
+		handleSpBladeRecordedAction({
+			state: blade,
+			action: elationAction,
+			attacker: character("yaoguang", "爻光", 100),
+			states: [blade],
+			actions,
+			input: input({ characters: [blade.character] }),
+			isForcedAttack: false,
+		});
+
+		expect(blade.spBladeStacks).toBe(7);
+		expect(actions).toHaveLength(2);
+
+		flushSpBladeExtraTurn({
+			owner: blade,
+			actions,
+			input: input({ characters: [blade.character] }),
+			states: [blade],
+		});
+
+		expect(actions[2]).toMatchObject({
+			key: "@aha-1-elation-yaoguang-sp-blade-extra",
+			isSpBladeExtraAction: true,
+		});
+		handleSpBladeRecordedAction({
+			state: blade,
+			action: actions[2],
+			attacker: blade.character,
+			states: [blade],
+			actions,
+			input: input({ characters: [blade.character] }),
+			isForcedAttack: true,
+		});
+		expect(blade.spBladeStacks).toBe(1);
 	});
 });

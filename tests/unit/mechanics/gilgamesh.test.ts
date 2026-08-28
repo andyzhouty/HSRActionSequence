@@ -147,7 +147,7 @@ describe("Gilgamesh", () => {
 		).toBe("闪");
 	});
 
-	it("applies Q and per-row manual 兴致 values as the following baseline", () => {
+	it("applies Q and per-row manual 兴致 values as the current action's final value", () => {
 		const actions = simulateActions(
 			input({
 				characters: [
@@ -165,6 +165,22 @@ describe("Gilgamesh", () => {
 		expect(
 			actions.find((action) => action.key === "ally-2")?.gilgameshInterest,
 		).toBe(7);
+	});
+
+	it("手动输入兴致覆盖当前行动自动增加的结果", () => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("gil", "吉尔伽美什", 100),
+					character("ally", "停云", 200),
+				],
+				resourceValues: { "ally-1": { 兴致: "0" } },
+				limit: 60,
+			}),
+		);
+		expect(actions.find((action) => action.key === "ally-1")).toMatchObject({
+			gilgameshInterest: 0,
+		});
 	});
 
 	it("E2 starts at 5 and its Q does not clear 兴致 before adding its two-plus-five bonus", () => {

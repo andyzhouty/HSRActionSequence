@@ -239,6 +239,23 @@ describe("砂金·戏浪 模拟", () => {
 		expect(acts.find((a) => a.key === "ally-1")?.spAventurineFervor).toBe(2);
 	});
 
+	it("手动输入的热意表示当前行动结束后的最终值", () => {
+		const acts = simulateActions(
+			input({
+				characters: [
+					character("spaven", "水砂", 100),
+					character("ally", "大黑塔", 150),
+				],
+				resourceValues: { "ally-1": { 热意: "1" } },
+				limit: 100,
+			}),
+		);
+		expect(acts.find((a) => a.key === "ally-1")?.spAventurineFervor).toBe(1);
+		expect(
+			acts.some((a) => a.key === "ally-1-elation-spaven-fervor-10"),
+		).toBe(false);
+	});
+
 	it("热意达到 10 立即施放一次普通欢愉技", () => {
 		const acts = simulateActions(
 			input({
@@ -247,11 +264,11 @@ describe("砂金·戏浪 模拟", () => {
 					character("ally", "大黑塔", 150),
 					character("enemy", "敌人", 300, { kind: "敌人" }),
 				],
-				resourceValues: { "ally-1": { 热意: "9" } },
+				resourceValues: { "@av0-1": { 热意: "8" } },
 				limit: 300,
 			}),
 		);
-		// ally-1：手动 9 + 攻击/天赋 2 = 11，越过阈值 10 → 立即普通欢愉技
+		// ally-1：行动前 8 + 攻击/天赋 2 = 10，越过阈值 10 → 立即普通欢愉技
 		const immediate = acts.find(
 			(a) => a.key === "ally-1-elation-spaven-fervor-10",
 		);
@@ -259,7 +276,7 @@ describe("砂金·戏浪 模拟", () => {
 		expect(immediate?.isElationSkill).toBe(true);
 		expect(immediate?.isEnhancedElationSkill).toBeUndefined();
 		expect(immediate?.elationSkillParentKey).toBe("ally-1");
-		expect(acts.find((a) => a.key === "ally-1")?.spAventurineFervor).toBe(11);
+		expect(acts.find((a) => a.key === "ally-1")?.spAventurineFervor).toBe(10);
 	});
 
 	it("E1：热意达到 20/30 也各施放一次普通欢愉技", () => {
@@ -270,7 +287,7 @@ describe("砂金·戏浪 模拟", () => {
 					character("ally", "大黑塔", 150),
 					character("enemy", "敌人", 300, { kind: "敌人" }),
 				],
-				resourceValues: { "ally-1": { 热意: "18" } },
+				resourceValues: { "@av0-1": { 热意: "18" } },
 				limit: 300,
 			}),
 		);
@@ -284,7 +301,7 @@ describe("砂金·戏浪 模拟", () => {
 					character("ally", "大黑塔", 150),
 					character("enemy", "敌人", 300, { kind: "敌人" }),
 				],
-				resourceValues: { "ally-1": { 热意: "28" } },
+				resourceValues: { "@av0-1": { 热意: "28" } },
 				limit: 300,
 			}),
 		);
@@ -301,7 +318,7 @@ describe("砂金·戏浪 模拟", () => {
 					character("ally", "大黑塔", 150),
 					character("enemy", "敌人", 300, { kind: "敌人" }),
 				],
-				resourceValues: { "ally-1": { 热意: "38" } },
+				resourceValues: { "@av0-1": { 热意: "38" } },
 				limit: 300,
 			}),
 		);

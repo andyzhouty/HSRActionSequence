@@ -51,10 +51,6 @@ export function handleArcherRecordedAction(params: {
 	const manualCharge = Number.parseFloat(
 		input.resourceValues?.[action.key]?.[archerFuaResourceName] ?? "",
 	);
-	if (Number.isFinite(manualCharge)) {
-		state.archerFuaCharge = clampArcherFuaCharge(manualCharge);
-	}
-	action.archerFuaCharge = state.archerFuaCharge;
 	if (
 		!action.isArcherFua &&
 		!action.isDomainAction &&
@@ -87,6 +83,11 @@ export function handleArcherRecordedAction(params: {
 			});
 		}
 	}
+	// 手动输入值表示当前行动（包括其自动追击）结算后的最终充能。
+	if (Number.isFinite(manualCharge)) {
+		state.archerFuaCharge = clampArcherFuaCharge(manualCharge);
+	}
+	action.archerFuaCharge = state.archerFuaCharge;
 }
 
 type ArcherExtraEParams = {

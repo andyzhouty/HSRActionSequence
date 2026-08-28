@@ -76,15 +76,9 @@ export function handleCompanionFollowUpRecordedAction(params: {
 	const ashveilManualCharge = Number.parseFloat(
 		input.resourceValues?.[action.key]?.[ashveilFuaResourceName] ?? "",
 	);
-	if (ashveilState && Number.isFinite(ashveilManualCharge)) {
-		ashveilState.ashveilFuaCharge = clampAshveilFuaCharge(ashveilManualCharge);
-	}
 	const kafkaManualCharge = Number.parseFloat(
 		input.resourceValues?.[action.key]?.[kafkaFuaResourceName] ?? "",
 	);
-	if (kafkaState && Number.isFinite(kafkaManualCharge)) {
-		kafkaState.kafkaFuaCharge = clampKafkaFuaCharge(kafkaManualCharge);
-	}
 	const isCompanionFollowUpTrigger =
 		attacker?.kind === "角色" &&
 		!action.isFuaAction &&
@@ -135,6 +129,13 @@ export function handleCompanionFollowUpRecordedAction(params: {
 				(kafkaState.kafkaFuaCharge ?? 0) + 1,
 			);
 		}
+	}
+	// 手动输入值表示当前行动（包括其自动追击）结算后的最终充能。
+	if (ashveilState && Number.isFinite(ashveilManualCharge)) {
+		ashveilState.ashveilFuaCharge = clampAshveilFuaCharge(ashveilManualCharge);
+	}
+	if (kafkaState && Number.isFinite(kafkaManualCharge)) {
+		kafkaState.kafkaFuaCharge = clampKafkaFuaCharge(kafkaManualCharge);
 	}
 	if (ashveilState) action.ashveilFuaCharge = ashveilState.ashveilFuaCharge;
 	if (kafkaState) action.kafkaFuaCharge = kafkaState.kafkaFuaCharge;

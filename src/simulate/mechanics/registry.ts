@@ -177,6 +177,7 @@ const recordedActionMechanics: RecordedActionMechanic[] = [
 					actions: context.actions,
 					input: context.input,
 					isForcedAttack: flags.isForcedAttack,
+					isSilverWolfNonAttack: flags.isSilverWolfNonAttack,
 				});
 			}
 		},

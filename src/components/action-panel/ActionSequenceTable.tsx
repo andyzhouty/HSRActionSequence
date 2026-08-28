@@ -4,7 +4,10 @@ import {
 	useActionSequenceDerivedContext,
 } from "../../contexts/ActionSequenceContext";
 import type { GeneratedAction } from "../../utils/action-sequence";
-import { formatActionValue } from "../../utils/action-sequence";
+import {
+	formatActionValue,
+	spBladeStackResourceName,
+} from "../../utils/action-sequence";
 import {
 	ActionLimitMarkerRow,
 	ActionRow,
@@ -195,23 +198,32 @@ function ElationSkillRow({ action }: { action: GeneratedAction }) {
 					ES
 				</span>
 			</td>
-			{ctx.resources.map((name) => (
-				<td
-					key={`es-res-${action.key}-${name}`}
-					className="whitespace-nowrap px-2 py-2"
-				>
-					<input
-						type="text"
-						value={ctx.resourceValues[action.key]?.[name] ?? ""}
-						onClick={(event) => event.stopPropagation()}
-						onContextMenu={(event) => event.stopPropagation()}
-						onChange={(event) =>
-							ctx.updateResourceValue(action.key, name, event.target.value)
-						}
-						className="h-10 w-full min-w-0 rounded-lg border border-gray-600 bg-gray-700 px-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-					/>
-				</td>
-			))}
+			{ctx.resources.map((name) => {
+				const storedValue = ctx.resourceValues[action.key]?.[name];
+				const value =
+					name === spBladeStackResourceName &&
+					action.spBladeStacks !== undefined &&
+					(storedValue === undefined || storedValue === "")
+						? String(action.spBladeStacks)
+						: (storedValue ?? "");
+				return (
+					<td
+						key={`es-res-${action.key}-${name}`}
+						className="whitespace-nowrap px-2 py-2"
+					>
+						<input
+							type="text"
+							value={value}
+							onClick={(event) => event.stopPropagation()}
+							onContextMenu={(event) => event.stopPropagation()}
+							onChange={(event) =>
+								ctx.updateResourceValue(action.key, name, event.target.value)
+							}
+							className="h-10 w-full min-w-0 rounded-lg border border-gray-600 bg-gray-700 px-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+						/>
+					</td>
+				);
+			})}
 		</tr>
 	);
 }
