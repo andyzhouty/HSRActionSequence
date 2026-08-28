@@ -94,6 +94,7 @@ export function ActionRow({
 	const isInterrupt =
 		action.actionNo === 0 &&
 		!action.isSparxieExtraAction &&
+		!action.isPearlExtraAction &&
 		!action.isDomainAction &&
 		!action.isMemospriteAction &&
 		!action.isEveyAction &&
@@ -420,32 +421,34 @@ export function ActionRow({
 														: "欢愉技"
 													: action.isSparxieExtraAction
 														? "额外"
-														: isDomain
-															? `境界 ${action.actionNo}`
-															: isAssist
-																? "助战"
-																: action.isEveySelfDestructAction
-																	? "额外"
-																	: action.isMemeAdvanceAction
-																		? `第 ${action.actionNo} 动`
-																		: action.isMemospriteAction &&
-																				action.actionNo > 0
+														: action.isPearlExtraAction
+															? "额外"
+															: isDomain
+																? `境界 ${action.actionNo}`
+																: isAssist
+																	? "助战"
+																	: action.isEveySelfDestructAction
+																		? "额外"
+																		: action.isMemeAdvanceAction
 																			? `第 ${action.actionNo} 动`
-																			: action.isMemospriteAction
-																				? "额外"
-																				: action.isOdeExtraAction
-																					? "诗篇"
-																					: isInterrupt
-																						? "插队"
-																						: action.isAssistFollowUp
-																							? `额外 ${action.actionNo}`
-																							: action.key.includes(
-																										"-break-extra-",
-																									)
-																								? "额外"
-																								: action.isAglaeaSupremeAction
-																									? `至高 ${action.actionNo}`
-																									: `第 ${action.actionNo} 动`}
+																			: action.isMemospriteAction &&
+																					action.actionNo > 0
+																				? `第 ${action.actionNo} 动`
+																				: action.isMemospriteAction
+																					? "额外"
+																					: action.isOdeExtraAction
+																						? "诗篇"
+																						: isInterrupt
+																							? "插队"
+																							: action.isAssistFollowUp
+																								? `额外 ${action.actionNo}`
+																								: action.key.includes(
+																											"-break-extra-",
+																										)
+																									? "额外"
+																									: action.isAglaeaSupremeAction
+																										? `至高 ${action.actionNo}`
+																										: `第 ${action.actionNo} 动`}
 						</div>
 					)}
 			</td>

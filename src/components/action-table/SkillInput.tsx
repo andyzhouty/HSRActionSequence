@@ -29,6 +29,7 @@ export function SkillInput({ action }: { action: GeneratedAction }) {
 	const isInterrupt =
 		action.actionNo === 0 &&
 		!action.isSparxieExtraAction &&
+		!action.isPearlExtraAction &&
 		!action.isDomainAction &&
 		!action.isMemospriteAction &&
 		!action.isEveyAction &&

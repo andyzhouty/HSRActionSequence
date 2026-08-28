@@ -522,6 +522,9 @@ export function canSelectSkillTargetForAction(
 	target: CharacterConfig,
 ) {
 	if (character.id === target.id) return false;
+	if (hasSkillEffect(character.name, "Q", "pearlUltimate")) {
+		return isCharacterTarget(target);
+	}
 	if (!isAllyTarget(target.kind)) return false;
 	if (
 		hasSkillEffect(character.name, "E", "sundayPullWithMemosprite") &&
@@ -548,7 +551,8 @@ export function canSelectAllyForSkill(
 		skill === "Q" &&
 		(hasSkillEffect(character.name, "Q", "allyTargetSelectable") ||
 			hasSkillEffect(character.name, "Q", "elationTrailblazerUltimate") ||
-			hasSkillEffect(character.name, "Q", "spRobinUltimate"));
+			hasSkillEffect(character.name, "Q", "spRobinUltimate") ||
+			hasSkillEffect(character.name, "Q", "pearlUltimate"));
 	return targetsWithE || targetsWithQ;
 }
 

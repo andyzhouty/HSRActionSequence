@@ -409,6 +409,13 @@
       "participantId": 116
     },
     {
+      "cid": "1503",
+      "effects": {
+        "Q": "pearlUltimate"
+      },
+      "participantId": 104
+    },
+    {
       "cid": "1505",
       "participantId": 146
     },

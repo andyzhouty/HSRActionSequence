@@ -18,6 +18,7 @@ import {
 	activateCombustion,
 	shouldActivateCombustion,
 } from "../mechanics/firefly";
+import { applyPearlUltimate } from "../mechanics/pearl";
 import {
 	applyMessengerSpeedBuff,
 	shouldTriggerMessengerUltimate,
@@ -32,9 +33,11 @@ import {
 } from "../mechanics/spRobin";
 import { emitTribbieUltimateFollowUp } from "../mechanics/tribbie";
 import type { GeneratedAction } from "../utils/action-sequence";
-import { isCharacterTarget } from "../utils/action-sequence";
 import {
-	getSkillTarget,
+	isCharacterTarget,
+	shouldRememberSkillTarget,
+} from "../utils/action-sequence";
+import {
 	handleMemoryTrailblazerQ,
 	isAllyTarget,
 	summonMemeState,
@@ -78,7 +81,12 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 	} = params;
 	const caster = states[casterIndex];
 	const character = caster.character;
-	const skillTargetId = getSkillTarget(input, sourceKey, character);
+	const skillTargetId =
+		(qActionKey ? input.skillTargets[qActionKey] : undefined) ??
+		input.skillTargets[sourceKey] ??
+		(shouldRememberSkillTarget(character.name)
+			? input.defaultSkillTargets[character.id]
+			: undefined);
 	const skillTargetKind = states.find(
 		(state) => state.character.id === skillTargetId,
 	)?.character.kind;
@@ -99,6 +107,14 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 		actionValue,
 	});
 	if (hasSaber(character)) caster.saberForceBasicAttack = true;
+	applyPearlUltimate({
+		states,
+		casterIndex,
+		targetId: skillTargetId,
+		actionValue,
+		actions,
+		sourceKey,
+	});
 
 	// 1. 阿格莱雅至高之姿
 	handleAglaeaSkillEffects(states, casterIndex, "Q", actionValue);

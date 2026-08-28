@@ -797,6 +797,15 @@
       "baseSpeed": 101
     },
     {
+      "cid": "1503",
+      "names": [
+        "真珠",
+        "Pearl"
+      ],
+      "path": "Elation",
+      "baseSpeed": 99
+    },
+    {
       "cid": "1504",
       "names": [
         "不死途",

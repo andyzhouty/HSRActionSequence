@@ -76,6 +76,7 @@ export type GeneratedAction = ActionIntent & {
 	isEnhancedElationSkill?: boolean;
 	hasElationSkills?: boolean;
 	elationSkillParentKey?: string;
+	isPearlExtraAction?: boolean;
 	isFuaAction?: boolean;
 	isAshveilFua?: boolean;
 	isKafkaFua?: boolean;

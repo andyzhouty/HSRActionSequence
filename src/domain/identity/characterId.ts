@@ -34,6 +34,7 @@ export const CHARACTER_IDS = {
 	gilgamesh: "1509",
 	spRobin: "1512",
 	spAventurine: "1513",
+	pearl: "1503",
 	ashveil: "1504",
 	evanescia: "1505",
 	hyacine: "1410",

@@ -94,6 +94,10 @@ function getDerivedExtraTurnSourceKey(action: GeneratedAction): string | null {
 	if (action.isSparxieExtraAction && action.key.endsWith("-sparxie-extra")) {
 		return action.key.slice(0, -"-sparxie-extra".length);
 	}
+	if (action.isPearlExtraAction) {
+		const pearlExtraMatch = action.key.match(/^(.*)-pearl-extra-.+$/);
+		if (pearlExtraMatch) return pearlExtraMatch[1];
+	}
 	const breakExtraMatch = action.key.match(/^(.*)-break-extra-\d+$/);
 	if (breakExtraMatch) return breakExtraMatch[1];
 	if (action.isOdeExtraAction) {
@@ -114,7 +118,7 @@ function getArcherArrowParentKey(action: GeneratedAction): string | null {
 function getRequiredPredecessorKey(action: GeneratedAction): string | null {
 	const extraAhaSourceKey = getExtraAhaSourceKey(action);
 	if (extraAhaSourceKey) return extraAhaSourceKey;
-	return action.isSparxieExtraAction
+	return action.isSparxieExtraAction || action.isPearlExtraAction
 		? getDerivedExtraTurnSourceKey(action)
 		: null;
 }
