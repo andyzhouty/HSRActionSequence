@@ -107,11 +107,16 @@ describe("光锥 23063 你将起身歌唱", () => {
 });
 
 describe("光锥 23064 向浪花掷下盛夏", () => {
-	it("23064/21066/22008 已写入光锥数据", () => {
+	it("欢愉光锥及相关光锥已写入数据", () => {
 		const ids = lightConeData.lightcones.map((lc) => lc.id);
+		expect(ids).toContain(23055);
 		expect(ids).toContain(23064);
 		expect(ids).toContain(21066);
 		expect(ids).toContain(22008);
+		const lc23055 = lightConeData.lightcones.find((lc) => lc.id === 23055);
+		expect(lc23055?.name).toBe("献给明日的色彩");
+		expect(lc23055?.rarity).toBe(5);
+		expect(lc23055?.path).toBe("Elation");
 		const lc23064 = lightConeData.lightcones.find((lc) => lc.id === 23064);
 		expect(lc23064?.path).toBe("Elation");
 		const lc22008 = lightConeData.lightcones.find((lc) => lc.id === 22008);

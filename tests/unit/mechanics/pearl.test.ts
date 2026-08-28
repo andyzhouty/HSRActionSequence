@@ -4,7 +4,10 @@ import {
 	hasSkillEffect,
 } from "../../../src/data/characters";
 import { simulateActions } from "../../../src/simulate/actions";
-import { canSelectSkillTargetForAction } from "../../../src/utils/action-sequence";
+import {
+	canSelectSkillTargetForAction,
+	isNonAttackSkill,
+} from "../../../src/utils/action-sequence";
 import {
 	getDisplayOrderedActions,
 	getExtraTurnParentKey,
@@ -42,6 +45,10 @@ describe("真珠行动轴机制", () => {
 		expect(getCharacterParticipantId("真珠")).toBe(104);
 		expect(getCharacterParticipantId("Pearl")).toBe(104);
 		expect(hasSkillEffect("真珠", "Q", "pearlUltimate")).toBe(true);
+	});
+
+	it("欢愉技不视为攻击", () => {
+		expect(isNonAttackSkill(character("pearl", "真珠", 100), "ES")).toBe(true);
 	});
 
 	it.each([

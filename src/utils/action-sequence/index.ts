@@ -560,12 +560,14 @@ export function isBasicAttackSkill(skill: SkillCode): boolean {
 	return skill === "" || skill === "A";
 }
 
-/** 可选我方目标的技能、知更鸟/阮梅 E/Q 和藿藿 E 都不计为攻击。 */
+/** 可选我方目标的技能、真珠 ES、知更鸟/阮梅 E/Q 和藿藿 E 都不计为攻击。 */
 export function isNonAttackSkill(
 	character: CharacterConfig,
 	skill: SkillCode,
 ): boolean {
 	const cid = getCharacterCid(character.name);
+	// 真珠的欢愉技不视为攻击。
+	if (cid === CHARACTER_IDS.pearl && skill === "ES") return true;
 	// Saber 的 A/E/Q 均固定视为攻击。
 	if (
 		cid === CHARACTER_IDS.saber &&

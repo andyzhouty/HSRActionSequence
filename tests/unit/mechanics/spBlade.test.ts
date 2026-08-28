@@ -28,7 +28,7 @@ function actionState(characterConfig: CharacterConfig): ActionState {
 }
 
 describe("千冶·刃", () => {
-	it("Q 开启无量忿怒、生成 70 速倒计时，并在阈值生成锁定 E", () => {
+	it("开大前的攻击不叠层，Q 开启无量忿怒并生成倒计时", () => {
 		const actions = simulateActions(
 			input({
 				characters: [character("blade", "千冶·刃", 100)],
@@ -39,40 +39,50 @@ describe("千冶·刃", () => {
 		);
 		expect(actions.find((action) => action.key === "blade-1-q")).toMatchObject({
 			isSpBladeFuryActivation: true,
-			spBladeStacks: 9,
+			spBladeStacks: 8,
 		});
 		expect(
 			actions.find((action) => action.key === "blade-1-q-sp-blade-extra"),
-		).toMatchObject({
-			skill: "E",
-			lockedSkill: true,
-			isSpBladeExtraAction: true,
-		});
+		).toBeUndefined();
 		expect(actions.some((action) => action.isSpBladeCountdownAction)).toBe(
 			true,
 		);
 	});
 
-	it("E2 使用 7 层阈值，且可取消额外回合", () => {
+	it("无量忿怒期间的攻击叠层并按 E2 阈值生成额外回合", () => {
 		const base = input({
-			characters: [{ ...character("blade", "千冶·刃", 100), eidolon: 2 }],
+			characters: [
+				{ ...character("blade", "千冶·刃", 300), eidolon: 2 },
+				character("ally", "停云", 100),
+			],
 			resourceValues: { "blade-1": { [spBladeStackResourceName]: "6" } },
-			skillOverrides: skills({ "blade-1": "EQ" }),
-			limit: 110,
+			skillOverrides: skills({ "blade-1": "AQ" }),
+			overrides: { "ally-1": "50" },
+			limit: 60,
 		});
-		expect(
-			simulateActions(base).some((action) => action.isSpBladeExtraAction),
-		).toBe(true);
+		const actions = simulateActions(base);
+		expect(actions.find((action) => action.key === "ally-1")).toMatchObject({
+			spBladeStacks: 7,
+		});
+		expect(actions).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					key: "ally-1-sp-blade-extra",
+					isSpBladeExtraAction: true,
+				}),
+			]),
+		);
 		expect(
 			simulateActions({
 				...base,
-				spBladeExtraTurnToggles: { "blade-1-q": false },
+				spBladeExtraTurnToggles: { "ally-1": false },
 			}).some((action) => action.isSpBladeExtraAction),
 		).toBe(false);
 	});
 
 	it("男性记忆主的普攻同样会触发史诗额外叠层", () => {
 		const blade = actionState(character("blade", "千冶·刃", 100));
+		blade.spBladeInfiniteFury = true;
 		const memory = actionState(character("rmc", "开拓者·记忆（男）", 100));
 		memory.epic = 1;
 		memory.epicPendingA = true;

@@ -185,35 +185,44 @@ export function handleSpBladeRecordedAction(params: {
 		state.spBladeStacks = clampSpBladeStacks(manualStacks);
 	}
 	let stacks = state.spBladeStacks ?? 0;
-	if (
-		isSpBladeAttack({
-			action,
-			attacker,
-			attackDisabled: input.attackDisabled,
-			isForcedAttack,
-		})
-	)
-		stacks += 1;
-	if (action.isDomainAction && (action.skill === "EA" || action.skill === "EW"))
-		stacks += 1;
-	if (
-		getCharacterCid(attacker?.name ?? "") === CASTORICE_CID &&
-		action.skill === "E" &&
-		states.some((s) => s.polluxOnField)
-	)
-		stacks += 1;
-	const memoryTrailblazer = areEquivalentCharacterCids(
-		getCharacterCid(attacker?.name ?? ""),
-		MEMORY_TRAILBLAZER_CID,
-	);
-	const memoryState = states.find((s) => s.character.id === action.characterId);
-	if (
-		memoryTrailblazer &&
-		isBasicAttackSkill(action.skill) &&
-		(memoryState?.epic ?? 0) > 0 &&
-		memoryState?.epicPendingA
-	)
-		stacks += 1;
+	// 只有无量忿怒期间的有效攻击及其特殊加层才会自动增加叠层；
+	// 非无量忿怒期间仅保留用户手动输入的基准值。
+	if (state.spBladeInfiniteFury) {
+		if (
+			isSpBladeAttack({
+				action,
+				attacker,
+				attackDisabled: input.attackDisabled,
+				isForcedAttack,
+			})
+		)
+			stacks += 1;
+		if (
+			action.isDomainAction &&
+			(action.skill === "EA" || action.skill === "EW")
+		)
+			stacks += 1;
+		if (
+			getCharacterCid(attacker?.name ?? "") === CASTORICE_CID &&
+			action.skill === "E" &&
+			states.some((s) => s.polluxOnField)
+		)
+			stacks += 1;
+		const memoryTrailblazer = areEquivalentCharacterCids(
+			getCharacterCid(attacker?.name ?? ""),
+			MEMORY_TRAILBLAZER_CID,
+		);
+		const memoryState = states.find(
+			(s) => s.character.id === action.characterId,
+		);
+		if (
+			memoryTrailblazer &&
+			isBasicAttackSkill(action.skill) &&
+			(memoryState?.epic ?? 0) > 0 &&
+			memoryState?.epicPendingA
+		)
+			stacks += 1;
+	}
 	state.spBladeStacks = stacks;
 	action.spBladeStacks = state.spBladeStacks;
 	action.spBladeInfiniteFury = state.spBladeInfiniteFury;
