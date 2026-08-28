@@ -566,8 +566,10 @@ export function isNonAttackSkill(
 	skill: SkillCode,
 ): boolean {
 	const cid = getCharacterCid(character.name);
-	// 真珠的欢愉技不视为攻击。
-	if (cid === CHARACTER_IDS.pearl && skill === "ES") return true;
+	// 真珠的战技和欢愉技均不视为攻击。
+	if (cid === CHARACTER_IDS.pearl && (skill === "E" || skill === "ES")) {
+		return true;
+	}
 	// Saber 的 A/E/Q 均固定视为攻击。
 	if (
 		cid === CHARACTER_IDS.saber &&

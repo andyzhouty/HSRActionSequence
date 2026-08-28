@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	handleSpBladeRecordedAction,
+	isSpBladeAttack,
 	spBladeStackResourceName,
 } from "../../../src/mechanics/spBlade";
 import { simulateActions } from "../../../src/simulate/actions";
@@ -106,5 +107,40 @@ describe("千冶·刃", () => {
 		});
 
 		expect(blade.spBladeStacks).toBe(2);
+	});
+
+	it("阿哈空技能不叠层", () => {
+		const blade = actionState(character("blade", "千冶·刃", 100));
+		blade.spBladeInfiniteFury = true;
+		const ahaAction: GeneratedAction = {
+			key: "@aha-1",
+			characterId: "@aha",
+			actionNo: 1,
+			actionValue: 50,
+			skill: "",
+			speed: 100,
+			isAhaInstant: true,
+		};
+
+		expect(
+			isSpBladeAttack({
+				action: ahaAction,
+				attacker: undefined,
+				attackDisabled: {},
+				isForcedAttack: true,
+			}),
+		).toBe(false);
+
+		handleSpBladeRecordedAction({
+			state: blade,
+			action: ahaAction,
+			attacker: undefined,
+			states: [blade],
+			actions: [],
+			input: input({ characters: [blade.character] }),
+			isForcedAttack: true,
+		});
+
+		expect(blade.spBladeStacks).toBe(0);
 	});
 });

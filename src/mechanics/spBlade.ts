@@ -102,6 +102,7 @@ export function isSpBladeAttack(params: {
 	const { action, attacker, attackDisabled, isForcedAttack } = params;
 	if (action.isSpBladeFuryActivation || action.isSpBladeCountdownAction)
 		return false;
+	if (action.isAhaInstant && isBasicAttackSkill(action.skill)) return false;
 	if (attacker?.kind === "敌人" || action.targetKind === "敌人") return true;
 	const forced =
 		isForcedAttack ||
