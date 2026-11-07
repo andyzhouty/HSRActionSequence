@@ -50,8 +50,9 @@ it("offers the Cerydra support team in the damage import panel", async () => {
 	const team = within(panel).getByRole("combobox", { name: "验证队伍" });
 	await userEvent.selectOptions(team, "cerydra");
 	expect(team).toHaveValue("cerydra");
-	await userEvent.click(
-		within(panel).getByRole("checkbox", { name: "启用白厄伤害计算" }),
-	);
+	const enabled = within(panel).getByRole("checkbox", {
+		name: "启用白厄伤害计算",
+	});
+	if (!(enabled as HTMLInputElement).checked) await userEvent.click(enabled);
 	expect(within(panel).getByLabelText("刻律德菈攻击力")).toBeInTheDocument();
 });
