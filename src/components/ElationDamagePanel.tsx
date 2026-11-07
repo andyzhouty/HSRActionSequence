@@ -12,6 +12,7 @@ import {
 import { getCharacterCid } from "../data/characters";
 import { analyzeSparxieRenewal } from "../mechanics/sparxieLottery";
 import type { SavedData } from "../utils/action-sequence";
+import { ElationSearchPanel } from "./ElationSearchPanel";
 
 const number = (n: number) =>
 	n.toLocaleString("zh-CN", { maximumFractionDigits: 2 });
@@ -638,6 +639,7 @@ export function ElationDamagePanel({
 							。真实游戏概率尚待实测。
 						</p>
 					)}
+					<ElationSearchPanel config={config} onApply={set} />
 					<div className="max-h-[600px] overflow-auto">
 						<table className="w-full whitespace-nowrap text-left text-sm">
 							<thead className="sticky top-0 bg-gray-900">
