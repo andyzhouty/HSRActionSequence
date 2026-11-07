@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import ActionPanel from "../components/ActionPanel";
 import CharacterPanel from "../components/CharacterPanel";
+import { DamageWorkspace } from "../components/DamageWorkspace";
 import { ElationDamagePanel } from "../components/ElationDamagePanel";
 import { PhainonDamagePanel } from "../components/PhainonDamagePanel";
 import { ActionSequenceProviders } from "../contexts/ActionSequenceContext";
@@ -550,40 +551,58 @@ export default function ActionSequence({
 							星穹铁道行动值序列工具，支持翁瓦克、风套、舞舞舞、手动行动值和资源备注。
 						</p>
 					</div>
-					<button
-						type="button"
-						onClick={onOpenGuide}
-						className="rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-sm font-bold text-gray-100 hover:border-blue-400"
-					>
-						使用指南
-					</button>
+					<div className="flex gap-2">
+						<a
+							href="#damage-calculator"
+							className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white hover:bg-blue-500"
+						>
+							伤害计算
+						</a>
+						<button
+							type="button"
+							onClick={onOpenGuide}
+							className="rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-sm font-bold text-gray-100 hover:border-blue-400"
+						>
+							使用指南
+						</button>
+					</div>
 				</div>
-				<div className="grid grid-cols-1 gap-4 xl:grid-cols-[420px_minmax(0,1fr)]">
+				<div
+					id="action-sequence-editor"
+					className="grid scroll-mt-4 grid-cols-1 gap-4 xl:grid-cols-[420px_minmax(0,1fr)]"
+				>
 					<CharacterPanel />
 					<ActionPanel />
 				</div>
-				<ElationDamagePanel
-					value={savedData.elationTeamTrial}
-					onChange={(config) =>
-						updateSavedData((previous) => ({
-							...previous,
-							elationTeamTrial: config,
-						}))
+				<DamageWorkspace
+					phainonActive={!!savedData.phainonDamageTrial?.enabled}
+					elation={
+						<ElationDamagePanel
+							value={savedData.elationTeamTrial}
+							onChange={(config) =>
+								updateSavedData((previous) => ({
+									...previous,
+									elationTeamTrial: config,
+								}))
+							}
+							onImport={(data) =>
+								applySavedData(data, { resetSelection: true, closeMenu: true })
+							}
+						/>
 					}
-					onImport={(data) =>
-						applySavedData(data, { resetSelection: true, closeMenu: true })
-					}
-				/>
-				<PhainonDamagePanel
-					value={savedData.phainonDamageTrial}
-					onChange={(config) =>
-						updateSavedData((previous) => ({
-							...previous,
-							phainonDamageTrial: config,
-						}))
-					}
-					onImport={(data) =>
-						applySavedData(data, { resetSelection: true, closeMenu: true })
+					phainon={
+						<PhainonDamagePanel
+							value={savedData.phainonDamageTrial}
+							onChange={(config) =>
+								updateSavedData((previous) => ({
+									...previous,
+									phainonDamageTrial: config,
+								}))
+							}
+							onImport={(data) =>
+								applySavedData(data, { resetSelection: true, closeMenu: true })
+							}
+						/>
 					}
 				/>
 			</div>

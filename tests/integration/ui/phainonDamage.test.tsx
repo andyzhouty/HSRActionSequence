@@ -46,6 +46,7 @@ it("imports saved damage settings, recalculates a skill, and includes the settin
 
 it("offers the Cerydra support team in the damage import panel", async () => {
 	render(<ActionSequence />);
+	await userEvent.click(screen.getByRole("tab", { name: "白厄队 · 手动排轴" }));
 	const panel = await screen.findByRole("region", { name: "白厄伤害试验" });
 	const team = within(panel).getByRole("combobox", { name: "验证队伍" });
 	await userEvent.selectOptions(team, "cerydra");

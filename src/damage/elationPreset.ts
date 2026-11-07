@@ -10,6 +10,7 @@ export function createElationTeamPreset(
 	third: "mc" | "sparxie" = "mc",
 	starSlot: "none" | "yao" | "third" | "huo" = "none",
 	pearlSlot: "none" | "yao" | "third" | "huo" = "none",
+	preserveEquipment = false,
 ): ElationTeamConfig {
 	const raw = structuredClone(value) as {
 		lightcones?: Record<string, unknown>[];
@@ -27,6 +28,22 @@ export function createElationTeamPreset(
 	if (pearlSlot !== "none") {
 		if (pearlSlot === starSlot) throw new Error("虚照与真珠的替换位置不能相同");
 		ids[pearlSlot === "yao" ? 1 : pearlSlot === "third" ? 2 : 3] = "1503";
+	}
+	if (preserveEquipment) {
+		const profiles = readTrialEquipment(raw, ids);
+		if (profiles.some((p) => p.level !== 80))
+			throw new Error("本次欢愉公式仅核对80级");
+		if (profiles.some((p) => p.character.name === "藿藿" && !p.gear.enhanced))
+			throw new Error(
+				"当前伤害计算仅支持强化藿藿。请使用开启强化版本的配装，或选择不含藿藿的队伍。",
+			);
+		return {
+			...defaultElationTeamConfig,
+			enabled: true,
+			sourceFile,
+			profiles,
+			ahaBaseSpeedRule: ids.includes("1511") ? "starInParty" : "fixed80",
+		};
 	}
 	const pearlCone = raw.lightcones.find(
 		(x) => String(x.equip_avatar) === "1503",

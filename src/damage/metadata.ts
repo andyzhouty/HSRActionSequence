@@ -12,6 +12,12 @@ const characters = raw.characters as unknown as Record<
 	CharacterMetadata
 >;
 export const damageMetadataVersion = raw.version;
+export function lightconeName(id: number): string {
+	return (
+		(raw.lightcones as Record<string, { name: string }>)[String(id)]?.name ??
+		String(id)
+	);
+}
 
 export function skillParameters(
 	cid: string,

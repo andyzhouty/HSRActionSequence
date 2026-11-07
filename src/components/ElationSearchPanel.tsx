@@ -113,7 +113,7 @@ export function ElationSearchPanel({
 		>
 			<h4 className="font-semibold">后台自动搜轴</h4>
 			<p className="my-2 text-sm text-gray-400">
-				固定当前队伍、配装和机制，搜索开大时机、技能循环与目标。候选先粗筛，再用独立随机种子复核；结果是搜索范围内的较优策略，不保证全局最优。切换标签页可继续计算，关闭或刷新页面会停止。
+				保持当前配装，自动比较开大时机和技能循环。点击开始即可，搜索期间仍可操作页面；关闭或刷新页面会停止。
 			</p>
 			<div className="flex flex-wrap items-center gap-3 text-sm">
 				<label>
@@ -125,29 +125,32 @@ export function ElationSearchPanel({
 						onChange={(e) => setQuality(e.target.value as SearchQuality)}
 						className="bg-gray-900"
 					>
-						<option value="quick">快速（8次粗筛 / 32次复核）</option>
-						<option value="thorough">深入（32次粗筛 / 128次复核）</option>
+						<option value="quick">快速 · 先找一条较优轴</option>
+						<option value="thorough">深入 · 更多比较、更长耗时</option>
 					</select>
 				</label>
-				<label>
-					并行线程{" "}
-					<select
-						aria-label="并行线程"
-						disabled={running}
-						value={threads}
-						onChange={(e) => setThreads(Number(e.target.value))}
-						className="bg-gray-900"
-					>
-						{[1, 2, 3, 4].map((n) => (
-							<option key={n} value={n}>
-								{n}
-							</option>
-						))}
-					</select>
-				</label>
+				<details>
+					<summary className="cursor-pointer text-gray-400">计算资源</summary>
+					<label>
+						并行线程{" "}
+						<select
+							aria-label="并行线程"
+							disabled={running}
+							value={threads}
+							onChange={(e) => setThreads(Number(e.target.value))}
+							className="bg-gray-900"
+						>
+							{[1, 2, 3, 4].map((n) => (
+								<option key={n} value={n}>
+									{n}
+								</option>
+							))}
+						</select>
+					</label>
+				</details>
 				<button
 					type="button"
-					className="rounded border px-3 py-1 disabled:opacity-50"
+					className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
 					disabled={running || !config.enabled || config.profiles.length !== 4}
 					onClick={start}
 				>
@@ -171,12 +174,19 @@ export function ElationSearchPanel({
 			</p>
 			{result && (
 				<>
-					<p className="text-sm">
-						当前策略复核均伤：{amount(result.baseline.mean)}；粗筛种子起点
-						{result.trainingSeed}，复核种子起点{result.validationSeed}
-						。下表每项使用同一组{result.validationSamples}
-						个复核种子；P10/P90为这组采样的分位数。应用后下方明细仍按当前单个种子展示。
+					<p className="my-2 text-sm">
+						结果按多次模拟的平均伤害排序。应用后会更新技能循环；下方行动明细展示一次模拟，数值可能与均伤不同。
 					</p>
+					<details className="my-2 text-sm text-gray-400">
+						<summary className="cursor-pointer">搜索方法与采样说明</summary>
+						<p>
+							当前策略复核均伤：{amount(result.baseline.mean)}；粗筛种子起点
+							{result.trainingSeed}，复核种子起点{result.validationSeed}
+							。下表每项使用同一组{result.validationSamples}
+							个复核种子；P10/P90为这组采样的分位数。应用后下方明细仍按当前单个种子展示。
+							不保证全局最优。
+						</p>
+					</details>
 					<div className="overflow-auto">
 						<table className="my-2 w-full whitespace-nowrap text-left text-sm">
 							<thead>

@@ -66,3 +66,5 @@ wails generate module
 - 银狼欢愉队：银狼LV.999、爻光、欢愉主、强化藿藿，以及可替换导入的火花、虚照（星神★阿哈）、真珠。支持资源账本、概率采样和100个随机种子统计；范围见[欢愉队试验](docs/elation-team-trial.md)、[火花](docs/sparxie-trial.md)、[虚照](docs/star-aha-damage.md)、[真珠](docs/pearl-damage.md)。
 
 这些入口按已实现的队伍与机制计算，不代表支持任意角色组队。欢愉队使用独立自动行动轴；欢愉队已提供[网页后台自动搜轴](docs/elation-browser-search.md)，支持并行计算、取消、独立种子复核与一键应用候选。
+
+网页计算区已整理为「选队并导入 → 设置战斗 → 查看结果或搜轴」，支持欢愉队与白厄队页签、默认保留原配装和折叠高级选项。点击顶部「伤害计算」即可进入，详见[操作说明](docs/damage-workflow.md)。
