@@ -26,6 +26,7 @@ import {
 	isSpAventurineElationEnhanced,
 } from "../mechanics/spAventurine";
 import { consumeFeverAdvance, hasAllyAdvanceBlock } from "../mechanics/spRobin";
+import { beginStarAhaTurn } from "../mechanics/starAha";
 import {
 	type GeneratedAction,
 	getCharacterCid,
@@ -91,6 +92,7 @@ export function emitExtraAhaAction(
 	activeOdes: Map<string, ActiveOdeState[]>,
 	calcAhaSpeed: () => number,
 	emitSparxieExtraActionFn: (sourceKey: string, actionValue: number) => void,
+	options: { fixedJokes?: number; doesNotConsumeJokes?: boolean } = {},
 ): void {
 	const extraAhaKey = `${sourceKey}-extra-aha`;
 	const extraAhaInterrupts = input.ultInterrupts[extraAhaKey] ?? [];
@@ -137,6 +139,8 @@ export function emitExtraAhaAction(
 		speed: extraAhaSpeed,
 		isAhaInstant: true,
 		isExtraAha: true,
+		ahaFixedJokes: options.fixedJokes,
+		ahaDoesNotConsumeJokes: options.doesNotConsumeJokes,
 		hasElationSkills: true,
 	});
 	// 额外阿哈时刻与常规阿哈时刻相同，依次触发全部欢愉技。
@@ -398,6 +402,7 @@ export function emitSparxieExtraAction(
 	if (!sparxieState) return;
 
 	const sparxieKey = `${sourceKey}-sparxie-extra`;
+	beginStarAhaTurn(states, sparxieState.character.id, sparxieKey);
 	const sparxieInterrupts = input.ultInterrupts[sparxieKey] ?? [];
 	const rawSkill = (input.skillOverrides[sparxieKey] ?? "") as SkillCode;
 	const himekoNovaAssist =
@@ -665,9 +670,14 @@ export function getElationParticipants(states: ActionState[]): ActionState[] {
 		.filter(
 			(s) =>
 				s.character.kind === "角色" &&
-				getCharacterParticipantId(s.character.name) !== undefined,
+				(getCharacterParticipantId(s.character.name) !== undefined ||
+					hasPassive(s.character.name, "elationAlwaysLast")),
 		)
 		.sort((a, b) => {
+			// 星神阿哈无视参演编号，始终在最后。
+			const aStar = hasPassive(a.character.name, "elationAlwaysLast");
+			const bStar = hasPassive(b.character.name, "elationAlwaysLast");
+			if (aStar !== bStar) return aStar ? 1 : -1;
 			const aId = getCharacterParticipantId(a.character.name) ?? 999;
 			const bId = getCharacterParticipantId(b.character.name) ?? 999;
 			return aId - bId;

@@ -9,6 +9,7 @@ import type { ActionState } from "../simulate/types";
 import {
 	type GeneratedAction,
 	isCharacterTarget,
+	type SkillCode,
 } from "../utils/action-sequence";
 
 const PEARL_ULTIMATE_EFFECT = "pearlUltimate";
@@ -42,6 +43,7 @@ export function applyPearlUltimate(params: {
 	actionValue: number;
 	actions: GeneratedAction[];
 	sourceKey: string;
+	skillOverrides?: Record<string, SkillCode>;
 }): void {
 	const { states, casterIndex, targetId, actionValue, actions, sourceKey } =
 		params;
@@ -72,7 +74,12 @@ export function applyPearlUltimate(params: {
 			characterId: target.character.id,
 			actionNo: 0,
 			actionValue,
-			skill: "A",
+			skill:
+				params.skillOverrides?.[
+					`${sourceKey}-pearl-extra-${target.character.id}`
+				]?.replace(/Q/g, "") === "E"
+					? "E"
+					: "A",
 			speed: target.currentSpeed,
 			isPearlExtraAction: true,
 		});

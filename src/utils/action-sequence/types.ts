@@ -1,5 +1,7 @@
+import type { ElationTeamConfig } from "../../damage/elationTypes";
 /** 共享的行动序列数据模型；不依赖模拟或 UI 实现。 */
 
+import type { PhainonTrialConfig } from "../../damage/types";
 import type { ActionIntent } from "../../domain/actions/models";
 import type { CharacterId } from "../../domain/identity";
 
@@ -104,6 +106,15 @@ export type GeneratedAction = ActionIntent & {
 	isGilgameshTechniqueAction?: boolean;
 	isTheHertaEnhancedE?: boolean;
 	theHertaInspiration?: number;
+	starAhaWill?: number;
+	starAhaJokes?: number;
+	starAhaEnvoy?: string;
+	starAhaUniverseTurns?: number;
+	starAhaUltimateUnavailable?: boolean;
+	starAhaSkillPointRefund?: number;
+	ahaFixedJokes?: number;
+	ahaDoesNotConsumeJokes?: boolean;
+	ahaJokesUsed?: number;
 	/** 砂金·戏浪：该行动时点的热意值。 */
 	spAventurineFervor?: number;
 };
@@ -202,6 +213,8 @@ export type DomainRule = {
 };
 
 export type SavedData = {
+	phainonDamageTrial?: PhainonTrialConfig;
+	elationTeamTrial?: ElationTeamConfig;
 	schemaVersion: number;
 	limitPreset: string;
 	customLimit: string;

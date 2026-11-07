@@ -1040,6 +1040,19 @@
       ],
       "path": "Elation",
       "baseSpeed": 106
+    },
+    {
+      "cid": "1511",
+      "names": [
+        "星神★阿哈",
+        "星神⭐阿哈",
+        "星神阿哈",
+        "阿哈",
+        "Star Aha",
+        "虚照"
+      ],
+      "path": "Elation",
+      "baseSpeed": 94
     }
   ]
 }

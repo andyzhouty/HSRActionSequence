@@ -1,0 +1,1199 @@
+{
+  "characters": {
+    "1001": {},
+    "1002": {},
+    "1003": {},
+    "1004": {},
+    "1005": {},
+    "1006": {},
+    "1008": {},
+    "1009": {},
+    "1013": {},
+    "1014": {},
+    "1015": {},
+    "1101": {},
+    "1102": {},
+    "1103": {},
+    "1104": {},
+    "1105": {},
+    "1106": {},
+    "1107": {},
+    "1108": {},
+    "1109": {},
+    "1110": {},
+    "1111": {},
+    "1112": {},
+    "1201": {},
+    "1202": {},
+    "1203": {},
+    "1204": {},
+    "1205": {},
+    "1206": {},
+    "1207": {},
+    "1208": {},
+    "1209": {},
+    "1210": {},
+    "1211": {},
+    "1212": {
+      "1212202": {
+        "1": 2
+      },
+      "1212206": {
+        "1": 3
+      },
+      "1212209": {
+        "1": 4
+      }
+    },
+    "1213": {},
+    "1214": {},
+    "1215": {
+      "1215202": {
+        "1": 2
+      },
+      "1215206": {
+        "1": 3
+      },
+      "1215209": {
+        "1": 4
+      }
+    },
+    "1217": {
+      "1217204": {
+        "1": 2
+      },
+      "1217208": {
+        "1": 3
+      }
+    },
+    "1218": {
+      "1218204": {
+        "1": 2
+      },
+      "1218208": {
+        "1": 3
+      }
+    },
+    "1220": {},
+    "1221": {},
+    "1222": {},
+    "1223": {},
+    "1224": {},
+    "1225": {
+      "1225201": {
+        "1": 2
+      },
+      "1225203": {
+        "1": 2
+      },
+      "1225205": {
+        "1": 3
+      },
+      "1225207": {
+        "1": 3
+      },
+      "1225210": {
+        "1": 4
+      }
+    },
+    "1301": {},
+    "1302": {},
+    "1303": {
+      "1303204": {
+        "1": 2
+      },
+      "1303208": {
+        "1": 3
+      }
+    },
+    "1304": {},
+    "1305": {},
+    "1306": {},
+    "1307": {},
+    "1308": {},
+    "1309": {
+      "1309204": {
+        "1": 2
+      },
+      "1309208": {
+        "1": 3
+      }
+    },
+    "1310": {
+      "1310204": {
+        "1": 2
+      },
+      "1310208": {
+        "1": 3
+      }
+    },
+    "1312": {},
+    "1313": {},
+    "1314": {},
+    "1315": {},
+    "1317": {
+      "1317202": {
+        "1": 2
+      },
+      "1317206": {
+        "1": 3
+      },
+      "1317209": {
+        "1": 4
+      }
+    },
+    "1321": {
+      "1321204": {
+        "1": 2
+      },
+      "1321208": {
+        "1": 3
+      }
+    },
+    "1401": {
+      "1401204": {
+        "1": 2
+      },
+      "1401208": {
+        "1": 3
+      }
+    },
+    "1402": {},
+    "1403": {},
+    "1404": {
+      "1404204": {
+        "1": 2
+      },
+      "1404208": {
+        "1": 3
+      }
+    },
+    "1405": {},
+    "1406": {
+      "1406201": {
+        "1": 2
+      },
+      "1406203": {
+        "1": 2
+      },
+      "1406205": {
+        "1": 3
+      },
+      "1406207": {
+        "1": 3
+      },
+      "1406210": {
+        "1": 4
+      }
+    },
+    "1407": {},
+    "1408": {
+      "1408204": {
+        "1": 2
+      },
+      "1408208": {
+        "1": 3
+      }
+    },
+    "1409": {
+      "1409201": {
+        "1": 2
+      },
+      "1409203": {
+        "1": 2
+      },
+      "1409205": {
+        "1": 3
+      },
+      "1409207": {
+        "1": 3
+      },
+      "1409210": {
+        "1": 4
+      }
+    },
+    "1410": {
+      "1410201": {
+        "1": 2
+      },
+      "1410203": {
+        "1": 2
+      },
+      "1410205": {
+        "1": 3
+      },
+      "1410207": {
+        "1": 3
+      },
+      "1410210": {
+        "1": 4
+      }
+    },
+    "1412": {},
+    "1413": {},
+    "1414": {
+      "1414204": {
+        "1": 2
+      },
+      "1414208": {
+        "1": 3
+      }
+    },
+    "1415": {
+      "1415202": {
+        "1": 2
+      },
+      "1415206": {
+        "1": 3
+      },
+      "1415209": {
+        "1": 4
+      }
+    },
+    "1501": {},
+    "1502": {
+      "1502202": {
+        "1": 2
+      },
+      "1502206": {
+        "1": 3
+      },
+      "1502209": {
+        "1": 4
+      }
+    },
+    "1503": {
+      "1503202": {
+        "1": 2
+      },
+      "1503206": {
+        "1": 3
+      },
+      "1503209": {
+        "1": 4
+      }
+    },
+    "1504": {},
+    "1505": {
+      "1505204": {
+        "1": 2
+      },
+      "1505208": {
+        "1": 3
+      }
+    },
+    "1506": {
+      "1506202": {
+        "1": 2
+      },
+      "1506206": {
+        "1": 3
+      },
+      "1506209": {
+        "1": 4
+      }
+    },
+    "1507": {},
+    "1508": {},
+    "1509": {},
+    "1510": {},
+    "1511": {
+      "1511204": {
+        "1": 2
+      },
+      "1511208": {
+        "1": 3
+      }
+    },
+    "1512": {
+      "1512201": {
+        "1": 2
+      },
+      "1512203": {
+        "1": 2
+      },
+      "1512205": {
+        "1": 3
+      },
+      "1512207": {
+        "1": 3
+      },
+      "1512210": {
+        "1": 4
+      }
+    },
+    "1513": {
+      "1513202": {
+        "1": 2
+      },
+      "1513206": {
+        "1": 3
+      },
+      "1513209": {
+        "1": 4
+      }
+    },
+    "8001": {},
+    "8002": {},
+    "8003": {},
+    "8004": {},
+    "8005": {},
+    "8006": {},
+    "8007": {},
+    "8008": {},
+    "8009": {},
+    "8010": {}
+  },
+  "lightcones": {
+    "20000": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "20001": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "20002": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "20003": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "20004": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "20005": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "20006": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "20007": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "20008": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "20009": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "20010": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "20011": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "20012": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "20013": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "20015": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "20016": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "20017": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "20018": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "20020": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "20021": {
+      "path": "Memory",
+      "kind": "none",
+      "values": {}
+    },
+    "20022": {
+      "path": "Memory",
+      "kind": "none",
+      "values": {}
+    },
+    "20023": {
+      "path": "Elation",
+      "kind": "none",
+      "values": {}
+    },
+    "20024": {
+      "path": "Elation",
+      "kind": "none",
+      "values": {}
+    },
+    "21000": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "21001": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "21002": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "21003": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "21004": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "21005": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "21006": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "21007": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "21008": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "21009": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "21010": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "21011": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "21012": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "21013": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "21014": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "21015": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "21016": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "21017": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "21018": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "21019": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "21020": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "21021": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "21022": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "21023": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "21025": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "21026": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "21027": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "21028": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "21029": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "21030": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "21031": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "21032": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "21033": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "21034": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "21035": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "21036": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "21037": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "21038": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "21039": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "21040": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "21041": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "21042": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "21043": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "21044": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "21046": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "21048": {
+      "path": "Priest",
+      "kind": "速度",
+      "values": {
+        "1": 0.08,
+        "2": 0.09,
+        "3": 0.1,
+        "4": 0.11,
+        "5": 0.12
+      }
+    },
+    "21050": {
+      "path": "Memory",
+      "kind": "none",
+      "values": {}
+    },
+    "21051": {
+      "path": "Memory",
+      "kind": "none",
+      "values": {}
+    },
+    "21052": {
+      "path": "Memory",
+      "kind": "none",
+      "values": {}
+    },
+    "21053": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "21054": {
+      "path": "Memory",
+      "kind": "none",
+      "values": {}
+    },
+    "21055": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "21056": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "21057": {
+      "path": "Memory",
+      "kind": "none",
+      "values": {}
+    },
+    "21058": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "21060": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "21061": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "21062": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "21064": {
+      "path": "Elation",
+      "kind": "none",
+      "values": {}
+    },
+    "21065": {
+      "path": "Elation",
+      "kind": "none",
+      "values": {}
+    },
+    "21066": {
+      "path": "Elation",
+      "kind": "none",
+      "values": {}
+    },
+    "22000": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "22001": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "22002": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "22003": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "22004": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "22005": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "22006": {
+      "path": "Memory",
+      "kind": "none",
+      "values": {}
+    },
+    "22007": {
+      "path": "Elation",
+      "kind": "none",
+      "values": {}
+    },
+    "22008": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "22009": {
+      "path": "Elation",
+      "kind": "none",
+      "values": {}
+    },
+    "23000": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "23002": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "23003": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "23004": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "23005": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "23007": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "23009": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "23010": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "23011": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "23012": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "23013": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "23014": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "23015": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "23016": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "23017": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "23018": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "23019": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "23020": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "23021": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "23022": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "23023": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "23024": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "23026": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "23028": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "23029": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "23030": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "23031": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "23032": {
+      "path": "Priest",
+      "kind": "none",
+      "values": {}
+    },
+    "23033": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "23034": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "23035": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "23036": {
+      "path": "Memory",
+      "kind": "基础速度",
+      "values": {
+        "1": 12,
+        "2": 14,
+        "3": 16,
+        "4": 18,
+        "5": 20
+      }
+    },
+    "23037": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "23038": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "23039": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "23040": {
+      "path": "Memory",
+      "kind": "none",
+      "values": {}
+    },
+    "23041": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "23042": {
+      "path": "Memory",
+      "kind": "速度",
+      "values": {
+        "1": 0.18,
+        "2": 0.21,
+        "3": 0.24,
+        "4": 0.27,
+        "5": 0.3
+      }
+    },
+    "23043": {
+      "path": "Warlock",
+      "kind": "速度",
+      "values": {
+        "1": 0.18,
+        "2": 0.21,
+        "3": 0.24,
+        "4": 0.27,
+        "5": 0.3
+      }
+    },
+    "23044": {
+      "path": "Warrior",
+      "kind": "基础速度",
+      "values": {
+        "1": 12,
+        "2": 14,
+        "3": 16,
+        "4": 18,
+        "5": 20
+      }
+    },
+    "23045": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "23046": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "23048": {
+      "path": "Shaman",
+      "kind": "none",
+      "values": {}
+    },
+    "23049": {
+      "path": "Memory",
+      "kind": "none",
+      "values": {}
+    },
+    "23050": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "23051": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "23052": {
+      "path": "Memory",
+      "kind": "速度",
+      "values": {
+        "1": 0.18,
+        "2": 0.21,
+        "3": 0.24,
+        "4": 0.27,
+        "5": 0.3
+      }
+    },
+    "23053": {
+      "path": "Elation",
+      "kind": "none",
+      "values": {}
+    },
+    "23054": {
+      "path": "Elation",
+      "kind": "速度",
+      "values": {
+        "1": 0.18,
+        "2": 0.21,
+        "3": 0.24,
+        "4": 0.27,
+        "5": 0.3
+      }
+    },
+    "23055": {
+      "path": "Elation",
+      "kind": "none",
+      "values": {}
+    },
+    "23056": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "23057": {
+      "path": "Elation",
+      "kind": "速度",
+      "values": {
+        "1": 0.18,
+        "2": 0.21,
+        "3": 0.24,
+        "4": 0.27,
+        "5": 0.3
+      }
+    },
+    "23058": {
+      "path": "Elation",
+      "kind": "none",
+      "values": {}
+    },
+    "23059": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "23060": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "23061": {
+      "path": "Mage",
+      "kind": "none",
+      "values": {}
+    },
+    "23062": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "23065": {
+      "path": "Elation",
+      "kind": "基础速度",
+      "values": {
+        "1": 12,
+        "2": 14,
+        "3": 16,
+        "4": 18,
+        "5": 20
+      }
+    },
+    "24000": {
+      "path": "Warrior",
+      "kind": "none",
+      "values": {}
+    },
+    "24001": {
+      "path": "Rogue",
+      "kind": "none",
+      "values": {}
+    },
+    "24002": {
+      "path": "Knight",
+      "kind": "none",
+      "values": {}
+    },
+    "24003": {
+      "path": "Warlock",
+      "kind": "none",
+      "values": {}
+    },
+    "24005": {
+      "path": "Memory",
+      "kind": "速度",
+      "values": {
+        "1": 0.06,
+        "2": 0.075,
+        "3": 0.09,
+        "4": 0.105,
+        "5": 0.12
+      }
+    },
+    "24006": {
+      "path": "Elation",
+      "kind": "none",
+      "values": {}
+    }
+  }
+}

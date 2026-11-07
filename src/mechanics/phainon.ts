@@ -107,9 +107,13 @@ export function applyPhainonDomainPauseAndSpeedBonus(
 
 		// 不受加速/拉条影响的角色（如知更鸟大招期间）跳过速度增益，纯平移 AV。
 		if (state.blockNextAdvance) {
+			const remainingDistance =
+				state.phainonDomainFrozenDistance ??
+				Math.max(0, state.nextActionValue - startActionValue) *
+					state.currentSpeed;
+			state.phainonDomainFrozenDistance = undefined;
 			state.nextActionValue =
-				domainEndActionValue +
-				Math.max(0, state.nextActionValue - startActionValue);
+				domainEndActionValue + remainingDistance / state.currentSpeed;
 			continue;
 		}
 
@@ -171,8 +175,6 @@ export function freezeAlliesForDomain(
 			continue;
 		}
 		if (!isAllyTarget(state.character.kind)) continue;
-		if (state.blockNextAdvance) continue;
-
 		const remainingDistance =
 			Math.max(0, state.nextActionValue - startActionValue) *
 			state.currentSpeed;

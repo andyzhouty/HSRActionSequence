@@ -101,6 +101,39 @@ describe("真珠行动轴机制", () => {
 		).toBeLessThan(ordered.findIndex((action) => action.isPearlExtraAction));
 	});
 
+	it.each([
+		"E",
+		"EQ",
+	])("executes extra-turn %s as E without an ultimate or natural-timer reset", (skill) => {
+		const actions = simulateActions(
+			input({
+				characters: [
+					character("pearl", "真珠", 200),
+					character("fire", "火花", 100),
+					character("yao", "爻光", 100),
+					character("star", "虚照", 100),
+				],
+				skillOverrides: skills({
+					"pearl-1": "AQ",
+					"pearl-1-pearl-extra-fire": skill,
+				}),
+				skillTargets: { "pearl-1": "fire" },
+				limit: 80,
+			}),
+		);
+		expect(
+			actions.find((a) => a.key === "pearl-1-pearl-extra-fire")?.skill,
+		).toBe("E");
+		expect(
+			actions.some(
+				(a) => a.key.startsWith("pearl-1-pearl-extra-fire") && a.skill === "Q",
+			),
+		).toBe(false);
+		expect(actions.find((a) => a.key === "fire-1")?.actionValue).toBeCloseTo(
+			70,
+		);
+	});
+
 	it("星魂 2 额外提前其他欢愉角色，但不重复提前真珠和目标", () => {
 		const actions = runPearlUltimate({
 			eidolon: 2,

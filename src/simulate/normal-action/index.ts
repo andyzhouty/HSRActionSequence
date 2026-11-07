@@ -2,6 +2,10 @@ import { hasPassive, hasSkillEffect } from "../../data/characters";
 import { archerMaxConsecutiveEs, hasArcher } from "../../mechanics/archer";
 import { hasCastoriceSummon } from "../../mechanics/castorice";
 import {
+	applyCerydraSpeed,
+	consumeCerydraSpeed,
+} from "../../mechanics/cerydra";
+import {
 	summonSouldragonState,
 	updateSouldragonBondmate,
 } from "../../mechanics/danHengPermansor";
@@ -24,8 +28,8 @@ import { consumeSpAventurineSpeedBuff } from "../../mechanics/spAventurine";
 import {
 	consumeAllyAdvanceBlock,
 	hasAllyAdvanceBlock,
-	recordSpRobinPercentBuff,
 } from "../../mechanics/spRobin";
+import { beginStarAhaTurn } from "../../mechanics/starAha";
 import { hasTheHerta } from "../../mechanics/theHerta";
 import {
 	getCharacterPath,
@@ -88,6 +92,7 @@ export function handleNormalAction(
 	const { input, states, actions, activeOdes, souldragonOwner, callbacks } =
 		runtime;
 	const { stateIndex, key, actionValue, character, actionNo } = context;
+	beginStarAhaTurn(states, character.id, key);
 	const actionProfile = resolveNormalActionProfile({
 		states,
 		stateIndex,
@@ -381,67 +386,16 @@ export function handleNormalAction(
 		});
 	}
 
-	// ── 刻律军功目标切换 ──
-	{
-		const meritOwnerState = states.find((s) =>
-			hasPassive(s.character.name, "meritSpeedBuff20"),
-		);
-		if (
-			meritOwnerState &&
-			character.id === meritOwnerState.character.id &&
-			skill.includes("E") &&
-			!resolvedSkill.includes("Q")
-		) {
-			const eTarget = getSkillTarget(input, key, character);
-			if (eTarget && eTarget !== runtime.currentMeritTarget) {
-				// 移除旧目标加速
-				if (runtime.currentMeritTarget) {
-					const oldTarget = states.find(
-						(s) => s.character.id === runtime.currentMeritTarget,
-					);
-					if (oldTarget) {
-						const oldSpeed = oldTarget.currentSpeed;
-						oldTarget.currentSpeed -= oldTarget.baseSpeed * 0.2;
-						const newSpeed = oldTarget.currentSpeed;
-						const remaining = oldTarget.nextActionValue - actionValue;
-						if (remaining > 0) {
-							oldTarget.nextActionValue =
-								actionValue + remaining * (oldSpeed / newSpeed);
-						} else {
-							oldTarget.nextActionValue = actionValue + 10000 / newSpeed;
-						}
-						recordSpRobinPercentBuff(
-							states,
-							oldTarget.character.id,
-							-0.2,
-							actionValue,
-						);
-					}
-				}
-				// 添加新目标加速
-				{
-					const newTarget = states.find((s) => s.character.id === eTarget);
-					if (newTarget) {
-						const oldSpeed = newTarget.currentSpeed;
-						newTarget.currentSpeed += newTarget.baseSpeed * 0.2;
-						const newSpeed = newTarget.currentSpeed;
-						const remaining = newTarget.nextActionValue - actionValue;
-						if (remaining > 0) {
-							newTarget.nextActionValue =
-								actionValue + remaining * (oldSpeed / newSpeed);
-						} else {
-							newTarget.nextActionValue = actionValue + 10000 / newSpeed;
-						}
-						recordSpRobinPercentBuff(
-							states,
-							newTarget.character.id,
-							0.2,
-							actionValue,
-						);
-					}
-				}
-				runtime.currentMeritTarget = eTarget;
-			}
+	// 刻律每次E刷新自身和目标的三回合固定20速度；换目标不提前撤销旧目标的限时加速。
+	if (
+		hasPassive(character.name, "meritSpeedBuff20") &&
+		skill.includes("E") &&
+		!resolvedSkill.includes("Q")
+	) {
+		const target = getSkillTarget(input, key, character);
+		if (target) {
+			runtime.currentMeritTarget = target;
+			applyCerydraSpeed(states, character.id, target, actionValue);
 		}
 	}
 
@@ -696,6 +650,7 @@ export function handleNormalAction(
 		consumeAllyAdvanceBlock(states[stateIndex]);
 		consumeEntrySpeedBuff(states, stateIndex, actionValue);
 		consumeMessengerSpeedBuff(states, stateIndex, actionValue);
+		consumeCerydraSpeed(states[stateIndex], actionValue);
 		consumeSpAventurineSpeedBuff(states, stateIndex, actionValue);
 	}
 

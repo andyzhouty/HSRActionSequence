@@ -6,6 +6,7 @@ import {
 	hasCastoriceSummon,
 	summonPollux,
 } from "../mechanics/castorice";
+import { applyCerydraSpeed } from "../mechanics/cerydra";
 import { hasAshveil, hasKafka } from "../mechanics/companionFollowUp";
 import {
 	hasDanHengSouldragon,
@@ -317,25 +318,21 @@ export function applyTeamSpeedBuffs(
 	}
 	refreshAhaSchedule(0);
 
-	// 刻律 军功：刻律和军功目标加速 20%
+	// 军功的开局目标由排轴配置指定；秘技的自动战技触发三回合固定加速。
 	if (input.meritTarget) {
-		const meritOwner = states.find((s) =>
+		const owner = states.find((s) =>
 			hasPassive(s.character.name, "meritSpeedBuff20"),
 		);
-		if (meritOwner) {
-			for (const s of states) {
-				if (
-					s.character.id === meritOwner.character.id ||
-					s.character.id === input.meritTarget
-				) {
-					const oldSpeed = s.currentSpeed;
-					s.currentSpeed = s.currentSpeed + s.baseSpeed * 0.2;
-					s.nextActionValue = s.nextActionValue * (oldSpeed / s.currentSpeed);
-					recordSpRobinPercentBuff(states, s.character.id, 0.2, 0);
-				}
-			}
-		}
+		if (owner?.character.techniqueOn)
+			applyCerydraSpeed(
+				states,
+				owner.character.id,
+				input.meritTarget,
+				0,
+				false,
+			);
 	}
+
 	refreshAhaSchedule(0);
 
 	// 大丽花 共舞者

@@ -214,6 +214,24 @@ export type LightconeMechanicState = {
 	elationLightconeSpeedBuffed?: boolean;
 };
 
+/** 星神阿哈自身资源与令使状态；区别于 @aha 行动体。 */
+export type StarAhaMechanicState = {
+	starAhaWill?: number;
+	starAhaEnvoy?: string;
+	starAhaUniverseTurns?: number;
+	starAhaTurnKeys?: Record<string, boolean>;
+	starAhaFortyClaimed?: boolean;
+	starAhaHealingUsed?: boolean;
+	starAhaE6Used?: boolean;
+	starAhaJokes?: number;
+	starAhaMoments?: Record<string, { consumed: number; refund: boolean }>;
+};
+
+export type CerydraMechanicState = {
+	cerydraSpeedTurns?: number;
+	cerydraSpeedPending?: boolean;
+};
+
 /** 信使套等遗器效果的临时状态。 */
 export type RelicMechanicState = {
 	/** 信使套速度增益的剩余正常回合数（每个目标分别计时）。 */
@@ -241,6 +259,8 @@ export type ActionState = SimulationCoreState &
 	SpecialCharacterMechanicState &
 	SpRobinMechanicState &
 	SpAventurineMechanicState &
+	StarAhaMechanicState &
+	CerydraMechanicState &
 	LightconeMechanicState &
 	RelicMechanicState;
 

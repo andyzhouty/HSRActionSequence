@@ -1,3 +1,5 @@
+import { normalizeElationTeamConfig } from "../../damage/elationTypes";
+import { normalizePhainonTrialConfig } from "../../damage/types";
 import { validateSavedDataInput } from "../../domain/saved-data";
 import {
 	CURRENT_SAVEDATA_VERSION,
@@ -141,6 +143,10 @@ export function toNormalizedSavedData(
 	const normalizedCharacters = toNormalizedCharacters(migrated);
 	return {
 		schemaVersion: CURRENT_SAVEDATA_VERSION,
+		elationTeamTrial: normalizeElationTeamConfig(migrated.elationTeamTrial),
+		phainonDamageTrial: normalizePhainonTrialConfig(
+			migrated.phainonDamageTrial,
+		),
 		limitPreset:
 			migrated.limitPreset && limitPresets.includes(migrated.limitPreset)
 				? migrated.limitPreset

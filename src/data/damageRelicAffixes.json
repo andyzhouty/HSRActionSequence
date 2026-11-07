@@ -1,0 +1,898 @@
+{
+  "source": "ProjectHyacine/shared/relic-affix-data.ts",
+  "main": {
+    "21": {
+      "1": {
+        "property": "HPDelta",
+        "base": 45.1584,
+        "step": 15.8054
+      }
+    },
+    "22": {
+      "1": {
+        "property": "AttackDelta",
+        "base": 22.5792,
+        "step": 7.90272
+      }
+    },
+    "23": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.027648,
+        "step": 0.009677
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.027648,
+        "step": 0.009677
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.03456,
+        "step": 0.012096
+      },
+      "4": {
+        "property": "CriticalChanceBase",
+        "base": 0.020736,
+        "step": 0.007258
+      },
+      "5": {
+        "property": "CriticalDamageBase",
+        "base": 0.041472,
+        "step": 0.014515
+      },
+      "6": {
+        "property": "HealRatioBase",
+        "base": 0.022118,
+        "step": 0.007741
+      },
+      "7": {
+        "property": "StatusProbabilityBase",
+        "base": 0.027648,
+        "step": 0.009677
+      }
+    },
+    "24": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.027648,
+        "step": 0.009677
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.027648,
+        "step": 0.009677
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.03456,
+        "step": 0.012096
+      },
+      "4": {
+        "property": "SpeedDelta",
+        "base": 1.6128,
+        "step": 1
+      }
+    },
+    "25": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.027648,
+        "step": 0.009677
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.027648,
+        "step": 0.009677
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.03456,
+        "step": 0.012096
+      },
+      "4": {
+        "property": "PhysicalAddedRatio",
+        "base": 0.024883,
+        "step": 0.008709
+      },
+      "5": {
+        "property": "FireAddedRatio",
+        "base": 0.024883,
+        "step": 0.008709
+      },
+      "6": {
+        "property": "IceAddedRatio",
+        "base": 0.024883,
+        "step": 0.008709
+      },
+      "7": {
+        "property": "ThunderAddedRatio",
+        "base": 0.024883,
+        "step": 0.008709
+      },
+      "8": {
+        "property": "WindAddedRatio",
+        "base": 0.024883,
+        "step": 0.008709
+      },
+      "9": {
+        "property": "QuantumAddedRatio",
+        "base": 0.024883,
+        "step": 0.008709
+      },
+      "10": {
+        "property": "ImaginaryAddedRatio",
+        "base": 0.024883,
+        "step": 0.008709
+      }
+    },
+    "26": {
+      "1": {
+        "property": "BreakDamageAddedRatioBase",
+        "base": 0.041472,
+        "step": 0.014515
+      },
+      "2": {
+        "property": "SPRatioBase",
+        "base": 0.012442,
+        "step": 0.004355
+      },
+      "3": {
+        "property": "HPAddedRatio",
+        "base": 0.027648,
+        "step": 0.009677
+      },
+      "4": {
+        "property": "AttackAddedRatio",
+        "base": 0.027648,
+        "step": 0.009677
+      },
+      "5": {
+        "property": "DefenceAddedRatio",
+        "base": 0.03456,
+        "step": 0.012096
+      }
+    },
+    "31": {
+      "1": {
+        "property": "HPDelta",
+        "base": 67.7376,
+        "step": 23.7082
+      }
+    },
+    "32": {
+      "1": {
+        "property": "AttackDelta",
+        "base": 33.8688,
+        "step": 11.8541
+      }
+    },
+    "33": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.041472,
+        "step": 0.014515
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.041472,
+        "step": 0.014515
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.05184,
+        "step": 0.018144
+      },
+      "4": {
+        "property": "CriticalChanceBase",
+        "base": 0.031104,
+        "step": 0.010886
+      },
+      "5": {
+        "property": "CriticalDamageBase",
+        "base": 0.062208,
+        "step": 0.021773
+      },
+      "6": {
+        "property": "HealRatioBase",
+        "base": 0.033178,
+        "step": 0.011612
+      },
+      "7": {
+        "property": "StatusProbabilityBase",
+        "base": 0.041472,
+        "step": 0.014515
+      }
+    },
+    "34": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.041472,
+        "step": 0.014515
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.041472,
+        "step": 0.014515
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.05184,
+        "step": 0.018144
+      },
+      "4": {
+        "property": "SpeedDelta",
+        "base": 2.4192,
+        "step": 1
+      }
+    },
+    "35": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.041472,
+        "step": 0.014515
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.041472,
+        "step": 0.014515
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.05184,
+        "step": 0.018144
+      },
+      "4": {
+        "property": "PhysicalAddedRatio",
+        "base": 0.037325,
+        "step": 0.013064
+      },
+      "5": {
+        "property": "FireAddedRatio",
+        "base": 0.037325,
+        "step": 0.013064
+      },
+      "6": {
+        "property": "IceAddedRatio",
+        "base": 0.037325,
+        "step": 0.013064
+      },
+      "7": {
+        "property": "ThunderAddedRatio",
+        "base": 0.037325,
+        "step": 0.013064
+      },
+      "8": {
+        "property": "WindAddedRatio",
+        "base": 0.037325,
+        "step": 0.013064
+      },
+      "9": {
+        "property": "QuantumAddedRatio",
+        "base": 0.037325,
+        "step": 0.013064
+      },
+      "10": {
+        "property": "ImaginaryAddedRatio",
+        "base": 0.037325,
+        "step": 0.013064
+      }
+    },
+    "36": {
+      "1": {
+        "property": "BreakDamageAddedRatioBase",
+        "base": 0.062208,
+        "step": 0.021773
+      },
+      "2": {
+        "property": "SPRatioBase",
+        "base": 0.018662,
+        "step": 0.006532
+      },
+      "3": {
+        "property": "HPAddedRatio",
+        "base": 0.041472,
+        "step": 0.014515
+      },
+      "4": {
+        "property": "AttackAddedRatio",
+        "base": 0.041472,
+        "step": 0.014515
+      },
+      "5": {
+        "property": "DefenceAddedRatio",
+        "base": 0.05184,
+        "step": 0.018144
+      }
+    },
+    "41": {
+      "1": {
+        "property": "HPDelta",
+        "base": 90.3168,
+        "step": 31.6109
+      }
+    },
+    "42": {
+      "1": {
+        "property": "AttackDelta",
+        "base": 45.1584,
+        "step": 15.8054
+      }
+    },
+    "43": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.055296,
+        "step": 0.019354
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.055296,
+        "step": 0.019354
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      },
+      "4": {
+        "property": "CriticalChanceBase",
+        "base": 0.041472,
+        "step": 0.014515
+      },
+      "5": {
+        "property": "CriticalDamageBase",
+        "base": 0.082944,
+        "step": 0.02903
+      },
+      "6": {
+        "property": "HealRatioBase",
+        "base": 0.044237,
+        "step": 0.015483
+      },
+      "7": {
+        "property": "StatusProbabilityBase",
+        "base": 0.055296,
+        "step": 0.019354
+      }
+    },
+    "433": {
+      "1": {
+        "property": "DefenceAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      }
+    },
+    "434": {
+      "1": {
+        "property": "CriticalChanceBase",
+        "base": 0.041472,
+        "step": 0.014515
+      }
+    },
+    "436": {
+      "1": {
+        "property": "HealRatioBase",
+        "base": 0.044237,
+        "step": 0.015483
+      }
+    },
+    "44": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.055296,
+        "step": 0.019354
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.055296,
+        "step": 0.019354
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      },
+      "4": {
+        "property": "SpeedDelta",
+        "base": 3.2256,
+        "step": 1.1
+      }
+    },
+    "441": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.055296,
+        "step": 0.019354
+      }
+    },
+    "443": {
+      "1": {
+        "property": "DefenceAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      }
+    },
+    "45": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.055296,
+        "step": 0.019354
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.055296,
+        "step": 0.019354
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      },
+      "4": {
+        "property": "PhysicalAddedRatio",
+        "base": 0.049766,
+        "step": 0.017418
+      },
+      "5": {
+        "property": "FireAddedRatio",
+        "base": 0.049766,
+        "step": 0.017418
+      },
+      "6": {
+        "property": "IceAddedRatio",
+        "base": 0.049766,
+        "step": 0.017418
+      },
+      "7": {
+        "property": "ThunderAddedRatio",
+        "base": 0.049766,
+        "step": 0.017418
+      },
+      "8": {
+        "property": "WindAddedRatio",
+        "base": 0.049766,
+        "step": 0.017418
+      },
+      "9": {
+        "property": "QuantumAddedRatio",
+        "base": 0.049766,
+        "step": 0.017418
+      },
+      "10": {
+        "property": "ImaginaryAddedRatio",
+        "base": 0.049766,
+        "step": 0.017418
+      }
+    },
+    "46": {
+      "1": {
+        "property": "BreakDamageAddedRatioBase",
+        "base": 0.082944,
+        "step": 0.02903
+      },
+      "2": {
+        "property": "SPRatioBase",
+        "base": 0.024883,
+        "step": 0.008709
+      },
+      "3": {
+        "property": "HPAddedRatio",
+        "base": 0.055296,
+        "step": 0.019354
+      },
+      "4": {
+        "property": "AttackAddedRatio",
+        "base": 0.055296,
+        "step": 0.019354
+      },
+      "5": {
+        "property": "DefenceAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      }
+    },
+    "51": {
+      "1": {
+        "property": "HPDelta",
+        "base": 112.896,
+        "step": 39.5136
+      }
+    },
+    "52": {
+      "1": {
+        "property": "AttackDelta",
+        "base": 56.448,
+        "step": 19.7568
+      }
+    },
+    "53": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.0864,
+        "step": 0.03024
+      },
+      "4": {
+        "property": "CriticalChanceBase",
+        "base": 0.05184,
+        "step": 0.018144
+      },
+      "5": {
+        "property": "CriticalDamageBase",
+        "base": 0.10368,
+        "step": 0.036288
+      },
+      "6": {
+        "property": "HealRatioBase",
+        "base": 0.055296,
+        "step": 0.019354
+      },
+      "7": {
+        "property": "StatusProbabilityBase",
+        "base": 0.06912,
+        "step": 0.024192
+      }
+    },
+    "54": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.0864,
+        "step": 0.03024
+      },
+      "4": {
+        "property": "SpeedDelta",
+        "base": 4.032,
+        "step": 1.4
+      }
+    },
+    "55": {
+      "1": {
+        "property": "HPAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      },
+      "2": {
+        "property": "AttackAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      },
+      "3": {
+        "property": "DefenceAddedRatio",
+        "base": 0.0864,
+        "step": 0.03024
+      },
+      "4": {
+        "property": "PhysicalAddedRatio",
+        "base": 0.062208,
+        "step": 0.021773
+      },
+      "5": {
+        "property": "FireAddedRatio",
+        "base": 0.062208,
+        "step": 0.021773
+      },
+      "6": {
+        "property": "IceAddedRatio",
+        "base": 0.062208,
+        "step": 0.021773
+      },
+      "7": {
+        "property": "ThunderAddedRatio",
+        "base": 0.062208,
+        "step": 0.021773
+      },
+      "8": {
+        "property": "WindAddedRatio",
+        "base": 0.062208,
+        "step": 0.021773
+      },
+      "9": {
+        "property": "QuantumAddedRatio",
+        "base": 0.062208,
+        "step": 0.021773
+      },
+      "10": {
+        "property": "ImaginaryAddedRatio",
+        "base": 0.062208,
+        "step": 0.021773
+      }
+    },
+    "56": {
+      "1": {
+        "property": "BreakDamageAddedRatioBase",
+        "base": 0.10368,
+        "step": 0.036288
+      },
+      "2": {
+        "property": "SPRatioBase",
+        "base": 0.031104,
+        "step": 0.010886
+      },
+      "3": {
+        "property": "HPAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      },
+      "4": {
+        "property": "AttackAddedRatio",
+        "base": 0.06912,
+        "step": 0.024192
+      },
+      "5": {
+        "property": "DefenceAddedRatio",
+        "base": 0.0864,
+        "step": 0.03024
+      }
+    }
+  },
+  "sub": {
+    "2": {
+      "1": {
+        "property": "HPDelta",
+        "base": 13.548,
+        "step": 1.6935
+      },
+      "2": {
+        "property": "AttackDelta",
+        "base": 6.77401,
+        "step": 0.846751
+      },
+      "3": {
+        "property": "DefenceDelta",
+        "base": 6.77401,
+        "step": 0.846751
+      },
+      "4": {
+        "property": "HPAddedRatio",
+        "base": 0.013824,
+        "step": 0.001728
+      },
+      "5": {
+        "property": "AttackAddedRatio",
+        "base": 0.013824,
+        "step": 0.001728
+      },
+      "6": {
+        "property": "DefenceAddedRatio",
+        "base": 0.01728,
+        "step": 0.00216
+      },
+      "7": {
+        "property": "SpeedDelta",
+        "base": 1,
+        "step": 0.1
+      },
+      "8": {
+        "property": "CriticalChanceBase",
+        "base": 0.010368,
+        "step": 0.001296
+      },
+      "9": {
+        "property": "CriticalDamageBase",
+        "base": 0.020736,
+        "step": 0.002592
+      },
+      "10": {
+        "property": "StatusProbabilityBase",
+        "base": 0.013824,
+        "step": 0.001728
+      },
+      "11": {
+        "property": "StatusResistanceBase",
+        "base": 0.013824,
+        "step": 0.001728
+      },
+      "12": {
+        "property": "BreakDamageAddedRatioBase",
+        "base": 0.020736,
+        "step": 0.002592
+      }
+    },
+    "3": {
+      "1": {
+        "property": "HPDelta",
+        "base": 20.322,
+        "step": 2.54025
+      },
+      "2": {
+        "property": "AttackDelta",
+        "base": 10.161,
+        "step": 1.27013
+      },
+      "3": {
+        "property": "DefenceDelta",
+        "base": 10.161,
+        "step": 1.27013
+      },
+      "4": {
+        "property": "HPAddedRatio",
+        "base": 0.020736,
+        "step": 0.002592
+      },
+      "5": {
+        "property": "AttackAddedRatio",
+        "base": 0.020736,
+        "step": 0.002592
+      },
+      "6": {
+        "property": "DefenceAddedRatio",
+        "base": 0.02592,
+        "step": 0.00324
+      },
+      "7": {
+        "property": "SpeedDelta",
+        "base": 1.2,
+        "step": 0.1
+      },
+      "8": {
+        "property": "CriticalChanceBase",
+        "base": 0.015552,
+        "step": 0.001944
+      },
+      "9": {
+        "property": "CriticalDamageBase",
+        "base": 0.031104,
+        "step": 0.003888
+      },
+      "10": {
+        "property": "StatusProbabilityBase",
+        "base": 0.020736,
+        "step": 0.002592
+      },
+      "11": {
+        "property": "StatusResistanceBase",
+        "base": 0.020736,
+        "step": 0.002592
+      },
+      "12": {
+        "property": "BreakDamageAddedRatioBase",
+        "base": 0.031104,
+        "step": 0.003888
+      }
+    },
+    "4": {
+      "1": {
+        "property": "HPDelta",
+        "base": 27.096,
+        "step": 3.387
+      },
+      "2": {
+        "property": "AttackDelta",
+        "base": 13.548,
+        "step": 1.6935
+      },
+      "3": {
+        "property": "DefenceDelta",
+        "base": 13.548,
+        "step": 1.6935
+      },
+      "4": {
+        "property": "HPAddedRatio",
+        "base": 0.027648,
+        "step": 0.003456
+      },
+      "5": {
+        "property": "AttackAddedRatio",
+        "base": 0.027648,
+        "step": 0.003456
+      },
+      "6": {
+        "property": "DefenceAddedRatio",
+        "base": 0.03456,
+        "step": 0.00432
+      },
+      "7": {
+        "property": "SpeedDelta",
+        "base": 1.6,
+        "step": 0.2
+      },
+      "8": {
+        "property": "CriticalChanceBase",
+        "base": 0.020736,
+        "step": 0.002592
+      },
+      "9": {
+        "property": "CriticalDamageBase",
+        "base": 0.041472,
+        "step": 0.005184
+      },
+      "10": {
+        "property": "StatusProbabilityBase",
+        "base": 0.027648,
+        "step": 0.003456
+      },
+      "11": {
+        "property": "StatusResistanceBase",
+        "base": 0.027648,
+        "step": 0.003456
+      },
+      "12": {
+        "property": "BreakDamageAddedRatioBase",
+        "base": 0.041472,
+        "step": 0.005184
+      }
+    },
+    "5": {
+      "1": {
+        "property": "HPDelta",
+        "base": 33.87,
+        "step": 4.23376
+      },
+      "2": {
+        "property": "AttackDelta",
+        "base": 16.935,
+        "step": 2.11688
+      },
+      "3": {
+        "property": "DefenceDelta",
+        "base": 16.935,
+        "step": 2.11688
+      },
+      "4": {
+        "property": "HPAddedRatio",
+        "base": 0.03456,
+        "step": 0.00432
+      },
+      "5": {
+        "property": "AttackAddedRatio",
+        "base": 0.03456,
+        "step": 0.00432
+      },
+      "6": {
+        "property": "DefenceAddedRatio",
+        "base": 0.0432,
+        "step": 0.0054
+      },
+      "7": {
+        "property": "SpeedDelta",
+        "base": 2,
+        "step": 0.3
+      },
+      "8": {
+        "property": "CriticalChanceBase",
+        "base": 0.02592,
+        "step": 0.00324
+      },
+      "9": {
+        "property": "CriticalDamageBase",
+        "base": 0.05184,
+        "step": 0.00648
+      },
+      "10": {
+        "property": "StatusProbabilityBase",
+        "base": 0.03456,
+        "step": 0.00432
+      },
+      "11": {
+        "property": "StatusResistanceBase",
+        "base": 0.03456,
+        "step": 0.00432
+      },
+      "12": {
+        "property": "BreakDamageAddedRatioBase",
+        "base": 0.05184,
+        "step": 0.00648
+      }
+    }
+  }
+}

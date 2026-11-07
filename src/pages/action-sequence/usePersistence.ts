@@ -7,6 +7,7 @@ import {
 	type SavedData,
 } from "../../utils/action-sequence";
 import { type BackendPort, getBackendPort } from "../../utils/backend";
+import { importFreeSrData, isFreeSrData } from "./freeSrImport";
 import { toNormalizedSavedData } from "./savedData";
 
 const BROWSER_DRAFT_STORAGE_KEY = "hsr-action-sequence-browser-draft";
@@ -201,18 +202,24 @@ export function usePersistence({
 		rawText = importText,
 	) => {
 		try {
-			const parsed = parseSavedDataJson(rawText);
+			const input: unknown = JSON.parse(rawText.replace(/^\uFEFF/, ""));
+			const freeSr = isFreeSrData(input);
+			const parsed = freeSr
+				? importFreeSrData(input)
+				: parseSavedDataJson(rawText);
 			lastImportedJsonRef.current = JSON.stringify(
 				toNormalizedSavedData(parsed),
 			);
 			setImportText(rawText);
 			applyImportedData(parsed, {
-				message: "导入成功",
+				message: freeSr
+					? "已导入 FreeSR 角色和装备；请筛选队伍并检查空缺速度"
+					: "导入成功",
 				resetSelection: true,
 				closeMenu: true,
 			});
-		} catch {
-			setMessage("导入失败，请检查 JSON 格式");
+		} catch (error) {
+			setMessage(`导入失败：${getErrorMessage(error)}`);
 		}
 	};
 

@@ -511,6 +511,16 @@
         "Q": "elationTrailblazerUltimate"
       },
       "participantId": 120
+    },
+    {
+      "cid": "1511",
+      "effects": {
+        "E": "allyTargetSelectable"
+      },
+      "passives": [
+        "firstActionAdvance30",
+        "elationAlwaysLast"
+      ]
     }
   ],
   "_defaults": {

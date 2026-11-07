@@ -251,9 +251,9 @@ describe("砂金·戏浪 模拟", () => {
 			}),
 		);
 		expect(acts.find((a) => a.key === "ally-1")?.spAventurineFervor).toBe(1);
-		expect(
-			acts.some((a) => a.key === "ally-1-elation-spaven-fervor-10"),
-		).toBe(false);
+		expect(acts.some((a) => a.key === "ally-1-elation-spaven-fervor-10")).toBe(
+			false,
+		);
 	});
 
 	it("热意达到 10 立即施放一次普通欢愉技", () => {

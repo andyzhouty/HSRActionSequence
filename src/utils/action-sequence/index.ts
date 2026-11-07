@@ -464,8 +464,13 @@ export function normalizeResourcesForCharacters(
 	const hasSpBlade = hasSpBladeCharacter(characters);
 	const hasSpRobin = hasSpRobinCharacter(characters);
 	const hasSpAventurine = hasSpAventurineCharacter(characters);
+	const hasStarAha = characters.some(
+		(c) => isCharacterTarget(c) && getCharacterCid(c.name) === "1511",
+	);
 	const filtered = resources.filter(
 		(resource) =>
+			!["愿力", "治疗/护盾"].includes(resource) &&
+			(!hasStarAha || resource !== "笑点") &&
 			resource !== evernightResourceName &&
 			resource !== archerFuaResourceName &&
 			resource !== gilgameshInterestResourceName &&
@@ -477,6 +482,7 @@ export function normalizeResourcesForCharacters(
 			(!hasArcher || resource !== defaultResources[0]),
 	);
 	const locked = [
+		...(hasStarAha ? ["愿力", "笑点", "治疗/护盾"] : []),
 		...(hasGilgamesh ? [gilgameshInterestResourceName] : []),
 		...(hasArcher ? [defaultResources[0], archerFuaResourceName] : []),
 		...(hasEvernight ? [evernightResourceName] : []),
@@ -494,6 +500,10 @@ export function isLockedResourceNameForCharacters(
 	characters: CharacterConfig[],
 ) {
 	return (
+		(characters.some(
+			(c) => isCharacterTarget(c) && getCharacterCid(c.name) === "1511",
+		) &&
+			["愿力", "笑点", "治疗/护盾"].includes(resourceName)) ||
 		(hasEvernightCharacter(characters) &&
 			resourceName === evernightResourceName) ||
 		(hasGilgameshCharacter(characters) &&
@@ -522,6 +532,8 @@ export function canSelectSkillTargetForAction(
 	target: CharacterConfig,
 ) {
 	if (character.id === target.id) return false;
+	if (getCharacterCid(character.name) === "1511")
+		return isCharacterTarget(target);
 	if (hasSkillEffect(character.name, "Q", "pearlUltimate")) {
 		return isCharacterTarget(target);
 	}

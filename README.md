@@ -14,6 +14,10 @@ Wails 桌面图标以根目录 `appicon.png` 为源文件，并在构建前自�
 
 新增角色时，先在 `src/data/characters.json` 增加基础角色目录数据，并在 `src/data/characterMechanics.json` 增加技能/机制配置，再通过 `pnpm run check:data` 校验；随后在 `src/mechanics/` 增加机制实现，必要时通过 `src/simulate/mechanics/registry.ts` 注册生命周期钩子，最后在 `tests/unit/mechanics/` 或 `tests/integration/simulation/` 增加行为测试。角色身份和 CID 统一从 `src/domain/identity/characterId.ts` 查询，技能输入统一经过 `src/domain/skills/skillCode.ts` 解析。
 
+JSON 导入支持 FreeSR 的 `freesr-data.json`。文件中的角色会全部导入，请自行删除不属于当前队伍的角色。速度根据行迹、遗器和可确认的光锥常驻效果计算；缺少必要数据或无法确认光锥效果时速度留空，需手动填写。速度所用行迹和光锥元数据摘自 HSRVersionInspector 4.6.54，遗器词条与套装系数参考 ProjectHyacine；新增角色或光锥时需要同步更新 `src/data/freesrSpeedMetadata.json`。
+
+页面下方新增白厄伤害试验，可单独导入 FreeSR 中白厄、布洛妮娅、花火、知更鸟的当前配装并生成验证轴；伤害设置随普通 JSON 保存。支持白厄0–2魂、布洛妮娅0–4魂、花火0魂（含强化技能组）、知更鸟0–1魂，以及首个验证配置中的四把光锥和遗器套装。试验只统计白厄自身的常规伤害，按6级普攻起步；未包含协奏附加伤害、队友伤害、击破、Boss阶段和战斗祝福。详细范围与数据更新方法见 [伤害试验说明](docs/damage-trial.md)。
+
 模拟器代码位于 `src/simulate/`，不依赖 React 或 Wails；UI 通过 `src/infrastructure/backend/port.ts` 定义的后端端口访问桌面能力，测试可注入 fake。保存数据必须经过版本迁移、归一化和 schema 校验后才能进入模拟器。
 
 修改 `main.go` 中 `App` 的公开方法后，使用 Wails 重新生成 `frontend/wailsjs`：
@@ -51,3 +55,14 @@ wails generate module
 - 绯英
 - 知更鸟·晴歌（水鸟）：E召唤晴空乐手，Q单体立即行动+禁拉其他我方，Fever状态
 - 砂金·戏浪（水砂）：热意积累与阈值触发欢愉技，阿哈时刻加速，强化欢愉技
+
+银狼欢愉队的实验性300AV伤害计算已接入排轴页，支持指定四人配装导入、资源账本、可复现盲盒采样与完整明细导出。使用方法和模型边界见 `docs/elation-team-trial.md`。
+
+## 网页伤害计算
+
+排轴页下方提供两个伤害试验入口，均可导入 FreeSR 配装并导出计算明细，技能数据版本为4.6.54：
+
+- 白厄队：布洛妮娅、花火或刻律德菈、知更鸟的增益与能量联动，包含刻律德菈奇袭。范围见[白厄伤害试验](docs/damage-trial.md)。
+- 银狼欢愉队：银狼LV.999、爻光、欢愉主、强化藿藿，以及可替换导入的火花、虚照（星神★阿哈）、真珠。支持资源账本、概率采样和100个随机种子统计；范围见[欢愉队试验](docs/elation-team-trial.md)、[火花](docs/sparxie-trial.md)、[虚照](docs/star-aha-damage.md)、[真珠](docs/pearl-damage.md)。
+
+这些入口按已实现的队伍与机制计算，不代表支持任意角色组队。欢愉队使用独立自动行动轴；网页自动搜索最佳策略尚未接入。

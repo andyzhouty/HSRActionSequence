@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+	applyPhainonDomainPauseAndSpeedBonus,
+	freezeAlliesForDomain,
+} from "../../../src/mechanics/phainon";
+import {
 	type SimulateActionsInput,
 	simulateActions,
 } from "../../../src/simulate/actions";
@@ -90,6 +94,30 @@ function interrupts(
 // ───── Phainon (白厄) ─────
 
 describe("Phainon (白厄)", () => {
+	it("freezes Robin's concerto countdown without giving its blocked state a speed buff", () => {
+		const state = (
+			id: string,
+			name: string,
+			next: number,
+			blocked = false,
+		) => ({
+			character: character(id, name, 100),
+			baseSpeed: 100,
+			currentSpeed: blocked ? 90 : 100,
+			nextActionValue: next,
+			phainonDomainSpeedBonus: 0,
+			blockNextAdvance: blocked,
+			phainonDomainFrozenDistance: undefined as number | undefined,
+		});
+		const states = [state("p", "白厄", 50), state("r", "知更鸟", 150, true)];
+		freezeAlliesForDomain(states, 0, 50);
+		expect(states[1].nextActionValue).toBeGreaterThan(200);
+		applyPhainonDomainPauseAndSpeedBonus(states, 0, 50, 200, 0.15);
+		expect(states[1].nextActionValue).toBe(300);
+		expect(states[1].currentSpeed).toBe(90);
+		expect(states[1].phainonDomainSpeedBonus).toBe(0);
+		expect(states[1].phainonDomainFrozenDistance).toBeUndefined();
+	});
 	it("keeps Aha moment on its normal independent timeline inside the domain", () => {
 		const actions = simulateActions(
 			input({

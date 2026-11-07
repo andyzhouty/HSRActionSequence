@@ -540,6 +540,9 @@ export function ActionRow({
 			</td>
 			{ctx.resources.map((resource) => {
 				const storedValue = ctx.resourceValues[action.key]?.[resource];
+				const isStarAhaWill = resource === "愿力";
+				const isStarAhaJokes = resource === "笑点";
+				const isStarAhaHealing = resource === "治疗/护盾";
 				const isArcherFua = resource === archerFuaResourceName;
 				const isGilgameshInterest = resource === gilgameshInterestResourceName;
 				const isAshveilFua = resource === ashveilFuaResourceName;
@@ -558,7 +561,17 @@ export function ActionRow({
 					<td key={`${action.key}-resource-${resource}`} className="px-2 py-3">
 						<input
 							type="text"
+							title={
+								isStarAhaHealing
+									? "填1表示本行动使星神阿哈受到队友治疗或护盾；每次Q之间最多触发一次"
+									: isStarAhaWill && action.starAhaUltimateUnavailable
+										? "施放前愿力不足8；该Q为手动假设施放"
+										: undefined
+							}
 							inputMode={
+								isStarAhaWill ||
+								isStarAhaJokes ||
+								isStarAhaHealing ||
 								isArcherFua ||
 								isGilgameshInterest ||
 								isAshveilFua ||
@@ -571,26 +584,45 @@ export function ActionRow({
 							}
 							value={
 								storedValue ??
-								(isArcherFua && action.archerFuaCharge !== undefined
-									? String(action.archerFuaCharge)
-									: isGilgameshInterest &&
-											action.gilgameshInterest !== undefined
-										? String(action.gilgameshInterest)
-										: isAshveilFua && action.ashveilFuaCharge !== undefined
-											? String(action.ashveilFuaCharge)
-											: isKafkaFua && action.kafkaFuaCharge !== undefined
-												? String(action.kafkaFuaCharge)
-												: isSpBladeStacks && action.spBladeStacks !== undefined
-													? String(action.spBladeStacks)
-													: isSpAventurineFervor &&
-															action.spAventurineFervor !== undefined
-														? String(action.spAventurineFervor)
-														: "")
+								(isStarAhaWill && action.starAhaWill !== undefined
+									? String(action.starAhaWill)
+									: isStarAhaJokes && action.starAhaJokes !== undefined
+										? String(action.starAhaJokes)
+										: isArcherFua && action.archerFuaCharge !== undefined
+											? String(action.archerFuaCharge)
+											: isGilgameshInterest &&
+													action.gilgameshInterest !== undefined
+												? String(action.gilgameshInterest)
+												: isAshveilFua && action.ashveilFuaCharge !== undefined
+													? String(action.ashveilFuaCharge)
+													: isKafkaFua && action.kafkaFuaCharge !== undefined
+														? String(action.kafkaFuaCharge)
+														: isSpBladeStacks &&
+																action.spBladeStacks !== undefined
+															? String(action.spBladeStacks)
+															: isSpAventurineFervor &&
+																	action.spAventurineFervor !== undefined
+																? String(action.spAventurineFervor)
+																: "")
 							}
 							onClick={(event) => event.stopPropagation()}
 							onContextMenu={(event) => event.stopPropagation()}
 							onChange={(event) => {
 								const value = event.target.value;
+								if (
+									(isStarAhaWill || isStarAhaJokes || isStarAhaHealing) &&
+									value !== "" &&
+									!/^\d*\.?\d*$/.test(value)
+								)
+									return;
+								if (
+									isStarAhaWill &&
+									value !== "" &&
+									(!/^\d+$/.test(value) || Number(value) > 10)
+								)
+									return;
+								if (isStarAhaHealing && value !== "" && !/^[01]$/.test(value))
+									return;
 								if (isArcherFua && value !== "" && !/^[0-4]$/.test(value))
 									return;
 								if (

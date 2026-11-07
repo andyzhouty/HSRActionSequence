@@ -114,6 +114,7 @@ export function handlePostUltimateEffects(params: PostUltimateParams): void {
 		actionValue,
 		actions,
 		sourceKey,
+		skillOverrides: input.skillOverrides,
 	});
 
 	// 1. 阿格莱雅至高之姿

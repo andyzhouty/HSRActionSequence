@@ -1,0 +1,193 @@
+{
+  "source": "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/index_new/cn/relic_sets.json",
+  "snapshotDate": "2026-11-06",
+  "sets": {
+    "129": {
+      "id": "129",
+      "name": "闪耀功勋的魔法少女",
+      "desc": [
+        "暴击伤害提高16%。",
+        "装备者及其忆灵造成的欢愉伤害无视目标10%的防御力，我方每累计获得5点笑点，造成的欢愉伤害额外无视目标1%的防御力，最多叠加10层。"
+      ],
+      "properties": [
+        [
+          {
+            "type": "CriticalDamageBase",
+            "value": 0.16
+          }
+        ],
+        []
+      ],
+      "icon": "icon/relic/129.png"
+    },
+    "130": {
+      "id": "130",
+      "name": "应天涉远的卜者",
+      "desc": [
+        "速度提高6%。",
+        "进入战斗前，若装备者的速度大于等于120/160，使装备者的暴击率提高10%/18%。装备者每场战斗首次施放欢愉技时，使我方全体欢愉度提高10%，该效果无法叠加。"
+      ],
+      "properties": [
+        [
+          {
+            "type": "SpeedAddedRatio",
+            "value": 0.06
+          }
+        ],
+        []
+      ],
+      "icon": "icon/relic/130.png"
+    },
+    "325": {
+      "id": "325",
+      "name": "零号关卡朋克洛德",
+      "desc": [
+        "使装备者的欢愉度提高8%。战斗中欢愉度首次达到40%/80%时，使装备者暴击伤害提高20%/32%。"
+      ],
+      "properties": [
+        [
+          {
+            "type": "ElationDamageAddedRatioBase",
+            "value": 0.08
+          }
+        ]
+      ],
+      "icon": "icon/relic/325.png"
+    },
+    "114": {
+      "id": "114",
+      "name": "骇域漫游的信使",
+      "desc": [
+        "速度提高6%。",
+        "当装备者对我方目标施放终结技时，我方全体速度提高12%，持续1回合，该效果无法叠加。"
+      ],
+      "properties": [
+        [
+          {
+            "type": "SpeedAddedRatio",
+            "value": 0.06
+          }
+        ],
+        []
+      ],
+      "icon": "icon/relic/114.png"
+    },
+    "310": {
+      "id": "310",
+      "name": "折断的龙骨",
+      "desc": [
+        "使装备者的效果抵抗提高10%。当装备者的效果抵抗大于等于30%时，我方全体暴击伤害提高10%。"
+      ],
+      "properties": [
+        [
+          {
+            "type": "StatusResistanceBase",
+            "value": 0.1
+          }
+        ]
+      ],
+      "icon": "icon/relic/310.png"
+    },
+    "121": {
+      "id": "121",
+      "name": "重循苦旅的司铎",
+      "desc": [
+        "速度提高6%。",
+        "对我方单体目标施放战技或终结技时，使技能目标的暴击伤害提高18%，持续2回合，该效果最多叠加2次。"
+      ],
+      "properties": [
+        [
+          {
+            "type": "SpeedAddedRatio",
+            "value": 0.06
+          }
+        ],
+        []
+      ],
+      "icon": "icon/relic/121.png"
+    },
+    "317": {
+      "id": "317",
+      "name": "沉陆海域露莎卡",
+      "desc": [
+        "使装备者的能量恢复效率提高5%，如果装备者不是编队中的第一位角色，使编队中的第一位角色攻击力提高12%。"
+      ],
+      "properties": [
+        [
+          {
+            "type": "SPRatioBase",
+            "value": 0.05
+          }
+        ]
+      ],
+      "icon": "icon/relic/317.png"
+    },
+    "308": {
+      "id": "308",
+      "name": "生命的翁瓦克",
+      "desc": [
+        "使装备者的能量恢复效率提高5%。当装备者的速度大于等于120时，进入战斗时立刻使行动提前40%。"
+      ],
+      "properties": [
+        [
+          {
+            "type": "SPRatioBase",
+            "value": 0.05
+          }
+        ]
+      ],
+      "icon": "icon/relic/308.png"
+    },
+    "133": {
+      "id": "133",
+      "name": "戏梦点星的伶人",
+      "desc": [
+        "速度提高6%。",
+        "当装备者对我方其他单体目标施放战技或终结技时，使技能目标的欢愉度提高16%，持续3回合，若装备者持有的好活当赏大于等于10点，则额外使我方全体目标的暴击伤害提高12%，持续3回合。"
+      ],
+      "properties": [
+        [
+          {
+            "type": "SpeedAddedRatio",
+            "value": 0.06
+          }
+        ],
+        []
+      ],
+      "icon": "icon/relic/133.png"
+    },
+    "314": {
+      "id": "314",
+      "name": "出云显世与高天神国",
+      "desc": [
+        "使装备者的攻击力提高12%。进入战斗时，若至少存在一名与装备者命途相同的队友，装备者的暴击率提高12%。"
+      ],
+      "properties": [
+        [
+          {
+            "type": "AttackAddedRatio",
+            "value": 0.12
+          }
+        ]
+      ],
+      "icon": "icon/relic/314.png"
+    },
+    "329": {
+      "id": "329",
+      "name": "神的瞬息欢愉",
+      "desc": [
+        "使装备者的速度提高6%。当装备者的欢愉度大于等于40%时，进入战斗时立刻使行动提前40%。"
+      ],
+      "properties": [
+        [
+          {
+            "type": "SpeedAddedRatio",
+            "value": 0.06
+          }
+        ]
+      ],
+      "source": "https://hsr.gachabase.net/planar-ornaments/329/gods-moment-of-joy/beta?lang=chs",
+      "snapshotDate": "2026-11-07"
+    }
+  }
+}

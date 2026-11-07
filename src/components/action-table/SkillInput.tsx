@@ -10,10 +10,11 @@ import {
 export function SkillInput({ action }: { action: GeneratedAction }) {
 	const ctx = useActionSequence();
 	const char = ctx.charactersById[action.characterId];
-	const rawDisplaySkill =
-		action.isDomainFinalAction ||
-		action.isAssistFollowUp ||
-		action.isCombustionAction
+	const rawDisplaySkill = action.isPearlExtraAction
+		? action.skill
+		: action.isDomainFinalAction ||
+				action.isAssistFollowUp ||
+				action.isCombustionAction
 			? action.skill
 			: (ctx.skillOverrides[action.key] ?? action.skill);
 	const rawOverride = ctx.skillOverrides[action.key];
@@ -58,18 +59,25 @@ export function SkillInput({ action }: { action: GeneratedAction }) {
 					getCounterWDomainRule(char.name)
 						.allowedSkills.filter((skill) => skill !== "EA" && skill !== "EW")
 						.join("、");
-	const skillTitle = action.isEpicTriggeredMemosprite
-		? "记忆主史诗触发的德谬歌额外攻击"
-		: action.isCyreneEnhancedQ
-			? "昔涟强化Q触发的德谬歌额外回合"
-			: isDomain
-				? domainSkillTitle
-				: action.isAglaeaSupremeAction
-					? "至高之姿下可填写 A、AQ、Q"
-					: nonDomainSkillTitle;
+	const skillTitle = action.isPearlExtraAction
+		? "额外回合可填写A或E，不可在其中施放Q"
+		: action.isEpicTriggeredMemosprite
+			? "记忆主史诗触发的德谬歌额外攻击"
+			: action.isCyreneEnhancedQ
+				? "昔涟强化Q触发的德谬歌额外回合"
+				: isDomain
+					? domainSkillTitle
+					: action.isAglaeaSupremeAction
+						? "至高之姿下可填写 A、AQ、Q"
+						: nonDomainSkillTitle;
 	const [draft, setDraft] = useState<string | null>(null);
 	const commitDraftSkill = (rawSkill: string) => {
-		const normalizedSkill = rawSkill.trim().toUpperCase();
+		const rawNormalized = rawSkill.trim().toUpperCase();
+		const normalizedSkill = action.isPearlExtraAction
+			? rawNormalized.replace(/Q/g, "") === "E"
+				? "E"
+				: "A"
+			: rawNormalized;
 		window.setTimeout(() => {
 			if (normalizedSkill !== displaySkill) {
 				ctx.updateActionSkill(action, normalizedSkill);

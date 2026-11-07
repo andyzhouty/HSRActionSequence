@@ -3,6 +3,10 @@ import {
 	emitImmediateSouldragonAction,
 } from "../mechanics/danHengPermansor";
 import { hasSilverWolfGodmode, isInGodmode } from "../mechanics/silverWolf";
+import {
+	handleStarAhaRecordedAction,
+	initializeStarAha,
+} from "../mechanics/starAha";
 import type { GeneratedAction } from "../utils/action-sequence";
 import { getCharacterPath, isNonAttackSkill } from "../utils/action-sequence";
 import {
@@ -36,6 +40,7 @@ export function simulateActions(
 	input: SimulateActionsInput,
 ): GeneratedAction[] {
 	const states = buildInitialStates(input.characters);
+	const starAhaState = initializeStarAha(states);
 	const { souldragonOwner, currentBondmateTarget: initialBondmateTarget } =
 		setupSouldragonBondmate(states, input);
 	const currentBondmateTarget = { value: initialBondmateTarget };
@@ -85,6 +90,15 @@ export function simulateActions(
 		});
 	};
 	const handleRecordedAction = (action: GeneratedAction) => {
+		if (starAhaState)
+			handleStarAhaRecordedAction({
+				owner: starAhaState,
+				action,
+				states,
+				actions,
+				input,
+				emitExtraAha: emitExtraAhaAction,
+			});
 		const attacker = characterById.get(action.characterId);
 		const attackerState = initialStateByCharacterId.get(action.characterId);
 		const { isForcedAttack, isSilverWolfNonAttack } =
@@ -217,7 +231,11 @@ export function simulateActions(
 	const emitGodmodeExtraAction = (sourceKey: string, actionValue: number) => {
 		emitGodmodeExtra(sourceKey, actionValue, states, actions, input);
 	};
-	const emitExtraAhaAction = (sourceKey: string, actionValue: number) => {
+	const emitExtraAhaAction = (
+		sourceKey: string,
+		actionValue: number,
+		options?: { fixedJokes?: number; doesNotConsumeJokes?: boolean },
+	) => {
 		emitExtraAha(
 			sourceKey,
 			actionValue,
@@ -227,6 +245,7 @@ export function simulateActions(
 			activeOdes,
 			calcAhaSpeed,
 			emitSparxieExtraAction,
+			options,
 		);
 	};
 	const emitSpecialInterruptAction = (

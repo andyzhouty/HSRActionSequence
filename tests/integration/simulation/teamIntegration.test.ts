@@ -214,23 +214,16 @@ describe("花火 + 鸭鸭 + 白厄 + 知更鸟 完整排轴", () => {
 // ───── 刻律军功目标中途切换 ─────
 
 describe("刻律军功目标中途切换", () => {
-	it("刻律 E 切换军功目标后速度正确转移", () => {
-		// 刻律 180 速 翁瓦克，初始军功目标=白厄(111速)
-		// 刻律第一动 E 选择那刻夏(111速)
-		// 刻律翁瓦克首发比白厄快，E 切换后白厄速度降为 111；
-		// 那刻夏基础速度固定为 97，因此速度升为 111 + 97×20% = 130.4。
+	it("未启用秘技时首次E才施加固定20速度", () => {
 		const actions = simulateActions(
 			input({
 				characters: [
 					character("cerydra", "刻律德菈", 180, {
 						hasVonwacq: true,
+						techniqueOn: false,
 					}),
-					character("bai-e", "白厄", 111, {
-						baseSpeed: "111",
-					}),
-					character("nakexia", "那刻夏", 111, {
-						baseSpeed: "111",
-					}),
+					character("bai-e", "白厄", 111),
+					character("nakexia", "那刻夏", 111),
 				],
 				meritTarget: "bai-e",
 				skillOverrides: skills({ "cerydra-1": "E" }),
@@ -238,57 +231,32 @@ describe("刻律军功目标中途切换", () => {
 				limit: 150,
 			}),
 		);
-
-		// 刻律基础速度为 99，速度始终为 180 + 99×20% = 199.8。
-		const cerydraActions = actions.filter((a) => a.characterId === "cerydra");
-		expect(cerydraActions.length).toBeGreaterThanOrEqual(1);
-		for (const a of cerydraActions) {
-			expect(a.speed).toBeCloseTo(199.8, 1);
-		}
-
-		// 白厄在刻律 E 切换后才行动，速度应降为 111
-		const baiActions = actions.filter((a) => a.characterId === "bai-e");
-		const baiFirst = baiActions[0];
-		expect(baiFirst.speed).toBeCloseTo(111, 0);
-
-		// 那刻夏在刻律 E 切换后才行动，速度应升为 130.4
-		const nakexiaActions = actions.filter((a) => a.characterId === "nakexia");
-		const nakexiaFirst = nakexiaActions[0];
-		expect(nakexiaFirst.speed).toBeCloseTo(130.4, 1);
+		const owner = actions.filter((a) => a.characterId === "cerydra");
+		expect(owner[0].speed).toBe(180);
+		expect(owner[1].speed).toBe(200);
+		expect(actions.find((a) => a.characterId === "bai-e")?.speed).toBe(111);
+		expect(actions.find((a) => a.characterId === "nakexia")?.speed).toBe(131);
 	});
-
-	it("刻律 E 切换后旧目标速度正确降低", () => {
-		// 初始目标白厄，E 切换至那刻夏后，白厄速度降为 111
+	it("秘技旧目标的三回合加速在换目标后保留并独立到期", () => {
 		const actions = simulateActions(
 			input({
 				characters: [
 					character("cerydra", "刻律德菈", 180, {
 						hasVonwacq: true,
+						techniqueOn: true,
 					}),
-					character("bai-e", "白厄", 111, {
-						baseSpeed: "111",
-					}),
-					character("nakexia", "那刻夏", 111, {
-						baseSpeed: "111",
-					}),
+					character("bai-e", "白厄", 111, { techniqueOn: false }),
+					character("nakexia", "那刻夏", 111),
 				],
 				meritTarget: "bai-e",
-				skillOverrides: skills({
-					"cerydra-1": "E",
-					"bai-e-1": "A",
-					"nakexia-1": "A",
-				}),
+				skillOverrides: skills({ "cerydra-1": "E" }),
 				skillTargets: { "cerydra-1": "nakexia" },
-				limit: 300,
+				limit: 450,
 			}),
 		);
-
-		// 刻律 E 首发后白厄速度降为 111
-		const baiFirst = actions.find((a) => a.characterId === "bai-e");
-		expect(baiFirst?.speed).toBeCloseTo(111, 0);
-
-		// 那刻夏 E 切换后速度升为 130.4（固定基础速度 97）
-		const nakexiaFirst = actions.find((a) => a.characterId === "nakexia");
-		expect(nakexiaFirst?.speed).toBeCloseTo(130.4, 1);
+		const previous = actions.filter((a) => a.characterId === "bai-e");
+		expect(previous.slice(0, 3).map((a) => a.speed)).toEqual([131, 131, 131]);
+		expect(previous[3].speed).toBe(111);
+		expect(actions.find((a) => a.characterId === "nakexia")?.speed).toBe(131);
 	});
 });

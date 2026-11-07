@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import ActionPanel from "../components/ActionPanel";
 import CharacterPanel from "../components/CharacterPanel";
+import { ElationDamagePanel } from "../components/ElationDamagePanel";
+import { PhainonDamagePanel } from "../components/PhainonDamagePanel";
 import { ActionSequenceProviders } from "../contexts/ActionSequenceContext";
 import { hasDanHengSouldragon } from "../mechanics/danHengPermansor";
 import {
@@ -560,6 +562,30 @@ export default function ActionSequence({
 					<CharacterPanel />
 					<ActionPanel />
 				</div>
+				<ElationDamagePanel
+					value={savedData.elationTeamTrial}
+					onChange={(config) =>
+						updateSavedData((previous) => ({
+							...previous,
+							elationTeamTrial: config,
+						}))
+					}
+					onImport={(data) =>
+						applySavedData(data, { resetSelection: true, closeMenu: true })
+					}
+				/>
+				<PhainonDamagePanel
+					value={savedData.phainonDamageTrial}
+					onChange={(config) =>
+						updateSavedData((previous) => ({
+							...previous,
+							phainonDamageTrial: config,
+						}))
+					}
+					onImport={(data) =>
+						applySavedData(data, { resetSelection: true, closeMenu: true })
+					}
+				/>
 			</div>
 		</ActionSequenceProviders>
 	);
