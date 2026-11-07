@@ -1,70 +1,152 @@
-# 星穹铁道排轴可视化工具
+# 星穹铁道排轴与伤害计算工具
 
-本工具使用 Wails 框架，结合React进行开发。开发目的是为了方便崩坏·星穹铁道的玩家在进行高难本挑战之前，预先对自己的轴进行排演，以便互相交流、分享。
+如果希望让Agent安装项目并维护自己的定制版本，可复制下面的提示词：
 
-Wails 桌面图标以根目录 `appicon.png` 为源文件，并在构建前自动同步到 `build/appicon.png`。
+```markdown
+请将 https://github.com/andyzhouty/HSRActionSequence 克隆到本地，先阅读 README.md 和 SKILL.md，再根据当前环境安装所需依赖，并验证项目能够正常运行。遇到需要额外权限的操作时，请先说明用途并向我确认。
 
-网页公共静态资源位于 `static/`；角色头像保存在 `static/favicon/`，可使用 `pnpm run download:favicons` 根据 `src/data/characters.json` 补齐或更新。
-
-## 开发检查与 Wails 绑定
-
-`pnpm check` 是提交前的统一检查入口，包含 TypeScript、角色数据、文档路径、Wails 绑定、架构依赖、Go 格式/测试/vet、lint、格式和全量测试。
-
-测试按运行环境和职责拆分：`pnpm run test:node` 执行领域、数据、模拟器和集成测试，`pnpm run test:ui` 执行 jsdom 组件测试，`pnpm run test:quality` 执行稳定的性质与契约测试，`pnpm run test:performance` 单独执行性能基准。性能基准使用固定场景，不属于普通 `pnpm check` 门禁；若修改模拟器核心，应在本地单独运行并记录结果。
-
-新增角色时，先在 `src/data/characters.json` 增加基础角色目录数据，并在 `src/data/characterMechanics.json` 增加技能/机制配置，再通过 `pnpm run check:data` 校验；随后在 `src/mechanics/` 增加机制实现，必要时通过 `src/simulate/mechanics/registry.ts` 注册生命周期钩子，最后在 `tests/unit/mechanics/` 或 `tests/integration/simulation/` 增加行为测试。角色身份和 CID 统一从 `src/domain/identity/characterId.ts` 查询，技能输入统一经过 `src/domain/skills/skillCode.ts` 解析。
-
-JSON 导入支持 FreeSR 的 `freesr-data.json`。文件中的角色会全部导入，请自行删除不属于当前队伍的角色。速度根据行迹、遗器和可确认的光锥常驻效果计算；缺少必要数据或无法确认光锥效果时速度留空，需手动填写。速度所用行迹和光锥元数据摘自 HSRVersionInspector 4.6.54，遗器词条与套装系数参考 ProjectHyacine；新增角色或光锥时需要同步更新 `src/data/freesrSpeedMetadata.json`。
-
-页面下方新增白厄伤害试验，可单独导入 FreeSR 中白厄、布洛妮娅、花火、知更鸟的当前配装并生成验证轴；伤害设置随普通 JSON 保存。支持白厄0–2魂、布洛妮娅0–4魂、花火0魂（含强化技能组）、知更鸟0–1魂，以及首个验证配置中的四把光锥和遗器套装。试验只统计白厄自身的常规伤害，按6级普攻起步；未包含协奏附加伤害、队友伤害、击破、Boss阶段和战斗祝福。详细范围与数据更新方法见 [伤害试验说明](docs/damage-trial.md)。
-
-模拟器代码位于 `src/simulate/`，不依赖 React 或 Wails；UI 通过 `src/infrastructure/backend/port.ts` 定义的后端端口访问桌面能力，测试可注入 fake。保存数据必须经过版本迁移、归一化和 schema 校验后才能进入模拟器。
-
-修改 `main.go` 中 `App` 的公开方法后，使用 Wails 重新生成 `frontend/wailsjs`：
-
-```text
-wails generate module
+接下来，我会提出配装、排轴、伤害计算或功能扩展等自定义需求，请基于项目现有架构进行调整，并保留我的本地修改。上游仓库可能持续更新，后续工作时请注意检查上游变化，在保留定制内容的前提下合并适用的更新，妥善处理冲突并运行相关检查，避免直接覆盖我的自定义内容。
 ```
 
-生成目录只允许由 Wails 生成流程更新；`pnpm run check:bindings` 会检查 `main.go` 与 `App.d.ts`、`App.js` 的方法集合是否一致。
+在战斗前排演角色行动顺序，比较技能循环，并用已实现的角色机制计算伤害。项目提供网页版及基于 Wails 的桌面版本，前端使用 React、TypeScript 和 Vite。
 
-## 项目
+项目正在逐步扩展通用伤害计算能力。白厄队和银狼欢愉队是当前已实现的计算入口，后续会继续接入更多角色、队伍和机制；下方支持范围描述当前版本的实际能力。
 
-- 图标：
-  ![图标](https://andyzhouty.github.io/hsrlab/favicon.jpg)
-- 项目当前用来Vibe Coding的AI: GPT 5.6 Luna XHigh
+[打开网页版](https://andyzhouty.github.io/HSRActionSequence/) · [伤害计算操作说明](docs/damage-workflow.md) · [Agent 指南](SKILL.md)
 
-## 目前支持的特殊逻辑
+## 快速开始
 
-- 白厄：Q开境界，境界内特殊行动（基础速度取角色数据与光锥加成），可手动结束大招
-- 姬子·启行：助战技F支持
-- 鸭/花/日：E单体拉条，日支持拉条召唤物
-- 鸟：Q群体拉条
-- 记忆主：右键迷迷拉条
-- 昔涟：全部诗篇已完成
-- 流萤——完全燃烧
-- 阿格莱雅
-- 银狼lv999
-- 刻律——军功已基本完成
-- 遐蝶
-- 风堇
-- 爻光
-- 火花
-- 长夜月
-- 盾丹
-- 绯英
-- 知更鸟·晴歌（水鸟）：E召唤晴空乐手，Q单体立即行动+禁拉其他我方，Fever状态
-- 砂金·戏浪（水砂）：热意积累与阈值触发欢愉技，阿哈时刻加速，强化欢愉技
+### 手动排轴
 
-银狼欢愉队的实验性300AV伤害计算已接入排轴页，支持指定四人配装导入、资源账本、可复现盲盒采样与完整明细导出。使用方法和模型边界见 `docs/elation-team-trial.md`。
+1. 添加角色与敌人，填写速度、星魂和装备，设置秘技等开场条件。
+2. 输入技能，选择目标，按需要插入终结技、调整行动值或添加资源备注。
+3. 查看行动序列，导出图片、Excel 或 JSON；JSON 可用于保存、分享和继续编辑。
 
-## 网页伤害计算
+常用技能码为 `A` 普攻、`E` 战技、`Q` 终结技；`W`、`F` 等特殊技能是否可用取决于角色机制。页面的「使用指南」提供具体操作说明。
 
-排轴页下方提供两个伤害试验入口，均可导入 FreeSR 配装并导出计算明细，技能数据版本为4.6.54：
+普通JSON导入也支持 FreeSR 的 `freesr-data.json`，会导入文件中的角色。速度根据行迹、遗器与已支持的光锥效果计算；无法还原时留空，需要补充数据或手动填写。只想计算某支队伍时，使用下面的专用配装导入入口。
 
-- 白厄队：布洛妮娅、花火或刻律德菈、知更鸟的增益与能量联动，包含刻律德菈奇袭。范围见[白厄伤害试验](docs/damage-trial.md)。
-- 银狼欢愉队：银狼LV.999、爻光、欢愉主、强化藿藿，以及可替换导入的火花、虚照（星神★阿哈）、真珠。支持资源账本、概率采样和100个随机种子统计；范围见[欢愉队试验](docs/elation-team-trial.md)、[火花](docs/sparxie-trial.md)、[虚照](docs/star-aha-damage.md)、[真珠](docs/pearl-damage.md)。
+### 伤害计算
 
-这些入口按已实现的队伍与机制计算，不代表支持任意角色组队。欢愉队使用独立自动行动轴；欢愉队已提供[网页后台自动搜轴](docs/elation-browser-search.md)，支持并行计算、取消、独立种子复核与一键应用候选。
+点击页面顶部「伤害计算」，选择队伍类型。
 
-网页计算区已整理为「选队并导入 → 设置战斗 → 查看结果或搜轴」，支持欢愉队与白厄队页签、默认保留原配装和折叠高级选项。点击顶部「伤害计算」即可进入，详见[操作说明](docs/damage-workflow.md)。
+|入口|适合做什么|行动轴来源|
+|---|---|---|
+|欢愉队 · 自动模拟|导入配装、查看总伤、比较和自动搜索技能循环|根据当前配置独立生成，不读取上方手动技能锚点|
+|白厄队 · 手动排轴|调整辅助技能时机，核对白厄及已接入协同机制的伤害|回放上方手动行动轴|
+
+欢愉队按「选择队伍并导入配装 → 设置战斗 → 查看结果或优化行动轴」操作：
+
+- 直接选择完整队伍方案，再选择 FreeSR 文件；**默认保留文件中的星魂、光锥、遗器及强化状态**。
+- 「旧版验证配置」会替换部分星魂与光锥，选择后会显示替换规则。
+- 修改战斗设置后自动更新结果。主结果是当前种子的一次模拟，搜轴排名使用多次模拟的平均伤害，两者可能不同。
+- 技能循环、随机种子、面板与计算口径在高级设置中；逐轮资源及逐行动明细可按需展开。
+- 导入会替换当前队伍和轴，原始配装文件不会被修改。需要保留当前排轴时，先导出JSON。
+
+后台自动搜轴支持1～4个计算线程、快速/深入两档、进度、取消及一键应用候选。它固定当前配装和机制，搜索已支持的策略参数，**不保证全局最优，也不会自动分配遗器副词条**。切换计算页签可保留任务；关闭或刷新页面会停止。详见[搜轴说明](docs/elation-browser-search.md)。
+
+## 支持范围
+
+### 排轴机制
+
+已实现多种角色的拉条、召唤物、特殊回合和资源逻辑，例如白厄境界、刻律德菈军功、银狼无敌玩家、阿哈时刻、虚照愿力、真珠额外回合，以及知更鸟·晴歌的晴空乐手与Fever、砂金·戏浪的热意机制。
+
+角色目录中的角色不一定都有完整特殊机制，**排轴支持也不等于伤害支持**。具体实现可查 `src/data/characterMechanics.json`、`src/mechanics/` 及对应测试。
+
+### 伤害模型
+
+|队伍|已接入角色与联动|说明|
+|---|---|---|
+|白厄队|白厄、布洛妮娅、花火或刻律德菈、知更鸟|包括已实现的辅助增益、回能、军功与奇袭；星魂、装备和协同范围见[白厄说明](docs/damage-trial.md)|
+|银狼欢愉队|银狼LV.999、爻光、欢愉主、强化藿藿、火花、虚照（星神★阿哈）、真珠|当前要求80级、四名不同角色且包含银狼；限已实现的光锥、套装与角色组合|
+
+欢愉队支持技能伤害、资源账本、可复现随机分支、能量结算与明细导出。默认统计300行动值、95级单体、132速敌人；可以按任务修改配置。未支持的光锥或套装会提示，不能默认视作已经计算。
+
+模型仍有待实测口径，不包含完整的敌方阶段、我方血量与死亡过程。特别注意：
+
+- **笑点每次变动后立即向下取整，尾数不累计**；银狼隐藏分按实际得到的整数笑点计算。
+- 描述明确为「固定回能」的来源不吃回能效率；普通受击回能吃效率。
+- 火花「目标3大奖」是停手目标，资源不足时会提前结束，不代表每轮必得3大奖。
+- 银狼盲盒使用当前配置中的资源动态概率模型；模拟分位数不是实战保底伤害。
+- 负债、暴击期望、抗性及复制计入来源等口径会影响结果；比较时应保持一致。
+
+详细文档：[欢愉队](docs/elation-team-trial.md) · [火花](docs/sparxie-trial.md) · [虚照](docs/star-aha-damage.md) · [真珠](docs/pearl-damage.md) · [笑点整数规则](docs/integer-jokes.md)。文档保留的历史试算需结合最新规则阅读，不能直接当作当前伤害结论。
+
+## 本地开发
+
+网页版开发对齐CI使用 Node.js 22、pnpm 11.9.0。桌面开发还需要 Go（版本见 `go.mod`）、Wails CLI及对应系统的桌面构建依赖。
+
+```sh
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+默认开发地址为 `http://localhost:1420`。
+
+```sh
+pnpm build       # TypeScript检查与网页生产构建，输出 dist/
+pnpm preview     # 本地预览生产构建
+pnpm wails dev   # Wails桌面开发
+pnpm wails build # 桌面生产构建
+```
+
+### 检查与测试
+
+|命令|用途|
+|---|---|
+|`pnpm check`|提交前完整检查：类型、数据、文档路径、绑定、架构、Go、lint/格式及Node/UI测试|
+|`pnpm run check:ci`|CI使用的检查入口，不依赖本机 `docs-for-ai/` 文档目录|
+|`pnpm run test:node`|领域、数据、模拟器与集成测试|
+|`pnpm run test:ui`|界面组件与交互测试|
+|`pnpm run test:quality`|稳定的性质与模拟器契约测试|
+|`pnpm run test:performance`|独立性能基准；修改模拟器核心时运行|
+|`pnpm run check:data`|角色目录与机制数据校验|
+|`pnpm run check:bindings`|Go公开方法与Wails绑定一致性|
+|`pnpm run check:architecture`|模块依赖边界|
+
+新克隆仓库可先运行 `pnpm build`，再运行 `pnpm run check:ci`；Go检查需要前端构建出的 `dist/`，并需要可用的Go开发环境。
+
+`pnpm run check:docs` 当前仅检查 `docs-for-ai/` 内的代码路径，该目录被Git忽略，不随仓库分发；缺少该目录时 `pnpm check` 会在文档检查处中止。拥有这份本机文档时可使用完整的 `pnpm check`。该检查也不覆盖根README和全部 `docs/` 链接，文档修改时还需核对实际文件。
+
+常规测试不要求个人账号文件。`tests/experiments/` 中的试算通常需要显式环境变量及本机输入，默认跳过；部分实验依赖历史配置和断言，运行前先读对应入口。`HSR_FREESR_TEST_FILE` 可用于指定实际FreeSR文件，但集成用例也可能要求特定验证配装，并非任意账号都能直接通过。
+
+## 项目结构与数据
+
+|目录或文件|内容|
+|---|---|
+|`src/pages/`、`src/components/`|排轴页、伤害计算与搜索界面|
+|`src/simulate/`|独立于React和Wails的手动行动模拟器|
+|`src/mechanics/`|角色、装备与特殊回合机制|
+|`src/damage/`|配装还原、伤害公式、能量、独立欢愉模拟及搜索|
+|`src/data/`|角色目录、机制配置、技能/装备元数据|
+|`src/domain/`|角色身份、技能码等公共领域定义|
+|`src/infrastructure/backend/`|桌面能力端口与适配|
+|`tests/`|单元、集成、界面、性能与按需启用的实验|
+|`docs/`|功能操作、机制范围与试验说明|
+|`static/`|网页静态资源；角色头像位于 `static/favicon/`|
+|`frontend/wailsjs/`|Wails生成绑定|
+|`build/`、`dist/`|本地产物，不提交到版本库|
+
+当前伤害与速度元数据使用 **HSRVersionInspector 4.6.54**；遗器词条系数参考 **ProjectHyacine**。源码中的机制实现与提取清单决定实际覆盖范围。
+
+```sh
+node scripts/extractDamageMetadata.mjs <HSRVersionInspector/data/4.6.54/zh>
+node scripts/extractFreeSrSpeedMetadata.mjs <HSRVersionInspector/data/4.6.54/zh>
+pnpm run check:data
+```
+
+新增角色或光锥时，检查提取脚本清单、`damageMetadata.json`、`freesrSpeedMetadata.json` 及机制目录，不只添加角色名称。外部数据项目可能位于WSL，须使用实际路径。
+
+修改 `main.go` 中 `App` 的公开方法后，用 `wails generate module` 重新生成绑定；不要直接修改生成文件。桌面图标源为根目录 `appicon.png`，构建前同步至 `build/appicon.png`。头像可通过 `pnpm run download:favicons` 补齐。
+
+## Agent 协作与发布
+
+Agent请先读取根目录 [SKILL.md](SKILL.md)，其中包含配装读取、两套引擎、可复现统计、完整轴导出、数据更新及验证流程。该文件可直接作为项目指南读取；不要求修改本机全局技能配置。
+
+GitHub Actions 在推送 `main` 后构建并部署 GitHub Pages，另运行测试与Windows桌面构建。代码提交、网站部署和桌面发行是不同步骤；需要发布时应核对实际工作流结果。用户要求先审阅的改动，应在确认后再提交和推送。
+
+提交时只纳入当前任务的文件，避免夹带用户原始配装、个人路径、本机交接文档和临时试算结果；需要分享这些资料时单独确认范围。实验报告应记录配置、规则、种子和样本数，便于后续复核。
+
+## 许可证
+
+[MIT](LICENSE)
