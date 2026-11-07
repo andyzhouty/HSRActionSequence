@@ -55,6 +55,28 @@ function harness(resources: Record<string, Record<string, string>> = {}) {
 	return { states, owner, actions, run };
 }
 describe("星神阿哈排轴", () => {
+	it("floors recorded jokes and each individual universe refund", () => {
+		const h = harness({ decimal: { 笑点: "59.9" }, second: { 笑点: "39.9" } });
+		h.run(action("decimal", "ally"));
+		expect(h.owner.starAhaJokes).toBe(59);
+		h.owner.starAhaUniverseTurns = 3;
+		h.run({ ...action("aha-first", "@aha", ""), isAhaInstant: true });
+		h.run({
+			...action("es-first", "star", "ES"),
+			isElationSkill: true,
+			elationSkillParentKey: "aha-first",
+		});
+		expect(h.owner.starAhaJokes).toBe(5);
+		h.run(action("second", "ally"));
+		expect(h.owner.starAhaJokes).toBe(39);
+		h.run({ ...action("aha-second", "@aha", ""), isAhaInstant: true });
+		h.run({
+			...action("es-second", "star", "ES"),
+			isElationSkill: true,
+			elationSkillParentKey: "aha-second",
+		});
+		expect(h.owner.starAhaJokes).toBe(3);
+	});
 	it("Pearl extra turns grant the action wish without ticking universe duration", () => {
 		const h = harness();
 		h.owner.starAhaUniverseTurns = 3;

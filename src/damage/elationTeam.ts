@@ -479,10 +479,11 @@ export function simulateElationTeam(raw: ElationTeamConfig): ElationTeamResult {
 	let totalJokes = 0;
 	const earnJokes = (amount: number, source: string) => {
 		const before = jokes;
-		jokes += amount;
-		totalJokes += amount;
+		jokes = Math.floor(Math.max(0, jokes + amount));
+		const gained = jokes - before;
+		totalJokes += gained;
 		resource("jokes", source, amount, before, jokes);
-		score(amount, `${source}→银狼天赋等量隐藏分`);
+		score(gained, `${source}→银狼天赋等量隐藏分`);
 		checkForty();
 	};
 	const gainPearl = (amount: number, source: string) => {
@@ -1232,7 +1233,7 @@ export function simulateElationTeam(raw: ElationTeamConfig): ElationTeamResult {
 		return primary;
 	};
 	const moment = (fixed?: number) => {
-		const used = fixed ?? jokes;
+		const used = Math.floor(Math.max(0, fixed ?? jokes));
 
 		const previousMoment = momentStart;
 		momentStart = rows.length;
@@ -1996,7 +1997,9 @@ export function simulateElationTeam(raw: ElationTeamConfig): ElationTeamResult {
 				);
 			}
 			const before = jokes;
-			jokes = Math.max(0, jokes - reward.jokes * (1 - reward.keepJokes));
+			jokes = Math.floor(
+				Math.max(0, jokes - reward.jokes * (1 - reward.keepJokes)),
+			);
 			resource(
 				"jokes",
 				"真珠额外回合结束·移除临时笑点",

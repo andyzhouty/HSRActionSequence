@@ -82,7 +82,7 @@ export function handleStarAhaRecordedAction(params: {
 		);
 	const own = action.characterId === owner.character.id;
 	const jokes = manualNumber(input, action.key, starAhaJokesResourceName);
-	if (jokes !== undefined) owner.starAhaJokes = jokes;
+	if (jokes !== undefined) owner.starAhaJokes = Math.floor(jokes);
 	if ((owner.starAhaJokes ?? 0) >= 40 && !owner.starAhaFortyClaimed) {
 		gain(owner, 1);
 		owner.starAhaFortyClaimed = true;
@@ -123,7 +123,7 @@ export function handleStarAhaRecordedAction(params: {
 			owner.character.eidolon >= 6 && !owner.starAhaE6Used ? 1 : 0.2;
 		if (advance === 1) {
 			owner.starAhaE6Used = true;
-			owner.starAhaJokes = (owner.starAhaJokes ?? 0) + 100;
+			owner.starAhaJokes = Math.floor((owner.starAhaJokes ?? 0) + 100);
 		}
 		if (aha && aha.currentSpeed > 0)
 			aha.nextActionValue = Math.max(
@@ -140,7 +140,7 @@ export function handleStarAhaRecordedAction(params: {
 		const consumed = action.ahaDoesNotConsumeJokes
 			? 0
 			: (owner.starAhaJokes ?? 0);
-		action.ahaJokesUsed = action.ahaFixedJokes ?? consumed;
+		action.ahaJokesUsed = Math.floor(action.ahaFixedJokes ?? consumed);
 		owner.starAhaMoments ??= {};
 		owner.starAhaMoments[action.key] = {
 			consumed,
@@ -151,7 +151,9 @@ export function handleStarAhaRecordedAction(params: {
 	if (own && action.isElationSkill && action.elationSkillParentKey) {
 		const moment = owner.starAhaMoments?.[action.elationSkillParentKey];
 		if (moment?.refund)
-			owner.starAhaJokes = (owner.starAhaJokes ?? 0) + moment.consumed * 0.1;
+			owner.starAhaJokes = Math.floor(
+				(owner.starAhaJokes ?? 0) + moment.consumed * 0.1,
+			);
 		if (owner.starAhaMoments)
 			delete owner.starAhaMoments[action.elationSkillParentKey];
 		owner.starAhaFortyClaimed = false;

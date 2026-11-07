@@ -77,6 +77,35 @@ it("converts defense and computes E2 and ascended temporary rewards", () => {
 		remainingDamage: 800,
 	});
 });
+it("floors every joke change before hidden-score conversion and does not carry refund fractions", () => {
+	const r = simulateElationTeam({
+		...defaultElationTeamConfig,
+		enabled: true,
+		profiles: profiles(6, true),
+		limit: 500,
+	});
+	const events = r.rows.flatMap((row) => row.resourceEvents);
+	const laughs = events.filter((e) => e.kind === "jokes");
+	expect(
+		laughs.some(
+			(e) => e.source === "虚照升格·爽点回收" && !Number.isInteger(e.requested),
+		),
+	).toBe(true);
+	expect(r.rows.every((row) => Number.isInteger(row.jokes))).toBe(true);
+	for (const e of laughs) {
+		expect([e.before, e.after, e.amount].every(Number.isInteger)).toBe(true);
+		expect(e.after).toBe(Math.floor(Math.max(0, e.before + e.requested)));
+		if (e.source === "虚照升格·爽点回收") {
+			const hidden = events.find(
+				(h) =>
+					h.kind === "hidden" &&
+					h.id > e.id &&
+					h.source === `${e.source}→银狼天赋等量隐藏分`,
+			);
+			expect(hidden?.requested).toBe(e.amount);
+		}
+	}
+});
 it.each([
 	false,
 	true,
